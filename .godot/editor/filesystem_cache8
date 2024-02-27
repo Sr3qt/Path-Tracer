@@ -1,0 +1,11 @@
+ea4bc82a6ad023ab7ee23ee620429895
+::res://::1709047709
+canvas.gdshader::Shader::-1::1709047709::0::1::::<><>::
+icon.svg::CompressedTexture2D::635493465185222049::1707753016::1707753022::1::::<><>::
+main_scene.tscn::PackedScene::6548347110793753175::1709047709::0::1::::<><>::res://RayTracer.gd<>res://canvas.gdshader<>uid://bdbvcujyyuudb::::res://temp.png
+RayTracer.gd::GDScript::-1::1708957451::0::1::::<>Node<>::
+ray_tracer.comp.glsl::RDShaderFile::6483268740974836562::1709047708::1709047708::1::::<><>::
+temp.png::CompressedTexture2D::2600331286290737687::1709047711::1709047712::1::::<><>::
+::res://basic_compute_shader_example/::1707923776
+basic_compute_shader_example.comp.glsl::RDShaderFile::825070052326899097::1707762058::1707923728::1::::<><>::
+basic_compute_shader_example.gd::GDScript::-1::1707923776::0::1::::<>Node<>::
