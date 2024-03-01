@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://c0kck5eyqahfr"]
+[gd_scene load_steps=8 format=3 uid="uid://c0kck5eyqahfr"]
 
 [ext_resource type="Script" path="res://RayTracer.gd" id="1_uicwf"]
 [ext_resource type="Shader" path="res://canvas.gdshader" id="2_be7hc"]
@@ -6,13 +6,16 @@
 
 [sub_resource type="SphereMesh" id="SphereMesh_rgm65"]
 
+[sub_resource type="Texture2DRD" id="Texture2DRD_xlpga"]
+
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_j0rgk"]
 render_priority = 0
 shader = ExtResource("2_be7hc")
 shader_parameter/width = 64.0
 shader_parameter/height = 36.0
 shader_parameter/scale = 16.0
-shader_parameter/image_buffer = ExtResource("3_334qs")
+shader_parameter/image_buffer = SubResource("Texture2DRD_xlpga")
+shader_parameter/preview_image_buffer = ExtResource("3_334qs")
 
 [sub_resource type="QuadMesh" id="QuadMesh_e2f01"]
 material = SubResource("ShaderMaterial_j0rgk")
