@@ -4,7 +4,7 @@ render_mode unshaded, cull_disabled;
 
 uniform sampler2D SCREEN_TEXTURE : hint_screen_texture, filter_linear_mipmap;
 
-uniform sampler2D image_buffer : filter_nearest, source_color;
+uniform sampler2D image_buffer : filter_nearest;
 uniform sampler2D preview_image_buffer : filter_nearest, source_color;
 
 uniform float width = 64.;
@@ -48,10 +48,11 @@ void fragment() {
 
 	// COnvertion from srgb to rgb
 //	ALBEDO = pow(color.rgb, vec3(2.2, 2.2, 2.2));	
+	float gamma = 1. / 1.6;
 	
 	// If showing default texture, swap with image preview
 	if (color.r == 1. && color.g == 0.0 && color.b == 1.) {
-		color = new_color;
+		color.rgb = pow(new_color.rgb, vec3(gamma, gamma, gamma));
 	} 
 	ALBEDO = color.rgb;
 }

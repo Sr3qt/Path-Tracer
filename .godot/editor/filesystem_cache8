@@ -1,11 +1,11 @@
 ea4bc82a6ad023ab7ee23ee620429895
-::res://::1709296755
-canvas.gdshader::Shader::-1::1709296755::0::1::::<><>::
+::res://::1709299541
+canvas.gdshader::Shader::-1::1709299541::0::1::::<><>::
 icon.svg::CompressedTexture2D::635493465185222049::1707753016::1707753022::1::::<><>::
-main_scene.tscn::PackedScene::6548347110793753175::1709296755::0::1::::<><>::res://RayTracer.gd<>res://canvas.gdshader<>uid://bdbvcujyyuudb::::res://temp.png
+main_scene.tscn::PackedScene::6548347110793753175::1709299541::0::1::::<><>::res://RayTracer.gd<>res://canvas.gdshader<>uid://bdbvcujyyuudb::::res://temp.png
 RayTracer.gd::GDScript::-1::1709296560::0::1::::<>Node<>::
-ray_tracer.comp.glsl::RDShaderFile::6483268740974836562::1709296753::1709296754::1::::<><>::
-temp.png::CompressedTexture2D::2600331286290737687::1709296795::1709296796::1::::<><>::
+ray_tracer.comp.glsl::RDShaderFile::6483268740974836562::1709299495::1709299499::1::::<><>::
+temp.png::CompressedTexture2D::2600331286290737687::1709299572::1709299572::1::::<><>::
 ::res://archive/::1709122462
 ray_tracer_after_weekend.comp.glsl::RDShaderFile::8213333610431927994::1709122423::1709122462::1::::<><>::
 weekend_result.png::CompressedTexture2D::2691186884518514632::1709115036::1709115039::1::::<><>::
