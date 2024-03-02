@@ -4,8 +4,9 @@ extends Node
 var uniform_sets = [
 	{}, # For image
 	{}, # For camera
-	{},  # For objects
-	{} # For image preview
+	{}, # For objects
+	{}, # For image preview
+	{} # For BVH
 ]
 var RIDs_to_free = [] # array of RIDs that need to be freed when done with them.
 
@@ -34,17 +35,22 @@ var spheres_bind := 1
 var preview_image_set_index := 3
 var preview_image_bind := 0
 
+var BVH_set_index := 4
+var BVH_bind := 0
+
 # Set RIDs
 var image_set : RID
 var camera_set : RID
 var object_set : RID
 var preview_image_set : RID
+var BVH_set : RID
 
 # Buffer RIDS
 var camera_buffer : RID
 var image_buffer : RID
 var sphere_buffer : RID
 var preview_image_buffer : RID
+var BVH_buffer : RID
 
 # Render variables
 var aspect_ratio := 16. / 9.
@@ -69,14 +75,16 @@ var forward: Vector3:
 	
 var camera_changed := false
 
+@onready var camera := RCCamera.new(Vector3(0,0,0), Vector3(0,0,1))
 
 func _ready():
 	
 	get_window().position = Vector2(1100, 400)
 	# Create a local rendering device.
 #	rd = RenderingServer.create_local_rendering_device()
+	# Holy merge clutch https://github.com/godotengine/godot/pull/79288 
 	rd = RenderingServer.get_rendering_device()
-	print(rd.screen_get_framebuffer_format())
+	
 
 	# Load GLSL shader
 	var shader_file = load("res://ray_tracer.comp.glsl")
@@ -89,7 +97,8 @@ func _ready():
 
 	# SET DATA BUFFERS
 	# ================
-
+	
+	
 	# Viewport
 	var size_bytes := PackedInt32Array([render_width, render_height]).to_byte_array()
 
@@ -100,11 +109,14 @@ func _ready():
 	image_buffer = _create_image_buffer()
 	var size_buffer = _create_uniform(size_bytes, rd, image_set_index, image_size_bind)
 	
-	preview_image_buffer = _create_uniform(image_bytes, rd, preview_image_set_index, preview_image_bind)
+	preview_image_buffer = _create_uniform(image_bytes, rd, preview_image_set_index, 
+															preview_image_bind)
 
-	camera_buffer = _create_uniform(_create_camera_bytes(), rd, camera_set_index, camera_bind)
+	camera_buffer = _create_uniform(camera.to_byte_array(), rd, camera_set_index, camera_bind)
 	sphere_buffer = _create_uniform(_create_spheres(), rd, object_set_index, spheres_bind)
 	
+	BVH_buffer = _create_uniform(_create_empty_BVHNode_array(), rd, 
+	BVH_set_index, BVH_bind)
 	
 	# BIND UNIFORMS AND SETS
 	# ======================
@@ -114,6 +126,7 @@ func _ready():
 	var camera_uniform = uniform_sets[camera_set_index].values()
 	var object_uniforms = uniform_sets[object_set_index].values()
 	var new_image_uniforms = uniform_sets[preview_image_set_index].values()
+	var BVH_uniforms = uniform_sets[BVH_set_index].values()
 
 	# Bind uniforms to sets
 	image_set = rd.uniform_set_create(image_uniforms, shader, image_set_index)
@@ -122,6 +135,8 @@ func _ready():
 	
 	preview_image_set = rd.uniform_set_create(new_image_uniforms, shader, 
 	preview_image_set_index)
+	
+	BVH_set = rd.uniform_set_create(BVH_uniforms, shader, BVH_set_index)
 	
 	# Set texture RID for Canvas
 	var canvas = get_node("/root/Node3D/Camera3D/Canvas")
@@ -135,15 +150,7 @@ func _process(delta):
 	var fps = 1. / delta
 	print(str(delta * 1000) + " ms, FPS: " + str(fps))
 	
-	if Input.is_key_pressed(KEY_W):
-		move_camera(-forward * Vector3(1,0,1) * move_speed)
-	elif Input.is_key_pressed(KEY_A):
-		move_camera(-right * Vector3(1,0,1) * move_speed)
-	elif Input.is_key_pressed(KEY_S):
-		move_camera(forward * Vector3(1,0,1) * move_speed)
-	elif Input.is_key_pressed(KEY_D):
-		move_camera(right * Vector3(1,0,1) * move_speed)
-	
+	camera._process(delta)
 
 	var spheres = _create_spheres()
 	rd.buffer_update(sphere_buffer, 0, spheres.size(), spheres)
@@ -158,17 +165,9 @@ func _process(delta):
 	#print(rd.get_captured_timestamp_gpu_time(1))
 
 
-# MOve to player ndoe
 func _input(event):
-	if event is InputEventMouseMotion and event.button_mask & 1:
-		# modify accumulated mouse rotation
-		var rot_x = event.relative.x * mouse_sensitivity_x
-		var rot_y = event.relative.y * mouse_sensitivity_y
-		var transform = Transform3D()
-		transform = transform.rotated(Vector3(0,1,0), rot_x).rotated(right, rot_y)
-		
-		rotate_camera(transform)
-
+	camera._input(event)
+	
 
 func _exit_tree():
 	# TODO turn new_image_buffer to image and get rid of preview_image_buffer
@@ -193,25 +192,27 @@ func _exit_tree():
 		rd.free_rid(rid)
 
 
-func vector2array(vector):
-	return [vector.x, vector.y, vector.z]
-
-
-func _create_camera_bytes():
-	var camera_array = (vector2array(camera_pos) + 
-						[focal_length] + vector2array(right) + 
-						[viewport_width] + vector2array(up) + 
-						[viewport_height] + vector2array(forward))
+func _create_empty_BVHNode_array():
+	var max_children = 2
 	
-	return (PackedFloat32Array(camera_array).to_byte_array())
+	var array_length = 100 # IDK
+	
+	var bytes_per_node = max_children * 16 + 32 + 16 
+	var total_bytes = bytes_per_node * array_length
+	var new_bytes = PackedByteArray()
+	new_bytes.resize(total_bytes)
+	new_bytes.fill(0)
+	
+	print("Made a BVH array with a size of " + str(total_bytes) + " bytes.")
+	return new_bytes
 
 
 func _create_compute_list():
 	""" Creates the compute list required for every compute call """
-	if camera_changed:
-		var new_bytes = _create_camera_bytes()
+	if camera.camera_changed:
+		var new_bytes = camera.to_byte_array()
 		rd.buffer_update(camera_buffer, 0, new_bytes.size(), new_bytes)
-		camera_changed = false
+		camera.camera_changed = false
 	
 	var compute_list = rd.compute_list_begin()
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
@@ -221,6 +222,7 @@ func _create_compute_list():
 	rd.compute_list_bind_uniform_set(compute_list, camera_set, camera_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, object_set, object_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, preview_image_set, preview_image_set_index)
+	rd.compute_list_bind_uniform_set(compute_list, BVH_set, BVH_set_index)
 	
 	rd.capture_timestamp("before dispatch")
 	rd.compute_list_dispatch(compute_list, ceil(render_width / 8.), 
@@ -289,11 +291,11 @@ func _create_image_buffer():
 func _create_spheres():
 	# Materials
 	var mat: int = 1
-	var mat1: int = 2
-	var metal: int = 3
 	var glass: int = 4
 	var extra = sin(Time.get_ticks_msec() / 1000.)
 	
+	var mat1: int = 2
+	var metal: int = 3
 	# Objects
 	var spheres = (
 		PackedFloat32Array([.5 + extra, 0.5, -2., 0.5]).to_byte_array() + 
@@ -311,21 +313,6 @@ func _create_spheres():
 	)
 
 	return spheres
-
-func rotate_camera(transform : Transform3D):
-	view_vectors *= transform
-	
-	right = view_vectors[0].normalized()
-	up = view_vectors[1].normalized()
-	forward = view_vectors[2].normalized()
-	
-	camera_changed = true
-	
-
-func move_camera(vector : Vector3):
-	camera_pos += vector
-	
-	camera_changed = true
 
 
 

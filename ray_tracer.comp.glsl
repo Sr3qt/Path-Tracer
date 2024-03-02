@@ -23,6 +23,10 @@ Normals always point outwards from surfaces and are always normalized on creatio
 
 Ray depth starts at 0 and goes up as depth increases
 
+mtl_index and obj_index refer to the an material and object in the global material list and 
+object list respectively. There may be multiple object lists in which case an object_type enum
+will determine which  
+
 
 LONG TERM GOALS
 ===============
@@ -49,6 +53,36 @@ LONG TERM GOALS
 
 // Invocations in the (x, y, z) dimension
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+
+// CONSTANTS
+// =========
+
+const float infinity = 1. / 0.;
+const double pi_double = 3.1415926535897932385;
+const float pi = 3.1415926535897932385;
+const float eps = 0.00001;
+
+// obj_type enumerator
+const int is_not_obj = 0;
+const int is_sphere = 1;
+const int is_plane = 2;
+
+// BVH child_index enum
+const int is_BVHNode = 1;
+
+// IORs
+const float IOR_air = 1.0;
+float current_IOR = IOR_air;
+
+const vec4 default_color = vec4(0.7, 0.7, 0.9, 1);
+const int samples_per_pixel = 16; // How many rays are sent per pixel
+const int max_depth = 8; // How many bounces is sampled at the most
+
+// Maximum number of children a BVHNode can have
+const int max_children = 2;
+
+float random_number;
 
 // DATATYPES
 // =========
@@ -88,9 +122,7 @@ struct Sphere {
     vec3 center;
     float radius;
     int mtl_index;
-    int filler1;
-    int filler2;
-    int filler3;
+    int filler[3];
 };
 
 struct RayHit {
@@ -98,7 +130,7 @@ struct RayHit {
     bool is_initialized; // Whether values like point and normal are determined
     bool is_inside; // Whether ray is traveling inside an object
     float current_IOR; // IOR of the material the ray is currently travelling through; 
-    // Bad implementation ^^
+    // Bad implementation ^^ use global variable to track current IOR of ray
 
     // Stored on-hit
     Ray ray;
@@ -107,10 +139,10 @@ struct RayHit {
     int obj_index; // The index of object hit in their respective object list, provided by obj_type
 
     // Retrieved later
+    int mtl_index; // Material of the object hit
     vec3 point; // Intersection point between sphere and ray
     vec3 normal;
     vec4 color; // Whatever color the rayhit is determined to be 
-    int mtl_index; // Material of the object hit
 
 };
 
@@ -120,14 +152,38 @@ struct Range {
 };
 
 struct AABB {
-    vec3 minimum;
-    vec3 maximum;
+    // only xyz used, they are vec4 to fit memory allocation
+    // minimum.x < maximum.x etc. should always be true, use create_AABB function to be safe
+    vec4 minimum;
+    vec4 maximum;
 };
 
+struct ChildIndex {
+    // Small struct to add labels to child indices in a BVHNode
+    int child_node; // Points to a child BVHNode, if is_BVHNode is 1, -1 otherwise
+    int obj_type; // Specifies the object type obj_index points to, if is_BVHNode is 0, 0 otherwise
+    int obj_index; // Points to an object in an object list specified by obj_type, 
+    // if is_BVHNode is 0, -1 otherwise
+
+    int is_BVHNode; // Is 1 if this points to a BVHNode, 0 otherwise
+};
+
+// BVH should be shared across all groups, how doe? Might make compute shader to make BVH
 struct BVHNode {
-    int parent;
+    // A BVHNode is an node in a n-ary tree. They are stored in a global BVH buffer. Every node 
+    //  points to its parents, its own and its childrens indicies in the list. 
+    //  Instead of pointing to a child node it might point to an object in specified object list
+    
+    ChildIndex children[max_children]; // List of children, see ChildIndex
+    AABB bbox; // Bounding box that encompasses all children 
+    int child_count;
+    int parent; // Index to parent in BVH list
+    int self; // Index to self in the BVH list, -1 means the node position is not finalized
+    // -2 means BVHNode doesn't exist
+    int filler;
 
 };
+
 
 // BUFFERS
 // =======
@@ -170,33 +226,17 @@ layout(set = 2, binding = 1, std430) restrict buffer SpheresBuffer {
 }
 spheres;
 
+layout(set = 4, binding = 0, std430) restrict buffer BVH_List {
+    BVHNode list[];
+}
+BVH;
 
 
 layout(r32f, set = 0, binding = 0) uniform restrict writeonly image2D output_image;
 
 
-// CONSTANTS
-// =========
-
-const float infinity = 1. / 0.;
-const double pi_double = 3.1415926535897932385;
-const float pi = 3.1415926535897932385;
-const float eps = 0.00001;
-
-// For checking what shape a ray hit
-const int is_sphere = 1;
-const int is_plane = 2;
-
-// IORs
-const float IOR_air = 1.0;
-float current_IOR = IOR_air;
-
-const vec4 default_color = vec4(0.7, 0.7, 0.9, 1);
-const int samples_per_pixel = 16; // How many rays are sent per pixel
-const int max_depth = 8; // How many bounces is sampled at the most
-
-float random_number;
-
+// TEMP STRUCT CREATION
+// ====================
 Material empty_mat = Material(vec3(0,0,0), 0., 0., 1., IOR_air);
 Material mat = Material(vec3(0,0.7,1), 0., 0., 1., 1.);
 Material mat1 = Material(vec3(0.1, 0.75, 0.1), 0., 0., 1., 1.);
@@ -216,6 +256,7 @@ Plane planes[1] = Plane[](
     Plane(vec3(0,1,0), -1., 2, 0,0,0)
 );
 
+
 // UTILITY FUNCTIONS
 // =================
 
@@ -228,7 +269,7 @@ Material empty_material() {
 }
 
 Sphere empty_sphere() {
-    return Sphere(vec3(0,0,0), 0., 0, 0,0,0);
+    return Sphere(vec3(0,0,0), 0., 0, int[](0,0,0));
 }
 
 Plane empty_plane() {
@@ -236,13 +277,55 @@ Plane empty_plane() {
 }
 
 RayHit empty_rayhit() {
-    return RayHit(false, false, false, IOR_air, empty_ray(), infinity, 0, 0, vec3(0,0,0), vec3(0,0,0), 
-                    vec4(0,0,0,0), 0);
+    return RayHit(false, false, false, IOR_air, empty_ray(), infinity, 0, 0, 0,
+                  vec3(0,0,0), vec3(0,0,0), vec4(0,0,0,0));
+}
+
+ChildIndex empty_child_index() {
+    return ChildIndex(-1, 0, -1, 0);
+}
+
+BVHNode empty_BVHNode() {
+    ChildIndex children[max_children];
+    for (int i = 0; i < max_children; i++) {
+        children[i] = empty_child_index();
+    }
+    AABB bbox = AABB(vec4(0), vec4(0));
+    return BVHNode(children, bbox, 0, 0, 0, 0);
+}
+
+AABB create_AABB(vec3 point1, vec3 point2) {
+    return AABB(vec4(min(point1, point2), 0), vec4(max(point1, point2), 0));
 }
 
 AABB sphere_AABB(Sphere sphere) {
+    // Calculate AABB for a sphere
     vec3 radius_vec = vec3(sphere.radius);
-    return AABB(sphere.center - radius_vec, sphere.center + radius_vec);
+    return AABB(vec4(sphere.center - radius_vec, 0), vec4(sphere.center + radius_vec, 0));
+}
+
+AABB merge_AABB(AABB box1, AABB box2) {
+    // Make a new AABB tow fit two other AABBs
+    AABB out_AABB;
+    out_AABB.minimum = min(box1.minimum, box2.minimum);
+    out_AABB.maximum = min(box1.maximum, box2.maximum);
+    return out_AABB;
+}
+
+void expand_AABB(inout AABB bbox, float delta) {
+    float padding = delta / 2.;
+    bbox.minimum -= padding;
+    bbox.maximum += padding;
+}
+
+bool intersect_AABB(AABB bbox1, AABB bbox2) {
+    // Returns whether two AABB intersect
+    for (int i = 0; i < 3; i++) {
+        if (bbox1.minimum[i] > bbox2.maximum[i] || bbox1.maximum[i] < bbox2.minimum[i]) {
+            return false;
+        }
+    }
+    return true;
 }
 
 float rand(float seed) {
@@ -270,6 +353,7 @@ void swap(inout float a, inout float b) {
     a = a - b;
 }
 
+
 bool is_close(float value1, float value2) {
     // Whether a value is within an epsilon of value2
     return (value2 + eps > value1 && value1 > value2 - eps);
@@ -290,13 +374,82 @@ bool xin_range(float value, Range range) {
     return (range.start < value && range.end > value);
 }
 
-
-// RAY FUNCTIONS
-// =============
-
 vec3 ray_at(Ray ray, float t) {
     return ray.origin + ray.direction * t;
 }
+
+
+// BVH FUNCTIONS
+// =============
+
+void create_BVH_list() {
+
+    int sphere_array_length = spheres.data.length();
+    int other_array_length = 0;
+
+    int total_length = sphere_array_length + other_array_length;
+
+    // Create a Node for every object in all object lists
+    int running_length = 0;
+    for (int i = 0; i < sphere_array_length; i++) {
+        BVHNode temp = empty_BVHNode();
+        temp.children[0] = ChildIndex(-1, is_sphere, i, 0);
+        temp.bbox = sphere_AABB(spheres.data[i]);
+        temp.self = -1;
+        BVH.list[i] = temp;
+    }
+    running_length += sphere_array_length;
+
+    // pseudo code for other object lists
+    // for (int i = 0; i < other_array_length; i++) {
+    //     BVHNode temp = empty_BVHNode();
+    //     temp.children[0] = ChildIndex(-1, obj_type, i, 0);
+    //     temp.bbox = AABB_of_obj(obj_list.data[i]);
+    //     temp.self = -1;
+    //     BVH.list[i + running_length] = temp;
+    // }
+    // running_length += other_array_length;
+
+    // Simple, naive merge method
+    // for (int i = 0; i < running_length - 1; i++) {
+    //     if (BVH.list[i].self != -2) {
+    //         continue;
+    //     }
+    //     for (int j = i + 1; j < running_length; j++) {
+    //         // If node doesn't exist, continue
+    //         if (BVH.list[j].self != -2) {continue;}
+    //         // If nodes don't intersect, continue
+    //         if (!intersect_AABB(BVH.list[i], BVH.list[j])) {continue;}
+
+    //     }
+    // }
+
+    // Merge intersecting nodes
+    for (int i = 0; i < running_length - 1; i++) {
+        BVHNode node1 = BVH.list[i];
+        if (node1.self != -2) {
+            continue;
+        }
+        for (int j = i + 1; j < running_length; j++) {
+            BVHNode node2 = BVH.list[j];
+            // If node doesn't exist, continue
+            if (node2.self != -2) {continue;}
+            // If nodes don't intersect, continue
+            if (!intersect_AABB(node1.bbox, node2.bbox)) {continue;}
+
+            // if ()
+
+        }
+    }
+
+}
+
+
+
+
+// RAY-HIT FUNCTIONS
+// =============
+
 
 void set_rayhit(inout RayHit rayhit, float t, Ray ray, int object_type, int object_index) {
     rayhit.hit = true;
@@ -310,8 +463,9 @@ bool hit_AABB(Ray ray, AABB bbox, Range range) {
     // Returns true if ray hits aabb within given range
     for (int i = 0; i < 3; i++) {
         float inv_ray_x = 1. / ray.direction[i];
-        float t0 = ((bbox.minimum[i] - ray.origin[i]) * inv_ray_x);
-        float t1 = ((bbox.maximum[i] - ray.origin[i]) * inv_ray_x);
+        float orig = ray.origin[i]; // This is an optimazation. Source: Trust me (real)
+        float t0 = ((bbox.minimum[i] - orig) * inv_ray_x);
+        float t1 = ((bbox.maximum[i] - orig) * inv_ray_x);
 
         // Make sure t0 is smallest
         if (inv_ray_x < 0.) {swap(t0, t1);}
@@ -424,6 +578,29 @@ RayHit check_ray_hit(Ray ray, Range range) {
     return rayhit;
 }
 
+
+RayHit check_ray_hit_BVH(Ray ray, Range range) {
+    // Like check_ray_hit but it checks against a BVH tree instead of each object_list individually
+    RayHit rayhit = empty_rayhit();
+
+    BVHNode root_node;
+    
+
+    // while (true) {
+
+    // }
+
+
+    // TODO ADD intersection with skybox, would still count as not hit
+    if (!rayhit.hit) {
+        rayhit.color = default_color;
+    }
+
+    return rayhit;
+}
+
+// RAY-BOUNCE FUNCTIONS
+// ====================
 Ray reflect_ray(Ray ray_in, RayHit rayhit) {
     // Returns a new reflected ray based on ray_in and rayhit
     vec3 reflected_dir = reflect(ray_in.direction, rayhit.normal);
@@ -515,6 +692,8 @@ Ray bounce_ray(Ray ray_in, RayHit rayhit) {
     return scatter_ray(ray_in, rayhit);
 }
 
+// MAIN FUNCTIONS
+// ==============
 vec4 cast_ray(Ray ray, Range range) {
     // Casts a ray with bounces and returns the color of the ray
 
@@ -534,9 +713,9 @@ vec4 cast_ray(Ray ray, Range range) {
         
         // Early break if no hit
         if (!rayhit.hit) {
-            // WOuld like to implement skybox color, but does not currently work
+            // Adds sky color as the last rayhit when miss
             rayhits[i] = rayhit;
-            i++; // Breaking doesn't increment therfore we have to correct for it
+            i++; // Breaking doesn't increment therefore we have to correct for it
             break;
         }
 

@@ -1,3 +1,5 @@
-MeshInstance3D
 Node
+CSGSphere3D
+ImporterMeshInstance3D
+MeshInstance3D
 Camera3D
