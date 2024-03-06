@@ -1,6 +1,6 @@
 extends Node
 
-class_name RCCamera
+class_name PTCamera
 
 # Whether the camera should react to button presses and mouse movements
 var is_fps := true
@@ -18,6 +18,7 @@ var focal_length := 1.
 var hfov := 106. # In degrees
 var vfov := hfov / aspect_ratio
 
+# Viewport is the physical surface through which rays are initially cast 
 var viewport_width : float
 var viewport_height : float
 
@@ -44,11 +45,9 @@ func _init(pos : Vector3, looking_at : Vector3):
 	camera_changed = false
 	
 
-
 func _process(delta):
 	
 	# MOve to player ndoe
-	print("bur")
 	if Input.is_key_pressed(KEY_W):
 		move_camera(-forward * Vector3(1,0,1) * move_speed)
 	elif Input.is_key_pressed(KEY_A):
@@ -75,6 +74,7 @@ func set_viewport_size():
 	viewport_height = viewport_width * (float(render_height) / float(render_width))
 	
 	camera_changed = true
+
 
 func look_at(point : Vector3):
 	forward = point - camera_pos

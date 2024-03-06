@@ -1,15 +1,18 @@
-extends RCPrimitive3D
+extends PTPrimitive3D
+
+class_name PTSphere
 
 var center : Vector3
 var radius : float
-var material : RCMaterial
-var material_index : int
 
-func _init(center : Vector3, radius : float, material : RCMaterial):
-	center = center
-	radius = radius 
-	material = material
-	material_index = 0
+func _init(center_ : Vector3, radius_ : float, material_ : PTMaterial, mtl_i):
+	center = center_
+	radius = radius_
+	material = material_
+	# TEMP: mtl_i is temporary will be removed
+	material_index = mtl_i 
+	
+	aabb = get_AABB()
 
 
 func vec2array(vector : Vector3):
@@ -21,5 +24,5 @@ func to_byte_array():
 
 func get_AABB():
 	var radius_vector = Vector3(radius, radius, radius)
-	return [center - radius_vector, center + radius_vector]
+	return PTAABB.new(center - radius_vector, center + radius_vector)
 	

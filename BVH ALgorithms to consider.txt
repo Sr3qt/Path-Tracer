@@ -1,0 +1,42 @@
+PLan: Create basic centroid split BVH. MAke other improvements and add triangles, then improve bvh.
+
+## Nice reading summary:
+## https://hackmd.io/@zOZhMrk6TWqOaocQT3Oa0A/HJUqrveG5 
+
+Gold mine:
+    https://www.idi.ntnu.no/emner/tdt03/
+
+
+Repo for help with algo implementation:
+https://github.com/madmann91/bvh
+
+
+BVH ALgorithms to consider
+    According to Terro Karras and Timo Aila:
+    https://research.nvidia.com/sites/default/files/pubs/2013-07_Fast-Parallel-Construction/karras2013hpg_paper.pdf 
+    Has close to SBVH perf (95%) with real time construction
+
+
+    Sweeping SAH:
+    https://graphics.cg.uni-saarland.de/courses/cg1-2018/slides/Building_good_BVHs.pdf 
+    greedy algortihm, takes first and best
+    Sweeping
+        • Two-step process: right-to-left and then left-to-right
+        • Right-to-left: compute and record SA(R)
+        SA(N) N(R)
+        • Left-to-right: compute full SAH using stored values
+
+    Top down SAH from:
+        https://www.pbr-book.org/4ed/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies 
+
+    J. Bittner algorithms:
+        - Parallel Reinsertion for Bounding Volume Hierarchy Optimization
+            https://onlinelibrary.wiley.com/doi/abs/10.1111/cgf.13376 
+
+
+    Bonsai: Rapid Bounding Volume Hierarchy Generation using Mini Trees. By Ganestam, Barringer, Doggett, 
+    and Akenine-Möller
+
+    First makes leaf nodes, then Sweep construction. SPlitting is good for performance
+
+    Splits triangles according to their midpoints

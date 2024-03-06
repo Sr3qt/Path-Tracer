@@ -16,9 +16,8 @@ var pipeline : RID
 
 var texture : Texture2DRD
 
-var mouse_sensitivity_x := 0.01
-var mouse_sensitivity_y := 0.01
-var move_speed := 0.1
+var objects_dict
+var material_list
 
 # Set / binding indices
 var image_set_index := 0
@@ -58,24 +57,9 @@ var render_width := 640 * 3
 var render_height := int(render_width / aspect_ratio)
 
 var focal_length := 1.
-var viewport_width := 4.
-var viewport_height := viewport_width * (float(render_height) / float(render_width))
 
-var camera_pos := Vector3(0,0,0)
-var view_vectors := PackedVector3Array([Vector3(1,0,0), Vector3(0,1,0), Vector3(0,0,1)])
-var right: Vector3:
-	get: return view_vectors[0]
-	set(value): view_vectors.set(0, value)
-var up: Vector3:
-	get: return view_vectors[1]
-	set(value): view_vectors.set(1, value)
-var forward: Vector3:
-	get: return view_vectors[2]
-	set(value): view_vectors.set(2, value)
-	
-var camera_changed := false
 
-@onready var camera := RCCamera.new(Vector3(0,0,0), Vector3(0,0,1))
+@onready var camera := PTCamera.new(Vector3(0,0,0), Vector3(0,0,1))
 
 func _ready():
 	
@@ -94,25 +78,35 @@ func _ready():
 	
 	# Create a compute pipeline
 	pipeline = rd.compute_pipeline_create(shader)
-
+	
+	var mtl_and_object_list = PTObject.read_PTobject_file("res://sphere_scene1.txt") 
+	material_list = mtl_and_object_list[0]
+	objects_dict = mtl_and_object_list[1]
+	
+	
 	# SET DATA BUFFERS
 	# ================
 	
 	
-	# Viewport
-	var size_bytes := PackedInt32Array([render_width, render_height]).to_byte_array()
 
+	# The image buffer that is used to save an image
 	var image_array = PackedColorArray()
 	image_array.resize(render_width * render_height)
 	var image_bytes := image_array.to_byte_array()
-	
-	image_buffer = _create_image_buffer()
-	var size_buffer = _create_uniform(size_bytes, rd, image_set_index, image_size_bind)
-	
 	preview_image_buffer = _create_uniform(image_bytes, rd, preview_image_set_index, 
 															preview_image_bind)
-
+	
+	# The image buffer used in compute and fragment shader
+	image_buffer = _create_image_buffer()
+	
+	# Viewport size
+	var size_bytes := PackedInt32Array([render_width, render_height]).to_byte_array()
+	var size_buffer = _create_uniform(size_bytes, rd, image_set_index, image_size_bind)
+	
+	# Camera data
 	camera_buffer = _create_uniform(camera.to_byte_array(), rd, camera_set_index, camera_bind)
+	
+	# One of the object lists, for spheres
 	sphere_buffer = _create_uniform(_create_spheres(), rd, object_set_index, spheres_bind)
 	
 	BVH_buffer = _create_uniform(_create_empty_BVHNode_array(), rd, 
@@ -148,17 +142,18 @@ func _ready():
 
 func _process(delta):
 	var fps = 1. / delta
-	print(str(delta * 1000) + " ms, FPS: " + str(fps))
+	#print(str(delta * 1000) + " ms, FPS: " + str(fps))
 	
 	camera._process(delta)
 
-	var spheres = _create_spheres()
-	rd.buffer_update(sphere_buffer, 0, spheres.size(), spheres)
+	#var spheres = _create_spheres()
+	#rd.buffer_update(sphere_buffer, 0, spheres.size(), spheres)
 	
 	# Sync is not required when using main RenderingDevice
 	_create_compute_list()
+	#_compute_list_timer()
 	
-	print_gpu_performance()
+	#print_gpu_performance()
 	#var time1 = rd.get_captured_timestamp_gpu_time(0)
 	#var time2 = rd.get_captured_timestamp_gpu_time(1)
 	#print((time2 - time1) / 1000000.)
@@ -171,8 +166,10 @@ func _input(event):
 
 func _exit_tree():
 	# TODO turn new_image_buffer to image and get rid of preview_image_buffer
-	#var image = rd.texture_get_data(new_image_buffer, 0)
-	var image = rd.buffer_get_data(preview_image_buffer)
+	var image = rd.texture_get_data(image_buffer, 0)
+	print_debug("hellop")
+	#print(image)
+	#image = rd.buffer_get_data(preview_image_buffer)
 	var new_image = Image.create_from_data(render_width, render_height, false,
 										   Image.FORMAT_RGBAF, image)
 										
@@ -214,6 +211,8 @@ func _create_compute_list():
 		rd.buffer_update(camera_buffer, 0, new_bytes.size(), new_bytes)
 		camera.camera_changed = false
 	
+	_update_sphere()
+	
 	var compute_list = rd.compute_list_begin()
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
 	
@@ -224,12 +223,12 @@ func _create_compute_list():
 	rd.compute_list_bind_uniform_set(compute_list, preview_image_set, preview_image_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, BVH_set, BVH_set_index)
 	
-	rd.capture_timestamp("before dispatch")
+	rd.capture_timestamp("Render Scene")
 	rd.compute_list_dispatch(compute_list, ceil(render_width / 8.), 
 										   ceil(render_height / 8.), 1)
-	rd.capture_timestamp("after dispatch")
 	rd.compute_list_end()
 	
+
 
 func print_gpu_performance():
 	for i in range(1, rd.get_captured_timestamps_count()):
@@ -273,7 +272,9 @@ func _create_image_buffer():
 	tf.usage_bits = (RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT + 
 		RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT +
 		RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT +
-		RenderingDevice.TEXTURE_USAGE_STORAGE_BIT
+		RenderingDevice.TEXTURE_USAGE_STORAGE_BIT + 
+		RenderingDevice.TEXTURE_USAGE_CPU_READ_BIT +
+		RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
 	)
 	
 	var new_image_buffer = rd.texture_create(tf, RDTextureView.new(), [])
@@ -289,32 +290,21 @@ func _create_image_buffer():
 
 
 func _create_spheres():
-	# Materials
-	var mat: int = 1
-	var glass: int = 4
-	var extra = sin(Time.get_ticks_msec() / 1000.)
 	
-	var mat1: int = 2
-	var metal: int = 3
-	# Objects
-	var spheres = (
-		PackedFloat32Array([.5 + extra, 0.5, -2., 0.5]).to_byte_array() + 
-		PackedInt32Array([mat,0,0,0]).to_byte_array() +
-		PackedFloat32Array([-0.5, 0., -1, 0.7]).to_byte_array() + 
-		PackedInt32Array([mat,0,0,0]).to_byte_array() +
-		PackedFloat32Array([-0.5, -0.2, -0.8, 0.5]).to_byte_array() + 
-		PackedInt32Array([mat,0,0,0]).to_byte_array() +
-		PackedFloat32Array([0.5, -0.2, -0.8, 0.4]).to_byte_array() + 
-		PackedInt32Array([metal,0,0,0]).to_byte_array() +
-		PackedFloat32Array([0.5, 0.6, -0.8, 0.3]).to_byte_array() + 
-		PackedInt32Array([metal,0,0,0]).to_byte_array() +
-		PackedFloat32Array([1.5, 0.2, -1.4, 0.3]).to_byte_array() + 
-		PackedInt32Array([glass,0,0,0]).to_byte_array()
-	)
+	var bytes = PackedByteArray()
+	for sphere in objects_dict[PTObject.OBJECT_TYPE.SPHERE]:
+		bytes += sphere.to_byte_array()
+	
+	return bytes
+	
 
-	return spheres
-
-
+func _update_sphere():
+	var sphere = objects_dict[PTObject.OBJECT_TYPE.SPHERE][0]
+	sphere.center.x = sin(Time.get_ticks_msec() / 1000.)
+	var bytes = sphere.to_byte_array()
+	
+	rd.buffer_update(sphere_buffer, 0, bytes.size(), bytes)
+	
 
 
 
