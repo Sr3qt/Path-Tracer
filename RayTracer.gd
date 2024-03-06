@@ -78,6 +78,9 @@ func _ready():
 	material_list = mtl_and_object_list[0]
 	objects_dict = mtl_and_object_list[1]
 	
+	var temp = PTBVHTree.new()
+	temp.create_BVH_List([objects_dict[PTObject.OBJECT_TYPE.SPHERE]])
+	print(temp)
 	
 	# SET DATA BUFFERS
 	# ================

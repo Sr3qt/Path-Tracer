@@ -1,3 +1,5 @@
 res://main_scene.tscn
 res://canvas.gdshader
 res://RayTracer.gd
+res://proprietary_dataclasses/PTMaterial.gd
+res://proprietary_dataclasses/PTBVH.gd
