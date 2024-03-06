@@ -76,7 +76,7 @@ const float IOR_air = 1.0;
 float current_IOR = IOR_air;
 
 const vec4 default_color = vec4(0.7, 0.7, 0.9, 1);
-const int samples_per_pixel = 16; // How many rays are sent per pixel
+const int samples_per_pixel = 1; // How many rays are sent per pixel
 const int max_depth = 8; // How many bounces is sampled at the most
 
 // Maximum number of children a BVHNode can have
@@ -187,12 +187,7 @@ struct BVHNode {
 
 // BUFFERS
 // =======
-
-// Viewport
-layout(set = 3, binding = 0, std430) restrict buffer ImageBuffer {
-    vec4 data[];
-}
-image_buffer;
+layout(r32f, set = 0, binding = 0) uniform restrict writeonly image2D output_image;
 
 layout(set = 0, binding = 1, std430) restrict buffer ImageSize {
     int width;
@@ -232,7 +227,6 @@ layout(set = 4, binding = 0, std430) restrict buffer BVH_List {
 BVH;
 
 
-layout(r32f, set = 0, binding = 0) uniform restrict writeonly image2D output_image;
 
 
 // TEMP STRUCT CREATION
@@ -796,6 +790,5 @@ void main() {
     float gammma_factor =  2.2;
     new_color.rgb = pow(new_color.rgb, vec3(gammma_factor, gammma_factor, gammma_factor));
 
-    image_buffer.data[image_index] = new_color;
     imageStore(output_image, UVi.xy, new_color);
 }

@@ -31,9 +31,6 @@ var object_set_index := 2
 var materials_bind := 0
 var spheres_bind := 1
 
-var preview_image_set_index := 3
-var preview_image_bind := 0
-
 var BVH_set_index := 4
 var BVH_bind := 0
 
@@ -41,14 +38,12 @@ var BVH_bind := 0
 var image_set : RID
 var camera_set : RID
 var object_set : RID
-var preview_image_set : RID
 var BVH_set : RID
 
 # Buffer RIDS
 var camera_buffer : RID
 var image_buffer : RID
 var sphere_buffer : RID
-var preview_image_buffer : RID
 var BVH_buffer : RID
 
 # Render variables
@@ -86,16 +81,6 @@ func _ready():
 	
 	# SET DATA BUFFERS
 	# ================
-	
-	
-
-	# The image buffer that is used to save an image
-	var image_array = PackedColorArray()
-	image_array.resize(render_width * render_height)
-	var image_bytes := image_array.to_byte_array()
-	preview_image_buffer = _create_uniform(image_bytes, rd, preview_image_set_index, 
-															preview_image_bind)
-	
 	# The image buffer used in compute and fragment shader
 	image_buffer = _create_image_buffer()
 	
@@ -119,7 +104,6 @@ func _ready():
 	var image_uniforms = uniform_sets[image_set_index].values()
 	var camera_uniform = uniform_sets[camera_set_index].values()
 	var object_uniforms = uniform_sets[object_set_index].values()
-	var new_image_uniforms = uniform_sets[preview_image_set_index].values()
 	var BVH_uniforms = uniform_sets[BVH_set_index].values()
 
 	# Bind uniforms to sets
@@ -127,8 +111,6 @@ func _ready():
 	camera_set = rd.uniform_set_create(camera_uniform, shader, camera_set_index)
 	object_set = rd.uniform_set_create(object_uniforms, shader, object_set_index)
 	
-	preview_image_set = rd.uniform_set_create(new_image_uniforms, shader, 
-	preview_image_set_index)
 	
 	BVH_set = rd.uniform_set_create(BVH_uniforms, shader, BVH_set_index)
 	
@@ -145,19 +127,11 @@ func _process(delta):
 	#print(str(delta * 1000) + " ms, FPS: " + str(fps))
 	
 	camera._process(delta)
-
-	#var spheres = _create_spheres()
-	#rd.buffer_update(sphere_buffer, 0, spheres.size(), spheres)
 	
 	# Sync is not required when using main RenderingDevice
 	_create_compute_list()
-	#_compute_list_timer()
 	
 	#print_gpu_performance()
-	#var time1 = rd.get_captured_timestamp_gpu_time(0)
-	#var time2 = rd.get_captured_timestamp_gpu_time(1)
-	#print((time2 - time1) / 1000000.)
-	#print(rd.get_captured_timestamp_gpu_time(1))
 
 
 func _input(event):
@@ -165,11 +139,7 @@ func _input(event):
 	
 
 func _exit_tree():
-	# TODO turn new_image_buffer to image and get rid of preview_image_buffer
 	var image = rd.texture_get_data(image_buffer, 0)
-	print_debug("hellop")
-	#print(image)
-	#image = rd.buffer_get_data(preview_image_buffer)
 	var new_image = Image.create_from_data(render_width, render_height, false,
 										   Image.FORMAT_RGBAF, image)
 										
@@ -220,7 +190,6 @@ func _create_compute_list():
 	rd.compute_list_bind_uniform_set(compute_list, image_set, image_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, camera_set, camera_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, object_set, object_set_index)
-	rd.compute_list_bind_uniform_set(compute_list, preview_image_set, preview_image_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, BVH_set, BVH_set_index)
 	
 	rd.capture_timestamp("Render Scene")
@@ -269,11 +238,11 @@ func _create_image_buffer():
 	tf.depth = 1
 	tf.array_layers = 1
 	tf.mipmaps = 1
-	tf.usage_bits = (RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT + 
+	tf.usage_bits = (
+		RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT + 
 		RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT +
+		RenderingDevice.TEXTURE_USAGE_STORAGE_BIT +
 		RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT +
-		RenderingDevice.TEXTURE_USAGE_STORAGE_BIT + 
-		RenderingDevice.TEXTURE_USAGE_CPU_READ_BIT +
 		RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
 	)
 	
