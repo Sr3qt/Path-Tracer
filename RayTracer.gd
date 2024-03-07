@@ -16,8 +16,7 @@ var pipeline : RID
 
 var texture : Texture2DRD
 
-var objects_dict
-var material_list
+var scene : PTScene 
 
 # Set / binding indices
 var image_set_index := 0
@@ -72,15 +71,11 @@ func _ready():
 	RIDs_to_free.append(shader)
 	
 	# Create a compute pipeline
-	pipeline = rd.compute_pipeline_create(shader)
+	pipeline = rd.compute_pipeline_create(shader) 
 	
-	var mtl_and_object_list = PTObject.read_PTobject_file("res://sphere_scene1.txt") 
-	material_list = mtl_and_object_list[0]
-	objects_dict = mtl_and_object_list[1]
-	
-	var temp = PTBVHTree.new()
-	temp.create_BVH_List([objects_dict[PTObject.OBJECT_TYPE.SPHERE]])
-	print(temp)
+	scene = PTScene.load_scene("res://sphere_scene1.txt")
+	scene.create_BVH()
+	#print(scene.BVHTree.to_byte_array())
 	
 	# SET DATA BUFFERS
 	# ================
@@ -89,13 +84,15 @@ func _ready():
 	
 	# Viewport size
 	var size_bytes := PackedInt32Array([render_width, render_height]).to_byte_array()
-	var size_buffer = _create_uniform(size_bytes, rd, image_set_index, image_size_bind)
+	var _size_buffer = _create_uniform(size_bytes, rd, image_set_index, image_size_bind)
 	
 	# Camera data
-	camera_buffer = _create_uniform(camera.to_byte_array(), rd, camera_set_index, camera_bind)
+	camera_buffer = _create_uniform(camera.to_byte_array(), rd, camera_set_index, 
+	camera_bind)
 	
 	# One of the object lists, for spheres
-	sphere_buffer = _create_uniform(_create_spheres(), rd, object_set_index, spheres_bind)
+	sphere_buffer = _create_uniform(_create_spheres(), rd, object_set_index, 
+	spheres_bind)
 	
 	BVH_buffer = _create_uniform(_create_empty_BVHNode_array(), rd, 
 	BVH_set_index, BVH_bind)
@@ -126,7 +123,7 @@ func _ready():
 	
 
 func _process(delta):
-	var fps = 1. / delta
+	#var fps = 1. / delta
 	#print(str(delta * 1000) + " ms, FPS: " + str(fps))
 	
 	camera._process(delta)
@@ -264,14 +261,14 @@ func _create_image_buffer():
 func _create_spheres():
 	
 	var bytes = PackedByteArray()
-	for sphere in objects_dict[PTObject.OBJECT_TYPE.SPHERE]:
+	for sphere in scene.objects[PTObject.OBJECT_TYPE.SPHERE]:
 		bytes += sphere.to_byte_array()
 	
 	return bytes
 	
 
 func _update_sphere():
-	var sphere = objects_dict[PTObject.OBJECT_TYPE.SPHERE][0]
+	var sphere = scene.objects[PTObject.OBJECT_TYPE.SPHERE][0]
 	sphere.center.x = sin(Time.get_ticks_msec() / 1000.)
 	var bytes = sphere.to_byte_array()
 	

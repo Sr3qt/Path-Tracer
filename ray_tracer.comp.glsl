@@ -160,12 +160,9 @@ struct AABB {
 
 struct ChildIndex {
     // Small struct to add labels to child indices in a BVHNode
-    int child_node; // Points to a child BVHNode, if is_BVHNode is 1, -1 otherwise
-    int obj_type; // Specifies the object type obj_index points to, if is_BVHNode is 0, 0 otherwise
-    int obj_index; // Points to an object in an object list specified by obj_type, 
-    // if is_BVHNode is 0, -1 otherwise
-
-    int is_BVHNode; // Is 1 if this points to a BVHNode, 0 otherwise
+    int index; // Points to a child BVHNode, if is_BVHNode is 1, -1 otherwise
+    int obj_type; // Specifies the object_type index points to. If obj_type is 0, it points to
+    // another BVHNode
 };
 
 // BVH should be shared across all groups, how doe? Might make compute shader to make BVH
@@ -176,7 +173,7 @@ struct BVHNode {
     
     ChildIndex children[max_children]; // List of children, see ChildIndex
     AABB bbox; // Bounding box that encompasses all children 
-    int child_count;
+    int child_count; // Says how many ChildIndixes actually exist and are valid
     int parent; // Index to parent in BVH list
     int self; // Index to self in the BVH list, -1 means the node position is not finalized
     // -2 means BVHNode doesn't exist
@@ -276,7 +273,7 @@ RayHit empty_rayhit() {
 }
 
 ChildIndex empty_child_index() {
-    return ChildIndex(-1, 0, -1, 0);
+    return ChildIndex(0, 0);
 }
 
 BVHNode empty_BVHNode() {
@@ -387,7 +384,7 @@ void create_BVH_list() {
     int running_length = 0;
     for (int i = 0; i < sphere_array_length; i++) {
         BVHNode temp = empty_BVHNode();
-        temp.children[0] = ChildIndex(-1, is_sphere, i, 0);
+        temp.children[0] = ChildIndex(i, is_sphere);
         temp.bbox = sphere_AABB(spheres.data[i]);
         temp.self = -1;
         BVH.list[i] = temp;

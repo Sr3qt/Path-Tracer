@@ -22,7 +22,19 @@ func intersects(other : PTAABB):
 	
 
 func merge(other : PTAABB):
-	pass
+	for i in range(3):
+		minimum[i] = min(other.minimum[i], minimum[i])
+	for i in range(3):
+		maximum[i] = max(other.maximum[i], maximum[i])
+		
+
+func vec3toarr(v):
+	return [v.x, v.y, v.z]
+
+
+func to_byte_array() -> PackedByteArray:
+	var arr = vec3toarr(minimum) + [0] + vec3toarr(maximum) + [0]
+	return PackedFloat32Array(arr).to_byte_array()
 
 
 
