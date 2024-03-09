@@ -14,9 +14,14 @@ config/name="PathTracer"
 run/main_scene="res://main_scene.tscn"
 config/features=PackedStringArray("4.2", "Forward Plus")
 run/flush_stdout_on_print=true
+run/max_fps=300
 config/icon="res://icon.svg"
 
 [debug]
 
 settings/stdout/print_fps=true
 settings/stdout/print_gpu_profile=true
+
+[display]
+
+window/vsync/vsync_mode=0

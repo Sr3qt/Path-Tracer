@@ -1,0 +1,17 @@
+mtl empty
+mtl mat
+mtl mat1
+mtl metal
+mtl glass 
+mtl ground
+mtl left
+mtl center
+mtl right
+
+
+sphere 0.0 -100.5 -1.0 100. 5
+sphere 0.0 0.0 -1.0 0.5 7
+sphere -1.0 0.0 -1.0 0.5 4
+sphere -1.0 0.0 -1.0 -0.4 4
+sphere 1.0 0.0 -1.0 0.5 8
+

@@ -1,7 +1,7 @@
 res://main_scene.tscn
 res://canvas.gdshader
-res://proprietary_dataclasses/PTBVH.gd
-res://proprietary_dataclasses/PTAABB.gd
+res://3DPrimitives/PTPlane.gd
+res://proprietary_dataclasses/PTScene.gd
 res://RayTracer.gd
-res://3DPrimitives/PTSphere.gd
-res://proprietary_dataclasses/PTObject3D.gd
+res://sphere_scene1.txt
+res://proprietary_dataclasses/PTBVH.gd

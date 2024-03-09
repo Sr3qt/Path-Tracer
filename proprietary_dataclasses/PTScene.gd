@@ -48,7 +48,11 @@ static func load_scene(path : String):
 	
 	var mtl_list : Array[PTMaterial] = []
 	var sphere_list = []
-	var objects_dict = {OBJECT_TYPE.SPHERE : sphere_list}
+	var plane_list = []
+	var objects_dict = {
+		OBJECT_TYPE.SPHERE : sphere_list,
+		OBJECT_TYPE.PLANE : plane_list
+	}
 	for line in text.split("\n", false):
 		if line.begins_with("#"):
 			continue
@@ -66,6 +70,16 @@ static func load_scene(path : String):
 			
 			sphere.object_index = sphere_list.size()
 			sphere_list.append(sphere)
+		
+		elif line.begins_with("plane"):
+			var normal = array2vec(numbers.slice(0, 3))
+			var material = mtl_list[int(numbers[4])]
+			var plane = PTPlane.new(normal, numbers[3], material, 
+			# Temp
+			int(numbers[4]))
+			
+			plane.object_index = plane_list.size()
+			plane_list.append(plane)
 	
 	return PTScene.new(objects_dict, mtl_list)
 

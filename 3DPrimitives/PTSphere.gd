@@ -15,11 +15,8 @@ func _init(center_ : Vector3, radius_ : float, material_ : PTMaterial, mtl_i):
 	aabb = get_AABB()
 
 
-func vec2array(vector : Vector3):
-	return [vector.x, vector.y, vector.z]
-
 func to_byte_array():
-	return (PackedFloat32Array(vec2array(center) + [radius]).to_byte_array() + 
+	return (PackedFloat32Array(PTObject.vec2array(center) + [radius]).to_byte_array() + 
 	PackedInt32Array([material_index, 0, 0, 0]).to_byte_array())
 
 func get_AABB():

@@ -7,7 +7,7 @@ var is_fps := true
 
 var mouse_sensitivity_x := 0.01
 var mouse_sensitivity_y := 0.01
-var move_speed := 0.1
+var move_speed := 1.
 
 # Render variables
 var aspect_ratio := 16. / 9.
@@ -22,7 +22,7 @@ var vfov := hfov / aspect_ratio
 var viewport_width : float
 var viewport_height : float
 
-var camera_pos := Vector3(0,0,0)
+var camera_pos : Vector3
 var view_vectors := PackedVector3Array([Vector3(1,0,0), Vector3(0,1,0), Vector3(0,0,1)])
 var right: Vector3:
 	get: return view_vectors[0]
@@ -36,9 +36,24 @@ var forward: Vector3:
 	
 var camera_changed := false
 
-func _init(pos : Vector3, looking_at : Vector3):
+func _init(
+	pos := Vector3(0,0,0), 
+	looking_at := Vector3(0,0,-1), 
+	aspect_ratio_ : float = aspect_ratio, 
+	resolution_width : int = render_width, 
+	horizontal_fov : float = hfov, 
+	focal_length_ : float = focal_length
+	):
 	camera_pos = pos
 	look_at(looking_at)
+	
+	aspect_ratio = aspect_ratio_
+	render_width = resolution_width
+	render_height = int(render_width / aspect_ratio)
+	
+	focal_length = focal_length_
+	hfov = horizontal_fov
+	vfov = hfov / aspect_ratio
 	
 	set_viewport_size()
 	
@@ -49,13 +64,13 @@ func _process(delta):
 	
 	# MOve to player ndoe
 	if Input.is_key_pressed(KEY_W):
-		move_camera(-forward * Vector3(1,0,1) * move_speed)
+		move_camera(-forward * Vector3(1,0,1) * move_speed * delta)
 	elif Input.is_key_pressed(KEY_A):
-		move_camera(-right * Vector3(1,0,1) * move_speed)
+		move_camera(-right * Vector3(1,0,1) * move_speed * delta)
 	elif Input.is_key_pressed(KEY_S):
-		move_camera(forward * Vector3(1,0,1) * move_speed)
+		move_camera(forward * Vector3(1,0,1) * move_speed * delta)
 	elif Input.is_key_pressed(KEY_D):
-		move_camera(right * Vector3(1,0,1) * move_speed)
+		move_camera(right * Vector3(1,0,1) * move_speed * delta)
 
 # MOve to player ndoe
 func _input(event):
@@ -77,10 +92,10 @@ func set_viewport_size():
 
 
 func look_at(point : Vector3):
-	forward = point - camera_pos
+	forward = (camera_pos - point).normalized()
 	
-	right = Vector3(0, 1, 0).cross(forward)
-	up = forward.cross(right)
+	right = Vector3(0, 1, 0).cross(forward).normalized()
+	up = forward.cross(right).normalized()
 	
 	camera_changed = true
 	

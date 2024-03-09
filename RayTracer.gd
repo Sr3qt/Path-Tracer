@@ -29,8 +29,9 @@ var camera_bind := 0
 var object_set_index := 2
 var materials_bind := 0
 var spheres_bind := 1
+var planes_bind := 2
 
-var BVH_set_index := 4
+var BVH_set_index := 3
 var BVH_bind := 0
 
 # Set RIDs
@@ -43,6 +44,7 @@ var BVH_set : RID
 var camera_buffer : RID
 var image_buffer : RID
 var sphere_buffer : RID
+var plane_buffer : RID
 var BVH_buffer : RID
 
 # Render variables
@@ -53,11 +55,17 @@ var render_height := int(render_width / aspect_ratio)
 var focal_length := 1.
 
 
-@onready var camera := PTCamera.new(Vector3(0,0,0), Vector3(0,0,1))
+@onready var camera := PTCamera.new(
+	Vector3(0,0,2), 
+	Vector3(0,0,1),
+	16. / 9.,
+	render_width,
+	106.,
+	focal_length)
 
 func _ready():
 	
-	get_window().position = Vector2(1100, 400)
+	get_window().position = Vector2(1200, 400)
 	# Create a local rendering device.
 #	rd = RenderingServer.create_local_rendering_device()
 	# Holy merge clutch https://github.com/godotengine/godot/pull/79288 
@@ -73,9 +81,8 @@ func _ready():
 	# Create a compute pipeline
 	pipeline = rd.compute_pipeline_create(shader) 
 	
+	# Load scene with spheres
 	scene = PTScene.load_scene("res://sphere_scene1.txt")
-	scene.create_BVH()
-	#print(scene.BVHTree.to_byte_array())
 	
 	# SET DATA BUFFERS
 	# ================
@@ -93,13 +100,16 @@ func _ready():
 	# One of the object lists, for spheres
 	sphere_buffer = _create_uniform(_create_spheres(), rd, object_set_index, 
 	spheres_bind)
+	# One of the object lists, for planes
+	plane_buffer = _create_uniform(_create_planes(), rd, object_set_index, 
+	planes_bind)
 	
-	BVH_buffer = _create_uniform(_create_empty_BVHNode_array(), rd, 
+	scene.create_BVH()
+	BVH_buffer = _create_uniform(scene.BVHTree.to_byte_array(), rd, 
 	BVH_set_index, BVH_bind)
 	
 	# BIND UNIFORMS AND SETS
 	# ======================
-
 	# Get uniforms
 	var image_uniforms = uniform_sets[image_set_index].values()
 	var camera_uniform = uniform_sets[camera_set_index].values()
@@ -110,8 +120,6 @@ func _ready():
 	image_set = rd.uniform_set_create(image_uniforms, shader, image_set_index)
 	camera_set = rd.uniform_set_create(camera_uniform, shader, camera_set_index)
 	object_set = rd.uniform_set_create(object_uniforms, shader, object_set_index)
-	
-	
 	BVH_set = rd.uniform_set_create(BVH_uniforms, shader, BVH_set_index)
 	
 	# Set texture RID for Canvas
@@ -124,6 +132,7 @@ func _ready():
 
 func _process(delta):
 	#var fps = 1. / delta
+	#DisplayServer.window_set_title(str(fps)) 
 	#print(str(delta * 1000) + " ms, FPS: " + str(fps))
 	
 	camera._process(delta)
@@ -259,13 +268,25 @@ func _create_image_buffer():
 
 
 func _create_spheres():
-	
 	var bytes = PackedByteArray()
-	for sphere in scene.objects[PTObject.OBJECT_TYPE.SPHERE]:
-		bytes += sphere.to_byte_array()
+	if scene.objects[PTObject.OBJECT_TYPE.SPHERE].size():
+		for sphere in scene.objects[PTObject.OBJECT_TYPE.SPHERE]:
+			bytes += sphere.to_byte_array()
+	else:
+		bytes = PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
 	
 	return bytes
 	
+
+func _create_planes():
+	var bytes = PackedByteArray()
+	if scene.objects[PTObject.OBJECT_TYPE.PLANE].size():
+		for plane in scene.objects[PTObject.OBJECT_TYPE.PLANE]:
+			bytes += plane.to_byte_array()
+	else:
+		bytes = PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
+	
+	return bytes
 
 func _update_sphere():
 	var sphere = scene.objects[PTObject.OBJECT_TYPE.SPHERE][0]

@@ -17,6 +17,9 @@ var material_index : int
 enum OBJECT_TYPE {NOT_OBJECT = 0, SPHERE = 1, PLANE = 2, MESH = 3}
 
 
+static func vec2array(vector : Vector3):
+	return [vector.x, vector.y, vector.z]
+
 func get_material() -> PTMaterial:
 	"""Returns the material of the object if it has one"""
 	if material:

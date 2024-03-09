@@ -76,11 +76,19 @@ const float IOR_air = 1.0;
 float current_IOR = IOR_air;
 
 const vec4 default_color = vec4(0.7, 0.7, 0.9, 1);
-const int samples_per_pixel = 1; // How many rays are sent per pixel
+const int samples_per_pixel = 8; // How many rays are sent per pixel
 const int max_depth = 8; // How many bounces is sampled at the most
 
 // Maximum number of children a BVHNode can have
-const int max_children = 2;
+const int max_children = 4;
+const int filler_const = int(mod(max_children, 2) + 2.) * 2; 
+
+// Pixels show levels of bvh travelled rather than color
+const bool show_bvh_depth = false;
+const bool use_bvh = false;
+
+const bool scene_changed = true;
+
 
 float random_number;
 
@@ -172,6 +180,7 @@ struct BVHNode {
     //  Instead of pointing to a child node it might point to an object in specified object list
     
     ChildIndex children[max_children]; // List of children, see ChildIndex
+    int temp_fill[filler_const];
     AABB bbox; // Bounding box that encompasses all children 
     int child_count; // Says how many ChildIndixes actually exist and are valid
     int parent; // Index to parent in BVH list
@@ -184,7 +193,7 @@ struct BVHNode {
 
 // BUFFERS
 // =======
-layout(r32f, set = 0, binding = 0) uniform restrict writeonly image2D output_image;
+layout(r32f, set = 0, binding = 0) uniform restrict image2D output_image;
 
 layout(set = 0, binding = 1, std430) restrict buffer ImageSize {
     int width;
@@ -218,7 +227,12 @@ layout(set = 2, binding = 1, std430) restrict buffer SpheresBuffer {
 }
 spheres;
 
-layout(set = 4, binding = 0, std430) restrict buffer BVH_List {
+layout(set = 2, binding = 2, std430) restrict buffer PlanesBuffer {
+    Plane data[];
+}
+planes;
+
+layout(set = 3, binding = 0, std430) restrict buffer BVH_List {
     BVHNode list[];
 }
 BVH;
@@ -228,24 +242,35 @@ BVH;
 
 // TEMP STRUCT CREATION
 // ====================
-Material empty_mat = Material(vec3(0,0,0), 0., 0., 1., IOR_air);
+Material empty_mat = Material(vec3(1), 0., 0., 0., IOR_air);
 Material mat = Material(vec3(0,0.7,1), 0., 0., 1., 1.);
 Material mat1 = Material(vec3(0.1, 0.75, 0.1), 0., 0., 1., 1.);
 Material metal = Material(vec3(0.5,0.8,0.96), 0., 1., 1., 1.);
-Material glass = Material(vec3(0.5,0.8,0.96), 0., .0, 0., 1.6);
+// Material glass = Material(vec3(0.5,0.8,0.96), 0., .0, 0., 1.6);
+Material glass = Material(vec3(1.,1.,1.), 0., .0, 0., 1.6);
 
-Material mtls[5] = Material[](
+Material mtl_ground = Material(vec3(0.8,0.8,0.0), 0., 0., 1., 1.);
+Material mtl_left = Material(vec3(0.8,0.8,0.8), 0., .7, 1., 1.);
+Material mtl_center = Material(vec3(0.1,0.2,0.5), 0., 0., 1., 1.);
+Material mtl_right = Material(vec3(0.8,0.6,0.2), 0., 1., 1., 1.);
+
+
+Material mtls[9] = Material[](
     empty_mat,
     mat, 
     mat1, 
     metal,
-    glass
+    glass,
+    mtl_ground,
+    mtl_left,
+    mtl_center,
+    mtl_right
 );
 
-Plane plane = Plane(vec3(0,1,0), -1., 2, 0,0,0);
-Plane planes[1] = Plane[](
-    Plane(vec3(0,1,0), -1., 2, 0,0,0)
-);
+// Plane plane = Plane(vec3(0,1,0), -1., 2, 0,0,0);
+// Plane planes[1] = Plane[](
+//     Plane(vec3(0,1,0), -1., 2, 0,0,0)
+// );
 
 
 // UTILITY FUNCTIONS
@@ -276,14 +301,14 @@ ChildIndex empty_child_index() {
     return ChildIndex(0, 0);
 }
 
-BVHNode empty_BVHNode() {
-    ChildIndex children[max_children];
-    for (int i = 0; i < max_children; i++) {
-        children[i] = empty_child_index();
-    }
-    AABB bbox = AABB(vec4(0), vec4(0));
-    return BVHNode(children, bbox, 0, 0, 0, 0);
-}
+// BVHNode empty_BVHNode() {
+//     ChildIndex children[max_children];
+//     for (int i = 0; i < max_children + filler_const / 2; i++) {
+//         children[i] = empty_child_index();
+//     }
+//     AABB bbox = AABB(vec4(0), vec4(0));
+//     return BVHNode(children, int[filler_const](0, 0), bbox, 0, 0, 0, 0);
+// }
 
 AABB create_AABB(vec3 point1, vec3 point2) {
     return AABB(vec4(min(point1, point2), 0), vec4(max(point1, point2), 0));
@@ -329,11 +354,13 @@ float rand2(vec2 co) {
 
 vec3 rand_vec3(vec3 point) {
     // Creates a normalized vector in a random direction from a point 
+    float i = 0;
     while (true) {
-        vec3 n = vec3(rand2(point.xy), rand2(point.xz), rand2(point.yz));
+        vec3 n = vec3(rand2(point.xy + i), rand2(point.xz + i), rand2(point.yz + i));
         if (dot(n, n) < 1.) {
             return normalize(n);
         }
+        i++;
     }
 }
 
@@ -381,15 +408,15 @@ void create_BVH_list() {
     int total_length = sphere_array_length + other_array_length;
 
     // Create a Node for every object in all object lists
-    int running_length = 0;
-    for (int i = 0; i < sphere_array_length; i++) {
-        BVHNode temp = empty_BVHNode();
-        temp.children[0] = ChildIndex(i, is_sphere);
-        temp.bbox = sphere_AABB(spheres.data[i]);
-        temp.self = -1;
-        BVH.list[i] = temp;
-    }
-    running_length += sphere_array_length;
+    // int running_length = 0;
+    // for (int i = 0; i < sphere_array_length; i++) {
+    //     BVHNode temp = empty_BVHNode();
+    //     temp.children[0] = ChildIndex(i, is_sphere);
+    //     temp.bbox = sphere_AABB(spheres.data[i]);
+    //     temp.self = -1;
+    //     BVH.list[i] = temp;
+    // }
+    // running_length += sphere_array_length;
 
     // pseudo code for other object lists
     // for (int i = 0; i < other_array_length; i++) {
@@ -416,22 +443,22 @@ void create_BVH_list() {
     // }
 
     // Merge intersecting nodes
-    for (int i = 0; i < running_length - 1; i++) {
-        BVHNode node1 = BVH.list[i];
-        if (node1.self != -2) {
-            continue;
-        }
-        for (int j = i + 1; j < running_length; j++) {
-            BVHNode node2 = BVH.list[j];
-            // If node doesn't exist, continue
-            if (node2.self != -2) {continue;}
-            // If nodes don't intersect, continue
-            if (!intersect_AABB(node1.bbox, node2.bbox)) {continue;}
+    // for (int i = 0; i < running_length - 1; i++) {
+    //     BVHNode node1 = BVH.list[i];
+    //     if (node1.self != -2) {
+    //         continue;
+    //     }
+    //     for (int j = i + 1; j < running_length; j++) {
+    //         BVHNode node2 = BVH.list[j];
+    //         // If node doesn't exist, continue
+    //         if (node2.self != -2) {continue;}
+    //         // If nodes don't intersect, continue
+    //         if (!intersect_AABB(node1.bbox, node2.bbox)) {continue;}
 
-            // if ()
+    //         // if ()
 
-        }
-    }
+    //     }
+    // }
 
 }
 
@@ -441,6 +468,10 @@ void create_BVH_list() {
 // RAY-HIT FUNCTIONS
 // =============
 
+vec4 hit_skybox(Ray ray, inout RayHit rayhit) {
+    // TODO: Implement skybox texture and hit detection
+    return default_color;
+}
 
 void set_rayhit(inout RayHit rayhit, float t, Ray ray, int object_type, int object_index) {
     rayhit.hit = true;
@@ -450,19 +481,18 @@ void set_rayhit(inout RayHit rayhit, float t, Ray ray, int object_type, int obje
     rayhit.obj_index = object_index;
 }
 
-bool hit_AABB(Ray ray, AABB bbox, Range range) {
+bool hit_AABB(Ray ray, AABB bbox, Range range, vec3 inv_dir, bvec3 is_dir_neg) {
     // Returns true if ray hits aabb within given range
     for (int i = 0; i < 3; i++) {
-        float inv_ray_x = 1. / ray.direction[i];
         float orig = ray.origin[i]; // This is an optimazation. Source: Trust me (real)
-        float t0 = ((bbox.minimum[i] - orig) * inv_ray_x);
-        float t1 = ((bbox.maximum[i] - orig) * inv_ray_x);
+        float t0 = ((bbox.minimum[i] - orig) * inv_dir[i]);
+        float t1 = ((bbox.maximum[i] - orig) * inv_dir[i]);
 
         // Make sure t0 is smallest
-        if (inv_ray_x < 0.) {swap(t0, t1);}
+        if (is_dir_neg[i]) {swap(t0, t1);}
 
         if (t0 > range.start) {range.start = t0;}
-        if (t1 > range.end) {range.end = t1;}
+        if (t1 < range.end) {range.end = t1;}
 
         if (range.end <= range.start) {return false;}
     }
@@ -510,7 +540,7 @@ RayHit hit_spheres(Ray ray, Range t_range, inout RayHit rayhit) {
     return rayhit;
 }
 
-RayHit hit_plane(Ray ray, Plane plane, Range t_range, inout RayHit rayhit) {
+RayHit hit_plane(Ray ray, int plane_index, Range t_range, inout RayHit rayhit) {
     
     // Early return if plane is paralell, even if the ray is contained in the plane
     // May not be needed
@@ -518,6 +548,8 @@ RayHit hit_plane(Ray ray, Plane plane, Range t_range, inout RayHit rayhit) {
     // if (is_paralell) {
     //     return rayhit;
     // }
+
+    Plane plane = planes.data[plane_index];
 
     float intersection_t = plane.d / dot(plane.normal, ray.origin + ray.direction);
 
@@ -530,6 +562,21 @@ RayHit hit_plane(Ray ray, Plane plane, Range t_range, inout RayHit rayhit) {
     set_rayhit(rayhit, intersection_t, ray, is_plane, 0); // 0 is TEMP as I only have one plane
 
     return rayhit;
+}
+
+RayHit hit_planes(Ray ray, Range t_range, inout RayHit rayhit) {
+    // Uses global scope planes array to bypass function parameter limitations
+    for (int i = 0; i < planes.data.length(); ++i) {
+        hit_plane(ray, i, t_range, rayhit);
+    }
+    return rayhit;
+}
+
+RayHit hit_object(Ray ray, Range range, inout RayHit rayhit, int object_index, int object_type) {
+    // Chooses the appropriate hit_ function for given object_type
+    if (object_type == is_sphere) {
+        return hit_sphere(ray, object_index, range, rayhit);
+    }
 }
 
 RayHit determine_rayhit(inout RayHit rayhit) {
@@ -545,7 +592,7 @@ RayHit determine_rayhit(inout RayHit rayhit) {
     
     // Procedure for hitting plane
     } else if (rayhit.obj_type == is_plane) {
-        Plane plane = planes[rayhit.obj_index];
+        Plane plane = planes.data[rayhit.obj_index];
         rayhit.mtl_index = plane.mtl_index;
         rayhit.normal = plane.normal;
         rayhit.color = vec4(mtls[rayhit.mtl_index].albedo, 1);
@@ -559,7 +606,11 @@ RayHit check_ray_hit(Ray ray, Range range) {
     
     RayHit rayhit = empty_rayhit();
     hit_spheres(ray, range, rayhit);
-    hit_plane(ray, plane, range, rayhit);
+    
+    // Hit planes if there are any
+    if (!near_zero(planes.data[0].normal)) {
+        hit_planes(ray, range, rayhit);
+    }
 
     // TODO ADD intersection with skybox, would still count as not hit
     if (!rayhit.hit) {
@@ -574,17 +625,56 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
     // Like check_ray_hit but it checks against a BVH tree instead of each object_list individually
     RayHit rayhit = empty_rayhit();
 
-    BVHNode root_node;
-    
+    // Stack of indices of nodes yet to traverse
+    // NOTE: might need to be bigger for larger scenes and/or with higher order trees
+    int to_visit[64];
+    // Index to top of the stack, points to vacant spot ABOVE the stack
+    int to_visit_i = 0;
 
-    // while (true) {
+    // Index to current node being processed
+    int current_index = 0;
 
-    // }
+    // Pre-compute values for hit detection
+    vec3 inv_direction = vec3(1. / ray.direction.x, 1. / ray.direction.y, 1. / ray.direction.z);
+    bvec3 dir_is_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
 
+    int hit_check_count = 0;
+    while (true) {
+        BVHNode node = BVH.list[current_index];
+
+        hit_check_count++;
+        if (hit_AABB(ray, node.bbox, range, inv_direction, dir_is_negative)) {
+            // Loop over child indices to add them to stack or do hit check
+            for (int i = node.child_count; i > 0; i--) {
+                ChildIndex tochild = node.children[i - 1];
+                // If children[i].index points to inner node, add it to to_visit
+                if (tochild.obj_type == is_not_obj) {
+                    to_visit[to_visit_i++] = tochild.index;
+                } 
+                // children[i].index points to object_index, do a hit test
+                else {
+                    hit_object(ray, range, rayhit, tochild.index, tochild.obj_type);
+                    hit_check_count++;
+                }
+            }
+        } 
+        // Break if no more nodes to visit, else go to next node in list
+        if (to_visit_i == 0) {break;}
+        current_index = to_visit[--to_visit_i];
+    }
+
+    // Hit planes if there are any
+    if (!near_zero(planes.data[0].normal)) {
+        hit_planes(ray, range, rayhit);
+    }
 
     // TODO ADD intersection with skybox, would still count as not hit
     if (!rayhit.hit) {
-        rayhit.color = default_color;
+        rayhit.color = hit_skybox(ray, rayhit);
+    }
+
+    if (show_bvh_depth) {
+        rayhit.color = vec4(0.04 * float(hit_check_count),0,1,0);
     }
 
     return rayhit;
@@ -594,7 +684,7 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
 // ====================
 Ray reflect_ray(Ray ray_in, RayHit rayhit) {
     // Returns a new reflected ray based on ray_in and rayhit
-    vec3 reflected_dir = reflect(ray_in.direction, rayhit.normal);
+    vec3 reflected_dir = reflect(ray_in.direction, rayhit.normal) * mtls[rayhit.mtl_index].metallic;
     vec3 dir_offset = rand_vec3(rayhit.point) * (1. - mtls[rayhit.mtl_index].metallic);
 
     Ray ray_out = Ray(rayhit.point, reflected_dir + dir_offset);
@@ -626,8 +716,8 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     }
     eta = (rayhit.is_inside) ? eta_out / eta_in : eta_in / eta_out;
     eta = eta_out / eta_in;
-    eta = (!rayhit.is_inside) ? 1. / mtls[rayhit.mtl_index].IOR : mtls[rayhit.mtl_index].IOR / 1.;
-    // eta = current_IOR / eta_out;
+    // eta = (!rayhit.is_inside) ? 1. / mtls[rayhit.mtl_index].IOR : mtls[rayhit.mtl_index].IOR / 1.;
+    eta = current_IOR / eta_out;
     current_IOR = (rayhit.is_inside) ? mtls[rayhit.mtl_index].IOR : IOR_air;
 
     vec3 normalized_direction = normalize(ray_in.direction);
@@ -642,8 +732,8 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     r0 = r0 * r0;
     float reflect_chance = r0 + (1. - r0) * pow(1. - cos_theta, 5.);
 
-    if (eta * sin_theta > 1. || reflect_chance > rand2(vec2(cos_theta, eta))) {
-        rayhit.normal *= -1.;
+    if (eta * sin_theta > 1. || reflect_chance > rand2(vec2(cos_theta, normal.x))) {
+        // rayhit.normal *= -1;
         return reflect_ray(ray_in, rayhit);
     }
 
@@ -700,7 +790,18 @@ vec4 cast_ray(Ray ray, Range range) {
     int i = 0;
 
     for (;i < max_depth; i++) {
-        rayhit = check_ray_hit(new_ray, range);
+        if (!use_bvh) {
+            rayhit = check_ray_hit(new_ray, range);
+        } else {
+            rayhit = check_ray_hit_BVH(new_ray, range);
+
+            // Send one ray, skip bouncing
+            if (show_bvh_depth) {
+                rayhits[i] = rayhit;
+                i++; // Breaking doesn't increment therefore we have to correct for it
+                break;
+            }
+        }
         
         // Early break if no hit
         if (!rayhit.hit) {
@@ -773,7 +874,7 @@ void main() {
     vec4 new_color = vec4(0,0,0,1);
     float circle_step = 2 * pi / float(samples_per_pixel);
     for (int i = 0; i < samples_per_pixel; ++i) {
-        float temp = fract(float(i) / float(samples_per_pixel)) ;
+        float temp = fract(float(i) / float(samples_per_pixel));
         vec3 circular_offset = pixel_delta_u / 2 * cos(float(i) * circle_step) * rand(temp) + 
                                pixel_delta_v / 2 * sin(float(i) * circle_step) * rand(temp);
         vec3 ray_direction = pixel_center - camera.pos + circular_offset;
@@ -787,5 +888,10 @@ void main() {
     float gammma_factor =  2.2;
     new_color.rgb = pow(new_color.rgb, vec3(gammma_factor, gammma_factor, gammma_factor));
 
-    imageStore(output_image, UVi.xy, new_color);
+    if (scene_changed) {
+        imageStore(output_image, UVi.xy, new_color);
+    } else {
+        vec4 prev_col = imageLoad(output_image, UVi.xy);
+        imageStore(output_image, UVi.xy, (new_color + prev_col) / 2.);
+    }
 }
