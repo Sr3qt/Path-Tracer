@@ -9,7 +9,6 @@ func _init(center_ : Vector3, radius_ : float, material_ : PTMaterial, mtl_i):
 	center = center_
 	radius = radius_
 	material = material_
-	# TEMP: mtl_i is temporary will be removed
 	material_index = mtl_i 
 	
 	aabb = get_AABB()

@@ -41,8 +41,12 @@ func _init(object_dict_, materials_):
 	#"""Sets every object's material index according to this scene's material list"""
 	
 
-#func add_object(object : PTObject):
-	#var type =  
+func add_object(object : PTObject):
+	var type = object.get_type()
+	object.object_index = objects[type].size()
+	objects[type].append(object)
+	# TODO: Handle material index here
+	scene_changed = true
 
 static func array2vec(a):
 	return Vector3(a[0], a[1], a[2])
@@ -53,6 +57,7 @@ static func load_scene(path : String):
 	var text = file.get_as_text()
 	file.close()
 	
+	var mtl_index = {}
 	var mtl_list : Array[PTMaterial] = []
 	var sphere_list : Array[PTObject] = []
 	var plane_list : Array[PTObject] = []
@@ -64,32 +69,42 @@ static func load_scene(path : String):
 		if line.begins_with("#"):
 			continue
 		
-		var numbers = line.split_floats(" ", false).slice(1)
 		if line.begins_with("mtl "):
-			mtl_list.append(PTMaterial.new())
+			var values = line.split(" ", false)
+			var material = PTMaterial.new()
+			material.albedo = Vector3(float(values[2]), 
+									  float(values[3]), 
+									  float(values[4]))
+			material.roughness = float(values[5])
+			material.metallic = float(values[6])
+			material.opacity = float(values[7])
+			material.IOR = float(values[8])
+			material.refraction_depth = int(values[9])
+			
+			mtl_index[values[1]] = mtl_list.size()
+			mtl_list.append(material)
 		
 		if line.begins_with("sphere"):
+			var numbers = line.split_floats(" ", false).slice(1)
 			var center = array2vec(numbers.slice(0, 3))
-			var material = mtl_list[int(numbers[4])]
-			var sphere = PTSphere.new(center, numbers[3], material, 
-			# Temp
-			int(numbers[4]))
+			var material_index = mtl_index[line.split(" ", false)[-1]]
+			var material = mtl_list[material_index]
+			var sphere = PTSphere.new(center, numbers[3], material, material_index)
 			
 			sphere.object_index = sphere_list.size()
 			sphere_list.append(sphere)
 		
 		elif line.begins_with("plane"):
+			var numbers = line.split_floats(" ", false).slice(1)
 			var normal = array2vec(numbers.slice(0, 3))
-			var material = mtl_list[int(numbers[4])]
-			var plane = PTPlane.new(normal, numbers[3], material, 
-			# Temp
-			int(numbers[4]))
+			var material_index = mtl_index[line.split(" ", false)[-1]]
+			var material = mtl_list[material_index]
+			var plane = PTPlane.new(normal, numbers[3], material, material_index)
 			
 			plane.object_index = plane_list.size()
 			plane_list.append(plane)
 	
 	return PTScene.new(objects_dict, mtl_list)
-
 
 
 func create_BVH(type : BVH_TYPE = BVH_TYPE.DEFAULT):
@@ -98,5 +113,18 @@ func create_BVH(type : BVH_TYPE = BVH_TYPE.DEFAULT):
 			BVHTree = PTBVHTree.new()
 			BVHTree.create_BVH_List(self)
 
+
+func create_random_scene(seed):
+	var rng = RandomNumberGenerator.new()
+	rng.seed = seed
+	#var temp = rng.randf()
+	
+	for i in range(22):
+		for j in range(22):
+			var choose_material = rng.randf()
+			
+			var color = Vector3()
+			
+			#if 
 
 

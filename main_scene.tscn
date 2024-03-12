@@ -1,9 +1,8 @@
-[gd_scene load_steps=9 format=3 uid="uid://c0kck5eyqahfr"]
+[gd_scene load_steps=8 format=3 uid="uid://c0kck5eyqahfr"]
 
 [ext_resource type="Script" path="res://RayTracer.gd" id="1_uicwf"]
 [ext_resource type="Shader" path="res://canvas.gdshader" id="2_be7hc"]
 [ext_resource type="Texture2D" uid="uid://bdbvcujyyuudb" path="res://temp.png" id="3_334qs"]
-[ext_resource type="Script" path="res://proprietary_dataclasses/PTBVH.gd" id="4_0wpe7"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_rgm65"]
 
@@ -47,6 +46,3 @@ visible = false
 [node name="CSGSphere3D" type="CSGSphere3D" parent="ImporterMeshInstance3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.72887, 1.6259, 3.11196)
 radius = 2.10386
-
-[node name="Test_BVH" type="Node" parent="."]
-script = ExtResource("4_0wpe7")

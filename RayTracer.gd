@@ -52,6 +52,7 @@ var image_buffer : RID
 var camera_buffer : RID
 var LOD_buffer : RID
 
+var material_buffer : RID
 var sphere_buffer : RID
 var plane_buffer : RID
 
@@ -99,10 +100,9 @@ func _ready():
 	pipeline = rd.compute_pipeline_create(shader)
 	
 	# Load scene with spheres
-	scene = PTScene.load_scene("res://sphere_scene1.txt")
+	scene = PTScene.load_scene("res://sphere_scene3.txt")
 	
-	# SET DATA BUFFERS
-	# ================
+	# Set data buffers
 	# The image buffer used in compute and fragment shader
 	image_buffer = _create_image_buffer()
 	#render_height /= 2
@@ -119,6 +119,10 @@ func _ready():
 	LOD_buffer = _create_uniform(lod_byte_array(), rd, camera_set_index, 
 	LOD_bind)
 	
+	# List of materials
+	material_buffer = _create_uniform(_create_materials(), rd, object_set_index,
+	materials_bind)
+	
 	# One of the object lists, for spheres
 	sphere_buffer = _create_uniform(_create_spheres(), rd, object_set_index, 
 	spheres_bind)
@@ -133,8 +137,7 @@ func _ready():
 	flags_buffer = _create_uniform(_create_planes(), rd, flags_set_index, 
 	flags_bind)
 	
-	# BIND UNIFORMS AND SETS
-	# ======================
+	# Bind uniforms and sets
 	# Get uniforms
 	var image_uniforms = uniform_sets[image_set_index].values()
 	var camera_uniform = uniform_sets[camera_set_index].values()
@@ -166,18 +169,19 @@ func _process(delta):
 	
 	#if is_rendering:
 	_create_compute_list()
-
-
-func _input(event):
-	camera._input(event)
 	
+	# Takes picture
 	if Input.is_key_pressed(KEY_X):
 		var before = Time.get_ticks_msec()
 		
 		samples_per_pixel = 512
+		max_default_depth = 16
+		max_refraction_bounces = 16
 		rd.buffer_update(LOD_buffer, 0, lod_byte_array().size(), lod_byte_array())
 		
+		var before_render = Time.get_ticks_msec()
 		_create_compute_list()
+		var after_render = Time.get_ticks_msec()
 		
 		var image = rd.texture_get_data(image_buffer, 0)
 		var new_image = Image.create_from_data(render_width, render_height, false,
@@ -186,10 +190,20 @@ func _input(event):
 		new_image.save_png("res://renders/temps/temp-" +
 		Time.get_datetime_string_from_system().replace(":", "-") + ".png")
 		
-		print("Total time " + str(Time.get_ticks_msec() - before) + " ms")
+		print("---------------------------------------")
+		print("Render time: " + str(after_render - before_render) + " ms")
+		print("Total time: " + str(Time.get_ticks_msec() - before) + " ms")
+		print("---------------------------------------")
 		
 		samples_per_pixel = 16
+		max_default_depth = 8
+		max_refraction_bounces = 8
 		rd.buffer_update(LOD_buffer, 0, lod_byte_array().size(), lod_byte_array())
+
+
+func _input(event):
+	camera._input(event)
+	
 
 func _exit_tree():
 	var image = rd.texture_get_data(image_buffer, 0)
@@ -231,6 +245,7 @@ func _create_compute_list():
 	rd.compute_list_bind_uniform_set(compute_list, BVH_set, BVH_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, flags_set, flags_set_index)
 	
+	# TODO: Weird bug when minimizing
 	rd.capture_timestamp("Render Scene")
 	rd.compute_list_dispatch(compute_list, ceil(render_width / 8.), 
 										   ceil(render_height / 8.), 1)
@@ -308,6 +323,16 @@ func _create_planes():
 		bytes = PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
 	
 	return bytes
+	
+
+func _create_materials():
+	var bytes = PackedByteArray()
+	if scene.materials:
+		for material in scene.materials:
+			bytes += material.to_byte_array()
+			
+	return bytes
+
 
 func _update_sphere():
 	var sphere = scene.objects[PTObject.OBJECT_TYPE.SPHERE][0]

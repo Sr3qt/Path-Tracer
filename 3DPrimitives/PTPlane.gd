@@ -9,7 +9,6 @@ func _init(normal_ : Vector3, distance_ : float, material_ : PTMaterial, mtl_i):
 	normal = normal_
 	distance = distance_
 	material = material_
-	# TEMP: mtl_i is temporary will be removed
 	material_index = mtl_i 
 	
 	
