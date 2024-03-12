@@ -20,6 +20,9 @@ var materials : Array[PTMaterial]
 
 var BVHTree : PTBVHTree
 
+# Whether anything in the scene, objects, camera, either moved, got added or removed
+var scene_changed := false
+
 static var OBJECT_TYPE = PTObject.OBJECT_TYPE
 # Enum of different possible BVH algorithms
 enum BVH_TYPE {DEFAULT}
@@ -36,6 +39,10 @@ func _init(object_dict_, materials_):
 #
 #func set_material_index():
 	#"""Sets every object's material index according to this scene's material list"""
+	
+
+#func add_object(object : PTObject):
+	#var type =  
 
 static func array2vec(a):
 	return Vector3(a[0], a[1], a[2])
@@ -47,8 +54,8 @@ static func load_scene(path : String):
 	file.close()
 	
 	var mtl_list : Array[PTMaterial] = []
-	var sphere_list = []
-	var plane_list = []
+	var sphere_list : Array[PTObject] = []
+	var plane_list : Array[PTObject] = []
 	var objects_dict = {
 		OBJECT_TYPE.SPHERE : sphere_list,
 		OBJECT_TYPE.PLANE : plane_list

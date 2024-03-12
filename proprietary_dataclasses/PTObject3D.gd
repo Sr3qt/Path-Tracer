@@ -28,10 +28,12 @@ func get_material() -> PTMaterial:
 		return _scene.materials[material_index]
 	return null
 
-static func get_obj_type(object):
-	"""Returns the relevant enum for given object"""
-	if object is PTSphere:
+
+func get_type():
+	"""Returns the PTObject sub type"""
+	if self is PTSphere:
 		return OBJECT_TYPE.SPHERE
+	elif self is PTPlane:
+		return OBJECT_TYPE.PLANE
 	else:
 		return OBJECT_TYPE.NOT_OBJECT
-	

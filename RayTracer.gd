@@ -104,7 +104,7 @@ func _ready():
 	# SET DATA BUFFERS
 	# ================
 	# The image buffer used in compute and fragment shader
-	image_buffer = _create_image_buffer(rd)
+	image_buffer = _create_image_buffer()
 	#render_height /= 2
 	#render_width /= 2
 	
@@ -164,8 +164,8 @@ func _process(delta):
 	
 	camera._process(delta)
 	
-	if is_rendering:
-		_create_compute_list()
+	#if is_rendering:
+	_create_compute_list()
 
 
 func _input(event):
@@ -217,7 +217,7 @@ func _create_compute_list():
 	if camera.camera_changed:
 		var new_bytes = camera.to_byte_array()
 		rd.buffer_update(camera_buffer, 0, new_bytes.size(), new_bytes)
-		camera.camera_changed = false
+		#camera.camera_changed = false
 	
 	#_update_sphere()
 	
@@ -257,7 +257,7 @@ func _create_uniform(bytes, render_device, set_, binding):
 	return buffer
 
 
-func _create_image_buffer(rd):
+func _create_image_buffer():
 	# Create image buffer for compute and fragment shader
 	var tf : RDTextureFormat = RDTextureFormat.new()
 	tf.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT

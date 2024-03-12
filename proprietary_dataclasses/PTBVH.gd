@@ -36,7 +36,7 @@ func create_BVH_List(scene : PTScene):
 	
 	"""
 	
-	var flat_object_list = []
+	var flat_object_list : Array[PTObject] = []
 	
 	var objects_to_include = [
 		scene.OBJECT_TYPE.SPHERE
@@ -64,10 +64,11 @@ func create_BVH_List(scene : PTScene):
 	return BVH_list
 	
 
-func _recursive_split(object_list, parent) -> Array[BVHNode]:
+func _recursive_split(object_list : Array[PTObject], parent) -> Array[BVHNode]:
 	""""""
 
-	# Will distriute objects evenly with first indices having slightly more 
+	# Will distriute objects evenly with first indices having slightly more
+	@warning_ignore("integer_division")
 	var even_division = object_list.size() / max_children
 	var leftover = object_list.size() % max_children
 	
@@ -76,7 +77,6 @@ func _recursive_split(object_list, parent) -> Array[BVHNode]:
 	var end = 0
 	for i in range(max_children):
 		start = end
-		var is_last_i = (i == max_children - 1)
 		end += even_division + int(i < leftover) 
 		var new_node = BVHNode.new(parent, self)
 		var split_objects = object_list.slice(start, end)
@@ -93,7 +93,7 @@ func _recursive_split(object_list, parent) -> Array[BVHNode]:
 	return new_children
 
 
-func _set_leaf(node : BVHNode, objects):
+func _set_leaf(node : BVHNode, objects : Array[PTObject]):
 	node.is_leaf = true
 	node.objects = objects
 	# Transfer object indices from objects to nodes
@@ -148,7 +148,7 @@ class BVHNode:
 	# Leaf nodes in the tree have no children and have a list pointing to objects
 	#  The object list is no larger than _tree.max_children
 	var is_leaf := false
-	var objects := [] 
+	var objects : Array[PTObject] = [] 
 	# List of indices to objects in the objects_dict
 	var object_indices : Array[int] = []
 	
@@ -195,7 +195,7 @@ class BVHNode:
 			child_indices_array += [i, 0]
 		
 		for i in range(objects.size()):
-			var type = PTObject.get_obj_type(objects[i])
+			var type = objects[i].get_type()
 			var _index = object_indices[i]
 			child_indices_array += [_index, type]
 		

@@ -49,12 +49,13 @@ void fragment() {
 	// COnvertion from srgb to rgb
 //	ALBEDO = pow(color.rgb, vec3(2.2, 2.2, 2.2));	
 	float gamma = 1.35;
+	float gamma1 = 2.2;
 	
 	// If showing default texture, swap with image preview
 	if (color.r == 1. && color.g == 0.0 && color.b == 1.) {
 		color.rgb = pow(new_color.rgb, vec3(gamma, gamma, gamma));
 	} else {
-		color.rgb = new_color.rgb;
+		color.rgb = pow(color.rgb, vec3(gamma1, gamma1, gamma1));
 	} 
 	ALBEDO = color.rgb;
 }
