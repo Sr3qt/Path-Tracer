@@ -129,6 +129,10 @@ func to_byte_array():
 	return (PackedFloat32Array(camera_array).to_byte_array())
 	
 
+func lod_byte_array():
+	var lod_array = []
+	
+
 
 
 

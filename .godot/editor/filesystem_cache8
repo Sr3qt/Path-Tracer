@@ -1,14 +1,15 @@
 ea4bc82a6ad023ab7ee23ee620429895
-::res://::1710003964
+::res://::1710244152
 BVH ALgorithms to consider.txt::TextFile::-1::1709719673::0::1::::<><>::
-canvas.gdshader::Shader::-1::1710003964::0::1::::<><>::
+canvas.gdshader::Shader::-1::1710182054::0::1::::<><>::
 icon.svg::CompressedTexture2D::635493465185222049::1707753016::1707753022::1::::<><>::
-main_scene.tscn::PackedScene::6548347110793753175::1710003963::0::1::::<><>::res://RayTracer.gd<>res://canvas.gdshader<>uid://bdbvcujyyuudb::::res://temp.png<>res://proprietary_dataclasses/PTBVH.gd
-RayTracer.gd::GDScript::-1::1710003667::0::1::::<>Node<>::
-ray_tracer.comp.glsl::RDShaderFile::6483268740974836562::1710003960::1710003963::1::::<><>::
+main_scene.tscn::PackedScene::6548347110793753175::1710181815::0::1::::<><>::res://RayTracer.gd<>res://canvas.gdshader<>uid://bdbvcujyyuudb::::res://temp.png<>res://proprietary_dataclasses/PTBVH.gd
+RayTracer.gd::GDScript::-1::1710182054::0::1::::<>Node<>::
+ray_tracer.comp.glsl::RDShaderFile::6483268740974836562::1710181780::1710181781::1::::<><>::
 sphere_scene1.txt::TextFile::-1::1710003667::0::1::::<><>::
 sphere_scene3.txt::TextFile::-1::1709998205::0::1::::<><>::
-temp.png::CompressedTexture2D::2600331286290737687::1710003972::1710003972::1::::<><>::
+temp1.png::CompressedTexture2D::2180594402614646315::1710181830::1710181834::1::::<><>::
+temp.png::CompressedTexture2D::2600331286290737687::1710181360::1710181218::1::::<><>::
 ::res://3DPrimitives/::1710002457
 PTPlane.gd::GDScript::-1::1710002457::0::1::::PTPlane<>PTPrimitive3D<>::
 PTPrimitive3D.gd::GDScript::-1::1709739243::0::1::::PTPrimitive3D<>PTObject<>::
@@ -16,10 +17,10 @@ PTSphere.gd::GDScript::-1::1710002307::0::1::::PTSphere<>PTPrimitive3D<>::
 ::res://archive/::1709122462
 ray_tracer_after_weekend.comp.glsl::RDShaderFile::8213333610431927994::1709122423::1709122462::1::::<><>::
 weekend_result.png::CompressedTexture2D::2691186884518514632::1709115036::1709115039::1::::<><>::
-::res://proprietary_dataclasses/::1710003934
+::res://proprietary_dataclasses/::1710180480
 PTAABB.gd::GDScript::-1::1709834248::0::1::::PTAABB<>Node<>::
 PTBVH.gd::GDScript::-1::1710003934::0::1::::PTBVHTree<>Node<>::
-PTCamera.gd::GDScript::-1::1710001054::0::1::::PTCamera<>Node<>::
+PTCamera.gd::GDScript::-1::1710180480::0::1::::PTCamera<>Node<>::
 PTMaterial.gd::GDScript::-1::1709745520::0::1::::PTMaterial<>Node<>::
 PTObject3D.gd::GDScript::-1::1710002277::0::1::::PTObject<>Node<>::
 PTScene.gd::GDScript::-1::1710003283::0::1::::PTScene<>Node<>::

@@ -3,7 +3,7 @@
 
 // Made by following the "Ray Tracing in One Weekend Series"
 //  by Peter Shirley, Trevor David Black, Steve Hollasch 
-//  https://raytracing.github.io/books/RayTracingInOneWeekend.html#antialiasing 
+//  https://raytracing.github.io/books/RayTracingInOneWeekend.html
 
 // Currnently following "Ray Tracing The Next Week"
 
@@ -11,7 +11,7 @@
 POLICIES
 ========
 
-The camera points in the negative z direction with y being up and x being right.
+The camera points in the negative z direction with positive y being up and positive x being right.
 
 The render image's origin is in the top left. u direction is right and v is down.
 
@@ -23,10 +23,10 @@ Normals always point outwards from surfaces and are always normalized on creatio
 
 Ray depth starts at 0 and goes up as depth increases
 
-mtl_index and obj_index refer to the an material and object in the global material list and 
+mtl_index and object_index refer to the an material and object in the global material list and 
 object list respectively. There may be multiple object lists in which case an object_type enum
-will determine which  
-
+will determine which object list object_index points to.
+ 
 
 LONG TERM GOALS
 ===============
@@ -63,7 +63,7 @@ const double pi_double = 3.1415926535897932385;
 const float pi = 3.1415926535897932385;
 const float eps = 0.00001;
 
-// obj_type enumerator
+// object_type enumerator
 const int is_not_obj = 0;
 const int is_sphere = 1;
 const int is_plane = 2;
@@ -71,13 +71,24 @@ const int is_plane = 2;
 // BVH child_index enum
 const int is_BVHNode = 1;
 
+// The program will keep track of which objects a ray is inside of to do correct calculations
+//  i.e. IOR tracking
+const int max_depth_inside = 8;
+int inside_of_count = 0; // Keeps track of first vacant index in stack
+// Holds the object_index, obejct_type and refraction_depth of and object
+ivec3 inside_of[max_depth_inside];
+
 // IORs
 const float IOR_air = 1.0;
 float current_IOR = IOR_air;
 
 const vec4 default_color = vec4(0.7, 0.7, 0.9, 1);
-const int samples_per_pixel = 8; // How many rays are sent per pixel
-const int max_depth = 8; // How many bounces is sampled at the most
+const int max_depth = 64; // How many bounces is sampled at the most, preferrably multiple of 64
+// const int samples_per_pixel = 16; // How many rays are sent per pixel
+// const int max_default_depth = 8; // How many bounces is sampled, for normal rays
+// const int max_refraction_bounces = 8; // How many total extra bounces can occur on refraction
+
+int refraction_bounces = 0; // Counts the number of times a ray has refracted
 
 // Maximum number of children a BVHNode can have
 const int max_children = 4;
@@ -88,7 +99,6 @@ const bool show_bvh_depth = false;
 const bool use_bvh = false;
 
 const bool scene_changed = true;
-
 
 float random_number;
 
@@ -113,7 +123,11 @@ struct Material {
     // Non-opaque materials can refract.
     float opacity; 
     // Index of refraction
-    float IOR; 
+    float IOR;
+    // In cases where a translusent object intersects other objects or contains other translusent 
+    //  objects, the refraction_depth will determine which object's material will take precedence 
+    //  in the intersection
+    int refraction_depth;
 };
 
 // The materials stored in objects are indices to a global material array
@@ -136,15 +150,15 @@ struct Sphere {
 struct RayHit {
     bool hit; // Whether the ray actually hit something
     bool is_initialized; // Whether values like point and normal are determined
-    bool is_inside; // Whether ray is traveling inside an object
-    float current_IOR; // IOR of the material the ray is currently travelling through; 
-    // Bad implementation ^^ use global variable to track current IOR of ray
+    // bool is_inside; // Whether ray is traveling inside an object
+    // float current_IOR; // IOR of the material the ray is currently travelling through; 
+    // // Bad implementation ^^ use global variable to track current IOR of ray
 
     // Stored on-hit
     Ray ray;
     float t; // Paramater value for ray
-    int obj_type; // enum for what type of object was hit
-    int obj_index; // The index of object hit in their respective object list, provided by obj_type
+    int object_type; // enum for what type of object was hit
+    int object_index; // The index of object hit in their respective object list, provided by object_type
 
     // Retrieved later
     int mtl_index; // Material of the object hit
@@ -168,8 +182,8 @@ struct AABB {
 
 struct ChildIndex {
     // Small struct to add labels to child indices in a BVHNode
-    int index; // Points to a child BVHNode, if is_BVHNode is 1, -1 otherwise
-    int obj_type; // Specifies the object_type index points to. If obj_type is 0, it points to
+    int index; // Points to a child BVHNode if object_type is 0, else it points to an object 
+    int object_type; // Specifies the object_type index points to. If object_type is 0, it points to
     // another BVHNode
 };
 
@@ -179,6 +193,7 @@ struct BVHNode {
     //  points to its parents, its own and its childrens indicies in the list. 
     //  Instead of pointing to a child node it might point to an object in specified object list
     
+    // TODO: compact BVHNode struct, its a little to big.
     ChildIndex children[max_children]; // List of children, see ChildIndex
     int temp_fill[filler_const];
     AABB bbox; // Bounding box that encompasses all children 
@@ -214,6 +229,13 @@ layout(set = 1, binding = 0, std430) restrict buffer CameraBuffer {
 }
 camera;
 
+layout(set = 1, binding = 1, std430) restrict buffer LODBuffer {
+    int samples_per_pixel; // How many rays are sent per pixel
+    int max_default_depth; // How many bounces is sampled, for normal rays
+    int max_refraction_bounces; // How many total extra bounces can occur on refraction
+}
+LOD;
+
 // Materials to index
 // layout(set = 2, binding = 0, std430) restrict buffer MaterialBuffer {
 //     Material data[];
@@ -237,22 +259,25 @@ layout(set = 3, binding = 0, std430) restrict buffer BVH_List {
 }
 BVH;
 
-
+layout(set = 4, binding = 0, std430) restrict buffer FlagBuffer {
+    BVHNode list[];
+}
+flags;
 
 
 // TEMP STRUCT CREATION
 // ====================
-Material empty_mat = Material(vec3(1), 0., 0., 0., IOR_air);
-Material mat = Material(vec3(0,0.7,1), 0., 0., 1., 1.);
-Material mat1 = Material(vec3(0.1, 0.75, 0.1), 0., 0., 1., 1.);
-Material metal = Material(vec3(0.5,0.8,0.96), 0., 1., 1., 1.);
-// Material glass = Material(vec3(0.5,0.8,0.96), 0., .0, 0., 1.6);
-Material glass = Material(vec3(1.,1.,1.), 0., .0, 0., 1.6);
+Material empty_mat = Material(vec3(1), 0., 0., 0., IOR_air, 0);
+Material mat = Material(vec3(0,0.7,1), 0., 0., 1., 1., 0);
+Material mat1 = Material(vec3(0.1, 0.75, 0.1), 0., 0., 1., 1., 0);
+Material metal = Material(vec3(0.5,0.8,0.96), 0., 1., 1., 1., 0);
+// Material glass = Material(vec3(0.5,0.8,0.96), 0., .0, 0., 1.6, 0);
+Material glass = Material(vec3(.98,.98,.9), 0., 0., 0., 1.6, 0);
 
-Material mtl_ground = Material(vec3(0.8,0.8,0.0), 0., 0., 1., 1.);
-Material mtl_left = Material(vec3(0.8,0.8,0.8), 0., .7, 1., 1.);
-Material mtl_center = Material(vec3(0.1,0.2,0.5), 0., 0., 1., 1.);
-Material mtl_right = Material(vec3(0.8,0.6,0.2), 0., 1., 1., 1.);
+Material mtl_ground = Material(vec3(0.8,0.8,0.0), 0., 0., 1., 1., 0);
+Material mtl_left = Material(vec3(0.8,0.8,0.8), 0., .7, 1., 1., 0);
+Material mtl_center = Material(vec3(0.1,0.2,0.5), 0., 0., 1., 1., 0);
+Material mtl_right = Material(vec3(0.8,0.6,0.2), 0., 1., 1., 1., 0);
 
 
 Material mtls[9] = Material[](
@@ -281,7 +306,7 @@ Ray empty_ray() {
 }
 
 Material empty_material() {
-    return Material(vec3(0,0,0), 0., 0., 1., IOR_air);
+    return Material(vec3(0,0,0), 0., 0., 1., IOR_air, 0);
 }
 
 Sphere empty_sphere() {
@@ -293,7 +318,7 @@ Plane empty_plane() {
 }
 
 RayHit empty_rayhit() {
-    return RayHit(false, false, false, IOR_air, empty_ray(), infinity, 0, 0, 0,
+    return RayHit(false, false, empty_ray(), infinity, 0, 0, 0,
                   vec3(0,0,0), vec3(0,0,0), vec4(0,0,0,0));
 }
 
@@ -421,7 +446,7 @@ void create_BVH_list() {
     // pseudo code for other object lists
     // for (int i = 0; i < other_array_length; i++) {
     //     BVHNode temp = empty_BVHNode();
-    //     temp.children[0] = ChildIndex(-1, obj_type, i, 0);
+    //     temp.children[0] = ChildIndex(-1, object_type, i, 0);
     //     temp.bbox = AABB_of_obj(obj_list.data[i]);
     //     temp.self = -1;
     //     BVH.list[i + running_length] = temp;
@@ -477,8 +502,8 @@ void set_rayhit(inout RayHit rayhit, float t, Ray ray, int object_type, int obje
     rayhit.hit = true;
     rayhit.t = t;
     rayhit.ray = ray;
-    rayhit.obj_type = object_type;
-    rayhit.obj_index = object_index;
+    rayhit.object_type = object_type;
+    rayhit.object_index = object_index;
 }
 
 bool hit_AABB(Ray ray, AABB bbox, Range range, vec3 inv_dir, bvec3 is_dir_neg) {
@@ -584,15 +609,15 @@ RayHit determine_rayhit(inout RayHit rayhit) {
     rayhit.point = ray_at(rayhit.ray, rayhit.t);
 
     // Procedure for hitting sphere
-    if (rayhit.obj_type == is_sphere) {
-        Sphere sphere = spheres.data[rayhit.obj_index];
+    if (rayhit.object_type == is_sphere) {
+        Sphere sphere = spheres.data[rayhit.object_index];
         rayhit.mtl_index = sphere.mtl_index;
         rayhit.normal = (rayhit.point - sphere.center) / sphere.radius;
         rayhit.color = vec4(mtls[rayhit.mtl_index].albedo, 1);
     
     // Procedure for hitting plane
-    } else if (rayhit.obj_type == is_plane) {
-        Plane plane = planes.data[rayhit.obj_index];
+    } else if (rayhit.object_type == is_plane) {
+        Plane plane = planes.data[rayhit.object_index];
         rayhit.mtl_index = plane.mtl_index;
         rayhit.normal = plane.normal;
         rayhit.color = vec4(mtls[rayhit.mtl_index].albedo, 1);
@@ -648,12 +673,12 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
             for (int i = node.child_count; i > 0; i--) {
                 ChildIndex tochild = node.children[i - 1];
                 // If children[i].index points to inner node, add it to to_visit
-                if (tochild.obj_type == is_not_obj) {
+                if (tochild.object_type == is_not_obj) {
                     to_visit[to_visit_i++] = tochild.index;
                 } 
                 // children[i].index points to object_index, do a hit test
                 else {
-                    hit_object(ray, range, rayhit, tochild.index, tochild.obj_type);
+                    hit_object(ray, range, rayhit, tochild.index, tochild.object_type);
                     hit_check_count++;
                 }
             }
@@ -701,41 +726,60 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     // Returns a refracted or reflected ray based on ray_in and rayhit
     Ray ray_out;
     ray_out.origin = rayhit.point;
-    rayhit.is_inside = bool(dot(rayhit.normal, ray_in.direction) > 0.);
+
+    // Whether object is inside the current object
+    bool is_inside = bool(dot(rayhit.normal, ray_in.direction) > 0.);
     float eta_in = current_IOR;
-    float eta_out = (rayhit.is_inside) ? IOR_air : mtls[rayhit.mtl_index].IOR;
+
+    if (inside_of_count == 1) {}
+
+    float eta_out = (is_inside) ? IOR_air : mtls[rayhit.mtl_index].IOR;
+
     float eta;
-    
-    // TODO fix support for refraction between different materials
-    // eta = (rayhit.is_inside) ? eta_out / eta_in : eta_in / eta_out;
-    if (!is_close(current_IOR, 1.)) {
-        eta = (rayhit.is_inside) ? eta_out / eta_in : eta_in / eta_out;
-    } else {
-        eta = (rayhit.is_inside) ? rayhit.current_IOR / mtls[rayhit.mtl_index].IOR : 
-        mtls[rayhit.mtl_index].IOR / rayhit.current_IOR;
-    }
-    eta = (rayhit.is_inside) ? eta_out / eta_in : eta_in / eta_out;
-    eta = eta_out / eta_in;
-    // eta = (!rayhit.is_inside) ? 1. / mtls[rayhit.mtl_index].IOR : mtls[rayhit.mtl_index].IOR / 1.;
-    eta = current_IOR / eta_out;
-    current_IOR = (rayhit.is_inside) ? mtls[rayhit.mtl_index].IOR : IOR_air;
+    eta = eta_in / eta_out;
+
+    for (int i = 0; i < inside_of_count; i++) {}
+
+
 
     vec3 normalized_direction = normalize(ray_in.direction);
-    vec3 normal = (rayhit.is_inside) ? -rayhit.normal : rayhit.normal;
+    vec3 normal = (is_inside) ? -rayhit.normal : rayhit.normal;
 
     // Calculate whether angle is shallow enough to disallow refraction
     float cos_theta = min(dot(-normalized_direction, normal), 1.);
     float sin_theta = sqrt(1. - cos_theta * cos_theta);
+    bool cannot_refract = eta * sin_theta > 1.;
+
+    // // Check for internal reflection
+    if (cannot_refract) {
+        ray_out.direction = reflect(normalized_direction, normal);
+        return ray_out;
+    } 
 
     // Schlick's approximation for reflectivety
     float r0 = (1. - eta) / (1. + eta);
     r0 = r0 * r0;
     float reflect_chance = r0 + (1. - r0) * pow(1. - cos_theta, 5.);
-
-    if (eta * sin_theta > 1. || reflect_chance > rand2(vec2(cos_theta, normal.x))) {
-        // rayhit.normal *= -1;
-        return reflect_ray(ray_in, rayhit);
+    
+    // Check for external reflection, TODO can add reflexivety for translucent materials
+    if (reflect_chance > rand2(vec2(cos_theta, normal.x))) {
+        ray_out.direction = reflect(normalized_direction, normal);
+        return ray_out;
     }
+
+    current_IOR = eta_out;
+
+    // If ray was inside and went out, remove from inside_of list
+    if (is_inside) {
+        inside_of[inside_of_count--] = ivec3(0,0,0);
+    } else {
+        // If ray was outside and refracted, add to inside_of list
+        inside_of[inside_of_count++] = ivec3(rayhit.object_index, rayhit.object_type, 
+        mtls[rayhit.mtl_index].refraction_depth);
+    }
+
+    // Add extra available bounces when ray refracts
+    if (refraction_bounces < LOD.max_refraction_bounces - 1) {refraction_bounces++;}
 
     ray_out.direction = refract(normalized_direction, normal, eta);
     return ray_out;
@@ -762,13 +806,14 @@ Ray scatter_ray(Ray ray_in, inout RayHit rayhit) {
 Ray bounce_ray(Ray ray_in, RayHit rayhit) {
     // Creates a new ray based material properties from the previous rayhit
 
+    if (mtls[rayhit.mtl_index].opacity < 1.) {
+        return refract_ray(ray_in, rayhit);
+    }
+
     if (mtls[rayhit.mtl_index].metallic > 0.) {
         return reflect_ray(ray_in, rayhit);
     }
 
-    if (mtls[rayhit.mtl_index].opacity < 1.) {
-        return refract_ray(ray_in, rayhit);
-    }
 
     return scatter_ray(ray_in, rayhit);
 }
@@ -781,15 +826,16 @@ vec4 cast_ray(Ray ray, Range range) {
     vec4 out_col = default_color;
 
     // Rayhit's color should determined in reverse order, so we to store them for later
-    RayHit rayhits[max_depth];
+    RayHit rayhits[64];
 
     // Calculate rayhits
     Ray new_ray = ray;
     RayHit prev_rayhit = empty_rayhit();
     RayHit rayhit;
     int i = 0;
+    refraction_bounces = 0;
 
-    for (;i < max_depth; i++) {
+    for (;i < LOD.max_default_depth + refraction_bounces; i++) {
         if (!use_bvh) {
             rayhit = check_ray_hit(new_ray, range);
         } else {
@@ -865,16 +911,15 @@ void main() {
     const uvec3 UVu = gl_GlobalInvocationID;
     const ivec3 UVi = ivec3(gl_GlobalInvocationID);
     const vec3 UV = vec3(UVi);
-    const int image_index = int(UV.x + UV.y * width);
 
     // CODE
     // ====
     vec3 pixel_center = pixel00_loc + (UV.x * pixel_delta_u) + (UV.y * pixel_delta_v);
 
     vec4 new_color = vec4(0,0,0,1);
-    float circle_step = 2 * pi / float(samples_per_pixel);
-    for (int i = 0; i < samples_per_pixel; ++i) {
-        float temp = fract(float(i) / float(samples_per_pixel));
+    float circle_step = 2 * pi / float(LOD.samples_per_pixel);
+    for (int i = 0; i < LOD.samples_per_pixel; ++i) {
+        float temp = fract(float(i) / float(LOD.samples_per_pixel));
         vec3 circular_offset = pixel_delta_u / 2 * cos(float(i) * circle_step) * rand(temp) + 
                                pixel_delta_v / 2 * sin(float(i) * circle_step) * rand(temp);
         vec3 ray_direction = pixel_center - camera.pos + circular_offset;
@@ -882,11 +927,11 @@ void main() {
 
         new_color += cast_ray(ray, Range(0.001, infinity));
     }
-    new_color = new_color / samples_per_pixel;
+    new_color = new_color / LOD.samples_per_pixel;
 
     // new_color = vec4(1., 0.5, 0.25, 1.);
-    float gammma_factor =  2.2;
-    new_color.rgb = pow(new_color.rgb, vec3(gammma_factor, gammma_factor, gammma_factor));
+    // float gammma_factor =  2.2;
+    // new_color.rgb = pow(new_color.rgb, vec3(gammma_factor, gammma_factor, gammma_factor));
 
     if (scene_changed) {
         imageStore(output_image, UVi.xy, new_color);

@@ -5,12 +5,13 @@ var uniform_sets = [
 	{}, # For image
 	{}, # For camera
 	{}, # For objects
-	{}, # For image preview
-	{} # For BVH
+	{}, # For BVH
+	{} # For flags
 ]
 var RIDs_to_free = [] # array of RIDs that need to be freed when done with them.
 
 var rd : RenderingDevice
+var rdl : RenderingDevice
 var shader : RID
 var pipeline : RID
 
@@ -25,6 +26,7 @@ var image_size_bind := 1
 
 var camera_set_index := 1
 var camera_bind := 0
+var LOD_bind := 1 # For sample per pixel, bounce depth etc.
 
 var object_set_index := 2
 var materials_bind := 0
@@ -34,25 +36,43 @@ var planes_bind := 2
 var BVH_set_index := 3
 var BVH_bind := 0
 
+# REnder modes, like bvh heat map
+var flags_set_index := 4
+var flags_bind := 0
+
 # Set RIDs
 var image_set : RID
 var camera_set : RID
 var object_set : RID
 var BVH_set : RID
+var flags_set : RID
 
 # Buffer RIDS
-var camera_buffer : RID
 var image_buffer : RID
+
+var camera_buffer : RID
+var LOD_buffer : RID
+
 var sphere_buffer : RID
 var plane_buffer : RID
+
 var BVH_buffer : RID
+
+var flags_buffer : RID
 
 # Render variables
 var aspect_ratio := 16. / 9.
+# Render resolution
 var render_width := 640 * 3
 var render_height := int(render_width / aspect_ratio)
 
 var focal_length := 1.
+
+var samples_per_pixel = 32
+var max_default_depth = 8
+var max_refraction_bounces = 8 
+
+var is_rendering = true
 
 
 @onready var camera := PTCamera.new(
@@ -66,12 +86,11 @@ var focal_length := 1.
 func _ready():
 	
 	get_window().position = Vector2(1200, 400)
-	# Create a local rendering device.
-#	rd = RenderingServer.create_local_rendering_device()
+	# Create a local rendering device. For taking pictures
+	rdl = RenderingServer.create_local_rendering_device()
 	# Holy merge clutch https://github.com/godotengine/godot/pull/79288 
 	rd = RenderingServer.get_rendering_device()
 	
-
 	# Load GLSL shader
 	var shader_file = load("res://ray_tracer.comp.glsl")
 	var shader_spirv: RDShaderSPIRV = shader_file.get_spirv()
@@ -84,10 +103,16 @@ func _ready():
 	# Load scene with spheres
 	scene = PTScene.load_scene("res://sphere_scene1.txt")
 	
+	setup_rendering_device(rd)
+
+
+func setup_rendering_device(rd : RenderingDevice):
 	# SET DATA BUFFERS
 	# ================
 	# The image buffer used in compute and fragment shader
-	image_buffer = _create_image_buffer()
+	image_buffer = _create_image_buffer(rd)
+	#render_height /= 2
+	#render_width /= 2
 	
 	# Viewport size
 	var size_bytes := PackedInt32Array([render_width, render_height]).to_byte_array()
@@ -96,6 +121,9 @@ func _ready():
 	# Camera data
 	camera_buffer = _create_uniform(camera.to_byte_array(), rd, camera_set_index, 
 	camera_bind)
+	
+	LOD_buffer = _create_uniform(lod_byte_array(), rd, camera_set_index, 
+	LOD_bind)
 	
 	# One of the object lists, for spheres
 	sphere_buffer = _create_uniform(_create_spheres(), rd, object_set_index, 
@@ -108,6 +136,9 @@ func _ready():
 	BVH_buffer = _create_uniform(scene.BVHTree.to_byte_array(), rd, 
 	BVH_set_index, BVH_bind)
 	
+	flags_buffer = _create_uniform(_create_planes(), rd, flags_set_index, 
+	flags_bind)
+	
 	# BIND UNIFORMS AND SETS
 	# ======================
 	# Get uniforms
@@ -115,12 +146,14 @@ func _ready():
 	var camera_uniform = uniform_sets[camera_set_index].values()
 	var object_uniforms = uniform_sets[object_set_index].values()
 	var BVH_uniforms = uniform_sets[BVH_set_index].values()
+	var flags_uniforms = uniform_sets[flags_set_index].values()
 
 	# Bind uniforms to sets
 	image_set = rd.uniform_set_create(image_uniforms, shader, image_set_index)
 	camera_set = rd.uniform_set_create(camera_uniform, shader, camera_set_index)
 	object_set = rd.uniform_set_create(object_uniforms, shader, object_set_index)
 	BVH_set = rd.uniform_set_create(BVH_uniforms, shader, BVH_set_index)
+	flags_set = rd.uniform_set_create(flags_uniforms, shader, flags_set_index)
 	
 	# Set texture RID for Canvas
 	var canvas = get_node("/root/Node3D/Camera3D/Canvas")
@@ -137,14 +170,18 @@ func _process(delta):
 	
 	camera._process(delta)
 	
-	# Sync is not required when using main RenderingDevice
-	_create_compute_list()
-	
-	#print_gpu_performance()
+	if is_rendering:
+		# Sync is not required when using main RenderingDevice
+		_create_compute_list(rd)
 
 
 func _input(event):
 	camera._input(event)
+	
+	if Input.is_key_pressed(KEY_X):
+		take_picture()
+		is_rendering = false
+		#_exit_tree()
 	
 
 func _exit_tree():
@@ -168,29 +205,14 @@ func _exit_tree():
 		rd.free_rid(rid)
 
 
-func _create_empty_BVHNode_array():
-	var max_children = 2
-	
-	var array_length = 100 # IDK
-	
-	var bytes_per_node = max_children * 16 + 32 + 16 
-	var total_bytes = bytes_per_node * array_length
-	var new_bytes = PackedByteArray()
-	new_bytes.resize(total_bytes)
-	new_bytes.fill(0)
-	
-	print("Made a BVH array with a size of " + str(total_bytes) + " bytes.")
-	return new_bytes
-
-
-func _create_compute_list():
+func _create_compute_list(rd : RenderingDevice):
 	""" Creates the compute list required for every compute call """
 	if camera.camera_changed:
 		var new_bytes = camera.to_byte_array()
 		rd.buffer_update(camera_buffer, 0, new_bytes.size(), new_bytes)
 		camera.camera_changed = false
 	
-	_update_sphere()
+	#_update_sphere()
 	
 	var compute_list = rd.compute_list_begin()
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
@@ -200,24 +222,13 @@ func _create_compute_list():
 	rd.compute_list_bind_uniform_set(compute_list, camera_set, camera_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, object_set, object_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, BVH_set, BVH_set_index)
+	rd.compute_list_bind_uniform_set(compute_list, flags_set, flags_set_index)
 	
 	rd.capture_timestamp("Render Scene")
 	rd.compute_list_dispatch(compute_list, ceil(render_width / 8.), 
 										   ceil(render_height / 8.), 1)
 	rd.compute_list_end()
 	
-
-
-func print_gpu_performance():
-	for i in range(1, rd.get_captured_timestamps_count()):
-		var start_name = rd.get_captured_timestamp_name(i - 1)
-		var end_name = rd.get_captured_timestamp_name(i)
-		# Docs says this returns time in microseconds since start, looks more 
-		#	like nanoseconds though
-		var start_time = rd.get_captured_timestamp_gpu_time(i - 1)
-		var end_time = rd.get_captured_timestamp_gpu_time(i)
-		print("Time between " + start_name + " and " + end_name + " is: 
-	" + str((end_time - start_time) / 1_000_000.) + " ms")
 
 func _create_uniform(bytes, render_device, set_, binding):
 	"""Create and bind uniform to a shader from bytes.
@@ -237,7 +248,7 @@ func _create_uniform(bytes, render_device, set_, binding):
 	return buffer
 
 
-func _create_image_buffer():
+func _create_image_buffer(rd):
 	# Create image buffer for compute and fragment shader
 	var tf : RDTextureFormat = RDTextureFormat.new()
 	tf.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT
@@ -252,7 +263,8 @@ func _create_image_buffer():
 		RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT +
 		RenderingDevice.TEXTURE_USAGE_STORAGE_BIT +
 		RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT +
-		RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
+		# Remove bit for increased performance
+		RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT 
 	)
 	
 	var new_image_buffer = rd.texture_create(tf, RDTextureView.new(), [])
@@ -296,7 +308,30 @@ func _update_sphere():
 	rd.buffer_update(sphere_buffer, 0, bytes.size(), bytes)
 	
 
+func lod_byte_array():
+	var lod_array = [samples_per_pixel, max_default_depth, max_refraction_bounces]
+	return PackedInt32Array(lod_array).to_byte_array()
 
-
-
-
+func take_picture():
+	var before = Time.get_ticks_msec()
+	samples_per_pixel = 128
+	
+	var shader_file = load("res://ray_tracer.comp.glsl")
+	var shader_spirv: RDShaderSPIRV = shader_file.get_spirv()
+	shader = rdl.shader_create_from_spirv(shader_spirv)
+	RIDs_to_free.append(shader)
+	
+	# Create a compute pipeline
+	pipeline = rdl.compute_pipeline_create(shader) 
+	setup_rendering_device(rdl)
+	
+	_create_compute_list(rdl)
+	#rdl.sync()
+	
+	var image = rdl.texture_get_data(image_buffer, 0)
+	var new_image = Image.create_from_data(render_width, render_height, false,
+										   Image.FORMAT_RGBAF, image)
+										
+	new_image.save_png("temp1.png")
+	
+	print("Total time " + str(Time.get_ticks_msec() - before) + " ms")
