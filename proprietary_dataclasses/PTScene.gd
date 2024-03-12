@@ -27,8 +27,16 @@ static var OBJECT_TYPE = PTObject.OBJECT_TYPE
 # Enum of different possible BVH algorithms
 enum BVH_TYPE {DEFAULT}
 
-func _init(object_dict_, materials_):
-	objects = object_dict_
+func _init(object_dict_= {}, materials_ : Array[PTMaterial] = []):
+	if object_dict_:
+		objects = object_dict_
+	else:
+		var sphere_list : Array[PTObject] = []
+		var plane_list : Array[PTObject] = []
+		objects = {
+			OBJECT_TYPE.SPHERE : sphere_list,
+			OBJECT_TYPE.PLANE : plane_list
+		}
 	materials = materials_
 
 
@@ -42,10 +50,28 @@ func _init(object_dict_, materials_):
 	
 
 func add_object(object : PTObject):
+	"""Adds an object to """
 	var type = object.get_type()
 	object.object_index = objects[type].size()
 	objects[type].append(object)
-	# TODO: Handle material index here
+	
+	# TODO: Add hash function to material, and make dict or
+	#  Make a global material index that keeps track of all material instances
+	# First check for object reference in array
+	var material_index = materials.find(object.material)
+	if material_index == -1:
+		# Second check for equal properties in array
+		material_index = object.material.find_in_array(materials)
+		if material_index == -1:
+			# Add to list
+			object.material_index = materials.size()
+			materials.append(object.material)
+		else:
+			object.material_index = material_index
+	else:
+		object.material_index = material_index
+		
+		
 	scene_changed = true
 
 static func array2vec(a):
@@ -117,14 +143,74 @@ func create_BVH(type : BVH_TYPE = BVH_TYPE.DEFAULT):
 func create_random_scene(seed):
 	var rng = RandomNumberGenerator.new()
 	rng.seed = seed
-	#var temp = rng.randf()
+	
+	# Ground
+	var ground_mat = PTMaterial.new()
+	ground_mat.albedo = Vector3(0.5, 0.5, 0.5)
+	
+	#add_object(PTPlane.new(Vector3(0, 1, 0), -1, ground_mat, 0))
+	add_object(PTSphere.new(Vector3(0, -1000, 0), 1000, ground_mat, 0))
+	
+	# Glass
+	var mat1 = PTMaterial.new()
+	mat1.IOR = 1.5
+	mat1.opacity = 0.
+	add_object(PTSphere.new(Vector3(0, 1, 0), 1, mat1, 0))
+	
+	# Diffuse
+	var mat2 = PTMaterial.new()
+	mat2.albedo = Vector3(0.4, 0.2, 0.1)
+	add_object(PTSphere.new(Vector3(-4, 1, 0), 1, mat2, 0))
+	
+	# Metallic
+	var mat3 = PTMaterial.new()
+	mat3.albedo = Vector3(0.7, 0.6, 0.5)
+	mat3.metallic = 1.
+	add_object(PTSphere.new(Vector3(4, 1, 0), 1, mat3, 0))
 	
 	for i in range(22):
 		for j in range(22):
+			var center = Vector3((i - 11) + 0.9 * rng.randf(),
+								 0.2,
+								 (j - 11) + 0.9 * rng.randf())
+			var radius = 0.2
+			
 			var choose_material = rng.randf()
+			var material = PTMaterial.new()
 			
-			var color = Vector3()
+			var color = Vector3(rng.randf(), rng.randf(), rng.randf())
 			
-			#if 
+			if choose_material < 0.8:
+				pass
+			elif choose_material < 0.95:
+				# Metal
+				color = Vector3(rng.randf_range(0.5, 1.), 
+								rng.randf_range(0.5, 1.),
+								rng.randf_range(0.5, 1.))
+				material.metallic = choose_material + 0.05
+			else:
+				# Glass
+				color = Vector3(rng.randf_range(0.88, 1.), 
+								rng.randf_range(0.88, 1.),
+								rng.randf_range(0.88, 1.))
+				material.opacity = 0.
+			
+			material.albedo = color
+			var new_sphere = PTSphere.new(center, radius, material, 0)
+			add_object(new_sphere)
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

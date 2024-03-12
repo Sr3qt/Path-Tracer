@@ -5,6 +5,8 @@ class_name PTPlane
 var normal : Vector3
 var distance : float
 
+
+# TODO planes are weird. long distance + renndering
 func _init(normal_ : Vector3, distance_ : float, material_ : PTMaterial, mtl_i):
 	normal = normal_
 	distance = distance_

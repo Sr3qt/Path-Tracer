@@ -96,7 +96,7 @@ const int max_depth = 64; // How many bounces is sampled at the most, preferrabl
 int refraction_bounces = 0; // Counts the number of times a ray has refracted
 
 // Maximum number of children a BVHNode can have
-const int max_children = 4;
+const int max_children = 16;
 const int filler_const = int(mod(max_children, 2) + 2.) * 2; 
 
 // Pixels show levels of bvh travelled rather than color
@@ -615,13 +615,14 @@ RayHit check_ray_hit(Ray ray, Range range) {
 }
 
 
+// TODO: THis is slower than normal rendering. Has to change!
 RayHit check_ray_hit_BVH(Ray ray, Range range) {
     // Like check_ray_hit but it checks against a BVH tree instead of each object_list individually
     RayHit rayhit = empty_rayhit();
 
     // Stack of indices of nodes yet to traverse
     // NOTE: might need to be bigger for larger scenes and/or with higher order trees
-    int to_visit[64];
+    int to_visit[512];
     // Index to top of the stack, points to vacant spot ABOVE the stack
     int to_visit_i = 0;
 
@@ -802,9 +803,7 @@ vec4 cast_ray(Ray ray, Range range) {
     refraction_bounces = 0;
 
     for (;i < LOD.max_default_depth + refraction_bounces; i++) {
-        if (!use_bvh) {
-            rayhit = check_ray_hit(new_ray, range);
-        } else {
+        if (use_bvh) {
             rayhit = check_ray_hit_BVH(new_ray, range);
 
             // Send one ray, skip bouncing
@@ -813,6 +812,8 @@ vec4 cast_ray(Ray ray, Range range) {
                 i++; // Breaking doesn't increment therefore we have to correct for it
                 break;
             }
+        } else {
+            rayhit = check_ray_hit(new_ray, range);
         }
         
         // Early break if no hit

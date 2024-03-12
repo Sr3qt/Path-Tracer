@@ -66,9 +66,9 @@ var aspect_ratio := 16. / 9.
 var render_width := 640 * 3
 var render_height := int(render_width / aspect_ratio)
 
-var focal_length := 1.
+var focal_length := 10.
 
-var samples_per_pixel = 16
+var samples_per_pixel = 1
 var max_default_depth = 8
 var max_refraction_bounces = 8 
 
@@ -76,11 +76,11 @@ var is_rendering = true
 
 
 @onready var camera := PTCamera.new(
-	Vector3(0,0,2), 
-	Vector3(0,0,1),
+	Vector3(13,2,3), 
+	Vector3(0,0,0),
 	16. / 9.,
 	render_width,
-	106.,
+	37.,
 	focal_length)
 
 func _ready():
@@ -100,7 +100,9 @@ func _ready():
 	pipeline = rd.compute_pipeline_create(shader)
 	
 	# Load scene with spheres
-	scene = PTScene.load_scene("res://sphere_scene3.txt")
+	#scene = PTScene.load_scene("res://sphere_scene3.txt")
+	scene = PTScene.new()
+	scene.create_random_scene(0)
 	
 	# Set data buffers
 	# The image buffer used in compute and fragment shader
@@ -170,11 +172,13 @@ func _process(delta):
 	#if is_rendering:
 	_create_compute_list()
 	
+	# TODO: Make loading bar
+	# TODO: MAke able to take images with long render time
 	# Takes picture
 	if Input.is_key_pressed(KEY_X):
 		var before = Time.get_ticks_msec()
 		
-		samples_per_pixel = 512
+		samples_per_pixel = 80
 		max_default_depth = 16
 		max_refraction_bounces = 16
 		rd.buffer_update(LOD_buffer, 0, lod_byte_array().size(), lod_byte_array())
@@ -195,7 +199,7 @@ func _process(delta):
 		print("Total time: " + str(Time.get_ticks_msec() - before) + " ms")
 		print("---------------------------------------")
 		
-		samples_per_pixel = 16
+		samples_per_pixel = 1
 		max_default_depth = 8
 		max_refraction_bounces = 8
 		rd.buffer_update(LOD_buffer, 0, lod_byte_array().size(), lod_byte_array())

@@ -2,13 +2,13 @@ extends Node
 
 class_name PTMaterial
 
-# Similar to GPU material, temporary
-var albedo : Vector3 # Stored as linear color values from 0 to 1
-var roughness : float
-var metallic : float
-var opacity : float
-var IOR : float
-var refraction_depth : int
+# Similar to GPU material, default value is the same as air
+var albedo := Vector3(1, 1, 1) # Stored as linear color values from 0 to 1
+var roughness := 0.
+var metallic := 0.
+var opacity := 1.
+var IOR := 1.
+var refraction_depth := 0
 
 
 func get_rgb():
@@ -27,3 +27,25 @@ func to_byte_array():
 	PackedInt32Array([refraction_depth]).to_byte_array())
 	
 	return bytes
+
+
+func find_in_array(materials : Array[PTMaterial]):
+	"""Returns the index of this material in an array, otherwise returns -1"""
+	
+	for i in range(materials.size()):
+		if is_equal(materials[i]):
+			return i
+	
+	return -1
+	
+
+func is_equal(other : PTMaterial):
+	"""Returns true if other has the same properties as this material"""
+	return (other.albedo == albedo and 
+			other.roughness == roughness and 
+			other.metallic == metallic and 
+			other.opacity == opacity and 
+			other.IOR == IOR and 
+			other.refraction_depth == refraction_depth
+	)
+		

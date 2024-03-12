@@ -17,7 +17,7 @@ var objects_dict
 var BVH_list : Array[BVHNode] = []
 var _index := 0 # Used to keep track of index when creating BVH_list
 
-var max_children := 4
+var max_children := 16
 
 var leaf_count : int # Counts nodes with no child nodes
 var inner_count : int # Counts nodes with child nodes, including root node
