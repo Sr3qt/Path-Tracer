@@ -1,15 +1,15 @@
 ea4bc82a6ad023ab7ee23ee620429895
-::res://::1710244152
+::res://::1710246538
 BVH ALgorithms to consider.txt::TextFile::-1::1709719673::0::1::::<><>::
-canvas.gdshader::Shader::-1::1710182054::0::1::::<><>::
+canvas.gdshader::Shader::-1::1710246538::0::1::::<><>::
 icon.svg::CompressedTexture2D::635493465185222049::1707753016::1707753022::1::::<><>::
-main_scene.tscn::PackedScene::6548347110793753175::1710181815::0::1::::<><>::res://RayTracer.gd<>res://canvas.gdshader<>uid://bdbvcujyyuudb::::res://temp.png<>res://proprietary_dataclasses/PTBVH.gd
-RayTracer.gd::GDScript::-1::1710182054::0::1::::<>Node<>::
-ray_tracer.comp.glsl::RDShaderFile::6483268740974836562::1710181780::1710181781::1::::<><>::
+main_scene.tscn::PackedScene::6548347110793753175::1710246538::0::1::::<><>::res://RayTracer.gd<>res://canvas.gdshader<>uid://bdbvcujyyuudb::::res://temp.png<>res://proprietary_dataclasses/PTBVH.gd
+RayTracer.gd::GDScript::-1::1710245954::0::1::::<>Node<>::
+ray_tracer.comp.glsl::RDShaderFile::6483268740974836562::1710246107::1710246111::1::::<><>::
 sphere_scene1.txt::TextFile::-1::1710003667::0::1::::<><>::
 sphere_scene3.txt::TextFile::-1::1709998205::0::1::::<><>::
-temp1.png::CompressedTexture2D::2180594402614646315::1710181830::1710181834::1::::<><>::
-temp.png::CompressedTexture2D::2600331286290737687::1710181360::1710181218::1::::<><>::
+temp1.png::CompressedTexture2D::2180594402614646315::1710245258::1710245262::1::::<><>::
+temp.png::CompressedTexture2D::2600331286290737687::1710246553::1710246553::1::::<><>::
 ::res://3DPrimitives/::1710002457
 PTPlane.gd::GDScript::-1::1710002457::0::1::::PTPlane<>PTPrimitive3D<>::
 PTPrimitive3D.gd::GDScript::-1::1709739243::0::1::::PTPrimitive3D<>PTObject<>::
@@ -24,6 +24,12 @@ PTCamera.gd::GDScript::-1::1710180480::0::1::::PTCamera<>Node<>::
 PTMaterial.gd::GDScript::-1::1709745520::0::1::::PTMaterial<>Node<>::
 PTObject3D.gd::GDScript::-1::1710002277::0::1::::PTObject<>Node<>::
 PTScene.gd::GDScript::-1::1710003283::0::1::::PTScene<>Node<>::
-::res://renders/::1709998753
+::res://renders/::1710245352
 fuzzed metal replica.png::CompressedTexture2D::2297104140935327355::1709995135::1709995142::1::::<><>::
 hollow glass sphere replica.png::CompressedTexture2D::3641772424507093914::1709998751::1709998753::1::::<><>::
+::res://renders/temps/::1710246122
+temp-2024-03-12.png::CompressedTexture2D::1425391383364491772::1710245670::1710245673::1::::<><>::
+temp-2024-03-12T13-16-35.png::CompressedTexture2D::5181574537082121770::1710245795::1710245797::1::::<><>::
+temp-2024-03-12T13-19-21.png::CompressedTexture2D::609643313344372386::1710245961::1710245967::1::::<><>::
+temp-2024-03-12T13-21-59.png::CompressedTexture2D::8116427406539760541::1710246119::1710246122::1::::<><>::
+temp-2024-03-12T13_15_51.png::CompressedTexture2D::8189460942802393996::1710245751::1710245753::1::::<><>::

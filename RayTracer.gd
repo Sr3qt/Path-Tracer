@@ -11,7 +11,6 @@ var uniform_sets = [
 var RIDs_to_free = [] # array of RIDs that need to be freed when done with them.
 
 var rd : RenderingDevice
-var rdl : RenderingDevice
 var shader : RID
 var pipeline : RID
 
@@ -68,7 +67,7 @@ var render_height := int(render_width / aspect_ratio)
 
 var focal_length := 1.
 
-var samples_per_pixel = 32
+var samples_per_pixel = 16
 var max_default_depth = 8
 var max_refraction_bounces = 8 
 
@@ -86,9 +85,8 @@ var is_rendering = true
 func _ready():
 	
 	get_window().position = Vector2(1200, 400)
-	# Create a local rendering device. For taking pictures
-	rdl = RenderingServer.create_local_rendering_device()
 	# Holy merge clutch https://github.com/godotengine/godot/pull/79288 
+	# RenderingDevice for realtime rendering
 	rd = RenderingServer.get_rendering_device()
 	
 	# Load GLSL shader
@@ -98,15 +96,11 @@ func _ready():
 	RIDs_to_free.append(shader)
 	
 	# Create a compute pipeline
-	pipeline = rd.compute_pipeline_create(shader) 
+	pipeline = rd.compute_pipeline_create(shader)
 	
 	# Load scene with spheres
 	scene = PTScene.load_scene("res://sphere_scene1.txt")
 	
-	setup_rendering_device(rd)
-
-
-func setup_rendering_device(rd : RenderingDevice):
 	# SET DATA BUFFERS
 	# ================
 	# The image buffer used in compute and fragment shader
@@ -171,18 +165,31 @@ func _process(delta):
 	camera._process(delta)
 	
 	if is_rendering:
-		# Sync is not required when using main RenderingDevice
-		_create_compute_list(rd)
+		_create_compute_list()
 
 
 func _input(event):
 	camera._input(event)
 	
 	if Input.is_key_pressed(KEY_X):
-		take_picture()
-		is_rendering = false
-		#_exit_tree()
-	
+		var before = Time.get_ticks_msec()
+		
+		samples_per_pixel = 512
+		rd.buffer_update(LOD_buffer, 0, lod_byte_array().size(), lod_byte_array())
+		
+		_create_compute_list()
+		
+		var image = rd.texture_get_data(image_buffer, 0)
+		var new_image = Image.create_from_data(render_width, render_height, false,
+											   Image.FORMAT_RGBAF, image)
+											
+		new_image.save_png("res://renders/temps/temp-" +
+		Time.get_datetime_string_from_system().replace(":", "-") + ".png")
+		
+		print("Total time " + str(Time.get_ticks_msec() - before) + " ms")
+		
+		samples_per_pixel = 16
+		rd.buffer_update(LOD_buffer, 0, lod_byte_array().size(), lod_byte_array())
 
 func _exit_tree():
 	var image = rd.texture_get_data(image_buffer, 0)
@@ -205,7 +212,7 @@ func _exit_tree():
 		rd.free_rid(rid)
 
 
-func _create_compute_list(rd : RenderingDevice):
+func _create_compute_list():
 	""" Creates the compute list required for every compute call """
 	if camera.camera_changed:
 		var new_bytes = camera.to_byte_array()
@@ -227,6 +234,8 @@ func _create_compute_list(rd : RenderingDevice):
 	rd.capture_timestamp("Render Scene")
 	rd.compute_list_dispatch(compute_list, ceil(render_width / 8.), 
 										   ceil(render_height / 8.), 1)
+										
+	# Sync is not required when using main RenderingDevice
 	rd.compute_list_end()
 	
 
@@ -312,26 +321,3 @@ func lod_byte_array():
 	var lod_array = [samples_per_pixel, max_default_depth, max_refraction_bounces]
 	return PackedInt32Array(lod_array).to_byte_array()
 
-func take_picture():
-	var before = Time.get_ticks_msec()
-	samples_per_pixel = 128
-	
-	var shader_file = load("res://ray_tracer.comp.glsl")
-	var shader_spirv: RDShaderSPIRV = shader_file.get_spirv()
-	shader = rdl.shader_create_from_spirv(shader_spirv)
-	RIDs_to_free.append(shader)
-	
-	# Create a compute pipeline
-	pipeline = rdl.compute_pipeline_create(shader) 
-	setup_rendering_device(rdl)
-	
-	_create_compute_list(rdl)
-	#rdl.sync()
-	
-	var image = rdl.texture_get_data(image_buffer, 0)
-	var new_image = Image.create_from_data(render_width, render_height, false,
-										   Image.FORMAT_RGBAF, image)
-										
-	new_image.save_png("temp1.png")
-	
-	print("Total time " + str(Time.get_ticks_msec() - before) + " ms")

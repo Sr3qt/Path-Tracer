@@ -930,8 +930,8 @@ void main() {
     new_color = new_color / LOD.samples_per_pixel;
 
     // new_color = vec4(1., 0.5, 0.25, 1.);
-    // float gammma_factor =  2.2;
-    // new_color.rgb = pow(new_color.rgb, vec3(gammma_factor, gammma_factor, gammma_factor));
+    float gammma_factor = 1 / 2.2;
+    new_color.rgb = pow(new_color.rgb, vec3(gammma_factor, gammma_factor, gammma_factor));
 
     if (scene_changed) {
         imageStore(output_image, UVi.xy, new_color);
