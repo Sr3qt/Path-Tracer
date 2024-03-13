@@ -536,6 +536,8 @@ RayHit hit_spheres(Ray ray, Range t_range, inout RayHit rayhit) {
 
 RayHit hit_plane(Ray ray, int plane_index, Range t_range, inout RayHit rayhit) {
     
+    Plane plane = planes.data[plane_index];
+
     // Early return if plane is paralell, even if the ray is contained in the plane
     // May not be needed
     // bool is_paralell = is_close(dot(ray.direction, plane.normal), 0.);
@@ -543,9 +545,12 @@ RayHit hit_plane(Ray ray, int plane_index, Range t_range, inout RayHit rayhit) {
     //     return rayhit;
     // }
 
-    Plane plane = planes.data[plane_index];
-
-    float intersection_t = plane.d / dot(plane.normal, ray.origin + ray.direction);
+    // float intersection_t = plane.d / dot(plane.normal, ray.origin + ray.direction);
+    // float intersection_t = (dot((vec3(0) - ray.origin), plane.normal) /
+    //                         dot(plane.normal, ray.direction));
+                            
+    float intersection_t = ((plane.d - dot(ray.origin, plane.normal)) /
+                            dot(plane.normal, ray.direction));
 
     // Early return if t is not in range or further away than previous t
     if (!in_range(intersection_t, t_range) || intersection_t > rayhit.t) {

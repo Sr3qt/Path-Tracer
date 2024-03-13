@@ -78,6 +78,9 @@ func _recursive_split(object_list : Array[PTObject], parent) -> Array[BVHNode]:
 	for i in range(max_children):
 		start = end
 		end += even_division + int(i < leftover) 
+		if not (start - end):
+			# Break if no nodes are left
+			break 
 		var new_node = BVHNode.new(parent, self)
 		var split_objects = object_list.slice(start, end)
 		

@@ -100,7 +100,7 @@ func _ready():
 	pipeline = rd.compute_pipeline_create(shader)
 	
 	# Load scene with spheres
-	#scene = PTScene.load_scene("res://sphere_scene3.txt")
+	#scene = PTScene.load_scene("res://sphere_scene1.txt")
 	scene = PTScene.new()
 	scene.create_random_scene(0)
 	
@@ -191,8 +191,16 @@ func _process(delta):
 		var new_image = Image.create_from_data(render_width, render_height, false,
 											   Image.FORMAT_RGBAF, image)
 											
-		new_image.save_png("res://renders/temps/temp-" +
+		
+		var folder_path = "res://renders/temps/" + Time.get_date_string_from_system()
+		
+		# Make folder for today if it doesnt exist
+		if not DirAccess.dir_exists_absolute(folder_path):
+			DirAccess.make_dir_absolute(folder_path)
+		
+		new_image.save_png(folder_path + "/temp-" +
 		Time.get_datetime_string_from_system().replace(":", "-") + ".png")
+		
 		
 		print("---------------------------------------")
 		print("Render time: " + str(after_render - before_render) + " ms")

@@ -148,8 +148,8 @@ func create_random_scene(seed):
 	var ground_mat = PTMaterial.new()
 	ground_mat.albedo = Vector3(0.5, 0.5, 0.5)
 	
-	#add_object(PTPlane.new(Vector3(0, 1, 0), -1, ground_mat, 0))
-	add_object(PTSphere.new(Vector3(0, -1000, 0), 1000, ground_mat, 0))
+	add_object(PTPlane.new(Vector3(0, 1, 0), -1., ground_mat, 0))
+	#add_object(PTSphere.new(Vector3(0, -1000, 0), 1000, ground_mat, 0))
 	
 	# Glass
 	var mat1 = PTMaterial.new()

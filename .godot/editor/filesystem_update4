@@ -1,8 +1,5 @@
 res://main_scene.tscn
 res://canvas.gdshader
-res://sphere_scene3.txt
 res://proprietary_dataclasses/PTScene.gd
-res://proprietary_dataclasses/PTMaterial.gd
 res://RayTracer.gd
 res://proprietary_dataclasses/PTBVH.gd
-res://3DPrimitives/PTPlane.gd
