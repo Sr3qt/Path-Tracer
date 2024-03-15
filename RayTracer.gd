@@ -1,5 +1,7 @@
 extends Node
 
+class_name PTWorkDispatcher
+
 # Holds the uniforms that will be bound to a set
 var uniform_sets = [
 	{}, # For image
@@ -35,16 +37,17 @@ var planes_bind := 2
 var BVH_set_index := 3
 var BVH_bind := 0
 
-# REnder modes, like bvh heat map
-var flags_set_index := 4
+# For external messages like time and render mode flags
+var external_set_index := 4
 var flags_bind := 0
+var random_bind := 1
 
 # Set RIDs
 var image_set : RID
 var camera_set : RID
 var object_set : RID
 var BVH_set : RID
-var flags_set : RID
+var external_set : RID
 
 # Buffer RIDS
 var image_buffer : RID
@@ -59,29 +62,29 @@ var plane_buffer : RID
 var BVH_buffer : RID
 
 var flags_buffer : RID
+var random_buffer : RID
 
 # Render variables
-var aspect_ratio := 16. / 9.
-# Render resolution
-var render_width := 640 * 3
-var render_height := int(render_width / aspect_ratio)
-
-var focal_length := 10.
+var render_width : int
+var render_height : int
 
 var samples_per_pixel = 1
 var max_default_depth = 8
 var max_refraction_bounces = 8 
 
 var is_rendering = true
+var is_taking_picture = false
 
 
-@onready var camera := PTCamera.new(
-	Vector3(13,2,3), 
-	Vector3(0,0,0),
-	16. / 9.,
-	render_width,
-	37.,
-	focal_length)
+var _image_render_time := 0
+var _image_render_start
+
+# Flags
+var use_bvh := true
+var show_bvh_depth := false
+
+var scene_changed := false
+
 
 func _ready():
 	
@@ -104,18 +107,21 @@ func _ready():
 	scene = PTScene.new()
 	scene.create_random_scene(0)
 	
+	scene.create_BVH()
+	
+	render_width = scene.camera.render_width
+	render_height = scene.camera.render_height
+	
 	# Set data buffers
 	# The image buffer used in compute and fragment shader
 	image_buffer = _create_image_buffer()
-	#render_height /= 2
-	#render_width /= 2
 	
-	# Viewport size
+	# Render dimensions
 	var size_bytes := PackedInt32Array([render_width, render_height]).to_byte_array()
 	var _size_buffer = _create_uniform(size_bytes, rd, image_set_index, image_size_bind)
 	
 	# Camera data
-	camera_buffer = _create_uniform(camera.to_byte_array(), rd, camera_set_index, 
+	camera_buffer = _create_uniform(scene.camera.to_byte_array(), rd, camera_set_index, 
 	camera_bind)
 	
 	LOD_buffer = _create_uniform(lod_byte_array(), rd, camera_set_index, 
@@ -132,12 +138,15 @@ func _ready():
 	plane_buffer = _create_uniform(_create_planes(), rd, object_set_index, 
 	planes_bind)
 	
-	scene.create_BVH()
 	BVH_buffer = _create_uniform(scene.BVHTree.to_byte_array(), rd, 
 	BVH_set_index, BVH_bind)
 	
-	flags_buffer = _create_uniform(_create_planes(), rd, flags_set_index, 
+	flags_buffer = _create_uniform(_create_flags(), rd, external_set_index, 
 	flags_bind)
+	
+	var time = PackedFloat32Array([Time.get_ticks_msec() / 1000.]).to_byte_array()
+	random_buffer = _create_uniform(time, rd, external_set_index, 
+	random_bind)
 	
 	# Bind uniforms and sets
 	# Get uniforms
@@ -145,14 +154,14 @@ func _ready():
 	var camera_uniform = uniform_sets[camera_set_index].values()
 	var object_uniforms = uniform_sets[object_set_index].values()
 	var BVH_uniforms = uniform_sets[BVH_set_index].values()
-	var flags_uniforms = uniform_sets[flags_set_index].values()
+	var flags_uniforms = uniform_sets[external_set_index].values()
 
 	# Bind uniforms to sets
 	image_set = rd.uniform_set_create(image_uniforms, shader, image_set_index)
 	camera_set = rd.uniform_set_create(camera_uniform, shader, camera_set_index)
 	object_set = rd.uniform_set_create(object_uniforms, shader, object_set_index)
 	BVH_set = rd.uniform_set_create(BVH_uniforms, shader, BVH_set_index)
-	flags_set = rd.uniform_set_create(flags_uniforms, shader, flags_set_index)
+	external_set = rd.uniform_set_create(flags_uniforms, shader, external_set_index)
 	
 	# Set texture RID for Canvas
 	var canvas = get_node("/root/Node3D/Camera3D/Canvas")
@@ -163,58 +172,37 @@ func _ready():
 	
 
 func _process(delta):
-	#var fps = 1. / delta
-	#DisplayServer.window_set_title(str(fps)) 
-	#print(str(delta * 1000) + " ms, FPS: " + str(fps))
+	scene.camera._process(delta)
 	
-	camera._process(delta)
 	
-	#if is_rendering:
-	_create_compute_list()
+	var time = PackedFloat32Array([Time.get_ticks_msec() / 1000.]).to_byte_array()
+	#print()
+	rd.buffer_update(random_buffer, 0, time.size(), time)
 	
 	# TODO: Make loading bar
 	# TODO: MAke able to take images with long render time
 	# Takes picture
-	if Input.is_key_pressed(KEY_X):
-		var before = Time.get_ticks_msec()
-		
+	if Input.is_key_pressed(KEY_X) and not is_taking_picture:
+		# Make last changes to camera settings
 		samples_per_pixel = 80
 		max_default_depth = 16
 		max_refraction_bounces = 16
 		rd.buffer_update(LOD_buffer, 0, lod_byte_array().size(), lod_byte_array())
 		
-		var before_render = Time.get_ticks_msec()
-		_create_compute_list()
-		var after_render = Time.get_ticks_msec()
+		is_taking_picture = true
+		is_rendering = false
+		_image_render_start = Time.get_ticks_msec()
 		
-		var image = rd.texture_get_data(image_buffer, 0)
-		var new_image = Image.create_from_data(render_width, render_height, false,
-											   Image.FORMAT_RGBAF, image)
-											
+	# Don't send work when window is not focused
+	if get_window().has_focus() and is_rendering:
+		_create_compute_list(ceil(render_width / 8.), ceil(render_height / 8.), 1)
 		
-		var folder_path = "res://renders/temps/" + Time.get_date_string_from_system()
-		
-		# Make folder for today if it doesnt exist
-		if not DirAccess.dir_exists_absolute(folder_path):
-			DirAccess.make_dir_absolute(folder_path)
-		
-		new_image.save_png(folder_path + "/temp-" +
-		Time.get_datetime_string_from_system().replace(":", "-") + ".png")
-		
-		
-		print("---------------------------------------")
-		print("Render time: " + str(after_render - before_render) + " ms")
-		print("Total time: " + str(Time.get_ticks_msec() - before) + " ms")
-		print("---------------------------------------")
-		
-		samples_per_pixel = 1
-		max_default_depth = 8
-		max_refraction_bounces = 8
-		rd.buffer_update(LOD_buffer, 0, lod_byte_array().size(), lod_byte_array())
-
+	
+	if is_taking_picture:
+		render_image()
 
 func _input(event):
-	camera._input(event)
+	scene.camera._input(event)
 	
 
 func _exit_tree():
@@ -238,12 +226,17 @@ func _exit_tree():
 		rd.free_rid(rid)
 
 
-func _create_compute_list():
-	""" Creates the compute list required for every compute call """
-	if camera.camera_changed:
-		var new_bytes = camera.to_byte_array()
+func _create_compute_list(x, y, z):
+	""" Creates the compute list required for every compute call 
+	
+	Requires workgroup coordinates to be given
+	"""
+	
+	## Move outside
+	if scene.camera.camera_changed:
+		var new_bytes = scene.camera.to_byte_array()
 		rd.buffer_update(camera_buffer, 0, new_bytes.size(), new_bytes)
-		#camera.camera_changed = false
+		scene.camera.camera_changed = false
 	
 	#_update_sphere()
 	
@@ -255,15 +248,59 @@ func _create_compute_list():
 	rd.compute_list_bind_uniform_set(compute_list, camera_set, camera_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, object_set, object_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, BVH_set, BVH_set_index)
-	rd.compute_list_bind_uniform_set(compute_list, flags_set, flags_set_index)
+	rd.compute_list_bind_uniform_set(compute_list, external_set, external_set_index)
 	
-	# TODO: Weird bug when minimizing
 	rd.capture_timestamp("Render Scene")
-	rd.compute_list_dispatch(compute_list, ceil(render_width / 8.), 
-										   ceil(render_height / 8.), 1)
-										
+	rd.compute_list_dispatch(compute_list, x, y, z)
+	
 	# Sync is not required when using main RenderingDevice
 	rd.compute_list_end()
+	
+
+func render_image():
+	"""Render image over time, possibly needed to be called multiple times"""
+	
+	var before = Time.get_ticks_msec()
+	
+	var finished_render = false
+	
+	
+	_create_compute_list(ceil(render_width / 8.), ceil(render_height / 8.), 1)
+	
+	# CPU waits for texture data to be ready.
+	var before_render = Time.get_ticks_msec()
+	
+	
+	
+	if finished_render:
+		#var image = rd.texture_get_data(image_buffer, 0)
+		var after_render = Time.get_ticks_msec()
+		
+		#var new_image = Image.create_from_data(render_width, render_height, false,
+											   #Image.FORMAT_RGBAF, image)
+											#
+		#
+		#var folder_path = "res://renders/temps/" + Time.get_date_string_from_system()
+		#
+		## Make folder for today if it doesnt exist
+		#if not DirAccess.dir_exists_absolute(folder_path):
+			#DirAccess.make_dir_absolute(folder_path)
+		#
+		#new_image.save_png(folder_path + "/temp-" +
+		#Time.get_datetime_string_from_system().replace(":", "-") + ".png")
+		
+		print("---------------------------------------")
+		print("Render time: " + str(after_render - before_render) + " ms")
+		print("Total time: " + str(Time.get_ticks_msec() - before) + " ms")
+		print("---------------------------------------")
+	
+		samples_per_pixel = 1
+		max_default_depth = 8
+		max_refraction_bounces = 8
+		rd.buffer_update(LOD_buffer, 0, lod_byte_array().size(), lod_byte_array())
+		
+		is_rendering = true
+		is_taking_picture = false
 	
 
 func _create_uniform(bytes, render_device, set_, binding):
@@ -346,6 +383,11 @@ func _create_materials():
 	return bytes
 
 
+func _create_flags():
+	var flag_array = PackedInt32Array([use_bvh, show_bvh_depth, scene_changed])
+	return flag_array.to_byte_array()
+
+
 func _update_sphere():
 	var sphere = scene.objects[PTObject.OBJECT_TYPE.SPHERE][0]
 	sphere.center.x = sin(Time.get_ticks_msec() / 1000.)
@@ -357,4 +399,6 @@ func _update_sphere():
 func lod_byte_array():
 	var lod_array = [samples_per_pixel, max_default_depth, max_refraction_bounces]
 	return PackedInt32Array(lod_array).to_byte_array()
+
+
 

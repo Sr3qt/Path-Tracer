@@ -99,12 +99,6 @@ int refraction_bounces = 0; // Counts the number of times a ray has refracted
 const int max_children = 16;
 const int filler_const = int(mod(max_children, 2) + 2.) * 2; 
 
-// Pixels show levels of bvh travelled rather than color
-const bool show_bvh_depth = false;
-const bool use_bvh = false;
-
-const bool scene_changed = true;
-
 float random_number;
 
 // DATATYPES
@@ -243,7 +237,6 @@ layout(set = 2, binding = 0, std430) restrict buffer MaterialBuffer {
     Material data[];
 }
 materials;
-// Will start to pass in materials later
 
 // Objects
 layout(set = 2, binding = 1, std430) restrict buffer SpheresBuffer {
@@ -256,16 +249,23 @@ layout(set = 2, binding = 2, std430) restrict buffer PlanesBuffer {
 }
 planes;
 
+// BVH tree in list form
 layout(set = 3, binding = 0, std430) restrict buffer BVH_List {
     BVHNode list[];
 }
 BVH;
 
 layout(set = 4, binding = 0, std430) restrict buffer FlagBuffer {
-    BVHNode list[];
+    bool use_bvh;
+    bool show_bvh_depth;
+    bool scene_changed;
 }
 flags;
 
+layout(set = 4, binding = 1, std430) restrict buffer RandomBuffer {
+    float time;
+}
+random;
 
 // UTILITY FUNCTIONS
 // =================
@@ -673,7 +673,7 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
         rayhit.color = hit_skybox(ray, rayhit);
     }
 
-    if (show_bvh_depth) {
+    if (flags.show_bvh_depth) {
         rayhit.color = vec4(0.04 * float(hit_check_count),0,1,0);
     }
 
@@ -808,11 +808,11 @@ vec4 cast_ray(Ray ray, Range range) {
     refraction_bounces = 0;
 
     for (;i < LOD.max_default_depth + refraction_bounces; i++) {
-        if (use_bvh) {
+        if (flags.use_bvh) {
             rayhit = check_ray_hit_BVH(new_ray, range);
 
             // Send one ray, skip bouncing
-            if (show_bvh_depth) {
+            if (flags.show_bvh_depth) {
                 rayhits[i] = rayhit;
                 i++; // Breaking doesn't increment therefore we have to correct for it
                 break;
@@ -886,8 +886,8 @@ void main() {
     float circle_step = 2 * pi / float(LOD.samples_per_pixel);
     for (int i = 0; i < LOD.samples_per_pixel; ++i) {
         float temp = fract(float(i) / float(LOD.samples_per_pixel));
-        vec3 circular_offset = pixel_delta_u / 2 * cos(float(i) * circle_step) * rand(temp) + 
-                               pixel_delta_v / 2 * sin(float(i) * circle_step) * rand(temp);
+        vec3 circular_offset = pixel_delta_u / 2 * cos(float(i) * circle_step) * rand(float(random.time)) + 
+                               pixel_delta_v / 2 * sin(float(i) * circle_step) * rand(float(random.time));
         vec3 ray_direction = pixel_center - camera.pos + circular_offset;
         Ray ray = Ray(camera.pos, ray_direction);
 
@@ -898,7 +898,7 @@ void main() {
     // Apply gamma correction
     new_color.rgb = pow(new_color.rgb, vec3(gammma, gammma, gammma));
 
-    if (scene_changed) {
+    if (flags.scene_changed) {
         imageStore(output_image, UVi.xy, new_color);
     } else {
         vec4 prev_col = imageLoad(output_image, UVi.xy);

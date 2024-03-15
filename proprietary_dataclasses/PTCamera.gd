@@ -11,7 +11,7 @@ var move_speed := 1.
 
 # Render variables
 var aspect_ratio := 16. / 9.
-var render_width := 640 * 3
+var render_width := 1920
 var render_height := int(render_width / aspect_ratio)
 
 var focal_length := 1.

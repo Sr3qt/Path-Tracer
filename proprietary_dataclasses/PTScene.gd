@@ -23,11 +23,18 @@ var BVHTree : PTBVHTree
 # Whether anything in the scene, objects, camera, either moved, got added or removed
 var scene_changed := false
 
+var camera : PTCamera
+
 static var OBJECT_TYPE = PTObject.OBJECT_TYPE
 # Enum of different possible BVH algorithms
 enum BVH_TYPE {DEFAULT}
 
-func _init(object_dict_= {}, materials_ : Array[PTMaterial] = []):
+func _init(
+	object_dict_ = {}, 
+	materials_ : Array[PTMaterial] = [], 
+	camera_ : PTCamera = null
+	):
+	
 	if object_dict_:
 		objects = object_dict_
 	else:
@@ -37,7 +44,13 @@ func _init(object_dict_= {}, materials_ : Array[PTMaterial] = []):
 			OBJECT_TYPE.SPHERE : sphere_list,
 			OBJECT_TYPE.PLANE : plane_list
 		}
+	
 	materials = materials_
+	
+	if camera_ == null:
+		camera = PTCamera.new()
+	else:
+		camera = camera_
 
 
 # Only relevant for when the structure of the scene changes, 
