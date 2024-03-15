@@ -1,4 +1,6 @@
 extends Node
+# Can potentially be Refcounted
+
 ## Nice reading summary:
 ## https://hackmd.io/@zOZhMrk6TWqOaocQT3Oa0A/HJUqrveG5 
 
@@ -13,7 +15,6 @@ var root_node : BVHNode
 # A dictionary of objects in the bvh
 var objects_dict
 
-
 var BVH_list : Array[BVHNode] = []
 var _index := 0 # Used to keep track of index when creating BVH_list
 
@@ -24,10 +25,17 @@ var inner_count : int # Counts nodes with child nodes, including root node
 var object_count : int # Counts the number of objects stored in leaf nodes
 
 
+func _init():
+	root_node = BVHNode.new(null, self)
+	root_node.aabb = PTAABB.new()
+	inner_count += 1
+	
+	BVH_list = [root_node]
+
 func create_BVH_List(scene : PTScene):
 	""" Takes in a list of objects and creates a BVH tree in bytes
 	
-	The result of this function will be stored in BVH_list
+	The result of this function will be stored in a BVH_list.
 	The nodes in BVH_list will contain indices to scene.objects and 
 	object pointers.
 	
@@ -50,9 +58,6 @@ func create_BVH_List(scene : PTScene):
 		return a.aabb.minimum[0] > b.aabb.minimum[0]
 	
 	flat_object_list.sort_custom(axis_sort)
-	
-	root_node = BVHNode.new(null, self)
-	inner_count += 1
 	
 	# Creates tree recursively
 	root_node.add_children(_recursive_split(flat_object_list, root_node))
@@ -140,7 +145,7 @@ func to_byte_array():
 
 
 class BVHNode:
-	var _tree : PTBVHTree # Reference tothe tree this node is a part of
+	var _tree : PTBVHTree # Reference to the tree this node is a part of
 	var parent : BVHNode
 	var parent_index : int # Index to parent
 	var index : int # INdex of this node in BVH_list
@@ -218,4 +223,5 @@ class BVHNode:
 		#print()
 		
 		return child_indices_bytes + bbox_bytes + other_bytes
+
 

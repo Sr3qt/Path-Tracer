@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="PathTracer"
-run/main_scene="res://main_scene.tscn"
+run/main_scene="res://main/New_main_scene.tscn"
 config/features=PackedStringArray("4.2", "Forward Plus")
 run/flush_stdout_on_print=true
 run/max_fps=300

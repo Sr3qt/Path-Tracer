@@ -5,9 +5,10 @@
 //  by Peter Shirley, Trevor David Black, Steve Hollasch 
 //  https://raytracing.github.io/books/RayTracingInOneWeekend.html
 
-// Currnently following "Ray Tracing The Next Week"
+// Currently following "Ray Tracing The Next Week"
 
 /*
+
 POLICIES
 ========
 
@@ -206,14 +207,8 @@ struct BVHNode {
 // =======
 layout(r32f, set = 0, binding = 0) uniform restrict image2D output_image;
 
-layout(set = 0, binding = 1, std430) restrict buffer ImageSize {
-    int width;
-    int height;
-}
-image;
-
 // Camera
-layout(set = 1, binding = 0, std430) restrict buffer CameraBuffer {
+layout(set = 1, binding = 0, std430) restrict readonly buffer CameraBuffer {
     vec3 pos;
     float focal_length;
     vec3 right;
@@ -225,7 +220,9 @@ layout(set = 1, binding = 0, std430) restrict buffer CameraBuffer {
 }
 camera;
 
-layout(set = 1, binding = 1, std430) restrict buffer LODBuffer {
+layout(set = 1, binding = 1, std430) restrict readonly buffer LODBuffer {
+    int width;
+    int height;
     int samples_per_pixel; // How many rays are sent per pixel
     int max_default_depth; // How many bounces is sampled, for normal rays
     int max_refraction_bounces; // How many total extra bounces can occur on refraction
@@ -233,29 +230,29 @@ layout(set = 1, binding = 1, std430) restrict buffer LODBuffer {
 LOD;
 
 // Materials to index
-layout(set = 2, binding = 0, std430) restrict buffer MaterialBuffer {
+layout(set = 2, binding = 0, std430) restrict readonly buffer MaterialBuffer {
     Material data[];
 }
 materials;
 
 // Objects
-layout(set = 2, binding = 1, std430) restrict buffer SpheresBuffer {
+layout(set = 2, binding = 1, std430) restrict readonly buffer SpheresBuffer {
     Sphere data[];
 }
 spheres;
 
-layout(set = 2, binding = 2, std430) restrict buffer PlanesBuffer {
+layout(set = 2, binding = 2, std430) restrict readonly buffer PlanesBuffer {
     Plane data[];
 }
 planes;
 
 // BVH tree in list form
-layout(set = 3, binding = 0, std430) restrict buffer BVH_List {
+layout(set = 3, binding = 0, std430) restrict readonly buffer BVH_List {
     BVHNode list[];
 }
 BVH;
 
-layout(set = 4, binding = 0, std430) restrict buffer FlagBuffer {
+layout(set = 4, binding = 0, std430) restrict readonly buffer FlagBuffer {
     bool use_bvh;
     bool show_bvh_depth;
     bool scene_changed;
@@ -266,6 +263,11 @@ layout(set = 4, binding = 1, std430) restrict buffer RandomBuffer {
     float time;
 }
 random;
+
+// Will implement push constants later
+// layout(push_constant) uniform constants {
+//     int temop;
+// } constaeene;
 
 // UTILITY FUNCTIONS
 // =================
@@ -527,6 +529,7 @@ RayHit hit_sphere(Ray ray, int sphere_index, Range t_range, inout RayHit rayhit)
 }
 
 RayHit hit_spheres(Ray ray, Range t_range, inout RayHit rayhit) {
+    if (near_zero(vec3(spheres.data[0].radius))) {return rayhit;} // Early return if no spheres in scene
     // Uses global scope sphere array to bypass function parameter limitations
     for (int i = 0; i < spheres.data.length(); ++i) {
         hit_sphere(ray, i, t_range, rayhit);
@@ -545,10 +548,6 @@ RayHit hit_plane(Ray ray, int plane_index, Range t_range, inout RayHit rayhit) {
     //     return rayhit;
     // }
 
-    // float intersection_t = plane.d / dot(plane.normal, ray.origin + ray.direction);
-    // float intersection_t = (dot((vec3(0) - ray.origin), plane.normal) /
-    //                         dot(plane.normal, ray.direction));
-                            
     float intersection_t = ((plane.d - dot(ray.origin, plane.normal)) /
                             dot(plane.normal, ray.direction));
 
@@ -564,6 +563,7 @@ RayHit hit_plane(Ray ray, int plane_index, Range t_range, inout RayHit rayhit) {
 }
 
 RayHit hit_planes(Ray ray, Range t_range, inout RayHit rayhit) {
+    if (near_zero(planes.data[0].normal)) {return rayhit;} // Early return if no planes in scene
     // Uses global scope planes array to bypass function parameter limitations
     for (int i = 0; i < planes.data.length(); ++i) {
         hit_plane(ray, i, t_range, rayhit);
@@ -606,10 +606,7 @@ RayHit check_ray_hit(Ray ray, Range range) {
     RayHit rayhit = empty_rayhit();
     hit_spheres(ray, range, rayhit);
     
-    // Hit planes if there are any
-    if (!near_zero(planes.data[0].normal)) {
-        hit_planes(ray, range, rayhit);
-    }
+    hit_planes(ray, range, rayhit);
 
     // TODO ADD intersection with skybox, would still count as not hit
     if (!rayhit.hit) {
@@ -663,10 +660,7 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
         current_index = to_visit[--to_visit_i];
     }
 
-    // Hit planes if there are any
-    if (!near_zero(planes.data[0].normal)) {
-        hit_planes(ray, range, rayhit);
-    }
+    hit_planes(ray, range, rayhit);
 
     // TODO ADD intersection with skybox, would still count as not hit
     if (!rayhit.hit) {
@@ -856,8 +850,8 @@ void main() {
     
     // VARIABLE DEFINITIONS
     // ====================
-    const float width = float(image.width);
-    const float height = float(image.height);
+    const float width = float(LOD.width);
+    const float height = float(LOD.height);
 
     // Calculate the vectors across the horizontal and down the vertical viewport edges.
     const vec3 viewport_u = camera.right * camera.viewport_width;

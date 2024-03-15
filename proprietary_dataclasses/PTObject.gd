@@ -1,11 +1,11 @@
 extends Node
+# Can potentially be Refcounted
 
-# Base class for all visual objects
+"""Base class for all visual objects"""
 class_name PTObject
 
 var material : PTMaterial
 var aabb : PTAABB
-
 
 # The scene this object is part of
 var _scene : PTScene

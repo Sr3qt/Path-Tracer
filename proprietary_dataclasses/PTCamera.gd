@@ -3,6 +3,7 @@ extends Node
 class_name PTCamera
 
 # Whether the camera should react to button presses and mouse movements
+#  NOTE: currently not implemented
 var is_fps := true
 
 var mouse_sensitivity_x := 0.01
@@ -10,6 +11,7 @@ var mouse_sensitivity_y := 0.01
 var move_speed := 1.
 
 # Render variables
+# TODO make variables exportable to editor or changable during run time
 var aspect_ratio := 16. / 9.
 var render_width := 1920
 var render_height := int(render_width / aspect_ratio)
@@ -65,11 +67,11 @@ func _process(delta):
 	# MOve to player ndoe
 	if Input.is_key_pressed(KEY_W):
 		move_camera(-forward * Vector3(1,0,1) * move_speed * delta)
-	elif Input.is_key_pressed(KEY_A):
+	if Input.is_key_pressed(KEY_A):
 		move_camera(-right * Vector3(1,0,1) * move_speed * delta)
-	elif Input.is_key_pressed(KEY_S):
+	if Input.is_key_pressed(KEY_S):
 		move_camera(forward * Vector3(1,0,1) * move_speed * delta)
-	elif Input.is_key_pressed(KEY_D):
+	if Input.is_key_pressed(KEY_D):
 		move_camera(right * Vector3(1,0,1) * move_speed * delta)
 
 # MOve to player ndoe

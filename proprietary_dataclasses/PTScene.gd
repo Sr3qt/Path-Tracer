@@ -18,6 +18,7 @@ var objects
 # materials should hold no duplicate materials
 var materials : Array[PTMaterial]
 
+# A BVHTree object is required although it can be empty
 var BVHTree : PTBVHTree
 
 # Whether anything in the scene, objects, camera, either moved, got added or removed
@@ -51,6 +52,8 @@ func _init(
 		camera = PTCamera.new()
 	else:
 		camera = camera_
+		
+	BVHTree = PTBVHTree.new()
 
 
 # Only relevant for when the structure of the scene changes, 

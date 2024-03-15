@@ -1,4 +1,5 @@
 extends Node
+# Can potentially be Refcounted
 
 class_name PTWorkDispatcher
 
@@ -18,7 +19,7 @@ var pipeline : RID
 
 var texture : Texture2DRD
 
-var scene : PTScene 
+var _scene : PTScene 
 
 # Set / binding indices
 var image_set_index := 0
@@ -83,15 +84,28 @@ var _image_render_start
 var use_bvh := true
 var show_bvh_depth := false
 
-var scene_changed := false
+var scene_changed := true
 
+# Whether this instance is using a local RenderDevice
+var is_local_renderer
 
-func _ready():
+var work_group_x : int
+var work_group_y : int
+var work_group_z : int
+var work_group_dimensions = []
+
+var _renderer
+
+func _init(renderer : PTRenderer, is_local = false):
+	_renderer = renderer
+	is_local_renderer = is_local
 	
-	get_window().position = Vector2(1200, 400)
-	# Holy merge clutch https://github.com/godotengine/godot/pull/79288 
-	# RenderingDevice for realtime rendering
-	rd = RenderingServer.get_rendering_device()
+	if is_local_renderer:
+		rd = RenderingServer.create_local_rendering_device()
+	else:
+		# Holy merge clutch https://github.com/godotengine/godot/pull/79288 
+		# RenderingDevice for realtime rendering
+		rd = RenderingServer.get_rendering_device()
 	
 	# Load GLSL shader
 	var shader_file = load("res://ray_tracer.comp.glsl")
@@ -101,30 +115,18 @@ func _ready():
 	
 	# Create a compute pipeline
 	pipeline = rd.compute_pipeline_create(shader)
-	
-	# Load scene with spheres
-	#scene = PTScene.load_scene("res://sphere_scene1.txt")
-	scene = PTScene.new()
-	scene.create_random_scene(0)
-	
-	scene.create_BVH()
-	
-	render_width = scene.camera.render_width
-	render_height = scene.camera.render_height
-	
-	# Set data buffers
+
+
+func create_buffers():
+	"""Creates and binds buffers to RenderDevice"""
 	# The image buffer used in compute and fragment shader
 	image_buffer = _create_image_buffer()
 	
-	# Render dimensions
-	var size_bytes := PackedInt32Array([render_width, render_height]).to_byte_array()
-	var _size_buffer = _create_uniform(size_bytes, rd, image_set_index, image_size_bind)
-	
 	# Camera data
-	camera_buffer = _create_uniform(scene.camera.to_byte_array(), rd, camera_set_index, 
+	camera_buffer = _create_uniform(_scene.camera.to_byte_array(), rd, camera_set_index, 
 	camera_bind)
 	
-	LOD_buffer = _create_uniform(lod_byte_array(), rd, camera_set_index, 
+	LOD_buffer = _create_uniform(_lod_byte_array(), rd, camera_set_index, 
 	LOD_bind)
 	
 	# List of materials
@@ -138,7 +140,7 @@ func _ready():
 	plane_buffer = _create_uniform(_create_planes(), rd, object_set_index, 
 	planes_bind)
 	
-	BVH_buffer = _create_uniform(scene.BVHTree.to_byte_array(), rd, 
+	BVH_buffer = _create_uniform(_scene.BVHTree.to_byte_array(), rd, 
 	BVH_set_index, BVH_bind)
 	
 	flags_buffer = _create_uniform(_create_flags(), rd, external_set_index, 
@@ -164,19 +166,22 @@ func _ready():
 	external_set = rd.uniform_set_create(flags_uniforms, shader, external_set_index)
 	
 	# Set texture RID for Canvas
-	var canvas = get_node("/root/Node3D/Camera3D/Canvas")
-	var material = canvas.get_mesh().surface_get_material(0)
+	var material = _renderer.canvas.get_mesh().surface_get_material(0)
 	
 	texture = material.get_shader_parameter("image_buffer")
 	texture.texture_rd_rid = image_buffer
 	
 
-func _process(delta):
-	scene.camera._process(delta)
+func _process(delta):	
+	## Update push constants when implented
 	
+	## Move outside
+	if _scene.camera.camera_changed:
+		var new_bytes = _scene.camera.to_byte_array()
+		rd.buffer_update(camera_buffer, 0, new_bytes.size(), new_bytes)
+		_scene.camera.camera_changed = false
 	
 	var time = PackedFloat32Array([Time.get_ticks_msec() / 1000.]).to_byte_array()
-	#print()
 	rd.buffer_update(random_buffer, 0, time.size(), time)
 	
 	# TODO: Make loading bar
@@ -187,31 +192,33 @@ func _process(delta):
 		samples_per_pixel = 80
 		max_default_depth = 16
 		max_refraction_bounces = 16
-		rd.buffer_update(LOD_buffer, 0, lod_byte_array().size(), lod_byte_array())
+		rd.buffer_update(LOD_buffer, 0, _lod_byte_array().size(), _lod_byte_array())
 		
-		is_taking_picture = true
-		is_rendering = false
+		## Currently disabled
+		#is_taking_picture = true
+		#is_rendering = false
 		_image_render_start = Time.get_ticks_msec()
 		
 	# Don't send work when window is not focused
-	if get_window().has_focus() and is_rendering:
-		_create_compute_list(ceil(render_width / 8.), ceil(render_height / 8.), 1)
+	if get_window() != null: # For some reason get_window can return null
+		if get_window().has_focus() and is_rendering:
+			create_compute_list()
 		
-	
 	if is_taking_picture:
 		render_image()
 
-func _input(event):
-	scene.camera._input(event)
-	
 
 func _exit_tree():
+	#if is_local_renderer:
 	var image = rd.texture_get_data(image_buffer, 0)
 	var new_image = Image.create_from_data(render_width, render_height, false,
 										   Image.FORMAT_RGBAF, image)
 										
 	new_image.save_png("temp.png")
 	
+	free_RIDs()
+
+func free_RIDs():
 	# I don't understand garbage collection. Maybe this helps idk
 	if texture:
 		texture.texture_rd_rid = RID()
@@ -226,19 +233,11 @@ func _exit_tree():
 		rd.free_rid(rid)
 
 
-func _create_compute_list(x, y, z):
+func create_compute_list(x := work_group_x, y := work_group_y, z := work_group_z):
 	""" Creates the compute list required for every compute call 
 	
-	Requires workgroup coordinates to be given
+	Requires workgroup coordinates to be given in an array or vector
 	"""
-	
-	## Move outside
-	if scene.camera.camera_changed:
-		var new_bytes = scene.camera.to_byte_array()
-		rd.buffer_update(camera_buffer, 0, new_bytes.size(), new_bytes)
-		scene.camera.camera_changed = false
-	
-	#_update_sphere()
 	
 	var compute_list = rd.compute_list_begin()
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
@@ -256,6 +255,21 @@ func _create_compute_list(x, y, z):
 	# Sync is not required when using main RenderingDevice
 	rd.compute_list_end()
 	
+	if is_local_renderer:
+		rd.submit()
+		rd.sync()
+	
+
+func set_scene(scene : PTScene):
+	"""set this this PTWorkDispatcher to use specified scene data"""
+	_scene = scene
+	
+	render_width = _scene.camera.render_width
+	render_height = _scene.camera.render_height
+	work_group_x = ceil(render_width / 8.)
+	work_group_y = ceil(render_height / 8.)
+	work_group_z = 1
+
 
 func render_image():
 	"""Render image over time, possibly needed to be called multiple times"""
@@ -265,7 +279,7 @@ func render_image():
 	var finished_render = false
 	
 	
-	_create_compute_list(ceil(render_width / 8.), ceil(render_height / 8.), 1)
+	create_compute_list()
 	
 	# CPU waits for texture data to be ready.
 	var before_render = Time.get_ticks_msec()
@@ -297,7 +311,7 @@ func render_image():
 		samples_per_pixel = 1
 		max_default_depth = 8
 		max_refraction_bounces = 8
-		rd.buffer_update(LOD_buffer, 0, lod_byte_array().size(), lod_byte_array())
+		rd.buffer_update(LOD_buffer, 0, _lod_byte_array().size(), _lod_byte_array())
 		
 		is_rendering = true
 		is_taking_picture = false
@@ -335,10 +349,12 @@ func _create_image_buffer():
 		RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT + 
 		RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT +
 		RenderingDevice.TEXTURE_USAGE_STORAGE_BIT +
-		RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT +
-		# Remove bit for increased performance
-		RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT 
+		RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT 
+		# Remove bit for increased performance, have to add readonly to shader buffer
+		+ RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
 	)
+	#if is_local_renderer:
+		#tf.usage_bits += RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT 
 	
 	var new_image_buffer = rd.texture_create(tf, RDTextureView.new(), [])
 	
@@ -354,8 +370,8 @@ func _create_image_buffer():
 
 func _create_spheres():
 	var bytes = PackedByteArray()
-	if scene.objects[PTObject.OBJECT_TYPE.SPHERE].size():
-		for sphere in scene.objects[PTObject.OBJECT_TYPE.SPHERE]:
+	if _scene.objects[PTObject.OBJECT_TYPE.SPHERE].size():
+		for sphere in _scene.objects[PTObject.OBJECT_TYPE.SPHERE]:
 			bytes += sphere.to_byte_array()
 	else:
 		bytes = PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
@@ -365,8 +381,8 @@ func _create_spheres():
 
 func _create_planes():
 	var bytes = PackedByteArray()
-	if scene.objects[PTObject.OBJECT_TYPE.PLANE].size():
-		for plane in scene.objects[PTObject.OBJECT_TYPE.PLANE]:
+	if _scene.objects[PTObject.OBJECT_TYPE.PLANE].size():
+		for plane in _scene.objects[PTObject.OBJECT_TYPE.PLANE]:
 			bytes += plane.to_byte_array()
 	else:
 		bytes = PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
@@ -376,8 +392,8 @@ func _create_planes():
 
 func _create_materials():
 	var bytes = PackedByteArray()
-	if scene.materials:
-		for material in scene.materials:
+	if _scene.materials:
+		for material in _scene.materials:
 			bytes += material.to_byte_array()
 			
 	return bytes
@@ -389,15 +405,16 @@ func _create_flags():
 
 
 func _update_sphere():
-	var sphere = scene.objects[PTObject.OBJECT_TYPE.SPHERE][0]
+	var sphere = _scene.objects[PTObject.OBJECT_TYPE.SPHERE][0]
 	sphere.center.x = sin(Time.get_ticks_msec() / 1000.)
 	var bytes = sphere.to_byte_array()
 	
 	rd.buffer_update(sphere_buffer, 0, bytes.size(), bytes)
 	
 
-func lod_byte_array():
-	var lod_array = [samples_per_pixel, max_default_depth, max_refraction_bounces]
+func _lod_byte_array():
+	var lod_array = [render_width, render_height, samples_per_pixel, 
+					 max_default_depth, max_refraction_bounces]
 	return PackedInt32Array(lod_array).to_byte_array()
 
 
