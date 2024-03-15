@@ -7,3 +7,6 @@ res://proprietary_dataclasses/PTCamera.gd
 res://3DPrimitives/PTPlane.gd
 res://proprietary_dataclasses/PTObject.gd
 res://main/New_main_scene.tscn
+res://proprietary_dataclasses/PTRenderer.gd
+res://proprietary_dataclasses/RayTracer.gd
+res://main/PTSceneInstance.gd

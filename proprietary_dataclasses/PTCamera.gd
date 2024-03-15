@@ -19,6 +19,7 @@ var render_height := int(render_width / aspect_ratio)
 var focal_length := 1.
 var hfov := 106. # In degrees
 var vfov := hfov / aspect_ratio
+var gamma = 1. / 2.2
 
 # Viewport is the physical surface through which rays are initially cast 
 var viewport_width : float
@@ -123,10 +124,10 @@ func vec2array(vector):
 
 
 func to_byte_array():
-	var camera_array = (vec2array(camera_pos) + 
-						[focal_length] + vec2array(right) + 
-						[viewport_width] + vec2array(up) + 
-						[viewport_height] + vec2array(forward))
+	var camera_array = (vec2array(camera_pos) + [focal_length] + 
+						vec2array(right) + [viewport_width] + 
+						vec2array(up) + [viewport_height] + 
+						vec2array(forward) + [gamma])
 	
 	return (PackedFloat32Array(camera_array).to_byte_array())
 	

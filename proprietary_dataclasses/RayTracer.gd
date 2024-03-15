@@ -27,8 +27,8 @@ var image_buffer_bind := 0
 var image_size_bind := 1
 
 var camera_set_index := 1
-var camera_bind := 0
-var LOD_bind := 1 # For sample per pixel, bounce depth etc.
+#var camera_bind := 0 # Depricated
+var LOD_bind := 0 # For sample per pixel, bounce depth etc.
 
 var object_set_index := 2
 var materials_bind := 0
@@ -41,7 +41,6 @@ var BVH_bind := 0
 # For external messages like time and render mode flags
 var external_set_index := 4
 var flags_bind := 0
-var random_bind := 1
 
 # Set RIDs
 var image_set : RID
@@ -69,6 +68,7 @@ var random_buffer : RID
 var render_width : int
 var render_height : int
 
+# Move to Renderer
 var samples_per_pixel = 1
 var max_default_depth = 8
 var max_refraction_bounces = 8 
@@ -76,7 +76,7 @@ var max_refraction_bounces = 8
 var is_rendering = true
 var is_taking_picture = false
 
-
+# Temp
 var _image_render_time := 0
 var _image_render_start
 
@@ -92,7 +92,6 @@ var is_local_renderer
 var work_group_x : int
 var work_group_y : int
 var work_group_z : int
-var work_group_dimensions = []
 
 var _renderer
 
@@ -122,10 +121,6 @@ func create_buffers():
 	# The image buffer used in compute and fragment shader
 	image_buffer = _create_image_buffer()
 	
-	# Camera data
-	camera_buffer = _create_uniform(_scene.camera.to_byte_array(), rd, camera_set_index, 
-	camera_bind)
-	
 	LOD_buffer = _create_uniform(_lod_byte_array(), rd, camera_set_index, 
 	LOD_bind)
 	
@@ -145,10 +140,6 @@ func create_buffers():
 	
 	flags_buffer = _create_uniform(_create_flags(), rd, external_set_index, 
 	flags_bind)
-	
-	var time = PackedFloat32Array([Time.get_ticks_msec() / 1000.]).to_byte_array()
-	random_buffer = _create_uniform(time, rd, external_set_index, 
-	random_bind)
 	
 	# Bind uniforms and sets
 	# Get uniforms
@@ -172,18 +163,7 @@ func create_buffers():
 	texture.texture_rd_rid = image_buffer
 	
 
-func _process(delta):	
-	## Update push constants when implented
-	
-	## Move outside
-	if _scene.camera.camera_changed:
-		var new_bytes = _scene.camera.to_byte_array()
-		rd.buffer_update(camera_buffer, 0, new_bytes.size(), new_bytes)
-		_scene.camera.camera_changed = false
-	
-	var time = PackedFloat32Array([Time.get_ticks_msec() / 1000.]).to_byte_array()
-	rd.buffer_update(random_buffer, 0, time.size(), time)
-	
+func _process(delta):
 	# TODO: Make loading bar
 	# TODO: MAke able to take images with long render time
 	# Takes picture
@@ -239,6 +219,8 @@ func create_compute_list(x := work_group_x, y := work_group_y, z := work_group_z
 	Requires workgroup coordinates to be given in an array or vector
 	"""
 	
+	var push_bytes = _push_constant_byte_array()
+	
 	var compute_list = rd.compute_list_begin()
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
 	
@@ -248,6 +230,7 @@ func create_compute_list(x := work_group_x, y := work_group_y, z := work_group_z
 	rd.compute_list_bind_uniform_set(compute_list, object_set, object_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, BVH_set, BVH_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, external_set, external_set_index)
+	rd.compute_list_set_push_constant(compute_list, push_bytes, push_bytes.size())
 	
 	rd.capture_timestamp("Render Scene")
 	rd.compute_list_dispatch(compute_list, x, y, z)
@@ -417,5 +400,16 @@ func _lod_byte_array():
 					 max_default_depth, max_refraction_bounces]
 	return PackedInt32Array(lod_array).to_byte_array()
 
+
+func _push_constant_byte_array():
+	var bytes = PackedByteArray()
+	
+	bytes += _scene.camera.to_byte_array()
+	bytes += PackedFloat32Array([Time.get_ticks_msec() / 1000.]).to_byte_array()
+	
+	# Filler
+	bytes += PackedFloat32Array([0,0,0]).to_byte_array()
+	
+	return bytes
 
 

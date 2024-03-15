@@ -104,6 +104,18 @@ float random_number;
 
 // DATATYPES
 // =========
+struct Camera {
+    vec3 pos;
+    float focal_length;
+    vec3 right;
+    float viewport_width;
+    vec3 up;
+    float viewport_height;
+    vec3 forward;
+    float gamma;
+};
+
+
 struct Ray {
     vec3 origin;
     vec3 direction;
@@ -162,7 +174,6 @@ struct RayHit {
     vec3 point; // Intersection point between sphere and ray
     vec3 normal;
     vec4 color; // Whatever color the rayhit is determined to be 
-
 };
 
 struct Range {
@@ -199,7 +210,6 @@ struct BVHNode {
     int self; // Index to self in the BVH list, -1 means the node position is not finalized
     // -2 means BVHNode doesn't exist. This value is currently unused.
     int filler;
-
 };
 
 
@@ -207,67 +217,43 @@ struct BVHNode {
 // =======
 layout(r32f, set = 0, binding = 0) uniform restrict image2D output_image;
 
-// Camera
-layout(set = 1, binding = 0, std430) restrict readonly buffer CameraBuffer {
-    vec3 pos;
-    float focal_length;
-    vec3 right;
-    float viewport_width;
-    vec3 up;
-    float viewport_height;
-    vec3 forward;
-    float filler1;
-}
-camera;
-
-layout(set = 1, binding = 1, std430) restrict readonly buffer LODBuffer {
+layout(set = 1, binding = 0, std430) restrict readonly buffer LODBuffer {
     int width;
     int height;
     int samples_per_pixel; // How many rays are sent per pixel
     int max_default_depth; // How many bounces is sampled, for normal rays
     int max_refraction_bounces; // How many total extra bounces can occur on refraction
-}
-LOD;
+} LOD;
 
 // Materials to index
 layout(set = 2, binding = 0, std430) restrict readonly buffer MaterialBuffer {
     Material data[];
-}
-materials;
+} materials;
 
 // Objects
 layout(set = 2, binding = 1, std430) restrict readonly buffer SpheresBuffer {
     Sphere data[];
-}
-spheres;
+} spheres;
 
 layout(set = 2, binding = 2, std430) restrict readonly buffer PlanesBuffer {
     Plane data[];
-}
-planes;
+} planes;
 
 // BVH tree in list form
 layout(set = 3, binding = 0, std430) restrict readonly buffer BVH_List {
     BVHNode list[];
-}
-BVH;
+} BVH;
 
 layout(set = 4, binding = 0, std430) restrict readonly buffer FlagBuffer {
     bool use_bvh;
     bool show_bvh_depth;
     bool scene_changed;
-}
-flags;
+} flags;
 
-layout(set = 4, binding = 1, std430) restrict buffer RandomBuffer {
+layout(push_constant, std430) uniform constants {
+    Camera camera;
     float time;
-}
-random;
-
-// Will implement push constants later
-// layout(push_constant) uniform constants {
-//     int temop;
-// } constaeene;
+} push;
 
 // UTILITY FUNCTIONS
 // =================
@@ -854,15 +840,15 @@ void main() {
     const float height = float(LOD.height);
 
     // Calculate the vectors across the horizontal and down the vertical viewport edges.
-    const vec3 viewport_u = camera.right * camera.viewport_width;
-    const vec3 viewport_v = -camera.up * camera.viewport_height;
+    const vec3 viewport_u = push.camera.right * push.camera.viewport_width;
+    const vec3 viewport_v = -push.camera.up * push.camera.viewport_height;
 
     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
     const vec3 pixel_delta_u = viewport_u / width;
     const vec3 pixel_delta_v = viewport_v / height;
 
     // Calculate the location of the upper left pixel.
-    const vec3 viewport_upper_left = camera.pos - camera.forward * camera.focal_length -
+    const vec3 viewport_upper_left = push.camera.pos - push.camera.forward * push.camera.focal_length -
                                      (viewport_u + viewport_v) / 2.;
 
     const vec3 pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
@@ -880,10 +866,10 @@ void main() {
     float circle_step = 2 * pi / float(LOD.samples_per_pixel);
     for (int i = 0; i < LOD.samples_per_pixel; ++i) {
         float temp = fract(float(i) / float(LOD.samples_per_pixel));
-        vec3 circular_offset = pixel_delta_u / 2 * cos(float(i) * circle_step) * rand(float(random.time)) + 
-                               pixel_delta_v / 2 * sin(float(i) * circle_step) * rand(float(random.time));
-        vec3 ray_direction = pixel_center - camera.pos + circular_offset;
-        Ray ray = Ray(camera.pos, ray_direction);
+        vec3 circular_offset = pixel_delta_u / 2 * cos(float(i) * circle_step) * rand(float(push.time)) + 
+                               pixel_delta_v / 2 * sin(float(i) * circle_step) * rand(float(push.time));
+        vec3 ray_direction = pixel_center - push.camera.pos + circular_offset;
+        Ray ray = Ray(push.camera.pos, ray_direction);
 
         new_color += cast_ray(ray, Range(0.001, infinity));
     }

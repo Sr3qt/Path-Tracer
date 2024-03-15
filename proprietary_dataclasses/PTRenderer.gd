@@ -2,7 +2,10 @@ extends Node
 
 class_name PTRenderer
 
-"""This node should be the root node of a scene with PTScene object added as a child
+"""This node should be the root node of a scene with PTScene object added as a child.
+
+This node has the responsibility to take render settings and pass them to 
+a the correct PTWorkDispatcher, wich will actually make the gpu render an image.
 
 
 TODO: Add way to change certain values in shader programatically, like 

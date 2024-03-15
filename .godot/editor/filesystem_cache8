@@ -1,9 +1,9 @@
 ea4bc82a6ad023ab7ee23ee620429895
-::res://::1710526286
+::res://::1710528794
 BVH ALgorithms to consider.txt::TextFile::-1::1709719673::0::1::::<><>::
-canvas.gdshader::Shader::-1::1710526207::0::1::::<><>::
+canvas.gdshader::Shader::-1::1710528794::0::1::::<><>::
 icon.svg::CompressedTexture2D::635493465185222049::1707753016::1707753022::1::::<><>::
-ray_tracer.comp.glsl::RDShaderFile::6483268740974836562::1710526346::1710526356::1::::<><>::
+ray_tracer.comp.glsl::RDShaderFile::6483268740974836562::1710528813::1710528815::1::::<><>::
 sources.md::TextFile::-1::1710253833::0::1::::<><>::
 temp1.png::CompressedTexture2D::2180594402614646315::1710245258::1710245262::1::::<><>::
 temp.png::CompressedTexture2D::2600331286290737687::1710521584::1710521584::1::::<><>::
@@ -14,20 +14,20 @@ PTSphere.gd::GDScript::-1::1710261919::0::1::::PTSphere<>PTPrimitive3D<>::
 ::res://archive/::1709122462
 ray_tracer_after_weekend.comp.glsl::RDShaderFile::8213333610431927994::1709122423::1709122462::1::::<><>::
 weekend_result.png::CompressedTexture2D::2691186884518514632::1709115036::1709115039::1::::<><>::
-::res://main/::1710526286
-New_main_scene.tscn::PackedScene::9131069116005758690::1710526207::0::1::::<><>::res://proprietary_dataclasses/PTRenderer.gd<>res://main/PTSceneInstance.gd<>res://proprietary_dataclasses/PTCamera.gd<>res://canvas.gdshader<>uid://bdbvcujyyuudb::::res://temp.png
-PTSceneInstance.gd::GDScript::-1::1710525706::0::1::::<>PTScene<>::
+::res://main/::1710528794
+New_main_scene.tscn::PackedScene::9131069116005758690::1710528794::0::1::::<><>::res://proprietary_dataclasses/PTRenderer.gd<>res://main/PTSceneInstance.gd<>res://proprietary_dataclasses/PTCamera.gd<>res://canvas.gdshader<>uid://bdbvcujyyuudb::::res://temp.png
+PTSceneInstance.gd::GDScript::-1::1710527857::0::1::::<>PTScene<>::
 sphere_scene1.txt::TextFile::-1::1710263036::0::1::::<><>::
 sphere_scene3.txt::TextFile::-1::1710266504::0::1::::<><>::
-::res://proprietary_dataclasses/::1710526207
+::res://proprietary_dataclasses/::1710528793
 PTAABB.gd::GDScript::-1::1710507112::0::1::::PTAABB<>Node<>::
 PTBVH.gd::GDScript::-1::1710507659::0::1::::PTBVHTree<>Node<>::
-PTCamera.gd::GDScript::-1::1710525935::0::1::::PTCamera<>Node<>::
+PTCamera.gd::GDScript::-1::1710528015::0::1::::PTCamera<>Node<>::
 PTMaterial.gd::GDScript::-1::1710507112::0::1::::PTMaterial<>Node<>::
 PTObject.gd::GDScript::-1::1710525734::0::1::::PTObject<>Node<>::
-PTRenderer.gd::GDScript::-1::1710525549::0::1::::PTRenderer<>Node<>::
+PTRenderer.gd::GDScript::-1::1710527505::0::1::::PTRenderer<>Node<>::
 PTScene.gd::GDScript::-1::1710507112::0::1::::PTScene<>Node<>::
-RayTracer.gd::GDScript::-1::1710525635::0::1::::PTWorkDispatcher<>Node<>::
+RayTracer.gd::GDScript::-1::1710528793::0::1::::PTWorkDispatcher<>Node<>::
 ::res://renders/::1710245352
 fuzzed metal replica.png::CompressedTexture2D::2297104140935327355::1709995135::1709995142::1::::<><>::
 hollow glass sphere replica.png::CompressedTexture2D::3641772424507093914::1709998751::1709998753::1::::<><>::
