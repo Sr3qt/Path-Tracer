@@ -75,7 +75,7 @@ const int is_sphere = 1;
 const int is_plane = 2;
 
 // BVH child_index enum
-const int is_BVHNode = 1;
+// const int is_BVHNode = 1;
 
 // The program will keep track of which objects a ray is inside of to do correct calculations
 //  i.e. IOR tracking
@@ -88,11 +88,8 @@ ivec3 inside_of[max_depth_inside];
 const float IOR_air = 1.0;
 float current_IOR = IOR_air;
 
-// TODO: Move to uniform
-const float gammma = 1 / 2.2;
-
 const vec4 default_color = vec4(0.7, 0.7, 0.9, 1);
-const int max_depth = 64; // How many bounces is sampled at the most, preferrably multiple of 64
+const int max_depth = 64 * 4; // Length of rayhits to visit stack in BVH 
 
 int refraction_bounces = 0; // Counts the number of times a ray has refracted
 
@@ -610,7 +607,7 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
 
     // Stack of indices of nodes yet to traverse
     // NOTE: might need to be bigger for larger scenes and/or with higher order trees
-    int to_visit[512];
+    int to_visit[max_depth];
     // Index to top of the stack, points to vacant spot ABOVE the stack
     int to_visit_i = 0;
 
@@ -623,6 +620,9 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
 
     int hit_check_count = 0;
     while (true) {
+        if (current_index >= max_depth) {
+            break;
+        }
         BVHNode node = BVH.list[current_index];
 
         hit_check_count++;
@@ -876,7 +876,7 @@ void main() {
     new_color = new_color / LOD.samples_per_pixel;
 
     // Apply gamma correction
-    new_color.rgb = pow(new_color.rgb, vec3(gammma, gammma, gammma));
+    new_color.rgb = pow(new_color.rgb, vec3(push.camera.gamma));
 
     if (flags.scene_changed) {
         imageStore(output_image, UVi.xy, new_color);

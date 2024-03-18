@@ -30,6 +30,14 @@ static var OBJECT_TYPE = PTObject.OBJECT_TYPE
 # Enum of different possible BVH algorithms
 enum BVH_TYPE {DEFAULT}
 
+# Temp
+enum camera_setting {top_down, corner, book_ex}
+var camera_settings = {
+	camera_setting.top_down : [Vector3(0, 8, -15), Vector3(0,0,-6), 106.],
+	camera_setting.corner : [Vector3(-11, 3, -11), Vector3(0,0,0), 106.],
+	camera_setting.book_ex : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.],
+}
+
 func _init(
 	object_dict_ = {}, 
 	materials_ : Array[PTMaterial] = [], 
@@ -154,6 +162,16 @@ func create_BVH(type : BVH_TYPE = BVH_TYPE.DEFAULT):
 		BVH_TYPE.DEFAULT:
 			BVHTree = PTBVHTree.new()
 			BVHTree.create_BVH_List(self)
+
+func set_camera_setting(cam : camera_setting):
+	var temp = camera_settings[cam]
+	
+	camera.camera_pos = temp[0]
+	
+	camera.look_at(temp[1])
+	
+	camera.hfov = temp[2]
+	camera.set_viewport_size()
 
 
 func create_random_scene(seed):

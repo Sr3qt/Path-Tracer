@@ -1,12 +1,6 @@
-res://New_main_scene.tscn
-res://canvas.gdshader
-res://PTRenderer.gd
-res://RayTracer.gd
-res://PTSceneInstance.gd
-res://proprietary_dataclasses/PTCamera.gd
-res://3DPrimitives/PTPlane.gd
-res://proprietary_dataclasses/PTObject.gd
 res://main/New_main_scene.tscn
+res://canvas.gdshader
 res://proprietary_dataclasses/PTRenderer.gd
-res://proprietary_dataclasses/RayTracer.gd
 res://main/PTSceneInstance.gd
+res://proprietary_dataclasses/PTScene.gd
+res://proprietary_dataclasses/RayTracer.gd

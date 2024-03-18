@@ -82,7 +82,7 @@ var _image_render_start
 
 # Flags
 var use_bvh := true
-var show_bvh_depth := false
+var show_bvh_depth := false # TODO FIX this
 
 var scene_changed := true
 
