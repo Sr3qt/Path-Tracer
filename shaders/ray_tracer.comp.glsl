@@ -1,4 +1,3 @@
-#[compute]
 #version 450
 
 // Made by following the "Ray Tracing in One Weekend Series"
@@ -63,7 +62,6 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 // CONSTANTS
 // =========
-
 const float infinity = 1. / 0.;
 const double pi_double = 3.1415926535897932385;
 const float pi = 3.1415926535897932385;
@@ -89,12 +87,12 @@ const float IOR_air = 1.0;
 float current_IOR = IOR_air;
 
 const vec4 default_color = vec4(0.7, 0.7, 0.9, 1);
-const int max_depth = 64 * 4; // Length of rayhits to visit stack in BVH 
+const int max_depth = 64 * 3; // Length of rayhits to visit stack in BVH 
 
 int refraction_bounces = 0; // Counts the number of times a ray has refracted
 
 // Maximum number of children a BVHNode can have
-const int max_children = 16;
+const int max_children = 2; // Replaced by script preprocessor, do NOT touch this line
 const int filler_const = int(mod(max_children, 2) + 2.) * 2; 
 
 float random_number;
@@ -212,7 +210,7 @@ struct BVHNode {
 
 // BUFFERS
 // =======
-layout(r32f, set = 0, binding = 0) uniform restrict image2D output_image;
+layout(rgba32f, set = 0, binding = 0) uniform restrict image2D output_image;
 
 layout(set = 1, binding = 0, std430) restrict readonly buffer LODBuffer {
     int width;
@@ -247,7 +245,7 @@ layout(set = 4, binding = 0, std430) restrict readonly buffer FlagBuffer {
     bool scene_changed;
 } flags;
 
-layout(push_constant, std430) uniform constants {
+layout(push_constant, std430) restrict readonly uniform constants {
     Camera camera;
     float time;
 } push;

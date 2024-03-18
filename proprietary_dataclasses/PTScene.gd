@@ -157,10 +157,10 @@ static func load_scene(path : String):
 	return PTScene.new(objects_dict, mtl_list)
 
 
-func create_BVH(type : BVH_TYPE = BVH_TYPE.DEFAULT):
+func create_BVH(max_children = 2, type : BVH_TYPE = BVH_TYPE.DEFAULT):
 	match type:
 		BVH_TYPE.DEFAULT:
-			BVHTree = PTBVHTree.new()
+			BVHTree = PTBVHTree.new(max_children)
 			BVHTree.create_BVH_List(self)
 
 func set_camera_setting(cam : camera_setting):

@@ -18,14 +18,15 @@ var objects_dict
 var BVH_list : Array[BVHNode] = []
 var _index := 0 # Used to keep track of index when creating BVH_list
 
-var max_children := 16
+var max_children : int
 
 var leaf_count : int # Counts nodes with no child nodes
 var inner_count : int # Counts nodes with child nodes, including root node
 var object_count : int # Counts the number of objects stored in leaf nodes
 
 
-func _init():
+func _init(max_children_ = 2):
+	max_children = max_children_
 	root_node = BVHNode.new(null, self)
 	root_node.aabb = PTAABB.new()
 	inner_count += 1
@@ -136,6 +137,17 @@ func size():
 	"""Returns the total bumber of nodes in the tree"""
 	return inner_count + leaf_count
 	
+
+func depth():
+	"""Returns the length of the longest path from the root to a leaf node"""
+	var counter = 0
+	var current_node = root_node
+	# The default tree is created in a way in which the longest path will be
+	#	along the first indices of each node
+	while !current_node.is_leaf:
+		current_node = current_node.children[0]
+		counter += 1
+	return counter
 
 func to_byte_array():
 	var bytes = PackedByteArray()

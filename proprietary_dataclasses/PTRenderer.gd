@@ -1,3 +1,4 @@
+
 extends Node
 
 
@@ -23,6 +24,8 @@ var canvas : MeshInstance3D
 # A scene with objects and a camera node
 var scene : PTScene
 
+var bvh_max_children := 8
+
 
 func _enter_tree():
 	rtwd = PTWorkDispatcher.new(self)
@@ -39,7 +42,7 @@ func _ready():
 	
 	# Prepare canvas shader
 	var mat = ShaderMaterial.new()
-	mat.shader = load("res://canvas.gdshader")
+	mat.shader = load("res://shaders/canvas.gdshader")
 	mat.set_shader_parameter("image_buffer", Texture2DRD.new())
 	#mat.set_shader_parameter("preview_image_buffer", ImageTexture.new())
 	
@@ -52,9 +55,14 @@ func _ready():
 	
 	scene = get_node("PTScene") # Is this the best way to get Scene node?
 	
+	scene.create_BVH(bvh_max_children)
+	
 	rtwd.set_scene(scene)
 	
+	load_shader()
+	
 	rtwd.create_buffers()
+	
 
 
 func _process(delta):
@@ -64,7 +72,19 @@ func _process(delta):
 		rtwd.create_compute_list()
 
 
-func change_file():
-	var file = FileAccess.open("res://ray_tracer.comp.glsl", FileAccess.READ_WRITE)
+func load_shader():
+	var file := FileAccess.open("res://shaders/ray_tracer.comp.glsl", 
+	FileAccess.READ_WRITE)
+	var text = file.get_as_text()
+	file.close()
 	
+	# Do changes
+	text = text.replace("const int max_children = 2;", 
+	"const int max_children = %s;" % bvh_max_children)
+
+	# Set shader
+	var shader = RDShaderSource.new()
+	shader.source_compute = text
+	
+	rtwd.load_shader(shader)
 	

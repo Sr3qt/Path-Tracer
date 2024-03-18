@@ -1,8 +1,25 @@
-[gd_scene load_steps=4 format=3 uid="uid://d3dfmywq1wbly"]
+[gd_scene load_steps=9 format=3 uid="uid://d3dfmywq1wbly"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/PTRenderer.gd" id="1_c80yu"]
 [ext_resource type="Script" path="res://main/PTSceneInstance.gd" id="2_gan7o"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/PTCamera.gd" id="3_i3qtc"]
+[ext_resource type="Shader" path="res://shaders/canvas.gdshader" id="4_2ftiq"]
+[ext_resource type="Texture2D" uid="uid://bdbvcujyyuudb" path="res://temp.png" id="5_5weid"]
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_2mxip"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tnndh"]
+render_priority = 0
+shader = ExtResource("4_2ftiq")
+shader_parameter/width = 64.0
+shader_parameter/height = 36.0
+shader_parameter/scale = 16.0
+shader_parameter/image_buffer = SubResource("PlaceholderTexture2D_2mxip")
+shader_parameter/preview_image_buffer = ExtResource("5_5weid")
+
+[sub_resource type="QuadMesh" id="QuadMesh_lfpsb"]
+material = SubResource("ShaderMaterial_tnndh")
+size = Vector2(2, 2)
 
 [node name="NewNode3D" type="Node3D"]
 
@@ -14,3 +31,6 @@ script = ExtResource("2_gan7o")
 
 [node name="PTCamera" type="Node" parent="SceneRenderer/PTScene"]
 script = ExtResource("3_i3qtc")
+
+[node name="Preview" type="MeshInstance3D" parent="."]
+mesh = SubResource("QuadMesh_lfpsb")

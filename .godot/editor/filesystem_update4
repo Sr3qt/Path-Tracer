@@ -1,6 +1,4 @@
 res://main/New_main_scene.tscn
-res://canvas.gdshader
-res://proprietary_dataclasses/PTRenderer.gd
-res://main/PTSceneInstance.gd
-res://proprietary_dataclasses/PTScene.gd
+res://shaders/canvas.gdshader
 res://proprietary_dataclasses/RayTracer.gd
+res://proprietary_dataclasses/PTRenderer.gd

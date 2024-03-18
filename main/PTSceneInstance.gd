@@ -1,3 +1,4 @@
+
 extends PTScene
 
 
@@ -13,6 +14,5 @@ func _ready():
 	
 	set_camera_setting(camera_setting.top_down)
 	
-	create_BVH()
 	
 	

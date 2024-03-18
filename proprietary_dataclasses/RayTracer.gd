@@ -1,3 +1,4 @@
+
 extends Node
 # Can potentially be Refcounted
 
@@ -84,7 +85,7 @@ var _image_render_start
 var use_bvh := true
 var show_bvh_depth := false # TODO FIX this
 
-var scene_changed := true
+var scene_changed := !true
 
 # Whether this instance is using a local RenderDevice
 var is_local_renderer
@@ -105,15 +106,6 @@ func _init(renderer : PTRenderer, is_local = false):
 		# Holy merge clutch https://github.com/godotengine/godot/pull/79288 
 		# RenderingDevice for realtime rendering
 		rd = RenderingServer.get_rendering_device()
-	
-	# Load GLSL shader
-	var shader_file = load("res://ray_tracer.comp.glsl")
-	var shader_spirv: RDShaderSPIRV = shader_file.get_spirv()
-	shader = rd.shader_create_from_spirv(shader_spirv)
-	RIDs_to_free.append(shader)
-	
-	# Create a compute pipeline
-	pipeline = rd.compute_pipeline_create(shader)
 
 
 func create_buffers():
@@ -252,6 +244,16 @@ func set_scene(scene : PTScene):
 	work_group_x = ceil(render_width / 8.)
 	work_group_y = ceil(render_height / 8.)
 	work_group_z = 1
+
+
+func load_shader(shader_ : RDShaderSource):
+	# Load GLSL shader
+	var shader_spirv: RDShaderSPIRV = rd.shader_compile_spirv_from_source(shader_)
+	shader = rd.shader_create_from_spirv(shader_spirv)
+	RIDs_to_free.append(shader)
+	
+	# Create a compute pipeline
+	pipeline = rd.compute_pipeline_create(shader)
 
 
 func render_image():
