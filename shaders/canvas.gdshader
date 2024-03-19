@@ -7,10 +7,7 @@ uniform sampler2D SCREEN_TEXTURE : hint_screen_texture, filter_linear_mipmap;
 uniform sampler2D image_buffer : filter_nearest;
 uniform sampler2D preview_image_buffer : filter_nearest, source_color;
 
-uniform float width = 64.;
-uniform float height = 36.;
-
-uniform float scale = 16.;
+uniform bool is_rendering = false;
 
 struct temp {
 	float h;
@@ -52,7 +49,7 @@ void fragment() {
 	float gamma1 = 2.2;
 	
 	// If showing default texture, swap with image preview
-	if (color.r == 1. && color.g == 0.0 && color.b == 1.) {
+	if (!is_rendering) {
 		color.rgb = pow(new_color.rgb, vec3(gamma, gamma, gamma));
 	} else {
 		color.rgb = pow(color.rgb, vec3(gamma1, gamma1, gamma1));

@@ -12,7 +12,7 @@ func _ready():
 	#materials = new_scene.materials
 	camera = get_child(0) # NOTE: Unsecure way to get Camera
 	
-	set_camera_setting(camera_setting.top_down)
+	set_camera_setting(camera_setting.corner)
 	
 	
 	

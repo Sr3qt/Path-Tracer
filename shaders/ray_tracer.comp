@@ -643,7 +643,7 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
         if (to_visit_i == 0) {break;}
         current_index = to_visit[--to_visit_i];
     }
-
+    
     hit_planes(ray, range, rayhit);
 
     // TODO ADD intersection with skybox, would still count as not hit
@@ -652,7 +652,9 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
     }
 
     if (flags.show_bvh_depth) {
-        rayhit.color = vec4(0.04 * float(hit_check_count),0,1,0);
+        float a = float(hit_check_count) / float(BVH.list.length() * 2);
+        float b = pow(a, 3.5);
+        rayhit.color = vec4(a,b,1,0);
     }
 
     return rayhit;

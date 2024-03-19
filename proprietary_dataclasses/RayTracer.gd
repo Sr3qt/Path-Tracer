@@ -113,25 +113,27 @@ func create_buffers():
 	# The image buffer used in compute and fragment shader
 	image_buffer = _create_image_buffer()
 	
-	LOD_buffer = _create_uniform(_lod_byte_array(), rd, camera_set_index, 
-	LOD_bind)
-	
+	LOD_buffer = _create_uniform(
+		_lod_byte_array(), rd, camera_set_index, LOD_bind
+	)
 	# List of materials
-	material_buffer = _create_uniform(_create_materials(), rd, object_set_index,
-	materials_bind)
-	
+	material_buffer = _create_uniform(
+		_create_materials(), rd, object_set_index, materials_bind
+	)
 	# One of the object lists, for spheres
-	sphere_buffer = _create_uniform(_create_spheres(), rd, object_set_index, 
-	spheres_bind)
+	sphere_buffer = _create_uniform(
+		_create_spheres(), rd, object_set_index, spheres_bind
+	)
 	# One of the object lists, for planes
-	plane_buffer = _create_uniform(_create_planes(), rd, object_set_index, 
-	planes_bind)
-	
-	BVH_buffer = _create_uniform(_scene.BVHTree.to_byte_array(), rd, 
-	BVH_set_index, BVH_bind)
-	
-	flags_buffer = _create_uniform(_create_flags(), rd, external_set_index, 
-	flags_bind)
+	plane_buffer = _create_uniform(
+		_create_planes(), rd, object_set_index, planes_bind
+	)
+	BVH_buffer = _create_uniform(
+		_scene.BVHTree.to_byte_array(), rd, BVH_set_index, BVH_bind
+	)
+	flags_buffer = _create_uniform(
+		_renderer.flags_to_byte_array(), rd, external_set_index, flags_bind
+	)
 	
 	# Bind uniforms and sets
 	# Get uniforms
@@ -248,6 +250,8 @@ func set_scene(scene : PTScene):
 
 func load_shader(shader_ : RDShaderSource):
 	# Load GLSL shader
+	# Was very annoying to find since this function is not mentioned anywhere
+	#	in RDShaderSource documentation wrrr
 	var shader_spirv: RDShaderSPIRV = rd.shader_compile_spirv_from_source(shader_)
 	shader = rd.shader_create_from_spirv(shader_spirv)
 	RIDs_to_free.append(shader)
@@ -382,11 +386,6 @@ func _create_materials():
 			bytes += material.to_byte_array()
 			
 	return bytes
-
-
-func _create_flags():
-	var flag_array = PackedInt32Array([use_bvh, show_bvh_depth, scene_changed])
-	return flag_array.to_byte_array()
 
 
 func _update_sphere():

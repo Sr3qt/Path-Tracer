@@ -27,6 +27,12 @@ var scene : PTScene
 var bvh_max_children := 8
 
 
+# Render Flags
+var use_bvh := true
+var show_bvh_depth := !false # TODO FIX this
+
+var scene_changed := true
+
 func _enter_tree():
 	rtwd = PTWorkDispatcher.new(self)
 
@@ -44,7 +50,6 @@ func _ready():
 	var mat = ShaderMaterial.new()
 	mat.shader = load("res://shaders/canvas.gdshader")
 	mat.set_shader_parameter("image_buffer", Texture2DRD.new())
-	#mat.set_shader_parameter("preview_image_buffer", ImageTexture.new())
 	
 	# Create a canvas to which rendered images will be drawn
 	canvas = MeshInstance3D.new()
@@ -70,10 +75,15 @@ func _process(delta):
 	
 	if rtwd.is_rendering:
 		rtwd.create_compute_list()
+		var mat = canvas.mesh.surface_get_material(0)
+		mat.set_shader_parameter("is_rendering", true)
+	else:
+		var mat = canvas.mesh.surface_get_material(0)
+		mat.set_shader_parameter("is_rendering", false)
 
 
 func load_shader():
-	var file := FileAccess.open("res://shaders/ray_tracer.comp.glsl", 
+	var file := FileAccess.open("res://shaders/ray_tracer.comp", 
 	FileAccess.READ_WRITE)
 	var text = file.get_as_text()
 	file.close()
@@ -88,3 +98,8 @@ func load_shader():
 	
 	rtwd.load_shader(shader)
 	
+
+
+func flags_to_byte_array():
+	var flag_array = PackedInt32Array([use_bvh, show_bvh_depth, scene_changed])
+	return flag_array.to_byte_array()
