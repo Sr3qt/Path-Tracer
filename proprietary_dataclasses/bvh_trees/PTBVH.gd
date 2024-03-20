@@ -4,10 +4,16 @@ extends Node
 ## Nice reading summary:
 ## https://hackmd.io/@zOZhMrk6TWqOaocQT3Oa0A/HJUqrveG5 
 
+## Also really good overview
+## https://meistdan.github.io/publications/bvh_star/paper.pdf 
+
+
 class_name PTBVHTree
 """ Base class for BVH trees. Inherit this object to make a specific 
 algorithmic implemention. 
 
+Such implementations should have a create_BVH function which creates the actual
+tree. Creation time and SAH score should also be recorded after creation.
 """
 
 var root_node : BVHNode
@@ -24,6 +30,8 @@ var leaf_count : int # Counts nodes with no child nodes
 var inner_count : int # Counts nodes with child nodes, including root node
 var object_count : int # Counts the number of objects stored in leaf nodes
 
+var creation_time : int # In usecs
+var SAH_cost : float
 
 func _init(max_children_ = 2):
 	max_children = max_children_
@@ -33,7 +41,7 @@ func _init(max_children_ = 2):
 	
 	BVH_list = [root_node]
 
-func create_BVH_List(scene : PTScene):
+func create_BVH(scene : PTScene):
 	""" Takes in a list of objects and creates a BVH tree in bytes
 	
 	The result of this function will be stored in a BVH_list.
@@ -44,6 +52,8 @@ func create_BVH_List(scene : PTScene):
 	The bytes created can directly be passed to the GPU. 
 	
 	"""
+	
+	var start_time = Time.get_ticks_usec()
 	
 	var flat_object_list : Array[PTObject] = []
 	
@@ -67,8 +77,8 @@ func create_BVH_List(scene : PTScene):
 	BVH_list.resize(size())
 	_index_node(root_node)
 	
-	return BVH_list
-	
+	creation_time = Time.get_ticks_usec() - start_time
+
 
 func _recursive_split(object_list : Array[PTObject], parent) -> Array[BVHNode]:
 	""""""
@@ -148,6 +158,10 @@ func depth():
 		current_node = current_node.children[0]
 		counter += 1
 	return counter
+
+func tree_SAH_cost():
+	"Calculates the SAH cost for the whole tree"
+
 
 func to_byte_array():
 	var bytes = PackedByteArray()

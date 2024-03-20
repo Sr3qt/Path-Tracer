@@ -161,7 +161,7 @@ func create_BVH(max_children = 2, type : BVH_TYPE = BVH_TYPE.DEFAULT):
 	match type:
 		BVH_TYPE.DEFAULT:
 			BVHTree = PTBVHTree.new(max_children)
-			BVHTree.create_BVH_List(self)
+			BVHTree.create_BVH(self)
 
 func set_camera_setting(cam : camera_setting):
 	var temp = camera_settings[cam]

@@ -81,12 +81,6 @@ var is_taking_picture = false
 var _image_render_time := 0
 var _image_render_start
 
-# Flags
-var use_bvh := true
-var show_bvh_depth := false # TODO FIX this
-
-var scene_changed := !true
-
 # Whether this instance is using a local RenderDevice
 var is_local_renderer
 
@@ -148,7 +142,7 @@ func create_buffers():
 	camera_set = rd.uniform_set_create(camera_uniform, shader, camera_set_index)
 	object_set = rd.uniform_set_create(object_uniforms, shader, object_set_index)
 	BVH_set = rd.uniform_set_create(BVH_uniforms, shader, BVH_set_index)
-	external_set = rd.uniform_set_create(flags_uniforms, shader, external_set_index)
+	#external_set = rd.uniform_set_create(flags_uniforms, shader, external_set_index)
 	
 	# Set texture RID for Canvas
 	var material = _renderer.canvas.get_mesh().surface_get_material(0)
@@ -207,13 +201,21 @@ func free_RIDs():
 		rd.free_rid(rid)
 
 
-func create_compute_list(x := work_group_x, y := work_group_y, z := work_group_z):
+func create_compute_list(x := 0, y := 0, z := 0,
+	x_offset := 0, y_offset := 0):
 	""" Creates the compute list required for every compute call 
 	
 	Requires workgroup coordinates to be given in an array or vector
 	"""
 	
-	var push_bytes = _push_constant_byte_array()
+	if x == 0:
+		x = work_group_x
+	if y == 0:
+		y = work_group_y
+	if z == 0:
+		z = work_group_z
+	
+	var push_bytes = _push_constant_byte_array(x_offset, y_offset)
 	
 	var compute_list = rd.compute_list_begin()
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
@@ -223,7 +225,7 @@ func create_compute_list(x := work_group_x, y := work_group_y, z := work_group_z
 	rd.compute_list_bind_uniform_set(compute_list, camera_set, camera_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, object_set, object_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, BVH_set, BVH_set_index)
-	rd.compute_list_bind_uniform_set(compute_list, external_set, external_set_index)
+	#rd.compute_list_bind_uniform_set(compute_list, external_set, external_set_index)
 	rd.compute_list_set_push_constant(compute_list, push_bytes, push_bytes.size())
 	
 	rd.capture_timestamp("Render Scene")
@@ -402,14 +404,15 @@ func _lod_byte_array():
 	return PackedInt32Array(lod_array).to_byte_array()
 
 
-func _push_constant_byte_array():
+func _push_constant_byte_array(x, y):
 	var bytes = PackedByteArray()
 	
 	bytes += _scene.camera.to_byte_array()
 	bytes += PackedFloat32Array([Time.get_ticks_msec() / 1000.]).to_byte_array()
-	
 	# Filler
-	bytes += PackedFloat32Array([0,0,0]).to_byte_array()
+	bytes += PackedInt32Array([_renderer.flags]).to_byte_array()
+	bytes += PackedInt32Array([x,y]).to_byte_array()
+	
 	
 	return bytes
 

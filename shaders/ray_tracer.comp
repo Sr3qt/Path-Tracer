@@ -95,6 +95,14 @@ int refraction_bounces = 0; // Counts the number of times a ray has refracted
 const int max_children = 2; // Replaced by script preprocessor, do NOT touch this line
 const int filler_const = int(mod(max_children, 2) + 2.) * 2; 
 
+// Flags
+bool flags[3];
+bool use_bvh;
+bool show_bvh_depth;
+
+bool scene_changed;
+
+
 float random_number;
 
 // DATATYPES
@@ -239,15 +247,11 @@ layout(set = 3, binding = 0, std430) restrict readonly buffer BVH_List {
     BVHNode list[];
 } BVH;
 
-layout(set = 4, binding = 0, std430) restrict readonly buffer FlagBuffer {
-    bool use_bvh;
-    bool show_bvh_depth;
-    bool scene_changed;
-} flags;
-
 layout(push_constant, std430) restrict readonly uniform constants {
     Camera camera;
     float time;
+    int flags;
+    ivec2 image_offset; // How many pixels offset should the rendering count as zero
 } push;
 
 // UTILITY FUNCTIONS
@@ -373,6 +377,24 @@ vec3 ray_at(Ray ray, float t) {
     return ray.origin + ray.direction * t;
 }
 
+void parse_flags() {
+    int bit = int(pow(2, flags.length() - 1));
+    int num = push.flags;
+    for (int i = flags.length() - 1; i >= 0; i--) {
+        num -= bit;
+        if (num < 0) {
+            flags[i] = false;
+            num += bit;
+        } else {
+            flags[i] = true;
+        }
+        bit = bit / 2;
+    }
+
+    show_bvh_depth = flags[0];
+    use_bvh = flags[1];
+    scene_changed = flags[2];
+}
 
 // BVH FUNCTIONS
 // =============
@@ -569,7 +591,8 @@ RayHit determine_rayhit(inout RayHit rayhit) {
         rayhit.mtl_index = sphere.mtl_index;
         rayhit.normal = (rayhit.point - sphere.center) / sphere.radius;
         rayhit.color = vec4(materials.data[rayhit.mtl_index].albedo, 1);
-    
+        // rayhit.uv = circle_uv(rayhit.object_index);
+
     // Procedure for hitting plane
     } else if (rayhit.object_type == is_plane) {
         Plane plane = planes.data[rayhit.object_index];
@@ -612,6 +635,10 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
     // Index to current node being processed
     int current_index = 0;
 
+    bool small_break = false;
+
+    vec3 new_point;
+
     // Pre-compute values for hit detection
     vec3 inv_direction = vec3(1. / ray.direction.x, 1. / ray.direction.y, 1. / ray.direction.z);
     bvec3 dir_is_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
@@ -624,6 +651,35 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
         BVHNode node = BVH.list[current_index];
 
         hit_check_count++;
+
+        // If ray already hit something, ignore aabbs which are not in the same octant as the 
+        //  ray origin relative to the intersection point, barely any performance impact
+        if (rayhit.hit) {
+            new_point = ray.origin + ray.direction * rayhit.t;
+            vec4 new_min = node.bbox.minimum;
+            vec4 new_max = node.bbox.maximum;
+
+            // small_break = (ray.direction.x > 0.) ? (new_point.x < node.bbox.minimum.x) : 
+            // (new_point.x > node.bbox.maximum.x) ||
+            //               (ray.direction.y > 0.) ? (new_point.y < node.bbox.minimum.y) : 
+            //               (new_point.y > node.bbox.maximum.y) || 
+            //               (ray.direction.z > 0.) ? (new_point.z < node.bbox.minimum.z) : 
+            //               (new_point.z > node.bbox.maximum.z);
+
+            small_break = (ray.direction.x > 0.) ? (new_point.x < new_min.x) :
+             (new_point.x > new_max.x);
+            if (!small_break) {
+                small_break = (ray.direction.y > 0.) ? (new_point.y < new_min.y) :
+                 (new_point.y > new_max.y);
+
+                if (!small_break) {
+                    small_break = (ray.direction.z > 0.) ? (new_point.z < new_min.z) :
+                     (new_point.z > new_max.z);
+                }
+            }
+        }
+
+        if (!small_break) {
         if (hit_AABB(ray, node.bbox, range, inv_direction, dir_is_negative)) {
             // Loop over child indices to add them to stack or do hit check
             for (int i = node.child_count; i > 0; i--) {
@@ -636,9 +692,12 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
                 else {
                     hit_object(ray, range, rayhit, tochild.index, tochild.object_type);
                     hit_check_count++;
+                    
                 }
             }
-        } 
+        }
+        }
+        small_break = false;
         // Break if no more nodes to visit, else go to next node in list
         if (to_visit_i == 0) {break;}
         current_index = to_visit[--to_visit_i];
@@ -651,7 +710,7 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
         rayhit.color = hit_skybox(ray, rayhit);
     }
 
-    if (flags.show_bvh_depth) {
+    if (show_bvh_depth) {
         float a = float(hit_check_count) / float(BVH.list.length() * 2);
         float b = pow(a, 3.5);
         rayhit.color = vec4(a,b,1,0);
@@ -760,6 +819,7 @@ Ray scatter_ray(Ray ray_in, inout RayHit rayhit) {
 Ray bounce_ray(Ray ray_in, RayHit rayhit) {
     // Creates a new ray based material properties from the previous rayhit
 
+    // TODO Make more sophisticated function choosing
     if (materials.data[rayhit.mtl_index].opacity < 1.) {
         return refract_ray(ray_in, rayhit);
     }
@@ -788,11 +848,11 @@ vec4 cast_ray(Ray ray, Range range) {
     refraction_bounces = 0;
 
     for (;i < LOD.max_default_depth + refraction_bounces; i++) {
-        if (flags.use_bvh) {
+        if (use_bvh) {
             rayhit = check_ray_hit_BVH(new_ray, range);
 
             // Send one ray, skip bouncing
-            if (flags.show_bvh_depth) {
+            if (show_bvh_depth) {
                 rayhits[i] = rayhit;
                 i++; // Breaking doesn't increment therefore we have to correct for it
                 break;
@@ -834,8 +894,12 @@ vec4 cast_ray(Ray ray, Range range) {
 // The code we want to execute in each invocation
 void main() {
     
+
     // VARIABLE DEFINITIONS
     // ====================
+    
+    parse_flags();
+
     const float width = float(LOD.width);
     const float height = float(LOD.height);
 
@@ -854,13 +918,14 @@ void main() {
     const vec3 pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
     // gl_GlobalInvocationID uniquely identifies this invocation across all work groups
-    const uvec3 UVu = gl_GlobalInvocationID;
-    const ivec3 UVi = ivec3(gl_GlobalInvocationID);
+    // const uvec3 UVu = gl_GlobalInvocationID + uvec3(push.image_offset, 0);
+    const ivec3 UVi = ivec3(gl_GlobalInvocationID) + ivec3(push.image_offset, 0);
     const vec3 UV = vec3(UVi);
+
+    vec3 pixel_center = pixel00_loc + (UV.x * pixel_delta_u) + (UV.y * pixel_delta_v);
 
     // CODE
     // ====
-    vec3 pixel_center = pixel00_loc + (UV.x * pixel_delta_u) + (UV.y * pixel_delta_v);
 
     vec4 new_color = vec4(0,0,0,1);
     float circle_step = 2 * pi / float(LOD.samples_per_pixel);
@@ -878,7 +943,7 @@ void main() {
     // Apply gamma correction
     new_color.rgb = pow(new_color.rgb, vec3(push.camera.gamma));
 
-    if (flags.scene_changed) {
+    if (scene_changed) {
         imageStore(output_image, UVi.xy, new_color);
     } else {
         vec4 prev_col = imageLoad(output_image, UVi.xy);
