@@ -66,7 +66,9 @@ func _ready():
 		rtwd = PTWorkDispatcher.new(self)
 		
 	
-	get_window().position = Vector2(1250, 400)
+	# Apparently very import check (Otherwise the editor bugs out)
+	if not Engine.is_editor_hint():
+		get_window().position = Vector2(1250, 400)
 	
 	# Set initial flags
 	flags = (
@@ -82,7 +84,8 @@ func _ready():
 		if child is MeshInstance3D:
 			canvas = child
 
-	if is_plugin_instance:
+	# Only allow runtime and plugin instances to create child nodes
+	if is_plugin_instance or not Engine.is_editor_hint():
 		if not normal_camera:
 			# Create godot camera to observe canvas
 			normal_camera = Camera3D.new()
