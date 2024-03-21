@@ -32,3 +32,14 @@ script = ExtResource("3_i3qtc")
 
 [node name="Preview" type="MeshInstance3D" parent="."]
 mesh = SubResource("QuadMesh_lfpsb")
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="."]
+anchors_preset = -1
+anchor_right = 0.035
+anchor_bottom = 0.062
+offset_right = -0.32
+offset_bottom = -0.176003
+
+[node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
+handle_input_locally = false
+render_target_update_mode = 4
