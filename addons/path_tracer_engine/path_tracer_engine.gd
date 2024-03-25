@@ -10,6 +10,11 @@ func _enter_tree():
 	print("EdiorPlugin entered tree")
 	main_panel_instance = MainPanel.instantiate()
 	
+	var renderer = main_panel_instance.get_child(1).get_child(0).get_child(0)
+	print(renderer)
+	
+	renderer._is_plugin_instance = true
+	renderer.root_node = main_panel_instance
 	
 	get_editor_interface().get_editor_main_screen().add_child(main_panel_instance)
 	

@@ -1,2 +1,9 @@
 res://addons/path_tracer_engine/render_scene_plugin.tscn
 res://shaders/canvas.gdshader
+res://proprietary_dataclasses/PTCamera.gd
+res://main/New_main_scene.tscn
+res://addons/path_tracer_engine/new_plugin_scene.tscn
+res://addons/path_tracer_engine/path_tracer_engine.gd
+res://proprietary_dataclasses/PTRenderer.gd
+res://main/PTSceneInstance.gd
+res://proprietary_dataclasses/RayTracer.gd

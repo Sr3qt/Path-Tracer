@@ -14,10 +14,13 @@ TODO: Add way to change certain values in shader programatically, like
 BVH max child count or image buffer being readonly.
 """
 
-@export var run_as_tool := false
+# Override for stopping rendering
+@export var disable_rendering := false
 
 # Whether this instance was created by a plugin script or not
-var is_plugin_instance = false
+var _is_plugin_instance = false
+var root_node # Since the scene will become a subtree in the plugin, root_node
+			  #  is a convenient pointer to the relative root node 
 
 # Realtime PTWorkDispatcher
 var rtwd : PTWorkDispatcher = null
@@ -54,29 +57,18 @@ func _enter_tree():
 
 
 func _ready():
-	#if get_parent() is Control:
-		## TEMP way to determine if in plugin
-		#is_plugin_instance = true
-	
-	print("PTRENDER readyh")
-	print(self)
-	if is_plugin_instance:
-		print("THere can only be one")
+	if _is_plugin_instance:
+		print("Plugin renderer _ready start")
 	
 	if not rtwd:
 		rtwd = PTWorkDispatcher.new(self)
-		
 	
 	# Apparently very import check (Otherwise the editor bugs out)
 	if not Engine.is_editor_hint():
 		get_window().position = Vector2(1250, 400)
 	
 	# Set initial flags
-	flags = (
-		RenderFlagsBits.USE_BVH * int(use_bvh) +
-		RenderFlagsBits.SHOW_BVH_DEPTH * int(show_bvh_depth) +
-		RenderFlagsBits.SCENE_CHANGED * int(scene_changed)
-	)
+	set_flags()
 
 	# Find camera and canvas in children 
 	for child in get_children():
@@ -86,7 +78,7 @@ func _ready():
 			canvas = child
 
 	# Only allow runtime and plugin instances to create child nodes
-	if is_plugin_instance or not Engine.is_editor_hint():
+	if _is_plugin_instance or not Engine.is_editor_hint():
 		if not normal_camera:
 			# Create godot camera to observe canvas
 			normal_camera = Camera3D.new()
@@ -106,10 +98,6 @@ func _ready():
 			canvas.mesh.surface_set_material(0, mat)
 			add_child(canvas)
 	
-	if is_plugin_instance or not Engine.is_editor_hint():
-			
-		print("PTRenderer almost rweady")
-
 		scene = get_node("PTScene") # Is this the best way to get Scene node?
 
 		scene.create_BVH(bvh_max_children)
@@ -119,14 +107,20 @@ func _ready():
 		load_shader()
 
 		rtwd.create_buffers()
-		print("PTRenderer fully rweady")
 	
 
 func _process(delta):
-	#rtwd._process(delta)
 	
-	if ((rtwd.is_rendering and get_window().has_focus() and not Engine.is_editor_hint()) or
-	 (is_plugin_instance and Engine.is_editor_hint() and run_as_tool)):
+	# Runtime and plugin requires different checks for window focus
+	var runtime = (rtwd.is_rendering and get_window().has_focus() and 
+					not Engine.is_editor_hint() and scene.camera.camera_changed)
+	var plugin = (_is_plugin_instance and (root_node and root_node.visible) and
+					Engine.is_editor_hint() and scene.camera.camera_changed)
+	
+	if (runtime or plugin) and not disable_rendering:
+		# TODO Make flag to allow for either multi sampling or not to save resources
+		scene.camera.camera_changed = false
+		
 		# TEMP
 		var x = ceil(1920. / 16.)
 		var y = ceil(1080. / 8.)

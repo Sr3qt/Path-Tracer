@@ -10,7 +10,7 @@ var uniform_sets = [
 	{}, # For camera
 	{}, # For objects
 	{}, # For BVH
-	{} # For flags
+	{} # Empty
 ]
 var RIDs_to_free = [] # array of RIDs that need to be freed when done with them.
 
@@ -39,16 +39,11 @@ var planes_bind := 2
 var BVH_set_index := 3
 var BVH_bind := 0
 
-# For external messages like time and render mode flags
-var external_set_index := 4
-var flags_bind := 0
-
 # Set RIDs
 var image_set : RID
 var camera_set : RID
 var object_set : RID
 var BVH_set : RID
-var external_set : RID
 
 # Buffer RIDS
 var image_buffer : RID
@@ -62,10 +57,7 @@ var plane_buffer : RID
 
 var BVH_buffer : RID
 
-var flags_buffer : RID
-var random_buffer : RID
-
-# Render variables
+# Render variables, also move to Renderer
 var render_width : int
 var render_height : int
 
@@ -125,9 +117,6 @@ func create_buffers():
 	BVH_buffer = _create_uniform(
 		_scene.BVHTree.to_byte_array(), rd, BVH_set_index, BVH_bind
 	)
-	flags_buffer = _create_uniform(
-		_renderer.flags_to_byte_array(), rd, external_set_index, flags_bind
-	)
 	
 	# Bind uniforms and sets
 	# Get uniforms
@@ -135,14 +124,12 @@ func create_buffers():
 	var camera_uniform = uniform_sets[camera_set_index].values()
 	var object_uniforms = uniform_sets[object_set_index].values()
 	var BVH_uniforms = uniform_sets[BVH_set_index].values()
-	var flags_uniforms = uniform_sets[external_set_index].values()
 
 	# Bind uniforms to sets
 	image_set = rd.uniform_set_create(image_uniforms, shader, image_set_index)
 	camera_set = rd.uniform_set_create(camera_uniform, shader, camera_set_index)
 	object_set = rd.uniform_set_create(object_uniforms, shader, object_set_index)
 	BVH_set = rd.uniform_set_create(BVH_uniforms, shader, BVH_set_index)
-	#external_set = rd.uniform_set_create(flags_uniforms, shader, external_set_index)
 	
 	# Set texture RID for Canvas
 	var material = _renderer.canvas.get_mesh().surface_get_material(0)
@@ -152,6 +139,7 @@ func create_buffers():
 	
 
 func _process(delta):
+	# TODO: REMOVE _process fuinction
 	# TODO: Make loading bar
 	# TODO: MAke able to take images with long render time
 	# Takes picture
@@ -225,7 +213,6 @@ func create_compute_list(x := 0, y := 0, z := 0,
 	rd.compute_list_bind_uniform_set(compute_list, camera_set, camera_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, object_set, object_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, BVH_set, BVH_set_index)
-	#rd.compute_list_bind_uniform_set(compute_list, external_set, external_set_index)
 	rd.compute_list_set_push_constant(compute_list, push_bytes, push_bytes.size())
 	
 	rd.capture_timestamp("Render Scene")

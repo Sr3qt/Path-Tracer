@@ -7,12 +7,15 @@ class_name PTCamera
 #  NOTE: currently not implemented
 var is_fps := true
 
+# Relative root node in plugin instance
+var root_node 
+
 var mouse_sensitivity_x := 0.01
 var mouse_sensitivity_y := 0.01
-var move_speed := 1.
+var move_speed := 3.5
 
 # Render variables
-# TODO make variables exportable to editor or changable during run time
+# TODO make variables exportable to editor or changable during run time. move to PTRENDEREr
 var aspect_ratio := 16. / 9.
 var render_width := 1920
 var render_height := int(render_width / aspect_ratio)
@@ -62,19 +65,27 @@ func _init(
 	set_viewport_size()
 	
 	camera_changed = false
+
+
+func _ready():
+	root_node = get_parent().get_parent().root_node
+	
+	if root_node:
+		root_node.connect("gui_input", _input)
 	
 
 func _process(delta):
 	
-	# MOve to player ndoe
-	if Input.is_key_pressed(KEY_W):
-		move_camera(-forward * Vector3(1,0,1) * move_speed * delta)
-	if Input.is_key_pressed(KEY_A):
-		move_camera(-right * Vector3(1,0,1) * move_speed * delta)
-	if Input.is_key_pressed(KEY_S):
-		move_camera(forward * Vector3(1,0,1) * move_speed * delta)
-	if Input.is_key_pressed(KEY_D):
-		move_camera(right * Vector3(1,0,1) * move_speed * delta)
+	if not Engine.is_editor_hint() or (root_node and root_node.visible):
+		# MOve to player ndoe
+		if Input.is_key_pressed(KEY_W):
+			move_camera(-forward * Vector3(1,0,1) * move_speed * delta)
+		if Input.is_key_pressed(KEY_A):
+			move_camera(-right * Vector3(1,0,1) * move_speed * delta)
+		if Input.is_key_pressed(KEY_S):
+			move_camera(forward * Vector3(1,0,1) * move_speed * delta)
+		if Input.is_key_pressed(KEY_D):
+			move_camera(right * Vector3(1,0,1) * move_speed * delta)
 
 # MOve to player ndoe
 func _input(event):
