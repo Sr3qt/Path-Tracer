@@ -13,8 +13,11 @@ two scenes.
 class_name PTScene
 
 # objects is a dictionary with OBJECT_TYPEs as keys. The values are arrays of
-#  PTObjects
+#  PTObjects 
+# TODO make into a class?
 var objects
+
+@export_file var scene_import
 
 # materials should hold no duplicate materials
 var materials : Array[PTMaterial]
@@ -45,6 +48,7 @@ func _init(
 	camera_ : PTCamera = null
 	):
 	
+	# Create objects dict if one was not passed
 	if object_dict_:
 		objects = object_dict_
 	else:
@@ -57,14 +61,28 @@ func _init(
 	
 	materials = materials_
 	
-	if camera_ == null:
-		camera = PTCamera.new()
-	else:
-		camera = camera_
-		
+	camera = camera_
+	
+	# TODO should be removed
 	BVHTree = PTBVHTree.new()
 
-
+func _ready():
+	if scene_import:
+		import(scene_import)
+	else:
+		create_random_scene(0)
+	
+	if camera == null:
+		for child in get_children():
+			if child is PTCamera:
+				camera = child
+				break
+	
+	#if camera == null:
+		#camera = PTCamera.new()
+	
+	set_camera_setting(camera_setting.corner)
+	
 # Only relevant for when the structure of the scene changes, 
 #  i.e adding / removing objects
 #func set_object_indices():
@@ -104,6 +122,19 @@ static func array2vec(a):
 
 
 static func load_scene(path : String):
+	var out = _load_scene(path)
+	
+	return PTScene.new(out[0], out[1])
+	
+
+func import(path : String):
+	var out = _load_scene(path)
+	
+	objects = out[0]
+	materials = out[1]
+
+
+static func _load_scene(path : String):
 	var file = FileAccess.open(path, FileAccess.READ)
 	var text = file.get_as_text()
 	file.close()
@@ -155,7 +186,7 @@ static func load_scene(path : String):
 			plane.object_index = plane_list.size()
 			plane_list.append(plane)
 	
-	return PTScene.new(objects_dict, mtl_list)
+	return [objects_dict, mtl_list]
 
 
 func create_BVH(max_children = 2, type : BVH_TYPE = BVH_TYPE.DEFAULT):
@@ -165,14 +196,18 @@ func create_BVH(max_children = 2, type : BVH_TYPE = BVH_TYPE.DEFAULT):
 			BVHTree.create_BVH(self)
 
 func set_camera_setting(cam : camera_setting):
-	var temp = camera_settings[cam]
-	
-	camera.camera_pos = temp[0]
-	
-	camera.look_at(temp[1])
-	
-	camera.hfov = temp[2]
-	camera.set_viewport_size()
+	if camera:
+		var temp = camera_settings[cam]
+		
+		camera.camera_pos = temp[0]
+		
+		camera.look_at(temp[1])
+		
+		camera.hfov = temp[2]
+		camera.set_viewport_size()
+	else:
+		# TODO make warning
+		pass
 
 
 func create_random_scene(seed):

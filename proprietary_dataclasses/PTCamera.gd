@@ -9,6 +9,7 @@ var is_fps := true
 
 # Relative root node in plugin instance
 var root_node 
+var freeze := true # For plugin
 
 var mouse_sensitivity_x := 0.01
 var mouse_sensitivity_y := 0.01
@@ -76,7 +77,7 @@ func _ready():
 
 func _process(delta):
 	
-	if not Engine.is_editor_hint() or (root_node and root_node.visible):
+	if not Engine.is_editor_hint() or (root_node and root_node.visible and not freeze):
 		# MOve to player ndoe
 		if Input.is_key_pressed(KEY_W):
 			move_camera(-forward * Vector3(1,0,1) * move_speed * delta)

@@ -1,0 +1,39 @@
+@tool
+extends Button
+
+var renderer
+
+var _is_plugin_instance := false
+
+func _enter_tree():
+	if _is_plugin_instance:
+		renderer = %PluginRenderer
+		
+		renderer._is_plugin_instance = true
+		renderer.root_node = self
+
+
+func _ready():
+	pressed.connect(_on_root_node_pressed)
+	mouse_exited.connect(_on_root_node_mouse_exited)
+	resized.connect(_on_resized)
+
+
+func _on_root_node_pressed():
+	if renderer.scene:
+		if renderer.scene.camera:
+			renderer.scene.camera.freeze = false
+
+
+func _on_root_node_mouse_exited():
+	if renderer.scene:
+		if renderer.scene.camera:
+			renderer.scene.camera.freeze = true
+
+
+func _on_resized():
+	var viewport = %SubViewport
+	
+	viewport.size.x = size.x
+	
+	viewport.size.y = size.x / renderer.scene.camera.aspect_ratio

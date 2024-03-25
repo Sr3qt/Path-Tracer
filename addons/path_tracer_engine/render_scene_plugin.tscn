@@ -1,40 +1,52 @@
 [gd_scene load_steps=5 format=3 uid="uid://dokumyccncfdd"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/PTRenderer.gd" id="1_1ib2v"]
-[ext_resource type="Script" path="res://main/PTSceneInstance.gd" id="2_5qneb"]
+[ext_resource type="Script" path="res://addons/path_tracer_engine/plugin_root.gd" id="1_2v5h1"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/PTScene.gd" id="3_i5gov"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/PTCamera.gd" id="3_oxc2k"]
-[ext_resource type="Script" path="res://addons/path_tracer_engine/temp_button.gd" id="4_qp7a4"]
 
-[node name="Control" type="Control"]
-layout_mode = 3
+[node name="RootControl" type="Button"]
+clip_contents = true
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+flat = true
+script = ExtResource("1_2v5h1")
 
-[node name="Button" type="Button" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 0
-text = "This button has text"
-script = ExtResource("4_qp7a4")
+offset_right = 40.0
+offset_bottom = 40.0
 
-[node name="SubViewportContainer" type="SubViewportContainer" parent="."]
-layout_mode = 0
-offset_left = 97.0
-offset_top = 67.0
-offset_right = 609.0
-offset_bottom = 579.0
+[node name="SubViewportContainer" type="SubViewportContainer" parent="VBoxContainer"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
 
-[node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
+[node name="SubViewport" type="SubViewport" parent="VBoxContainer/SubViewportContainer"]
+unique_name_in_owner = true
 handle_input_locally = false
 size = Vector2i(1080, 720)
 render_target_update_mode = 4
 
-[node name="SceneRenderer" type="Node" parent="SubViewportContainer/SubViewport"]
+[node name="PluginRenderer" type="Node" parent="VBoxContainer/SubViewportContainer/SubViewport"]
+unique_name_in_owner = true
 script = ExtResource("1_1ib2v")
 
-[node name="PTScene" type="Node" parent="SubViewportContainer/SubViewport/SceneRenderer"]
-script = ExtResource("2_5qneb")
+[node name="PTScene" type="Node" parent="VBoxContainer/SubViewportContainer/SubViewport/PluginRenderer"]
+script = ExtResource("3_i5gov")
+scene_import = ""
 
-[node name="PTCamera" type="Node" parent="SubViewportContainer/SubViewport/SceneRenderer/PTScene"]
+[node name="PTCamera" type="Node" parent="VBoxContainer/SubViewportContainer/SubViewport/PluginRenderer/PTScene"]
 script = ExtResource("3_oxc2k")
+
+[node name="MenuButton" type="MenuButton" parent="VBoxContainer"]
+layout_mode = 2
+text = "Mneu bitton"
+item_count = 2
+popup/item_0/text = "text here"
+popup/item_0/checkable = 1
+popup/item_0/id = 0
+popup/item_1/text = "othewr"
+popup/item_1/id = 1

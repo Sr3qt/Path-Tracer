@@ -1,7 +1,7 @@
 [gd_scene load_steps=9 format=3 uid="uid://d3dfmywq1wbly"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/PTRenderer.gd" id="1_c80yu"]
-[ext_resource type="Script" path="res://main/PTSceneInstance.gd" id="2_gan7o"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/PTScene.gd" id="2_s1nmc"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/PTCamera.gd" id="3_i3qtc"]
 [ext_resource type="Shader" path="res://shaders/canvas.gdshader" id="4_2ftiq"]
 [ext_resource type="Texture2D" uid="uid://bdbvcujyyuudb" path="res://temp.png" id="5_5weid"]
@@ -25,22 +25,12 @@ size = Vector2(2, 2)
 script = ExtResource("1_c80yu")
 
 [node name="PTScene" type="Node" parent="SceneRenderer"]
-script = ExtResource("2_gan7o")
+script = ExtResource("2_s1nmc")
+scene_import = "res://main/sphere_scene1.txt"
 
 [node name="PTCamera" type="Node" parent="SceneRenderer/PTScene"]
 script = ExtResource("3_i3qtc")
 
 [node name="Preview" type="MeshInstance3D" parent="."]
-mesh = SubResource("QuadMesh_lfpsb")
-
-[node name="SubViewportContainer" type="SubViewportContainer" parent="."]
 visible = false
-anchors_preset = -1
-anchor_right = 0.035
-anchor_bottom = 0.062
-offset_right = -0.32
-offset_bottom = -0.176003
-
-[node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
-handle_input_locally = false
-render_target_update_mode = 0
+mesh = SubResource("QuadMesh_lfpsb")

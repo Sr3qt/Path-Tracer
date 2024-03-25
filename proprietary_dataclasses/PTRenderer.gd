@@ -59,23 +59,24 @@ func _enter_tree():
 func _ready():
 	if _is_plugin_instance:
 		print("Plugin renderer _ready start")
+		print(self)
 	
 	if not rtwd:
 		rtwd = PTWorkDispatcher.new(self)
 	
-	# Apparently very import check (Otherwise the editor bugs out)
 	if not Engine.is_editor_hint():
+		# Apparently very import check for get_window (Otherwise the editor bugs out)
 		get_window().position = Vector2(1250, 400)
 	
-	# Set initial flags
-	set_flags()
+		# Set initial flags
+		set_flags()
 
-	# Find camera and canvas in children 
-	for child in get_children():
-		if child is Camera3D: # TODO more secure way of identifying camera and canvas
-			normal_camera = child
-		if child is MeshInstance3D:
-			canvas = child
+		# Find camera and canvas in children 
+		for child in get_children():
+			if child is Camera3D: # TODO more secure way of identifying camera and canvas
+				normal_camera = child
+			if child is MeshInstance3D:
+				canvas = child
 
 	# Only allow runtime and plugin instances to create child nodes
 	if _is_plugin_instance or not Engine.is_editor_hint():
@@ -143,6 +144,7 @@ func create_compute_list(x := 0, y := 0, z := 0, x_offset := 0, y_offset := 0):
 	"""Wrapper function for rtwd.create_compute_list"""
 	set_flags()
 	rtwd.create_compute_list(x, y, z, x_offset, y_offset)
+
 
 func load_shader():
 	var file := FileAccess.open("res://shaders/ray_tracer.comp", 
