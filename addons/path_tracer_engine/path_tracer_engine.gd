@@ -1,7 +1,7 @@
 @tool
 extends EditorPlugin
 
-const MainPanel = preload("res://addons/path_tracer_engine/new_plugin_scene.tscn")
+const MainPanel = preload("res://addons/path_tracer_engine/render_scene_plugin.tscn")
 
 var main_panel_instance
 

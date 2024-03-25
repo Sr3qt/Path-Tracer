@@ -54,8 +54,9 @@ func _enter_tree():
 
 
 func _ready():
-	if get_parent() is Control:
-		is_plugin_instance = true
+	#if get_parent() is Control:
+		## TEMP way to determine if in plugin
+		#is_plugin_instance = true
 	
 	print("PTRENDER readyh")
 	print(self)
@@ -105,8 +106,9 @@ func _ready():
 			canvas.mesh.surface_set_material(0, mat)
 			add_child(canvas)
 	
-	if not Engine.is_editor_hint():
+	if is_plugin_instance or not Engine.is_editor_hint():
 			
+		print("PTRenderer almost rweady")
 
 		scene = get_node("PTScene") # Is this the best way to get Scene node?
 
@@ -117,12 +119,14 @@ func _ready():
 		load_shader()
 
 		rtwd.create_buffers()
+		print("PTRenderer fully rweady")
 	
 
 func _process(delta):
 	#rtwd._process(delta)
 	
-	if rtwd.is_rendering and get_window().has_focus() and not Engine.is_editor_hint():
+	if ((rtwd.is_rendering and get_window().has_focus() and not Engine.is_editor_hint()) or
+	 (is_plugin_instance and Engine.is_editor_hint() and run_as_tool)):
 		# TEMP
 		var x = ceil(1920. / 16.)
 		var y = ceil(1080. / 8.)

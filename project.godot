@@ -24,3 +24,7 @@ settings/stdout/print_gpu_profile=true
 [display]
 
 window/vsync/vsync_mode=0
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/path_tracer_engine/plugin.cfg")

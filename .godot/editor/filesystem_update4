@@ -1,3 +1,2 @@
-res://main/New_main_scene.tscn
+res://addons/path_tracer_engine/render_scene_plugin.tscn
 res://shaders/canvas.gdshader
-res://proprietary_dataclasses/PTRenderer.gd

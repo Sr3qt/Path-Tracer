@@ -1,3 +1,4 @@
+@tool
 extends Node
 
 """THis class is to hold PTObjects, PTMaterials and PTBVH for a scene

@@ -1,4 +1,4 @@
-
+@tool
 extends PTScene
 
 
@@ -16,3 +16,7 @@ func _ready():
 	
 	
 	
+
+
+#func create_BVH():
+	#super
