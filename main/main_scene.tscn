@@ -1,8 +1,8 @@
 [gd_scene load_steps=9 format=3 uid="uid://d3dfmywq1wbly"]
 
-[ext_resource type="Script" path="res://proprietary_dataclasses/PTRenderer.gd" id="1_c80yu"]
-[ext_resource type="Script" path="res://proprietary_dataclasses/PTScene.gd" id="2_s1nmc"]
-[ext_resource type="Script" path="res://proprietary_dataclasses/PTCamera.gd" id="3_i3qtc"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_renderer.gd" id="1_c80yu"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_scene.gd" id="2_s1nmc"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera.gd" id="3_i3qtc"]
 [ext_resource type="Shader" path="res://shaders/canvas.gdshader" id="4_2ftiq"]
 [ext_resource type="Texture2D" uid="uid://bdbvcujyyuudb" path="res://temp.png" id="5_5weid"]
 

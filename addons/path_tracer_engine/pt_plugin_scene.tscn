@@ -1,9 +1,9 @@
 [gd_scene load_steps=5 format=3 uid="uid://dokumyccncfdd"]
 
-[ext_resource type="Script" path="res://proprietary_dataclasses/PTRenderer.gd" id="1_1ib2v"]
-[ext_resource type="Script" path="res://addons/path_tracer_engine/plugin_root.gd" id="1_2v5h1"]
-[ext_resource type="Script" path="res://proprietary_dataclasses/PTScene.gd" id="3_i5gov"]
-[ext_resource type="Script" path="res://proprietary_dataclasses/PTCamera.gd" id="3_oxc2k"]
+[ext_resource type="Script" path="res://addons/path_tracer_engine/plugin_control_root.gd" id="1_2v5h1"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_renderer.gd" id="2_k81n4"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_scene.gd" id="3_g8rfj"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera.gd" id="4_e827o"]
 
 [node name="RootControl" type="Button"]
 clip_contents = true
@@ -32,14 +32,14 @@ render_target_update_mode = 4
 
 [node name="PluginRenderer" type="Node" parent="VBoxContainer/SubViewportContainer/SubViewport"]
 unique_name_in_owner = true
-script = ExtResource("1_1ib2v")
+script = ExtResource("2_k81n4")
 
 [node name="PTScene" type="Node" parent="VBoxContainer/SubViewportContainer/SubViewport/PluginRenderer"]
-script = ExtResource("3_i5gov")
+script = ExtResource("3_g8rfj")
 scene_import = ""
 
 [node name="PTCamera" type="Node" parent="VBoxContainer/SubViewportContainer/SubViewport/PluginRenderer/PTScene"]
-script = ExtResource("3_oxc2k")
+script = ExtResource("4_e827o")
 
 [node name="MenuButton" type="MenuButton" parent="VBoxContainer"]
 layout_mode = 2
