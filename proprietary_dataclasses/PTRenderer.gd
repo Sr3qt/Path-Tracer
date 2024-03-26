@@ -4,6 +4,7 @@ extends Node
 
 class_name PTRenderer
 
+# TODO This class probably fits well as a singleton, research how to do that
 """This node should be the root node of a scene with PTScene object added as a child.
 
 This node has the responsibility to take render settings and pass them to 

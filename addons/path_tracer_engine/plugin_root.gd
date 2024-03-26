@@ -1,13 +1,16 @@
 @tool
 extends Button
 
-var renderer
+var renderer : PTRenderer
+var viewport : Viewport
 
 var _is_plugin_instance := false
+
 
 func _enter_tree():
 	if _is_plugin_instance:
 		renderer = %PluginRenderer
+		viewport = %SubViewport
 		
 		renderer._is_plugin_instance = true
 		renderer.root_node = self
@@ -32,7 +35,6 @@ func _on_root_node_mouse_exited():
 
 
 func _on_resized():
-	var viewport = %SubViewport
 	
 	viewport.size.x = size.x
 	
