@@ -20,6 +20,7 @@ var pipeline : RID
 
 var texture : Texture2DRD
 
+var _renderer : PTRenderer
 var _scene : PTScene 
 
 # Set / binding indices
@@ -28,7 +29,6 @@ var image_buffer_bind := 0
 var image_size_bind := 1
 
 var camera_set_index := 1
-#var camera_bind := 0 # Depricated
 var LOD_bind := 0 # For sample per pixel, bounce depth etc.
 
 var object_set_index := 2
@@ -57,15 +57,6 @@ var plane_buffer : RID
 
 var BVH_buffer : RID
 
-# Render variables, also move to Renderer
-var render_width : int
-var render_height : int
-
-# Move to Renderer
-var samples_per_pixel = 1
-var max_default_depth = 8
-var max_refraction_bounces = 8 
-
 var is_rendering = true
 var is_taking_picture = false
 
@@ -80,10 +71,10 @@ var work_group_x : int
 var work_group_y : int
 var work_group_z : int
 
-var _renderer
 
 func _init(renderer : PTRenderer, is_local = false):
 	_renderer = renderer
+	
 	is_local_renderer = is_local
 	
 	if is_local_renderer:
@@ -138,41 +129,22 @@ func create_buffers():
 	texture.texture_rd_rid = image_buffer
 	
 
-func _process(delta):
-	# TODO: REMOVE _process fuinction
-	# TODO: Make loading bar
-	# TODO: MAke able to take images with long render time
-	# Takes picture
-	if Input.is_key_pressed(KEY_X) and not is_taking_picture:
-		# Make last changes to camera settings
-		samples_per_pixel = 80
-		max_default_depth = 16
-		max_refraction_bounces = 16
-		rd.buffer_update(LOD_buffer, 0, _lod_byte_array().size(), _lod_byte_array())
-		
-		## Currently disabled
-		#is_taking_picture = true
-		#is_rendering = false
-		_image_render_start = Time.get_ticks_msec()
-		
-	# Don't send work when window is not focused
-	if get_window() != null: # For some reason get_window can return null
-		if get_window().has_focus() and is_rendering:
-			create_compute_list()
-		
-	if is_taking_picture:
-		render_image()
-
-
 func _exit_tree():
 	#if is_local_renderer:
 	var image = rd.texture_get_data(image_buffer, 0)
-	var new_image = Image.create_from_data(render_width, render_height, false,
-										   Image.FORMAT_RGBAF, image)
-										
+	# Changing the renderer render size should always create a new buffer, so
+	#  this code should always yield a correct result
+	var new_image = Image.create_from_data(
+		_renderer.render_width, 
+		_renderer.render_height, 
+		false,
+		Image.FORMAT_RGBAF, 
+		image
+	)
 	new_image.save_png("temp.png")
 	
 	free_RIDs()
+
 
 func free_RIDs():
 	# I don't understand garbage collection. Maybe this helps idk
@@ -189,21 +161,27 @@ func free_RIDs():
 		rd.free_rid(rid)
 
 
-func create_compute_list(x := 0, y := 0, z := 0,
-	x_offset := 0, y_offset := 0):
+func create_compute_list(window : PTRenderer.PTDebugWindow = null):
 	""" Creates the compute list required for every compute call 
 	
 	Requires workgroup coordinates to be given in an array or vector
 	"""
 	
-	if x == 0:
-		x = work_group_x
-	if y == 0:
-		y = work_group_y
-	if z == 0:
-		z = work_group_z
+	# By default, will dispatch groups to fill whole render size
+	if window == null:
+		window = PTRenderer.PTDebugWindow.new()
+		
+		window.work_group_width = ceil(_renderer.render_width / 
+										_renderer.compute_invocation_width)
+		window.work_group_height = ceil(_renderer.render_height / 
+										_renderer.compute_invocation_height)
+		window.work_group_depth = 1
 	
-	var push_bytes = _push_constant_byte_array(x_offset, y_offset)
+	var x = window.work_group_width
+	var y = window.work_group_height
+	var z = window.work_group_depth
+	
+	var push_bytes = _push_constant_byte_array(window)
 	
 	var compute_list = rd.compute_list_begin()
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
@@ -230,12 +208,6 @@ func set_scene(scene : PTScene):
 	"""set this this PTWorkDispatcher to use specified scene data"""
 	_scene = scene
 	
-	render_width = _scene.camera.render_width
-	render_height = _scene.camera.render_height
-	work_group_x = ceil(render_width / 8.)
-	work_group_y = ceil(render_height / 8.)
-	work_group_z = 1
-
 
 func load_shader(shader_ : RDShaderSource):
 	# Load GLSL shader
@@ -257,7 +229,7 @@ func render_image():
 	var finished_render = false
 	
 	
-	create_compute_list()
+	#create_compute_list()
 	
 	# CPU waits for texture data to be ready.
 	var before_render = Time.get_ticks_msec()
@@ -286,9 +258,9 @@ func render_image():
 		print("Total time: " + str(Time.get_ticks_msec() - before) + " ms")
 		print("---------------------------------------")
 	
-		samples_per_pixel = 1
-		max_default_depth = 8
-		max_refraction_bounces = 8
+		#samples_per_pixel = 1
+		#max_default_depth = 8
+		#max_refraction_bounces = 8
 		rd.buffer_update(LOD_buffer, 0, _lod_byte_array().size(), _lod_byte_array())
 		
 		is_rendering = true
@@ -318,8 +290,8 @@ func _create_image_buffer():
 	var tf : RDTextureFormat = RDTextureFormat.new()
 	tf.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT
 	tf.texture_type = RenderingDevice.TEXTURE_TYPE_2D
-	tf.width = render_width
-	tf.height = render_height
+	tf.width = _renderer.render_width
+	tf.height = _renderer.render_height
 	tf.depth = 1
 	tf.array_layers = 1
 	tf.mipmaps = 1
@@ -386,20 +358,24 @@ func _update_sphere():
 	
 
 func _lod_byte_array():
-	var lod_array = [render_width, render_height, samples_per_pixel, 
-					 max_default_depth, max_refraction_bounces]
+	var lod_array = [
+		_renderer.render_width, 
+		_renderer.render_height, 
+		_renderer.samples_per_pixel, 
+		_renderer.max_default_depth, 
+		_renderer.max_refraction_bounces
+	]
 	return PackedInt32Array(lod_array).to_byte_array()
 
 
-func _push_constant_byte_array(x, y):
+func _push_constant_byte_array(window : PTRenderer.PTDebugWindow):
 	var bytes = PackedByteArray()
 	
 	bytes += _scene.camera.to_byte_array()
 	bytes += PackedFloat32Array([Time.get_ticks_msec() / 1000.]).to_byte_array()
 	# Filler
-	bytes += PackedInt32Array([_renderer.flags]).to_byte_array()
-	bytes += PackedInt32Array([x,y]).to_byte_array()
-	
+	bytes += window.flags_to_byte_array()
+	bytes += PackedInt32Array([window.x_offset, window.y_offset]).to_byte_array()
 	
 	return bytes
 

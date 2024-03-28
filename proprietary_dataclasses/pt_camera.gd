@@ -11,6 +11,9 @@ var is_fps := true
 var root_node 
 var freeze := true # For plugin
 
+# Whether any camera settings has changed
+var camera_changed := false
+
 var mouse_sensitivity_x := 0.01
 var mouse_sensitivity_y := 0.01
 var move_speed := 3.5
@@ -18,8 +21,6 @@ var move_speed := 3.5
 # Render variables
 # TODO make variables exportable to editor or changable during run time. move to PTRENDEREr
 var aspect_ratio := 16. / 9.
-var render_width := 1920
-var render_height := int(render_width / aspect_ratio)
 
 var focal_length := 1.
 var hfov := 106. # In degrees
@@ -42,13 +43,11 @@ var forward: Vector3:
 	get: return view_vectors[2]
 	set(value): view_vectors.set(2, value)
 	
-var camera_changed := false
 
 func _init(
 	pos := Vector3(0,0,0), 
 	looking_at := Vector3(0,0,-1), 
 	aspect_ratio_ : float = aspect_ratio, 
-	resolution_width : int = render_width, 
 	horizontal_fov : float = hfov, 
 	focal_length_ : float = focal_length
 	):
@@ -56,8 +55,6 @@ func _init(
 	look_at(looking_at)
 	
 	aspect_ratio = aspect_ratio_
-	render_width = resolution_width
-	render_height = int(render_width / aspect_ratio)
 	
 	focal_length = focal_length_
 	hfov = horizontal_fov
@@ -88,6 +85,7 @@ func _process(delta):
 		if Input.is_key_pressed(KEY_D):
 			move_camera(right * Vector3(1,0,1) * move_speed * delta)
 
+
 # MOve to player ndoe
 func _input(event):
 	if event is InputEventMouseMotion and event.button_mask & 1:
@@ -99,10 +97,14 @@ func _input(event):
 		
 		rotate_camera(transform)
 
+
 func set_viewport_size():
 	var theta = deg_to_rad(hfov)
 	viewport_width = 2 * tan(theta / 2.) * focal_length
-	viewport_height = viewport_width * (float(render_height) / float(render_width))
+	# NOTE: Using the idealistic aspect ratio isn't technically correct, using 
+	#  the actual ratio between the render width and height should be prefered,
+	#  however for simplicity the ideal aspect ratio is used
+	viewport_height = viewport_width / aspect_ratio
 	
 	camera_changed = true
 

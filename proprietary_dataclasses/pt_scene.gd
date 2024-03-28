@@ -35,11 +35,12 @@ static var OBJECT_TYPE = PTObject.OBJECT_TYPE
 enum BVH_TYPE {DEFAULT}
 
 # Temp
-enum camera_setting {top_down, corner, book_ex}
-var camera_settings = {
+enum camera_setting {top_down, corner, book_ex, center}
+var camera_settings_values = {
 	camera_setting.top_down : [Vector3(0, 8, -15), Vector3(0,0,-6), 106.],
 	camera_setting.corner : [Vector3(-11, 3, -11), Vector3(0,0,0), 106.],
 	camera_setting.book_ex : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.],
+	camera_setting.center : [Vector3(0, 0, 1), Vector3(0,0,0), 106.]
 }
 
 func _init(
@@ -81,7 +82,10 @@ func _ready():
 	#if camera == null:
 		#camera = PTCamera.new()
 	
-	set_camera_setting(camera_setting.corner)
+	if not Engine.is_editor_hint():
+		set_camera_setting(camera_setting.center)
+	else:
+		set_camera_setting(camera_setting.corner)
 	
 # Only relevant for when the structure of the scene changes, 
 #  i.e adding / removing objects
@@ -197,7 +201,7 @@ func create_BVH(max_children = 2, type : BVH_TYPE = BVH_TYPE.DEFAULT):
 
 func set_camera_setting(cam : camera_setting):
 	if camera:
-		var temp = camera_settings[cam]
+		var temp = camera_settings_values[cam]
 		
 		camera.camera_pos = temp[0]
 		

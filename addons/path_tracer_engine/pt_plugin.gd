@@ -10,6 +10,7 @@ var is_docked := true
 var is_main := !is_docked
 
 
+# TODO add ability to render currently editing scene 
 func _enter_tree():
 	print("EdiorPlugin entered tree")
 	main_panel_instance = MainPanel.instantiate()

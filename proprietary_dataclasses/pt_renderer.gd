@@ -1,7 +1,6 @@
 @tool
 extends Node
 
-
 class_name PTRenderer
 
 # TODO This class probably fits well as a singleton, research how to do that
@@ -10,9 +9,6 @@ class_name PTRenderer
 This node has the responsibility to take render settings and pass them to 
 a the correct PTWorkDispatcher, wich will actually make the gpu render an image.
 
-
-TODO: Add way to change certain values in shader programatically, like 
-BVH max child count or image buffer being readonly.
 """
 
 # Override for stopping rendering
@@ -27,34 +23,33 @@ var root_node # Since the scene will become a subtree in the plugin, root_node
 var rtwd : PTWorkDispatcher = null
 #var nrtwd : PTWorkDispatcher
 
+# Array of sub-windows
+var windows : Array[PTDebugWindow] = []
+
 # The mesh to draw to
 var canvas : MeshInstance3D = null
 
 var normal_camera : Camera3D = null
 
-var render_height := 1920
-var render_width := 1080
-
 # A scene with objects and a camera node
 var scene : PTScene
 
-var bvh_max_children := 8
+var render_width := 1920
+var render_height := 1080
 
-# Render Flags
-# TODO: Make flag object which can be instantiated and keeps track of its own flags
-var flags := 0
-var use_bvh := true
-var show_bvh_depth := !false
-var scene_changed := true
+var samples_per_pixel = 1
+var max_default_depth = 8
+var max_refraction_bounces = 8 
 
-enum RenderFlagsBits {
-	USE_BVH = 1,
-	SHOW_BVH_DEPTH = 2,
-	SCENE_CHANGED = 4}
+# Controls the degree of the bvh tree passed to the gpu. 
+# NOTE: Currently no support for dynamically changing it. TODO
+const bvh_max_children := 8
 
-func _enter_tree():
-	if not Engine.is_editor_hint():
-		pass
+# NOTE: CPU control over gpu invocations has not been added. 
+#	These are merely for reference
+const compute_invocation_width := 8
+const compute_invocation_height := 8
+const compute_invocation_depth := 1
 
 
 func _ready():
@@ -68,9 +63,6 @@ func _ready():
 	if not Engine.is_editor_hint():
 		# Apparently very import check for get_window (Otherwise the editor bugs out)
 		get_window().position = Vector2(1250, 400)
-	
-		# Set initial flags
-		set_flags()
 
 		# Find camera and canvas in children 
 		for child in get_children():
@@ -109,6 +101,16 @@ func _ready():
 		load_shader()
 
 		rtwd.create_buffers()
+		
+		var x = ceil(1920. / 16.)
+		var y = ceil(1080. / 8.)
+		
+		var window1 = PTDebugWindow.new(x, y)
+		var window2 = PTDebugWindow.new(x, y, 1, 1920 / 2)
+		window2.show_bvh_depth = true
+		
+		add_window(window1)
+		add_window(window2)
 	
 
 func _process(delta):
@@ -123,28 +125,38 @@ func _process(delta):
 		# TODO Make flag to allow for either multi sampling or not to save resources
 		scene.camera.camera_changed = false
 		
-		# TEMP
-		var x = ceil(1920. / 16.)
-		var y = ceil(1080. / 8.)
+		for window in windows:
+			rtwd.create_compute_list(window)
 		
-		show_bvh_depth = false
-		create_compute_list(x, y, 1, 0, 0)
-		
-		show_bvh_depth = true
-		create_compute_list(x, y, 1, 1920 / 2, 0)
-		
-		#rtwd.create_compute_list()
 		var mat = canvas.mesh.surface_get_material(0)
 		mat.set_shader_parameter("is_rendering", true)
 	#else:
 		#var mat = canvas.mesh.surface_get_material(0)
 		#mat.set_shader_parameter("is_rendering", false)
-
-
-func create_compute_list(x := 0, y := 0, z := 0, x_offset := 0, y_offset := 0):
-	"""Wrapper function for rtwd.create_compute_list"""
-	set_flags()
-	rtwd.create_compute_list(x, y, z, x_offset, y_offset)
+		
+	# Taken from work_dispatcher, TODO implement picture taking functionality
+	## TODO: Make loading bar
+	## TODO: MAke able to take images with long render time
+	## Takes picture
+	#if Input.is_key_pressed(KEY_X) and not is_taking_picture:
+		## Make last changes to camera settings
+		#samples_per_pixel = 80
+		#max_default_depth = 16
+		#max_refraction_bounces = 16
+		#rd.buffer_update(LOD_buffer, 0, _lod_byte_array().size(), _lod_byte_array())
+		#
+		### Currently disabled
+		##is_taking_picture = true
+		##is_rendering = false
+		#_image_render_start = Time.get_ticks_msec()
+		#
+	## Don't send work when window is not focused
+	#if get_window() != null: # For some reason get_window can return null
+		#if get_window().has_focus() and is_rendering:
+			#create_compute_list()
+		#
+	#if is_taking_picture:
+		#render_image()
 
 
 func load_shader():
@@ -164,44 +176,68 @@ func load_shader():
 	rtwd.load_shader(shader)
 	
 
-func set_flags():
-	""""""
-	flags = (
-		RenderFlagsBits.USE_BVH * int(use_bvh) +
-		RenderFlagsBits.SHOW_BVH_DEPTH * int(show_bvh_depth) +
-		RenderFlagsBits.SCENE_CHANGED * int(scene_changed)
-	)
+func add_window(window : PTDebugWindow):
+	windows.append(window)
 	
-
-func flags_to_byte_array():
-	var flag_array = PackedInt32Array([use_bvh, show_bvh_depth, scene_changed])
-	return flag_array.to_byte_array()
+	# TODO add collision check with other windows and change their size accordingly
 
 
+# TODO probably move to control node script
 class PTDebugWindow:
 	"""Class for showing gui and passing render flags for a smaller portion of 
 	the render window"""
 	
-	# Render Flags
+	# Defualt render flags
 	var flags := 0
-	var use_bvh := true
-	var show_bvh_depth := false
-	var scene_changed := true
+	var use_bvh := true:
+		set(value):
+			flags = flags ^ (RenderFlagsBits.USE_BVH * int(value))
+			use_bvh = value
+	var show_bvh_depth := false:
+		set(value):
+			flags = flags ^ (RenderFlagsBits.SHOW_BVH_DEPTH * int(value))
+			show_bvh_depth = value
+	var scene_changed := true:
+		set(value):
+			flags = flags ^ (RenderFlagsBits.SCENE_CHANGED * int(value))
+			scene_changed = value
 	
+	# work_group_height and width are used for size calculations.
+	#  depth is passed to work dispatcher, but no support for depth > 1 exist yet
 	var work_group_width : int
 	var work_group_height : int
+	var work_group_depth := 1
 	
-	var x_offset : int
-	var y_offset : int
+	var x_offset := 0
+	var y_offset := 0
 	
-	func _init():
-		set_flags()
+	enum RenderFlagsBits {
+		USE_BVH = 1,
+		SHOW_BVH_DEPTH = 2,
+		SCENE_CHANGED = 4
+	}
+	
+	
+	func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 0):
+		_set_flags()
 		
-	func set_flags():
-		""""""
+		work_group_width = group_x
+		work_group_height = group_y
+		work_group_depth = group_z
+		
+		x_offset = offset_x
+		y_offset = offset_y
+	
+	
+	func _set_flags():
+		"""Used once for init"""
 		flags = (
 			RenderFlagsBits.USE_BVH * int(use_bvh) +
 			RenderFlagsBits.SHOW_BVH_DEPTH * int(show_bvh_depth) +
 			RenderFlagsBits.SCENE_CHANGED * int(scene_changed)
 		)
 	
+	
+	func flags_to_byte_array():
+		var flag_array = PackedInt32Array([flags])
+		return flag_array.to_byte_array()
