@@ -1,8 +1,8 @@
 
+class_name PTWorkDispatcher
 extends Node
 # Can potentially be Refcounted
 
-class_name PTWorkDispatcher
 
 # Holds the uniforms that will be bound to a set
 var uniform_sets = [
@@ -19,9 +19,6 @@ var shader : RID
 var pipeline : RID
 
 var texture : Texture2DRD
-
-var _renderer : PTRenderer
-var _scene : PTScene 
 
 # Set / binding indices
 var image_set_index := 0
@@ -60,16 +57,12 @@ var BVH_buffer : RID
 var is_rendering = true
 var is_taking_picture = false
 
-# Temp
-var _image_render_time := 0
-var _image_render_start
-
 # Whether this instance is using a local RenderDevice
 var is_local_renderer
 
-var work_group_x : int
-var work_group_y : int
-var work_group_z : int
+# References to renderer and scene that will render
+var _renderer : PTRenderer
+var _scene : PTScene 
 
 
 func _init(renderer : PTRenderer, is_local = false):
@@ -127,7 +120,19 @@ func create_buffers():
 	
 	texture = material.get_shader_parameter("image_buffer")
 	texture.texture_rd_rid = image_buffer
+
+
+func load_shader(shader_ : RDShaderSource):
+	# Load GLSL shader
+	# Was very annoying to find since this function is not mentioned anywhere
+	#	in RDShaderSource documentation wrrr
+	var shader_spirv: RDShaderSPIRV = rd.shader_compile_spirv_from_source(shader_)
+	shader = rd.shader_create_from_spirv(shader_spirv)
+	RIDs_to_free.append(shader)
 	
+	# Create a compute pipeline
+	pipeline = rd.compute_pipeline_create(shader)
+
 
 func free_RIDs():
 	# I don't understand garbage collection. Maybe this helps idk
@@ -192,18 +197,6 @@ func set_scene(scene : PTScene):
 	_scene = scene
 	
 
-func load_shader(shader_ : RDShaderSource):
-	# Load GLSL shader
-	# Was very annoying to find since this function is not mentioned anywhere
-	#	in RDShaderSource documentation wrrr
-	var shader_spirv: RDShaderSPIRV = rd.shader_compile_spirv_from_source(shader_)
-	shader = rd.shader_create_from_spirv(shader_spirv)
-	RIDs_to_free.append(shader)
-	
-	# Create a compute pipeline
-	pipeline = rd.compute_pipeline_create(shader)
-
-
 func render_image():
 	"""Render image over time, possibly needed to be called multiple times"""
 	
@@ -211,13 +204,10 @@ func render_image():
 	
 	var finished_render = false
 	
-	
 	#create_compute_list()
 	
 	# CPU waits for texture data to be ready.
 	var before_render = Time.get_ticks_msec()
-	
-	
 	
 	if finished_render:
 		#var image = rd.texture_get_data(image_buffer, 0)
@@ -362,8 +352,8 @@ func _create_texture_buffer(
 
 func _create_spheres():
 	var bytes = PackedByteArray()
-	if _scene.objects[PTObject.OBJECT_TYPE.SPHERE].size():
-		for sphere in _scene.objects[PTObject.OBJECT_TYPE.SPHERE]:
+	if _scene.objects[PTObject.ObjectType.SPHERE].size():
+		for sphere in _scene.objects[PTObject.ObjectType.SPHERE]:
 			bytes += sphere.to_byte_array()
 	else:
 		bytes = PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
@@ -373,8 +363,8 @@ func _create_spheres():
 
 func _create_planes():
 	var bytes = PackedByteArray()
-	if _scene.objects[PTObject.OBJECT_TYPE.PLANE].size():
-		for plane in _scene.objects[PTObject.OBJECT_TYPE.PLANE]:
+	if _scene.objects[PTObject.ObjectType.PLANE].size():
+		for plane in _scene.objects[PTObject.ObjectType.PLANE]:
 			bytes += plane.to_byte_array()
 	else:
 		bytes = PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
@@ -392,7 +382,7 @@ func _create_materials():
 
 
 func _update_sphere():
-	var sphere = _scene.objects[PTObject.OBJECT_TYPE.SPHERE][0]
+	var sphere = _scene.objects[PTObject.ObjectType.SPHERE][0]
 	sphere.center.x = sin(Time.get_ticks_msec() / 1000.)
 	var bytes = sphere.to_byte_array()
 	

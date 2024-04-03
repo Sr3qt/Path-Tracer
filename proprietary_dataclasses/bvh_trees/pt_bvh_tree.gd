@@ -1,3 +1,4 @@
+class_name PTBVHTree
 extends Node
 # Can potentially be Refcounted
 
@@ -8,7 +9,6 @@ extends Node
 ## https://meistdan.github.io/publications/bvh_star/paper.pdf 
 
 
-class_name PTBVHTree
 """ Base class for BVH trees. Inherit this object to make a specific 
 algorithmic implemention. 
 
@@ -16,13 +16,21 @@ Such implementations should have a create_BVH function which creates the actual
 tree. Creation time and SAH score should also be recorded after creation.
 """
 
+# Enum of different possible BVH algorithms, should be updated as more algortithms
+#  are added
+enum BVHType {DEFAULT}
+
+const bvh_types = {
+	BVHType.DEFAULT : PTBVHTree
+}
+
 var root_node : BVHNode
 
+# TODO probably stated elsewhere but this should probably be a class for typehinting
 # A dictionary of objects in the bvh
 var objects_dict
 
 var BVH_list : Array[BVHNode] = []
-var _index := 0 # Used to keep track of index when creating BVH_list
 
 var max_children : int
 
@@ -33,12 +41,8 @@ var object_count : int # Counts the number of objects stored in leaf nodes
 var creation_time : int # In usecs
 var SAH_cost : float
 
-# Enum of different possible BVH algorithms, should be updated as more algortithms
-#  are added
-enum BVH_TYPE {DEFAULT}
-var bvh_types = {
-	BVH_TYPE.DEFAULT : PTBVHTree
-}
+var _index := 0 # Used to keep track of index when creating BVH_list
+
 
 func _init(max_children_ = 2):
 	max_children = max_children_
@@ -47,6 +51,7 @@ func _init(max_children_ = 2):
 	inner_count += 1
 	
 	BVH_list = [root_node]
+
 
 func create_BVH(scene : PTScene):
 	""" Takes in a list of objects and creates a BVH tree in bytes
@@ -65,7 +70,7 @@ func create_BVH(scene : PTScene):
 	var flat_object_list : Array[PTObject] = []
 	
 	var objects_to_include = [
-		scene.OBJECT_TYPE.SPHERE
+		scene.ObjectType.SPHERE
 	]
 	for object in objects_to_include:
 		flat_object_list += scene.objects[object]
@@ -85,6 +90,33 @@ func create_BVH(scene : PTScene):
 	_index_node(root_node)
 	
 	creation_time = Time.get_ticks_usec() - start_time
+
+
+func size():
+	"""Returns the total bumber of nodes in the tree"""
+	return inner_count + leaf_count
+	
+
+func depth():
+	"""Returns the length of the longest path from the root to a leaf node"""
+	var counter = 0
+	var current_node = root_node
+	# The default tree is created in a way in which the longest path will be
+	#	along the first indices of each node
+	while !current_node.is_leaf:
+		current_node = current_node.children[0]
+		counter += 1
+	return counter
+
+func tree_SAH_cost():
+	"Calculates the SAH cost for the whole tree"
+
+
+func to_byte_array():
+	var bytes = PackedByteArray()
+	for node in BVH_list:
+		bytes += node.to_byte_array()
+	return bytes
 
 
 func _recursive_split(object_list : Array[PTObject], parent) -> Array[BVHNode]:
@@ -150,40 +182,19 @@ func _index_node(parent : BVHNode):
 		_index_node(child)
 		
 
-func size():
-	"""Returns the total bumber of nodes in the tree"""
-	return inner_count + leaf_count
-	
-
-func depth():
-	"""Returns the length of the longest path from the root to a leaf node"""
-	var counter = 0
-	var current_node = root_node
-	# The default tree is created in a way in which the longest path will be
-	#	along the first indices of each node
-	while !current_node.is_leaf:
-		current_node = current_node.children[0]
-		counter += 1
-	return counter
-
-func tree_SAH_cost():
-	"Calculates the SAH cost for the whole tree"
-
-
-func to_byte_array():
-	var bytes = PackedByteArray()
-	for node in BVH_list:
-		bytes += node.to_byte_array()
-	return bytes
-
-
 class BVHNode:
+	""" This class represents a Node in a bvh tree.
+	
+	Ideally all bvh trees would use the same Node class, since their only
+	intention is to hold information.
+	"""
+	
 	var _tree : PTBVHTree # Reference to the tree this node is a part of
-	var parent : BVHNode
-	var parent_index : int # Index to parent
-	var index : int # INdex of this node in BVH_list
-	var children : Array[BVHNode]
-	var children_indices : Array[int] # List of indices to children in the BVH_list
+	var parent : BVHNode # Reference to parent BVHNode
+	var parent_index : int # Index to parent BVHNode in BVH_list
+	var index : int # Index of this node in BVH_list
+	var children : Array[BVHNode] # Reference to child BVHNodes
+	var children_indices : Array[int] # List of indices to child BVHNodes in the BVH_list
 	var aabb : PTAABB
 	
 	# Leaf nodes in the tree have no children and have a list pointing to objects
@@ -197,15 +208,19 @@ class BVHNode:
 	func _init(parent_, tree):
 		parent = parent_
 		_tree = tree
-	
+
+
 	func add_child():
 		pass
-	
+
+
 	func size():
 		"""Returns number of children and number of references to objects"""
 		return children.size() + objects.size()
-	
+
+
 	func set_aabb():
+		# TODO This method is not secure enough
 		if is_leaf:
 			aabb = objects[0].aabb
 			if objects.size() == 1:
@@ -220,13 +235,15 @@ class BVHNode:
 				aabb.merge(child.aabb)
 			else:
 				print("Warning: Child node does not have aabb")
-	
+
+
 	func add_children(new_children : Array[BVHNode]):
 		if size() + new_children.size() <= _tree.max_children:
 			children += new_children
 			set_aabb() # Update aabb
 		else:
 			print("Warning: Cannot fit child node")
+
 
 	func to_byte_array():
 		var child_indices_array = []
@@ -249,11 +266,6 @@ class BVHNode:
 		var other_bytes = PackedInt32Array(other).to_byte_array()
 		
 		var child_indices_bytes = PackedInt32Array(child_indices_array).to_byte_array()
-		
-		#print(child_indices_bytes)
-		#print(bbox_bytes)
-		#print(other_bytes)
-		#print()
 		
 		return child_indices_bytes + bbox_bytes + other_bytes
 

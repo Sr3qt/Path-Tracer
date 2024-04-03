@@ -1,6 +1,5 @@
-extends PTBVHTree
-
 class_name PTBVHSweepSAH
+extends PTBVHTree
 
 
 func create_BVH_List(scene : PTScene):
@@ -11,7 +10,7 @@ func create_BVH_List(scene : PTScene):
 	var flat_object_list : Array[PTObject] = []
 	
 	var objects_to_include = [
-		scene.OBJECT_TYPE.SPHERE
+		scene.ObjectType.SPHERE
 	]
 	for object in objects_to_include:
 		flat_object_list += scene.objects[object]

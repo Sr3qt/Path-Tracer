@@ -1,4 +1,5 @@
 @tool
+class_name PTScene
 extends Node
 
 """THis class is to hold PTObjects, PTMaterials and PTBVH for a scene
@@ -10,14 +11,29 @@ two scenes.
 
 """
 
-class_name PTScene
+# Enum for different custom 3D object types
+static var ObjectType = PTObject.ObjectType
 
-# objects is a dictionary with OBJECT_TYPEs as keys. The values are arrays of
+# Enum of different possible BVH algorithms
+enum BVHType {DEFAULT}
+
+# Semi-Temp
+enum CameraSetting {top_down, corner, book_ex, center, middle}
+
+var camera_settings_values = {
+	CameraSetting.top_down : [Vector3(0, 8, -15), Vector3(0,0,-6), 106.],
+	CameraSetting.corner : [Vector3(-11, 3, -11), Vector3(0,0,0), 106.],
+	CameraSetting.book_ex : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.],
+	CameraSetting.center : [Vector3(0, 0, 1), Vector3(0,0,0), 106.],
+	CameraSetting.middle : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.]
+}
+
+@export_file var scene_import
+
+# objects is a dictionary with ObjectTypes as keys. The values are arrays of
 #  PTObjects 
 # TODO make into a class?
 var objects
-
-@export_file var scene_import
 
 # materials should hold no duplicate materials
 var materials : Array[PTMaterial]
@@ -30,45 +46,34 @@ var scene_changed := false
 
 var camera : PTCamera
 
-static var OBJECT_TYPE = PTObject.OBJECT_TYPE
-# Enum of different possible BVH algorithms
-enum BVH_TYPE {DEFAULT}
-
-# Temp
-enum camera_setting {top_down, corner, book_ex, center, middle}
-var camera_settings_values = {
-	camera_setting.top_down : [Vector3(0, 8, -15), Vector3(0,0,-6), 106.],
-	camera_setting.corner : [Vector3(-11, 3, -11), Vector3(0,0,0), 106.],
-	camera_setting.book_ex : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.],
-	camera_setting.center : [Vector3(0, 0, 1), Vector3(0,0,0), 106.],
-	camera_setting.middle : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.]
-}
 
 func _init(
-	object_dict_ = {}, 
-	materials_ : Array[PTMaterial] = [], 
-	camera_ : PTCamera = null
+		_object_dict = {}, 
+		_materials : Array[PTMaterial] = [], 
+		_camera : PTCamera = null
 	):
 	
 	# Create objects dict if one was not passed
-	if object_dict_:
-		objects = object_dict_
+	if _object_dict:
+		objects = _object_dict
 	else:
 		var sphere_list : Array[PTObject] = []
 		var plane_list : Array[PTObject] = []
 		objects = {
-			OBJECT_TYPE.SPHERE : sphere_list,
-			OBJECT_TYPE.PLANE : plane_list
+			ObjectType.SPHERE : sphere_list,
+			ObjectType.PLANE : plane_list
 		}
 	
-	materials = materials_
+	materials = _materials
 	
-	camera = camera_
+	camera = _camera
 	
 	# TODO should be removed
 	BVHTree = PTBVHTree.new()
 
+
 func _ready():
+	# Create default random scene if no imports
 	if scene_import:
 		import(scene_import)
 	else:
@@ -84,9 +89,9 @@ func _ready():
 		#camera = PTCamera.new()
 	
 	if not Engine.is_editor_hint():
-		set_camera_setting(camera_setting.middle)
+		set_camera_setting(CameraSetting.middle)
 	else:
-		set_camera_setting(camera_setting.corner)
+		set_camera_setting(CameraSetting.corner)
 	
 # Only relevant for when the structure of the scene changes, 
 #  i.e adding / removing objects
@@ -122,85 +127,34 @@ func add_object(object : PTObject):
 		
 	scene_changed = true
 
+
 static func array2vec(a):
 	return Vector3(a[0], a[1], a[2])
 
 
 static func load_scene(path : String):
+	""" Returns new scene with data from file """
 	var out = _load_scene(path)
 	
 	return PTScene.new(out[0], out[1])
 	
 
 func import(path : String):
+	""" Replaces this scenes data with data from file """
 	var out = _load_scene(path)
 	
 	objects = out[0]
 	materials = out[1]
 
 
-static func _load_scene(path : String):
-	var file = FileAccess.open(path, FileAccess.READ)
-	var text = file.get_as_text()
-	file.close()
-	
-	var mtl_index = {}
-	var mtl_list : Array[PTMaterial] = []
-	var sphere_list : Array[PTObject] = []
-	var plane_list : Array[PTObject] = []
-	var objects_dict = {
-		OBJECT_TYPE.SPHERE : sphere_list,
-		OBJECT_TYPE.PLANE : plane_list
-	}
-	for line in text.split("\n", false):
-		if line.begins_with("#"):
-			continue
-		
-		if line.begins_with("mtl "):
-			var values = line.split(" ", false)
-			var material = PTMaterial.new()
-			material.albedo = Vector3(float(values[2]), 
-									  float(values[3]), 
-									  float(values[4]))
-			material.roughness = float(values[5])
-			material.metallic = float(values[6])
-			material.opacity = float(values[7])
-			material.IOR = float(values[8])
-			material.refraction_depth = int(values[9])
-			
-			mtl_index[values[1]] = mtl_list.size()
-			mtl_list.append(material)
-		
-		if line.begins_with("sphere"):
-			var numbers = line.split_floats(" ", false).slice(1)
-			var center = array2vec(numbers.slice(0, 3))
-			var material_index = mtl_index[line.split(" ", false)[-1]]
-			var material = mtl_list[material_index]
-			var sphere = PTSphere.new(center, numbers[3], material, material_index)
-			
-			sphere.object_index = sphere_list.size()
-			sphere_list.append(sphere)
-		
-		elif line.begins_with("plane"):
-			var numbers = line.split_floats(" ", false).slice(1)
-			var normal = array2vec(numbers.slice(0, 3))
-			var material_index = mtl_index[line.split(" ", false)[-1]]
-			var material = mtl_list[material_index]
-			var plane = PTPlane.new(normal, numbers[3], material, material_index)
-			
-			plane.object_index = plane_list.size()
-			plane_list.append(plane)
-	
-	return [objects_dict, mtl_list]
-
-
-func create_BVH(max_children = 2, type : BVH_TYPE = BVH_TYPE.DEFAULT):
+func create_BVH(max_children = 2, type : BVHType = BVHType.DEFAULT):
 	match type:
-		BVH_TYPE.DEFAULT:
+		BVHType.DEFAULT:
 			BVHTree = PTBVHTree.new(max_children)
 			BVHTree.create_BVH(self)
 
-func set_camera_setting(cam : camera_setting):
+
+func set_camera_setting(cam : CameraSetting):
 	if camera:
 		var temp = camera_settings_values[cam]
 		
@@ -274,6 +228,60 @@ func create_random_scene(seed):
 			var new_sphere = PTSphere.new(center, radius, material, 0)
 			add_object(new_sphere)
 	
+
+static func _load_scene(path : String):
+	var file = FileAccess.open(path, FileAccess.READ)
+	var text = file.get_as_text()
+	file.close()
+	
+	var mtl_index = {}
+	var mtl_list : Array[PTMaterial] = []
+	var sphere_list : Array[PTObject] = []
+	var plane_list : Array[PTObject] = []
+	var objects_dict = {
+		ObjectType.SPHERE : sphere_list,
+		ObjectType.PLANE : plane_list
+	}
+	for line in text.split("\n", false):
+		if line.begins_with("#"):
+			continue
+		
+		if line.begins_with("mtl "):
+			var values = line.split(" ", false)
+			var material = PTMaterial.new()
+			material.albedo = Vector3(float(values[2]), 
+									  float(values[3]), 
+									  float(values[4]))
+			material.roughness = float(values[5])
+			material.metallic = float(values[6])
+			material.opacity = float(values[7])
+			material.IOR = float(values[8])
+			material.refraction_depth = int(values[9])
+			
+			mtl_index[values[1]] = mtl_list.size()
+			mtl_list.append(material)
+		
+		if line.begins_with("sphere"):
+			var numbers = line.split_floats(" ", false).slice(1)
+			var center = array2vec(numbers.slice(0, 3))
+			var material_index = mtl_index[line.split(" ", false)[-1]]
+			var material = mtl_list[material_index]
+			var sphere = PTSphere.new(center, numbers[3], material, material_index)
+			
+			sphere.object_index = sphere_list.size()
+			sphere_list.append(sphere)
+		
+		elif line.begins_with("plane"):
+			var numbers = line.split_floats(" ", false).slice(1)
+			var normal = array2vec(numbers.slice(0, 3))
+			var material_index = mtl_index[line.split(" ", false)[-1]]
+			var material = mtl_list[material_index]
+			var plane = PTPlane.new(normal, numbers[3], material, material_index)
+			
+			plane.object_index = plane_list.size()
+			plane_list.append(plane)
+	
+	return [objects_dict, mtl_list]
 
 
 

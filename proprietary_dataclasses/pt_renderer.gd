@@ -1,7 +1,6 @@
 @tool
-extends Node
-
 class_name PTRenderer
+extends Node
 
 # TODO This class probably fits well as a singleton, research how to do that
 """This node should be the root node of a scene with PTScene object added as a child.
@@ -11,16 +10,24 @@ a the correct PTWorkDispatcher, wich will actually make the gpu render an image.
 
 """
 
-
 const WindowGui = preload("res://ui_scenes/render_window_gui/render_window_gui.tscn")
+
+# Controls the degree of the bvh tree passed to the gpu. 
+# NOTE: Currently no support for dynamically changing it. TODO
+const bvh_max_children := 8
+
+# NOTE: CPU control over gpu invocations has not been added. 
+#	These are merely for reference
+const compute_invocation_width := 8
+const compute_invocation_height := 8
+const compute_invocation_depth := 1
 
 # Override for stopping rendering
 @export var disable_rendering := false
 
-# Whether this instance was created by a plugin script or not
-var _is_plugin_instance = false
-var root_node # Since the scene will become a subtree in the plugin, root_node
-			  #  is a convenient pointer to the relative root node 
+# Since the scene will become a subtree in the plugin, 
+#  root_node is a convenient pointer to the relative root node 
+var root_node 
 
 # Realtime PTWorkDispatcher
 var rtwd : PTWorkDispatcher = null
@@ -54,15 +61,9 @@ var samples_per_pixel = 1
 var max_default_depth = 8
 var max_refraction_bounces = 8 
 
-# Controls the degree of the bvh tree passed to the gpu. 
-# NOTE: Currently no support for dynamically changing it. TODO
-const bvh_max_children := 8
 
-# NOTE: CPU control over gpu invocations has not been added. 
-#	These are merely for reference
-const compute_invocation_width := 8
-const compute_invocation_height := 8
-const compute_invocation_depth := 1
+# Whether this instance was created by a plugin script or not
+var _is_plugin_instance = false
 
 
 func _ready():
@@ -116,8 +117,8 @@ func _ready():
 		rtwd.create_buffers()
 		
 		#var x = ceil(1920. / 16.)
-		var x = ceil(1920. / 8.)
-		var y = ceil(1080. / 8.)
+		var x = ceili(1920. / 8.)
+		var y = ceili(1080. / 8.)
 		
 		var window1 = PTRenderWindow.new(x, y)
 		var window2 = PTRenderWindow.new(x, y, 1, 1920 / 2)
@@ -140,6 +141,7 @@ func _ready():
 		add_window(better_window)
 		add_child(better_window)
 
+
 func _process(delta):
 	
 	# Runtime and plugin requires different checks for window focus
@@ -161,6 +163,8 @@ func _process(delta):
 		for window in windows:
 			rtwd.create_compute_list(window)
 		
+		# TODO tie this to is_rendering changed signal.
+		# TODO move is rendering to renderer
 		var mat = canvas.mesh.surface_get_material(0)
 		mat.set_shader_parameter("is_rendering", true)
 	#else:
@@ -221,7 +225,7 @@ func _exit_tree():
 
 func load_shader():
 	var file := FileAccess.open("res://shaders/ray_tracer.comp", 
-	FileAccess.READ_WRITE)
+		FileAccess.READ_WRITE)
 	var res = file.get_as_text()
 	file.close()
 	

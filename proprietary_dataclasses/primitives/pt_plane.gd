@@ -1,6 +1,6 @@
+class_name PTPlane
 extends PTPrimitive3D
 
-class_name PTPlane
 
 var normal : Vector3
 var distance : float

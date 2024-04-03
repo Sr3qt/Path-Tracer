@@ -1,7 +1,11 @@
 @tool
+class_name PTCamera
 extends Node
 
-class_name PTCamera
+""" Controls rendering paramaters and position in 3d space
+
+Replaces Camera3D for path traced rendering
+"""
 
 # Whether the camera should react to button presses and mouse movements
 #  NOTE: currently not implemented
@@ -45,18 +49,19 @@ var forward: Vector3:
 	
 
 func _init(
-	pos := Vector3(0,0,0), 
-	looking_at := Vector3(0,0,-1), 
-	aspect_ratio_ : float = aspect_ratio, 
-	horizontal_fov : float = hfov, 
-	focal_length_ : float = focal_length
-	):
+		pos := Vector3(0,0,0), 
+		looking_at := Vector3(0,0,-1), 
+		_aspect_ratio : float = aspect_ratio, 
+		horizontal_fov : float = hfov, 
+		_focal_length : float = focal_length
+	): # :(
+	
 	camera_pos = pos
 	look_at(looking_at)
 	
-	aspect_ratio = aspect_ratio_
+	aspect_ratio = _aspect_ratio
 	
-	focal_length = focal_length_
+	focal_length = _focal_length
 	hfov = horizontal_fov
 	vfov = hfov / aspect_ratio
 	
@@ -77,11 +82,11 @@ func _process(delta):
 	if not Engine.is_editor_hint() or (root_node and root_node.visible and not freeze):
 		# MOve to player ndoe
 		if Input.is_key_pressed(KEY_W):
-			move_camera(-forward * Vector3(1,0,1) * move_speed * delta)
+			move_camera((-forward * Vector3(1,0,1)).normalized() * move_speed * delta)
 		if Input.is_key_pressed(KEY_A):
 			move_camera(-right * Vector3(1,0,1) * move_speed * delta)
 		if Input.is_key_pressed(KEY_S):
-			move_camera(forward * Vector3(1,0,1) * move_speed * delta)
+			move_camera((forward * Vector3(1,0,1)).normalized() * move_speed * delta)
 		if Input.is_key_pressed(KEY_D):
 			move_camera(right * Vector3(1,0,1) * move_speed * delta)
 
@@ -109,10 +114,10 @@ func set_viewport_size():
 	camera_changed = true
 
 
-func look_at(point : Vector3):
+func look_at(point : Vector3, _up := Vector3(0, 1, 0)):
 	forward = (camera_pos - point).normalized()
 	
-	right = Vector3(0, 1, 0).cross(forward).normalized()
+	right = _up.cross(forward).normalized()
 	up = forward.cross(right).normalized()
 	
 	camera_changed = true

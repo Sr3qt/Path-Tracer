@@ -10,8 +10,8 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -1.0
-offset_bottom = -1.0
+offset_right = 8.0
+offset_bottom = 8.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_7js1k")
@@ -29,6 +29,7 @@ script = ExtResource("2_lirvx")
 
 [node name="PanelContainer" type="PanelContainer" parent="."]
 unique_name_in_owner = true
+visible = false
 layout_mode = 0
 offset_left = 106.0
 offset_top = 32.0
@@ -58,6 +59,7 @@ text = "Use BVH tree"
 [node name="UseBVHButton" type="CheckBox" parent="PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
 unique_name_in_owner = true
 layout_mode = 2
+button_pressed = true
 text = "
 "
 

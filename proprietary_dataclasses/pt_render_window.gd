@@ -1,11 +1,16 @@
-#@tool
-extends Control
-
+@tool
 class_name PTRenderWindow
-
+extends Control
 
 """Class for showing gui and passing render flags for a smaller portion of 
 the render window"""
+
+enum RenderFlagsBits {
+	USE_BVH = 1,
+	SHOW_BVH_DEPTH = 2,
+	SCENE_CHANGED = 4,
+	SAMPLE_ALL_TEXTURES = 8
+}
 
 var render_name := "unnamed_window"
 
@@ -51,19 +56,9 @@ var work_group_depth := 1
 var x_offset := 0
 var y_offset := 0
 
-enum RenderFlagsBits {
-	USE_BVH = 1,
-	SHOW_BVH_DEPTH = 2,
-	SCENE_CHANGED = 4,
-	SAMPLE_ALL_TEXTURES = 8
-}
-
-# What kind of bvh is used, if any. Is of type BVH_TYPE enum, but i can't 
+# What kind of bvh is used, if any. Is of type BVHType enum, but i can't 
 #  type hint for some reason
 var bvh_type = null
-
-
-#enum 
 
 
 func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 0):
@@ -85,6 +80,10 @@ func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 
 	set_position(Vector2(x_offset, y_offset))
 
 
+func flags_to_byte_array():
+	var flag_array = PackedInt32Array([flags])
+	return flag_array.to_byte_array()
+
 
 func _set_flags():
 	"""Used once for init"""
@@ -100,7 +99,3 @@ func _set_flag_bit(bit, boolean : bool):
 	# https://stackoverflow.com/questions/47981/how-to-set-clear-and-toggle-a-single-bit
 	flags = (flags & ~bit) | (bit * int(boolean))
 
-
-func flags_to_byte_array():
-	var flag_array = PackedInt32Array([flags])
-	return flag_array.to_byte_array()

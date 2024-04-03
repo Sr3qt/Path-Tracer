@@ -4,7 +4,7 @@ extends EditorPlugin
 const MainPanel = preload("res://addons/path_tracer_engine/pt_plugin_scene.tscn")
 
 var main_panel_instance
-var renderer
+var renderer # Might not be necessary
 
 var is_docked := true
 var is_main := !is_docked
@@ -24,10 +24,7 @@ func _enter_tree():
 	if is_docked:
 		add_control_to_dock(EditorPlugin.DOCK_SLOT_RIGHT_UL, main_panel_instance)
 	
-	#renderer = %PluginRenderer
 	renderer = main_panel_instance.renderer
-	print(renderer)
-	
 	
 	_make_visible(false)
 

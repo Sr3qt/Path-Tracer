@@ -1,7 +1,7 @@
+class_name PTMaterial
 extends Node
 # Can potentially be Refcounted
 
-class_name PTMaterial
 
 # Similar to GPU material, default value is the same as air
 var albedo := Vector3(1, 1, 1) # Stored as linear color values from 0 to 1
@@ -14,20 +14,6 @@ var refraction_depth := 0
 
 func get_rgb():
 	"""Returns albedo as rgb values from 0 to 255 in srgb space"""
-
-
-func to_byte_array():
-	var floats_array = PTObject.vec2array(albedo) + [
-		roughness,
-		metallic,
-		opacity,
-		IOR
-	]
-	
-	var bytes = (PackedFloat32Array(floats_array).to_byte_array() +
-	PackedInt32Array([refraction_depth]).to_byte_array())
-	
-	return bytes
 
 
 func find_in_array(materials : Array[PTMaterial]):
@@ -49,4 +35,16 @@ func is_equal(other : PTMaterial):
 			other.IOR == IOR and 
 			other.refraction_depth == refraction_depth
 	)
-		
+
+func to_byte_array():
+	var floats_array = PTObject.vec2array(albedo) + [
+		roughness,
+		metallic,
+		opacity,
+		IOR
+	]
+	
+	var bytes = (PackedFloat32Array(floats_array).to_byte_array() +
+	PackedInt32Array([refraction_depth]).to_byte_array())
+	
+	return bytes

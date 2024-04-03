@@ -1,3 +1,4 @@
+@tool
 extends CheckBox
 
 @onready var parent : PTRenderWindow = get_parent()

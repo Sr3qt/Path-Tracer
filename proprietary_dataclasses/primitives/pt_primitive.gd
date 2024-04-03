@@ -1,6 +1,10 @@
+class_name PTPrimitive3D
 extends PTObject
 
-class_name PTPrimitive3D
+""" Base class for primitive objects
+
+Might be unnecessary
+"""
 
 
 
