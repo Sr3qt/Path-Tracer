@@ -129,23 +129,6 @@ func create_buffers():
 	texture.texture_rd_rid = image_buffer
 	
 
-func _exit_tree():
-	#if is_local_renderer:
-	var image = rd.texture_get_data(image_buffer, 0)
-	# Changing the renderer render size should always create a new buffer, so
-	#  this code should always yield a correct result
-	var new_image = Image.create_from_data(
-		_renderer.render_width, 
-		_renderer.render_height, 
-		false,
-		Image.FORMAT_RGBAF, 
-		image
-	)
-	new_image.save_png("temp.png")
-	
-	free_RIDs()
-
-
 func free_RIDs():
 	# I don't understand garbage collection. Maybe this helps idk
 	if texture:
@@ -284,29 +267,28 @@ func _create_uniform(bytes, render_device, set_, binding):
 	
 	return buffer
 
-
-func _create_image_buffer():
-	# Create image buffer for compute and fragment shader
-	var tf : RDTextureFormat = RDTextureFormat.new()
-	tf.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT
-	tf.texture_type = RenderingDevice.TEXTURE_TYPE_2D
-	tf.width = _renderer.render_width
-	tf.height = _renderer.render_height
-	tf.depth = 1
-	tf.array_layers = 1
-	tf.mipmaps = 1
-	tf.usage_bits = (
+func _temp_create_texture_buffer():
+	"""Creates and binds render result texture buffer aka. image_buffer"""
+	var usage_bits = (
 		RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT + 
 		RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT +
 		RenderingDevice.TEXTURE_USAGE_STORAGE_BIT +
 		RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT 
-		# Remove bit for increased performance, have to add readonly to shader buffer
+		# Remove bit for increased performance, have to add writeonly to shader buffer
 		+ RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
 	)
-	#if is_local_renderer:
-		#tf.usage_bits += RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT 
 	
-	var new_image_buffer = rd.texture_create(tf, RDTextureView.new(), [])
+	#if is_local_renderer:
+		#usage_bits += RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT 
+	
+	var new_image_buffer = _create_texture_buffer(
+		RenderingDevice.TEXTURE_TYPE_2D,
+		_renderer.render_width, 
+		_renderer.render_height,
+		[],
+		1,
+		usage_bits
+	)
 	
 	var uniform := RDUniform.new()
 	uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
@@ -316,6 +298,66 @@ func _create_image_buffer():
 	uniform_sets[image_set_index][image_buffer_bind] = uniform
 	
 	return new_image_buffer
+
+
+
+func _create_image_buffer():
+	"""Creates and binds render result texture buffer aka. image_buffer"""
+	var usage_bits = (
+		RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT + 
+		RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT +
+		RenderingDevice.TEXTURE_USAGE_STORAGE_BIT +
+		RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT 
+		# Remove bit for increased performance, have to add writeonly to shader buffer
+		+ RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
+	)
+	
+	#if is_local_renderer:
+		#usage_bits += RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT 
+	
+	var new_image_buffer = _create_texture_buffer(
+		RenderingDevice.TEXTURE_TYPE_2D,
+		_renderer.render_width, 
+		_renderer.render_height,
+		[],
+		1,
+		usage_bits
+	)
+	
+	var uniform := RDUniform.new()
+	uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
+	uniform.binding = image_buffer_bind
+	uniform.add_id(new_image_buffer)
+	
+	uniform_sets[image_set_index][image_buffer_bind] = uniform
+	
+	return new_image_buffer
+
+
+func _create_texture_buffer(
+	texture_type,
+	width : int,
+	height : int,
+	data : PackedByteArray,
+	array_layers : int,
+	usage_bits : int):
+	"""Creates an unbound texture buffer"""
+	
+	# Create image buffer for compute and fragment shader
+	var tf : RDTextureFormat = RDTextureFormat.new()
+	tf.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT
+	tf.texture_type = texture_type
+	tf.width = width
+	tf.height = height
+	tf.depth = 1
+	tf.array_layers = array_layers
+	tf.mipmaps = 1
+	tf.usage_bits = usage_bits
+	
+	var new_texture_buffer = rd.texture_create(tf, RDTextureView.new(), data)
+	RIDs_to_free.append(new_texture_buffer)
+	
+	return new_texture_buffer
 
 
 func _create_spheres():

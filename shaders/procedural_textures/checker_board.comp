@@ -1,0 +1,26 @@
+
+const float divisor = (1. / .5);
+
+vec4 procedural_texture(vec3 pos) {
+    float biggest = max(abs(pos.x), abs(pos.z));
+
+    float twos = 2.;
+    if (biggest > 10.) {
+        twos *= 2.;
+    }
+    if (biggest> 100.) {
+        twos *= 2.;
+    }
+    if (biggest > 1000.) {
+        twos *= 2.;
+    }
+    if (biggest > 10000.) {
+        twos *= 2.;
+    }
+
+    // vec3 new_pos = floor(pos * divisor / pow(1.01, biggest));
+    vec3 new_pos = floor(pos * divisor);
+    float sum = new_pos.x + new_pos.z;
+
+    return bool(mod(sum, 2.)) ? vec4(0.9,0.9,0.9,1) : vec4(0.2,0.3,0.1,1);
+}

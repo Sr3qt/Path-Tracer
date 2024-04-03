@@ -1,0 +1,12 @@
+
+const float divisor = (1. / .5);
+
+vec4 procedural_texture(vec3 pos) {
+    vec3 new_pos = floor(pos * divisor);
+    float sum = new_pos.x + new_pos.y + new_pos.z;
+
+
+    // bool another = bool(mod(float(new_pos.x + new_pos.z), 2.)) ;
+    return bool(mod(sum, 2.)) ? vec4(0.9,0.9,0.9,1) : vec4(0.2,0.3,0.1,1);
+    // return another ? vec4(0.9,0.9,0.9,1) : vec4(0.2,0.3,0.1,1);
+}

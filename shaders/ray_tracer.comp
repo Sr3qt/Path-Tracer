@@ -15,6 +15,7 @@ The camera points in the negative z direction with positive y being up and posit
 
 The render image's origin is in the top left. u direction is right and v is down.
 
+Index 0 usually points to an empty or intentionally invalid value.
 
 RayHit structs don't determine normals and intersection points on-hit. They 
 have to have determine_rayhit called on them afterwards to have valid values.
@@ -31,6 +32,14 @@ Basically it determines if a translucent object cuts into another object or not.
 mtl_index and object_index refer to the an material and object in the global material list and 
 object list respectively. There may be multiple object lists in which case an object_type enum
 will determine which object list object_index points to.
+
+texture_index and texture_type, similarly to object_index and object_type, point to a texture 
+and specifies what kind of texture it is respectively, however texture index either points to 
+a texture in an array or, if texture_type is zero, to a procedural_texture_function.
+
+Procedural textures are single function files which takes in a vec3 position and returns a vec4 color.
+These functions are written in a seperate file and inserted into this file by the preprocessor. 
+The function's name should be "procedural_texture".
  
 
 LONG TERM GOALS
@@ -63,14 +72,21 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 // CONSTANTS
 // =========
 const float infinity = 1. / 0.;
-const double pi_double = 3.1415926535897932385;
+const double pi_d = 3.1415926535897932385;
 const float pi = 3.1415926535897932385;
+const float pi_half = pi / 2.;
+const float pi_double = pi * 2;
 const float eps = 0.00001;
 
 // object_type enumerator
 const int is_not_obj = 0;
 const int is_sphere = 1;
 const int is_plane = 2;
+
+// texture_type enumerator
+const int is_procedural_spatial = 0; // For point hit procedural function
+const int is_procedural_flat = 1; // For uv procedural functions
+const int is_sampled_texture = 2; // For uv sampling from texture buffer
 
 // BVH child_index enum
 // const int is_BVHNode = 1;
@@ -96,11 +112,12 @@ const int max_children = 2; // Replaced by script preprocessor, do NOT touch thi
 const int filler_const = int(mod(max_children, 2) + 2.) * 2; 
 
 // Flags
-bool flags[3];
+bool flags[4];
 bool use_bvh;
 bool show_bvh_depth;
 
 bool scene_changed;
+bool sample_all_textures;
 
 
 float random_number;
@@ -117,7 +134,6 @@ struct Camera {
     vec3 forward;
     float gamma;
 };
-
 
 struct Ray {
     vec3 origin;
@@ -150,19 +166,22 @@ struct Plane {
     vec3 normal;
     float d;
     int mtl_index;
-    int filler1; // Not needed since i dont pass in planes, YET
-    int filler2;
-    int filler3;
+    int texture_index;
+    int texture_type;
+    int filler1;
 };
 
 struct Sphere {
     vec3 center;
     float radius;
     int mtl_index;
-    int filler[3];
+    int texture_index;
+    int texture_type;
+    int filler1;
 };
 
 struct RayHit {
+    // TODO Optimize rayhit memory consumption
     bool hit; // Whether the ray actually hit something
     bool is_initialized; // Whether values like point and normal are determined
 
@@ -174,7 +193,10 @@ struct RayHit {
 
     // Retrieved later
     int mtl_index; // Material of the object hit
+    int texture_index;
+    int texture_type;
     vec3 point; // Intersection point between sphere and ray
+    vec2 uv;
     vec3 normal;
     vec4 color; // Whatever color the rayhit is determined to be 
 };
@@ -251,31 +273,31 @@ layout(push_constant, std430) restrict readonly uniform constants {
     Camera camera;
     float time;
     int flags;
-    ivec2 image_offset; // How many pixels offset should the rendering count as zero
+    ivec2 image_offset; // How many pixels offset should the viewport origin be
 } push;
 
 // UTILITY FUNCTIONS
 // =================
 
 Ray empty_ray() {
-    return Ray(vec3(0,0,0), vec3(0,0,0));
+    return Ray(vec3(0), vec3(0));
 }
 
 Material empty_material() {
-    return Material(vec3(0,0,0), 0., 0., 1., IOR_air, 0);
+    return Material(vec3(0), 0., 0., 1., IOR_air, 0);
 }
 
 Sphere empty_sphere() {
-    return Sphere(vec3(0,0,0), 0., 0, int[](0,0,0));
+    return Sphere(vec3(0), 0., 0, 0, 0, 0);
 }
 
 Plane empty_plane() {
-    return Plane(vec3(0,0,0), 0., 0, 0,0,0);
+    return Plane(vec3(0), 0., 0, 0, 0, 0);
 }
 
 RayHit empty_rayhit() {
-    return RayHit(false, false, empty_ray(), infinity, 0, 0, 0,
-                  vec3(0,0,0), vec3(0,0,0), vec4(0,0,0,0));
+    return RayHit(false, false, empty_ray(), infinity, 0, 0, 0, 0, 0,
+                  vec3(0), vec2(0), vec3(0), vec4(0));
 }
 
 ChildIndex empty_child_index() {
@@ -325,6 +347,14 @@ bool intersect_AABB(AABB bbox1, AABB bbox2) {
     return true;
 }
 
+float atan2(float y, float x) {
+    // Apparantly more stable atan function, read:
+    // https://stackoverflow.com/questions/26070410/robust-atany-x-on-glsl-for-converting-xy-coordinate-to-angle
+
+    bool s = (abs(x) > abs(y));
+    return mix(pi / 2.0 - atan(x,y), atan(y,x), s); // Should perform as well as ternary
+}
+
 float rand(float seed) {
     return fract((seed * 23489.52364) / 0.0836);
 }
@@ -351,7 +381,6 @@ void swap(inout float a, inout float b) {
     b = a - b;
     a = a - b;
 }
-
 
 bool is_close(float value1, float value2) {
     // Whether a value is within an epsilon of value2
@@ -394,74 +423,52 @@ void parse_flags() {
     show_bvh_depth = flags[0];
     use_bvh = flags[1];
     scene_changed = flags[2];
+    sample_all_textures = flags[3];
 }
 
-// BVH FUNCTIONS
+// TEXTURE STUFF
 // =============
 
-void create_BVH_list() {
+vec2 sphere_get_uv(vec3 pos) {
+    float theta = acos(-pos.y);
+    float phi = atan(-pos.z, pos.x) + pi;
 
-    int sphere_array_length = spheres.data.length();
-    int other_array_length = 0;
+    vec2 uv = vec2(phi / pi_double, theta / pi);
 
-    int total_length = sphere_array_length + other_array_length;
-
-    // Create a Node for every object in all object lists
-    // int running_length = 0;
-    // for (int i = 0; i < sphere_array_length; i++) {
-    //     BVHNode temp = empty_BVHNode();
-    //     temp.children[0] = ChildIndex(i, is_sphere);
-    //     temp.bbox = sphere_AABB(spheres.data[i]);
-    //     temp.self = -1;
-    //     BVH.list[i] = temp;
-    // }
-    // running_length += sphere_array_length;
-
-    // pseudo code for other object lists
-    // for (int i = 0; i < other_array_length; i++) {
-    //     BVHNode temp = empty_BVHNode();
-    //     temp.children[0] = ChildIndex(-1, object_type, i, 0);
-    //     temp.bbox = AABB_of_obj(obj_list.data[i]);
-    //     temp.self = -1;
-    //     BVH.list[i + running_length] = temp;
-    // }
-    // running_length += other_array_length;
-
-    // Simple, naive merge method
-    // for (int i = 0; i < running_length - 1; i++) {
-    //     if (BVH.list[i].self != -2) {
-    //         continue;
-    //     }
-    //     for (int j = i + 1; j < running_length; j++) {
-    //         // If node doesn't exist, continue
-    //         if (BVH.list[j].self != -2) {continue;}
-    //         // If nodes don't intersect, continue
-    //         if (!intersect_AABB(BVH.list[i], BVH.list[j])) {continue;}
-
-    //     }
-    // }
-
-    // Merge intersecting nodes
-    // for (int i = 0; i < running_length - 1; i++) {
-    //     BVHNode node1 = BVH.list[i];
-    //     if (node1.self != -2) {
-    //         continue;
-    //     }
-    //     for (int j = i + 1; j < running_length; j++) {
-    //         BVHNode node2 = BVH.list[j];
-    //         // If node doesn't exist, continue
-    //         if (node2.self != -2) {continue;}
-    //         // If nodes don't intersect, continue
-    //         if (!intersect_AABB(node1.bbox, node2.bbox)) {continue;}
-
-    //         // if ()
-
-    //     }
-    // }
+    return uv;
 
 }
 
+// Preprocessor will place procedural texture definitions here
+//procedural_texture_function_definition_hook
 
+vec4 procedural_texture(vec3 pos, int function) {
+    // This function will be pre processed and filled procedural texture functions.
+    // For sampled textures there is a different implementation (not yet implemented)
+    
+    // Return white as default function
+    if (function == 0) {
+        return vec4(1);
+    }
+    
+    // Preprocessor will insert procedural texture functions here
+    //procedural_texture_function_call_hook
+
+    // Also return white when function not found
+    return vec4(1);
+}
+
+
+vec4 get_texture(RayHit rayhit) {
+    if (rayhit.texture_type == is_procedural_spatial) {
+        // return vec4(0.9);
+        return procedural_texture(rayhit.point, rayhit.texture_index);
+    }
+    else if (rayhit.texture_type == is_procedural_flat) {
+        return procedural_texture(vec3(rayhit.uv, 0), rayhit.texture_index);
+    }
+    // TODO Add sampled textures
+}
 
 
 // RAY-HIT FUNCTIONS
@@ -544,15 +551,13 @@ RayHit hit_plane(Ray ray, int plane_index, Range t_range, inout RayHit rayhit) {
     
     Plane plane = planes.data[plane_index];
 
-    // Early return if plane is paralell, even if the ray is contained in the plane
-    // May not be needed
-    // bool is_paralell = is_close(dot(ray.direction, plane.normal), 0.);
-    // if (is_paralell) {
-    //     return rayhit;
-    // }
-
     float intersection_t = ((plane.d - dot(ray.origin, plane.normal)) /
                             dot(plane.normal, ray.direction));
+
+    // Early return if plane is paralell, even if the ray is contained in the plane
+    if (isnan(intersection_t) || (isinf(intersection_t))) {
+        return rayhit;
+    }
 
     // Early return if t is not in range or further away than previous t
     if (!in_range(intersection_t, t_range) || intersection_t > rayhit.t) {
@@ -589,14 +594,18 @@ RayHit determine_rayhit(inout RayHit rayhit) {
     if (rayhit.object_type == is_sphere) {
         Sphere sphere = spheres.data[rayhit.object_index];
         rayhit.mtl_index = sphere.mtl_index;
+        rayhit.texture_index = sphere.texture_index;
+        rayhit.texture_type = sphere.texture_type;
         rayhit.normal = (rayhit.point - sphere.center) / sphere.radius;
         rayhit.color = vec4(materials.data[rayhit.mtl_index].albedo, 1);
-        // rayhit.uv = circle_uv(rayhit.object_index);
+        rayhit.uv = sphere_get_uv(rayhit.point);
 
     // Procedure for hitting plane
     } else if (rayhit.object_type == is_plane) {
         Plane plane = planes.data[rayhit.object_index];
         rayhit.mtl_index = plane.mtl_index;
+        rayhit.texture_index = plane.texture_index;
+        rayhit.texture_type = plane.texture_type;
         rayhit.normal = plane.normal;
         rayhit.color = vec4(materials.data[rayhit.mtl_index].albedo, 1);
     }
@@ -621,7 +630,6 @@ RayHit check_ray_hit(Ray ray, Range range) {
 }
 
 
-// TODO: THis is slower than normal rendering. Has to change!
 RayHit check_ray_hit_BVH(Ray ray, Range range) {
     // Like check_ray_hit but it checks against a BVH tree instead of each object_list individually
     RayHit rayhit = empty_rayhit();
@@ -798,10 +806,10 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     return ray_out;
 }
 
-Ray scatter_ray(Ray ray_in, inout RayHit rayhit) {
+Ray scatter_ray(Ray ray_in, RayHit rayhit) {
     // TODO Change the way rays are created based on roughness, less/ more scatter
     // Returns a scattered ray based on ray_in and rayhit
-    vec3 ray_dir = rand_vec3(rayhit.point) + rayhit.normal;
+    vec3 ray_dir = rand_vec3(rayhit.point + rayhit.ray.direction) + rayhit.normal;
 
     // If created ray pointed in opposite direction of normal
     if (near_zero(ray_dir)) {
@@ -838,14 +846,18 @@ vec4 cast_ray(Ray ray, Range range) {
 
     vec4 out_col = default_color;
 
+
+    // Turns out computing colors in the same loop was faster, TODO maybe reconsider
     // Rayhit's color should determined in reverse order, so we to store them for later
-    RayHit rayhits[64];
+    // RayHit rayhits[64];
 
     // Calculate rayhits
     Ray new_ray = ray;
     RayHit rayhit;
     int i = 0;
     refraction_bounces = 0;
+    vec4 new_color = vec4(1);
+    vec4 tex_col = vec4(1);
 
     for (;i < LOD.max_default_depth + refraction_bounces; i++) {
         if (use_bvh) {
@@ -853,8 +865,7 @@ vec4 cast_ray(Ray ray, Range range) {
 
             // Send one ray, skip bouncing
             if (show_bvh_depth) {
-                rayhits[i] = rayhit;
-                i++; // Breaking doesn't increment therefore we have to correct for it
+                new_color = rayhit.color;
                 break;
             }
         } else {
@@ -864,28 +875,24 @@ vec4 cast_ray(Ray ray, Range range) {
         // Early break if no hit
         if (!rayhit.hit) {
             // Adds sky color as the last rayhit when miss
-            rayhits[i] = rayhit;
-            i++; // Breaking doesn't increment therefore we have to correct for it
+            new_color *= rayhit.color;
             break;
         }
 
         determine_rayhit(rayhit);
 
-        new_ray = bounce_ray(new_ray, rayhit);
         
-        rayhits[i] = rayhit;
+        // Get texture if relevant
+        if (sample_all_textures || (i == 0)) {
+            tex_col = rayhit.texture_type == 0 ?  get_texture(rayhit) : vec4(1);
+        }
+
+        // TODO: implement attenuation based on incident and exiting angles
+        new_color *= rayhit.color * tex_col;
+
+        
+        new_ray = bounce_ray(new_ray, rayhit);
     } 
-
-    if (i == 0) {return out_col;} // Early return if no rays were hit
-
-    i--; // Correct i to be last index of rayhits
-
-    // Determine each ray color in reverse order
-    // TODO: implement attenuation based on incident and exiting angles
-    vec4 new_color = rayhits[i].color;
-    for (int j = i; j > 0; j--) {
-        new_color = new_color * rayhits[j - 1].color; // temp
-    }
 
     return new_color;
 }
@@ -950,3 +957,5 @@ void main() {
         imageStore(output_image, UVi.xy, (new_color + prev_col) / 2.);
     }
 }
+
+

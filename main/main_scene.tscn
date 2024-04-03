@@ -26,7 +26,6 @@ script = ExtResource("1_c80yu")
 
 [node name="PTScene" type="Node" parent="SceneRenderer"]
 script = ExtResource("2_s1nmc")
-scene_import = "res://main/sphere_scene1.txt"
 
 [node name="PTCamera" type="Node" parent="SceneRenderer/PTScene"]
 script = ExtResource("3_i3qtc")

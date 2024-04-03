@@ -35,12 +35,13 @@ static var OBJECT_TYPE = PTObject.OBJECT_TYPE
 enum BVH_TYPE {DEFAULT}
 
 # Temp
-enum camera_setting {top_down, corner, book_ex, center}
+enum camera_setting {top_down, corner, book_ex, center, middle}
 var camera_settings_values = {
 	camera_setting.top_down : [Vector3(0, 8, -15), Vector3(0,0,-6), 106.],
 	camera_setting.corner : [Vector3(-11, 3, -11), Vector3(0,0,0), 106.],
 	camera_setting.book_ex : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.],
-	camera_setting.center : [Vector3(0, 0, 1), Vector3(0,0,0), 106.]
+	camera_setting.center : [Vector3(0, 0, 1), Vector3(0,0,0), 106.],
+	camera_setting.middle : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.]
 }
 
 func _init(
@@ -83,7 +84,7 @@ func _ready():
 		#camera = PTCamera.new()
 	
 	if not Engine.is_editor_hint():
-		set_camera_setting(camera_setting.center)
+		set_camera_setting(camera_setting.middle)
 	else:
 		set_camera_setting(camera_setting.corner)
 	
