@@ -1,6 +1,0 @@
-res://main/main_scene.tscn
-res://shaders/canvas.gdshader
-res://proprietary_dataclasses/pt_renderer.gd
-res://proprietary_dataclasses/pt_work_dispatcher.gd
-res://addons/path_tracer_engine/pt_plugin_scene.tscn
-res://proprietary_dataclasses/primitives/pt_plane.gd
