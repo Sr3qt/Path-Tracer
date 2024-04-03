@@ -144,7 +144,7 @@ func free_RIDs():
 		rd.free_rid(rid)
 
 
-func create_compute_list(window : PTRenderer.PTDebugWindow = null):
+func create_compute_list(window : PTRenderWindow = null):
 	""" Creates the compute list required for every compute call 
 	
 	Requires workgroup coordinates to be given in an array or vector
@@ -152,7 +152,7 @@ func create_compute_list(window : PTRenderer.PTDebugWindow = null):
 	
 	# By default, will dispatch groups to fill whole render size
 	if window == null:
-		window = PTRenderer.PTDebugWindow.new()
+		window = PTRenderWindow.new()
 		
 		window.work_group_width = ceil(_renderer.render_width / 
 										_renderer.compute_invocation_width)
@@ -176,12 +176,12 @@ func create_compute_list(window : PTRenderer.PTDebugWindow = null):
 	rd.compute_list_bind_uniform_set(compute_list, BVH_set, BVH_set_index)
 	rd.compute_list_set_push_constant(compute_list, push_bytes, push_bytes.size())
 	
-	rd.capture_timestamp("Render Scene")
+	rd.capture_timestamp(window.render_name)
 	rd.compute_list_dispatch(compute_list, x, y, z)
 	
-	# Sync is not required when using main RenderingDevice
 	rd.compute_list_end()
 	
+	# Sync is not required when using main RenderingDevice
 	if is_local_renderer:
 		rd.submit()
 		rd.sync()
@@ -410,7 +410,7 @@ func _lod_byte_array():
 	return PackedInt32Array(lod_array).to_byte_array()
 
 
-func _push_constant_byte_array(window : PTRenderer.PTDebugWindow):
+func _push_constant_byte_array(window : PTRenderWindow):
 	var bytes = PackedByteArray()
 	
 	bytes += _scene.camera.to_byte_array()

@@ -409,6 +409,7 @@ vec3 ray_at(Ray ray, float t) {
 void parse_flags() {
     int bit = int(pow(2, flags.length() - 1));
     int num = push.flags;
+    // Loop over the i-th bit from most significant to least
     for (int i = flags.length() - 1; i >= 0; i--) {
         num -= bit;
         if (num < 0) {
@@ -420,8 +421,8 @@ void parse_flags() {
         bit = bit / 2;
     }
 
-    show_bvh_depth = flags[0];
-    use_bvh = flags[1];
+    use_bvh = flags[0];
+    show_bvh_depth = flags[1];
     scene_changed = flags[2];
     sample_all_textures = flags[3];
 }

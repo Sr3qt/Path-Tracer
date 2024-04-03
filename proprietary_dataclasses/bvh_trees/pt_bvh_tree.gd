@@ -33,6 +33,13 @@ var object_count : int # Counts the number of objects stored in leaf nodes
 var creation_time : int # In usecs
 var SAH_cost : float
 
+# Enum of different possible BVH algorithms, should be updated as more algortithms
+#  are added
+enum BVH_TYPE {DEFAULT}
+var bvh_types = {
+	BVH_TYPE.DEFAULT : PTBVHTree
+}
+
 func _init(max_children_ = 2):
 	max_children = max_children_
 	root_node = BVHNode.new(null, self)

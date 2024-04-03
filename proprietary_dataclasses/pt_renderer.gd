@@ -11,6 +11,9 @@ a the correct PTWorkDispatcher, wich will actually make the gpu render an image.
 
 """
 
+
+const WindowGui = preload("res://ui_scenes/render_window_gui/render_window_gui.tscn")
+
 # Override for stopping rendering
 @export var disable_rendering := false
 
@@ -24,7 +27,7 @@ var rtwd : PTWorkDispatcher = null
 #var nrtwd : PTWorkDispatcher
 
 # Array of sub-windows
-var windows : Array[PTDebugWindow] = []
+var windows : Array[PTRenderWindow] = []
 
 # The mesh to draw to
 var canvas : MeshInstance3D = null
@@ -116,16 +119,26 @@ func _ready():
 		var x = ceil(1920. / 8.)
 		var y = ceil(1080. / 8.)
 		
-		var window1 = PTDebugWindow.new(x, y)
-		var window2 = PTDebugWindow.new(x, y, 1, 1920 / 2)
+		var window1 = PTRenderWindow.new(x, y)
+		var window2 = PTRenderWindow.new(x, y, 1, 1920 / 2)
+		var better_window = WindowGui.instantiate()
+		
 		window2.show_bvh_depth = true
 		#window1.show_bvh_depth = true
 		
 		window1.sample_all_textures = true
 		
-		add_window(window1)
+		window1.set_anchors_preset(Control.PRESET_LEFT_WIDE)
+		window2.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
+		
+		#add_window(window1)
 		#add_window(window2)
-	
+		
+		better_window.work_group_width = x
+		better_window.work_group_height = y
+		
+		add_window(better_window)
+		add_child(better_window)
 
 func _process(delta):
 	
@@ -256,7 +269,7 @@ func load_shader():
 	rtwd.load_shader(shader)
 	
 
-func add_window(window : PTDebugWindow):
+func add_window(window : PTRenderWindow):
 	windows.append(window)
 	
 	# TODO add collision check with other windows and change their size accordingly
@@ -277,7 +290,7 @@ func save_framebuffer(work_dispatcher : PTWorkDispatcher):
 		Image.FORMAT_RGBAF, 
 		image
 	)
-	#xxxxxxxxxxxxxxxxxxxxx
+	
 	var folder_path = "res://renders/temps/" + Time.get_date_string_from_system()
 	
 	# Make folder for today if it doesnt exist
@@ -287,73 +300,3 @@ func save_framebuffer(work_dispatcher : PTWorkDispatcher):
 	new_image.save_png(folder_path + "/temp-" +
 	Time.get_datetime_string_from_system().replace(":", "-") + ".png")
 
-# TODO probably move to control node script
-class PTDebugWindow:
-	"""Class for showing gui and passing render flags for a smaller portion of 
-	the render window"""
-	
-	# Defualt render flags
-	var flags := 0
-	# Whether a bvh tree should be used or 
-	#  if every object should be checked for ray hit
-	var use_bvh := true:
-		set(value):
-			flags = flags ^ (RenderFlagsBits.USE_BVH * int(value))
-			use_bvh = value
-	# If a bvh heat map of of most expensive traversals are shown
-	var show_bvh_depth := false:
-		set(value):
-			flags = flags ^ (RenderFlagsBits.SHOW_BVH_DEPTH * int(value))
-			show_bvh_depth = value
-	# Whether the shader can make assume nothing has changed since last frame or not
-	var scene_changed := true:
-		set(value):
-			flags = flags ^ (RenderFlagsBits.SCENE_CHANGED * int(value))
-			scene_changed = value
-	# Whether every object who is hit should sample their texture or not
-	var sample_all_textures := false:
-		set(value):
-			flags = flags ^ (RenderFlagsBits.SAMPLE_ALL_TEXTURES * int(value))
-			sample_all_textures = value
-	
-	# work_group_height and width are used for size calculations.
-	#  depth is passed to work dispatcher, but no support for depth > 1 exist yet
-	var work_group_width : int
-	var work_group_height : int
-	var work_group_depth := 1
-	
-	var x_offset := 0
-	var y_offset := 0
-	
-	enum RenderFlagsBits {
-		USE_BVH = 1,
-		SHOW_BVH_DEPTH = 2,
-		SCENE_CHANGED = 4,
-		SAMPLE_ALL_TEXTURES = 8
-	}
-	
-	
-	func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 0):
-		_set_flags()
-		
-		work_group_width = group_x
-		work_group_height = group_y
-		work_group_depth = group_z
-		
-		x_offset = offset_x
-		y_offset = offset_y
-	
-	
-	func _set_flags():
-		"""Used once for init"""
-		flags = (
-			RenderFlagsBits.USE_BVH * int(use_bvh) +
-			RenderFlagsBits.SHOW_BVH_DEPTH * int(show_bvh_depth) +
-			RenderFlagsBits.SCENE_CHANGED * int(scene_changed) +
-			RenderFlagsBits.SAMPLE_ALL_TEXTURES * int(sample_all_textures)
-		)
-	
-	
-	func flags_to_byte_array():
-		var flag_array = PackedInt32Array([flags])
-		return flag_array.to_byte_array()

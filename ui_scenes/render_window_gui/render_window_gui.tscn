@@ -1,0 +1,139 @@
+[gd_scene load_steps=4 format=3 uid="uid://eoscno85ldok"]
+
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_render_window.gd" id="1_7js1k"]
+[ext_resource type="Script" path="res://ui_scenes/render_window_gui/gui_button_connector.gd" id="2_lirvx"]
+[ext_resource type="StyleBox" uid="uid://bq3nr6sqfrh8q" path="res://ui_scenes/render_window_gui/new_style_box_flat.tres" id="2_yf57u"]
+
+[node name="RenderWindowGui" type="Control"]
+custom_minimum_size = Vector2(8, 8)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -1.0
+offset_bottom = -1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_7js1k")
+
+[node name="CheckBox" type="CheckBox" parent="."]
+custom_minimum_size = Vector2(30, 0)
+layout_mode = 0
+offset_left = 53.0
+offset_top = 518.0
+offset_right = 135.0
+offset_bottom = 570.0
+flat = true
+expand_icon = true
+script = ExtResource("2_lirvx")
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 106.0
+offset_top = 32.0
+offset_right = 458.0
+offset_bottom = 582.0
+theme_override_styles/panel = ExtResource("2_yf57u")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="PanelContainer"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+
+[node name="GridContainer" type="GridContainer" parent="PanelContainer/ScrollContainer/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/h_separation = 90
+columns = 2
+
+[node name="UseBVHLabel" type="Label" parent="PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+layout_mode = 2
+text = "Use BVH tree"
+
+[node name="UseBVHButton" type="CheckBox" parent="PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "
+"
+
+[node name="ShowBVHDepthLabel" type="Label" parent="PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+layout_mode = 2
+text = "Show BVH depth map"
+
+[node name="ShowBVHDepthButton" type="CheckBox" parent="PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "
+"
+
+[node name="UseBVHLabel3" type="Label" parent="PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+layout_mode = 2
+text = "Use BVH tree"
+
+[node name="UseBVHButton3" type="CheckBox" parent="PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+layout_mode = 2
+text = "
+"
+
+[node name="BVHTypeLabel" type="Label" parent="PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+layout_mode = 2
+text = "New option"
+
+[node name="BVHType" type="OptionButton" parent="PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/ScrollContainer/MarginContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 46
+
+[node name="Labels" type="VBoxContainer" parent="PanelContainer/ScrollContainer/MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="UseBVHLabel" type="Label" parent="PanelContainer/ScrollContainer/MarginContainer/HBoxContainer/Labels"]
+layout_mode = 2
+text = "Use BVH tree"
+
+[node name="ShowBVHDepthLabel" type="Label" parent="PanelContainer/ScrollContainer/MarginContainer/HBoxContainer/Labels"]
+layout_mode = 2
+text = "Show BVH depth map"
+
+[node name="UseBVHLabel3" type="Label" parent="PanelContainer/ScrollContainer/MarginContainer/HBoxContainer/Labels"]
+layout_mode = 2
+text = "Use BVH tree"
+
+[node name="BVHTypeLabel" type="Label" parent="PanelContainer/ScrollContainer/MarginContainer/HBoxContainer/Labels"]
+layout_mode = 2
+text = "New option"
+
+[node name="Buttons" type="VBoxContainer" parent="PanelContainer/ScrollContainer/MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="UseBVHButton" type="CheckBox" parent="PanelContainer/ScrollContainer/MarginContainer/HBoxContainer/Buttons"]
+layout_mode = 2
+text = "
+"
+
+[node name="ShowBVHDepthButton" type="CheckBox" parent="PanelContainer/ScrollContainer/MarginContainer/HBoxContainer/Buttons"]
+layout_mode = 2
+text = "
+"
+
+[node name="UseBVHButton3" type="CheckBox" parent="PanelContainer/ScrollContainer/MarginContainer/HBoxContainer/Buttons"]
+layout_mode = 2
+text = "
+"
+
+[node name="BVHType" type="OptionButton" parent="PanelContainer/ScrollContainer/MarginContainer/HBoxContainer/Buttons"]
+layout_mode = 2
+
+[connection signal="toggled" from="PanelContainer/ScrollContainer/MarginContainer/GridContainer/UseBVHButton" to="CheckBox" method="_on_use_bvh_button_toggled"]
+[connection signal="toggled" from="PanelContainer/ScrollContainer/MarginContainer/GridContainer/ShowBVHDepthButton" to="CheckBox" method="_on_show_bvh_depth_button_toggled"]
