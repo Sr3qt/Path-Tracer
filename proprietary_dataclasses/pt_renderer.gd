@@ -198,7 +198,7 @@ func _exit_tree():
 			Image.FORMAT_RGBAF, 
 			image
 		)
-		new_image.save_png("temp.png")
+		new_image.save_png("temps/temp.png")
 		
 		rtwd.free_RIDs()
 	

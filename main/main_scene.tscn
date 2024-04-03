@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_scene.gd" id="2_s1nmc"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera.gd" id="3_i3qtc"]
 [ext_resource type="Shader" path="res://shaders/canvas.gdshader" id="4_2ftiq"]
-[ext_resource type="Texture2D" uid="uid://bdbvcujyyuudb" path="res://temp.png" id="5_5weid"]
+[ext_resource type="Texture2D" uid="uid://bdbvcujyyuudb" path="res://temps/temp.png" id="5_5weid"]
 
 [sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_2mxip"]
 
