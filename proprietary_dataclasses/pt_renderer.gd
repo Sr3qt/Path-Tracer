@@ -76,13 +76,11 @@ func _ready():
 		print("Plugin renderer _ready start")
 		print(self)
 	
-	if not rtwd:
-		rtwd = PTWorkDispatcher.new(self)
-	
 	if not Engine.is_editor_hint():
 		# Apparently very import check for get_window (Otherwise the editor bugs out)
 		get_window().position = Vector2(250, 400)
 
+		# Might not be needed
 		# Find camera and canvas in children 
 		for child in get_children():
 			if child is Camera3D: # TODO more secure way of identifying camera and canvas
@@ -91,7 +89,10 @@ func _ready():
 				canvas = child
 
 	# Only allow runtime and plugin instances to create child nodes
-	if _is_plugin_instance or not Engine.is_editor_hint():
+	if not Engine.is_editor_hint() or _is_plugin_instance:
+		if not rtwd:
+			rtwd = PTWorkDispatcher.new(self)
+		
 		if not normal_camera:
 			# Create godot camera to observe canvas
 			normal_camera = Camera3D.new()
@@ -279,7 +280,6 @@ func add_window(window : PTRenderWindow):
 	windows.append(window)
 	
 	if not Engine.is_editor_hint():
-		#get_parent().get_parent().add_child.call_deferred(window)
 		add_child(window)
 	else:
 		# This was the easiest way to give the window input events

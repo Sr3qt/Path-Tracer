@@ -26,7 +26,7 @@ var image_size_bind := 1
 
 var camera_set_index := 1
 var LOD_bind := 0 # For sample per pixel, bounce depth etc.
-# is_rendering
+
 var object_set_index := 2
 var materials_bind := 0
 var spheres_bind := 1

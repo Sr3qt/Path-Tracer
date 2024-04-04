@@ -13,6 +13,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
+flat = true
 script = ExtResource("1_2v5h1")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]

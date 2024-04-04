@@ -17,12 +17,11 @@ func _enter_tree():
 
 
 func _ready():
-	pressed.connect(_on_root_node_pressed)
 	mouse_exited.connect(_on_root_node_mouse_exited)
 	resized.connect(_on_resized)
 
 
-func _on_root_node_pressed():
+func _pressed():
 	if renderer.scene:
 		if renderer.scene.camera:
 			renderer.scene.camera.freeze = false

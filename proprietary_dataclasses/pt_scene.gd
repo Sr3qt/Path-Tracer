@@ -14,9 +14,6 @@ two scenes.
 # Enum for different custom 3D object types
 static var ObjectType = PTObject.ObjectType
 
-# Enum of different possible BVH algorithms
-enum BVHType {DEFAULT}
-
 # Semi-Temp
 enum CameraSetting {top_down, corner, book_ex, center, middle}
 
@@ -53,6 +50,7 @@ func _init(
 		_camera : PTCamera = null
 	):
 	
+	# TODO add safeguards for running in editor
 	# Create objects dict if one was not passed
 	if _object_dict:
 		objects = _object_dict
@@ -147,9 +145,9 @@ func import(path : String):
 	materials = out[1]
 
 
-func create_BVH(max_children = 2, type : BVHType = BVHType.DEFAULT):
+func create_BVH(max_children = 2, type : PTBVHTree.BVHType = PTBVHTree.BVHType.X_SORTED):
 	match type:
-		BVHType.DEFAULT:
+		PTBVHTree.BVHType.X_SORTED:
 			BVHTree = PTBVHTree.new(max_children)
 			BVHTree.create_BVH(self)
 

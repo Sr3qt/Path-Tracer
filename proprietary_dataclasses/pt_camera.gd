@@ -74,12 +74,13 @@ func _ready():
 	root_node = get_parent().get_parent().root_node
 	
 	if root_node:
-		root_node.connect("gui_input", _input)
+		root_node.connect("gui_input", _unhandled_input)
 	
 
 func _process(delta):
-	
-	if not Engine.is_editor_hint() or (root_node and root_node.visible and not freeze):
+	var plugin = (Engine.is_editor_hint() and root_node and root_node.visible and
+			not freeze)
+	if not Engine.is_editor_hint() or plugin:
 		# MOve to player ndoe
 		if Input.is_key_pressed(KEY_W):
 			move_camera((-forward * Vector3(1,0,1)).normalized() * move_speed * delta)
@@ -91,8 +92,7 @@ func _process(delta):
 			move_camera(right * Vector3(1,0,1) * move_speed * delta)
 
 
-# MOve to player ndoe
-func _input(event):
+func _unhandled_input(event):
 	var plugin = ((root_node and root_node.button_pressed and Engine.is_editor_hint())
 			or not Engine.is_editor_hint())
 	if event is InputEventMouseMotion and event.button_mask & 1 and plugin:

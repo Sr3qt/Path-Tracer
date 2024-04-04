@@ -64,6 +64,7 @@ var bvh_type = null
 
 
 func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 0):
+	# TODO add safeguards for running in editor
 	_set_flags()
 	
 	custom_minimum_size = Vector2(work_group_width_pixels, work_group_height_pixels)

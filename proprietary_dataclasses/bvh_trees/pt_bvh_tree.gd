@@ -18,10 +18,10 @@ tree. Creation time and SAH score should also be recorded after creation.
 
 # Enum of different possible BVH algorithms, should be updated as more algortithms
 #  are added
-enum BVHType {DEFAULT}
+enum BVHType {X_SORTED}
 
-const bvh_types = {
-	BVHType.DEFAULT : PTBVHTree
+const bvh_classes = {
+	BVHType.X_SORTED : PTBVHTree
 }
 
 var root_node : BVHNode
