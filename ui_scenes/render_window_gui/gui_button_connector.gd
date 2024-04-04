@@ -7,11 +7,16 @@ extends CheckBox
 
 var bvh_types_array
 
-var is_plugin_instance
+var _is_plugin_instance = false
 
 
 func _ready():
-	if not Engine.is_editor_hint() or is_plugin_instance:
+	# TODO add control to eat focus when clicking on nothing
+	
+	if get_parent()._renderer:
+		_is_plugin_instance = get_parent()._renderer._is_plugin_instance
+	
+	if not Engine.is_editor_hint() or _is_plugin_instance:
 		%PanelContainer.visible = false
 		
 		# Set default value for buttons
@@ -20,16 +25,10 @@ func _ready():
 		
 		# Initialize bvh dropdown menu
 		bvh_types_array = PTBVHTree.BVHType.keys()
-		var temp : PTOptionButton = %BVHType
 		bvh_types_array[0] += " (Default)"
 		for i in range(bvh_types_array.size()):
-			var text = bvh_types_array[i]
-			#text = text.replacen("_", " ")
-			#text = text.to_pascal_case()
-			temp.add_item(text.capitalize(), i)
-			
-		#temp.selected = 0
-	
+			%BVHType.add_item(bvh_types_array[i].capitalize(), i)
+
 
 func _toggled(toggled_on):
 	%PanelContainer.visible = toggled_on
@@ -39,6 +38,8 @@ func _on_use_bvh_button_toggled(toggled_on):
 	parent.use_bvh = toggled_on
 	
 	%ShowBVHDepthButton.set_disable(not toggled_on)
+	%BVHType.set_disable(not toggled_on)
+	%BVHTreeOrder.set_disable(not toggled_on)
 
 
 func _on_show_bvh_depth_button_toggled(toggled_on):
@@ -46,4 +47,5 @@ func _on_show_bvh_depth_button_toggled(toggled_on):
 
 
 func _on_bvh_type_item_selected(index):
+	# TODO add button to send bvh data from user input to create a bvh tree
 	pass # Replace with function body.

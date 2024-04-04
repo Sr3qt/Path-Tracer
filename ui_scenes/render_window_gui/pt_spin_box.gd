@@ -1,6 +1,6 @@
 @tool
-class_name PTOptionButton
-extends OptionButton
+class_name PTSpinBox
+extends SpinBox
 
 """The very advanced and high tech custom !option button! (tm pending)"""
 
@@ -28,7 +28,7 @@ func _ready():
 
 
 func set_disable(is_disabled):
-	disabled = is_disabled
+	editable = not is_disabled
 	print("Disabled", is_disabled)
 	disabled_mask.visible = is_disabled
 		

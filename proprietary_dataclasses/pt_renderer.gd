@@ -278,6 +278,7 @@ func load_shader():
 
 func add_window(window : PTRenderWindow):
 	windows.append(window)
+	window._renderer = self
 	
 	if not Engine.is_editor_hint():
 		add_child(window)

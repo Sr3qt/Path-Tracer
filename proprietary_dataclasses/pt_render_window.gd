@@ -62,6 +62,8 @@ var y_offset := 0
 #  type hint for some reason
 var bvh_type = null
 
+var _renderer
+
 
 func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 0):
 	# TODO add safeguards for running in editor
