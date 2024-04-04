@@ -8,8 +8,10 @@ the render window"""
 enum RenderFlagsBits {
 	USE_BVH = 1,
 	SHOW_BVH_DEPTH = 2,
+	#USE_MULTISAMPLING = 4,
 	SCENE_CHANGED = 4,
-	SAMPLE_ALL_TEXTURES = 8
+	
+	SAMPLE_ALL_TEXTURES = 8,
 }
 
 var render_name := "unnamed_window"

@@ -1,4 +1,3 @@
-
 class_name PTWorkDispatcher
 extends Node
 # Can potentially be Refcounted
@@ -10,7 +9,7 @@ var uniform_sets = [
 	{}, # For camera
 	{}, # For objects
 	{}, # For BVH
-	{} # Empty
+	{}, # Empty
 ]
 var RIDs_to_free = [] # array of RIDs that need to be freed when done with them.
 
@@ -27,7 +26,7 @@ var image_size_bind := 1
 
 var camera_set_index := 1
 var LOD_bind := 0 # For sample per pixel, bounce depth etc.
-
+# is_rendering
 var object_set_index := 2
 var materials_bind := 0
 var spheres_bind := 1
@@ -53,9 +52,6 @@ var sphere_buffer : RID
 var plane_buffer : RID
 
 var BVH_buffer : RID
-
-var is_rendering = true
-var is_taking_picture = false
 
 # Whether this instance is using a local RenderDevice
 var is_local_renderer
@@ -207,6 +203,7 @@ func render_image():
 	#create_compute_list()
 	
 	# CPU waits for texture data to be ready.
+	# TODO Find a way for the cpu to wait for buffer access
 	var before_render = Time.get_ticks_msec()
 	
 	if finished_render:
@@ -235,10 +232,7 @@ func render_image():
 		#max_default_depth = 8
 		#max_refraction_bounces = 8
 		rd.buffer_update(LOD_buffer, 0, _lod_byte_array().size(), _lod_byte_array())
-		
-		is_rendering = true
-		is_taking_picture = false
-	
+
 
 func _create_uniform(bytes, render_device, set_, binding):
 	"""Create and bind uniform to a shader from bytes.

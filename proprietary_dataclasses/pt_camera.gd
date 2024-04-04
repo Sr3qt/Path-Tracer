@@ -93,7 +93,9 @@ func _process(delta):
 
 # MOve to player ndoe
 func _input(event):
-	if event is InputEventMouseMotion and event.button_mask & 1:
+	var plugin = ((root_node and root_node.button_pressed and Engine.is_editor_hint())
+			or not Engine.is_editor_hint())
+	if event is InputEventMouseMotion and event.button_mask & 1 and plugin:
 		# modify accumulated mouse rotation
 		var rot_x = event.relative.x * mouse_sensitivity_x
 		var rot_y = event.relative.y * mouse_sensitivity_y

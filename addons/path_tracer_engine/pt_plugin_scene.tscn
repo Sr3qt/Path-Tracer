@@ -12,13 +12,13 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-flat = true
+mouse_filter = 1
 script = ExtResource("1_2v5h1")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 2
+offset_right = 1080.0
+offset_bottom = 755.0
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="VBoxContainer"]
 custom_minimum_size = Vector2(40, 40)

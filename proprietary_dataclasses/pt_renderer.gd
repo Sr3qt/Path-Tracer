@@ -23,7 +23,12 @@ const compute_invocation_height := 8
 const compute_invocation_depth := 1
 
 # Override for stopping rendering
-@export var disable_rendering := false
+@export var is_rendering_disabled := false:
+	set(value):
+		if canvas:
+			var mat = canvas.mesh.surface_get_material(0)
+			mat.set_shader_parameter("is_rendering", not value)
+		is_rendering_disabled = value
 
 # Since the scene will become a subtree in the plugin, 
 #  root_node is a convenient pointer to the relative root node 
@@ -98,6 +103,7 @@ func _ready():
 			var mat = ShaderMaterial.new()
 			mat.shader = load("res://shaders/canvas.gdshader")
 			mat.set_shader_parameter("image_buffer", Texture2DRD.new())
+			mat.set_shader_parameter("is_rendering", not is_rendering_disabled)
 			
 			# Create a canvas to which rendered images will be drawn
 			canvas = MeshInstance3D.new()
@@ -139,21 +145,20 @@ func _ready():
 		better_window.work_group_height = y
 		
 		add_window(better_window)
-		add_child(better_window)
 
 
 func _process(delta):
 	
 	# Runtime and plugin requires different checks for window focus
-	var runtime = (rtwd.is_rendering and get_window().has_focus() and 
-					not Engine.is_editor_hint())
+	var runtime = (get_window().has_focus() and not Engine.is_editor_hint())
 	var plugin = (_is_plugin_instance and (root_node and root_node.visible) and
 					Engine.is_editor_hint())
 					
-	var common = ((scene and scene.camera.camera_changed) and not disable_rendering)
+	var common = ((scene and scene.camera.camera_changed) and not is_rendering_disabled)
 	
 	if (runtime or plugin) and common:
 		# TODO Make flag to allow for either multi sampling or not to save resources
+		# TODO Before that add actual multisampling from different renders
 		scene.camera.camera_changed = false
 		
 		if not Engine.is_editor_hint():
@@ -163,13 +168,10 @@ func _process(delta):
 		for window in windows:
 			rtwd.create_compute_list(window)
 		
-		# TODO tie this to is_rendering changed signal.
-		# TODO move is rendering to renderer
-		var mat = canvas.mesh.surface_get_material(0)
-		mat.set_shader_parameter("is_rendering", true)
-	#else:
-		#var mat = canvas.mesh.surface_get_material(0)
-		#mat.set_shader_parameter("is_rendering", false)
+		# NOTE: For some reason this is neccessary for smooth performance in editor
+		if Engine.is_editor_hint():
+			var mat = canvas.mesh.surface_get_material(0)
+			mat.set_shader_parameter("is_rendering", true)
 
 
 func _input(event):
@@ -275,6 +277,13 @@ func load_shader():
 
 func add_window(window : PTRenderWindow):
 	windows.append(window)
+	
+	if not Engine.is_editor_hint():
+		#get_parent().get_parent().add_child.call_deferred(window)
+		add_child(window)
+	else:
+		# This was the easiest way to give the window input events
+		get_parent().get_parent().add_child.call_deferred(window)
 	
 	# TODO add collision check with other windows and change their size accordingly
 

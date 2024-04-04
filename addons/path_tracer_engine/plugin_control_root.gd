@@ -6,6 +6,7 @@ var viewport : Viewport
 
 var _is_plugin_instance := false
 
+
 func _enter_tree():
 	if _is_plugin_instance:
 		renderer = %PluginRenderer

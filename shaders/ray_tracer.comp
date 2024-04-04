@@ -365,14 +365,12 @@ float rand2(vec2 co) {
 
 vec3 rand_vec3(vec3 point) {
     // Creates a normalized vector in a random direction from a point 
-    float i = 0;
-    while (true) {
-        vec3 n = vec3(rand2(point.xy + i), rand2(point.xz + i), rand2(point.yz + i));
-        if (dot(n, n) < 1.) {
-            return normalize(n);
-        }
-        i++;
-    }
+    // I got tricked by the tutorial :(
+    vec3 n = vec3(
+        rand2(point.xy) - 0.5, 
+        rand2(point.xz) - 0.5, 
+        rand2(point.yz) - 0.5);
+    return normalize(n);
 }
 
 void swap(inout float a, inout float b) {
