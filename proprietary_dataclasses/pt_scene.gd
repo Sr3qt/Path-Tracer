@@ -35,13 +35,17 @@ var objects
 # materials should hold no duplicate materials
 var materials : Array[PTMaterial]
 
-# A BVHTree object is required although it can be empty
-var BVHTree : PTBVHTree
+# Current BVH that would be used by the Renderer
+var bvh : PTBVHTree
+# Array of created and unused BVHs
+var cached_bvhs : Array[PTBVHTree]
 
 # Whether anything in the scene, objects, camera, either moved, got added or removed
 var scene_changed := false
 
 var camera : PTCamera
+
+var object_count : int = 0
 
 
 func _init(
@@ -54,6 +58,7 @@ func _init(
 	# Create objects dict if one was not passed
 	if _object_dict:
 		objects = _object_dict
+		get_size()
 	else:
 		var sphere_list : Array[PTObject] = []
 		var plane_list : Array[PTObject] = []
@@ -65,17 +70,17 @@ func _init(
 	materials = _materials
 	
 	camera = _camera
-	
-	# TODO should be removed
-	BVHTree = PTBVHTree.new()
 
 
 func _ready():
+	# TODO Add option to not create scene when added to tree
 	# Create default random scene if no imports
 	if scene_import:
 		import(scene_import)
 	else:
 		create_random_scene(0)
+	
+	get_size()
 	
 	if camera == null:
 		for child in get_children():
@@ -105,6 +110,8 @@ func add_object(object : PTObject):
 	var type = object.get_type()
 	object.object_index = objects[type].size()
 	objects[type].append(object)
+	
+	object_count += 1
 	
 	# TODO: Add hash function to material, and make dict or
 	#  Make a global material index that keeps track of all material instances
@@ -145,11 +152,28 @@ func import(path : String):
 	materials = out[1]
 
 
-func create_BVH(max_children = 2, type : PTBVHTree.BVHType = PTBVHTree.BVHType.X_SORTED):
-	match type:
-		PTBVHTree.BVHType.X_SORTED:
-			BVHTree = PTBVHTree.new(max_children)
-			BVHTree.create_BVH(self)
+func get_size():
+	"""Calculates the number of primitives stored in the scene"""
+	object_count = 0
+	
+	for _objects in objects.values():
+		object_count += _objects.size()
+	
+	return object_count
+
+
+func create_BVH(max_children : int, function_name : String):
+	# TODO add check to reuse BVH if it is in cached_bvhs
+	
+	#for sphere in objects[ObjectType.SPHERE]:
+		#print(sphere.object_index)
+	
+	
+	if bvh:
+		cached_bvhs.append(bvh)
+		
+	
+	bvh = PTBVHTree.create_bvh_with_function_name(self, max_children, function_name)
 
 
 func set_camera_setting(cam : CameraSetting):
@@ -221,6 +245,7 @@ func create_random_scene(seed):
 								rng.randf_range(0.88, 1.),
 								rng.randf_range(0.88, 1.))
 				material.opacity = 0.
+				material.IOR = 1.6
 			
 			material.albedo = color
 			var new_sphere = PTSphere.new(center, radius, material, 0)

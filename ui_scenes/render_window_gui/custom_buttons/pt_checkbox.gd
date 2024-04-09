@@ -12,7 +12,7 @@ func _ready():
 	# Create disabled mask
 	disabled_mask = ColorRect.new()
 	
-	disabled_mask.color = Color(170, 0, 0, 1)
+	disabled_mask.color = PTButtonController.DISABLED_COLOR
 	disabled_mask.size = Vector2(16, 16)
 	disabled_mask.position = Vector2(4, 7)
 	
@@ -24,5 +24,4 @@ func _ready():
 
 func set_disable(is_disabled):
 	disabled = is_disabled
-	print("Disabled", is_disabled)
 	disabled_mask.visible = is_disabled

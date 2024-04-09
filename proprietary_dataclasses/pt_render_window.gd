@@ -61,8 +61,9 @@ var y_offset := 0
 # What kind of bvh is used, if any. Is of type BVHType enum, but i can't 
 #  type hint for some reason
 var bvh_type = null
+var bvh_order : int
 
-var _renderer
+var _renderer : PTRenderer
 
 
 func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 0):

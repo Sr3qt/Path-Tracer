@@ -12,23 +12,23 @@ a the correct PTWorkDispatcher, wich will actually make the gpu render an image.
 
 const WindowGui = preload("res://ui_scenes/render_window_gui/render_window_gui.tscn")
 
-# Controls the degree of the bvh tree passed to the gpu. 
-# NOTE: Currently no support for dynamically changing it. TODO
-const bvh_max_children := 8
-
 # NOTE: CPU control over gpu invocations has not been added. 
 #	These are merely for reference
-const compute_invocation_width := 8
-const compute_invocation_height := 8
-const compute_invocation_depth := 1
+const compute_invocation_width : int = 8
+const compute_invocation_height : int = 8
+const compute_invocation_depth : int = 1
 
-# Override for stopping rendering
+## Override for stopping rendering. When enabled no work will be pushed to the 
+##  GPU the screen will be white.
 @export var is_rendering_disabled := false:
 	set(value):
 		if canvas:
 			var mat = canvas.mesh.surface_get_material(0)
 			mat.set_shader_parameter("is_rendering", not value)
 		is_rendering_disabled = value
+
+## The BVH type created on startup
+@export var default_bvh : PTBVHTree.BVHType = PTBVHTree.BVHType.X_SORTED
 
 # Since the scene will become a subtree in the plugin, 
 #  root_node is a convenient pointer to the relative root node 
@@ -48,6 +48,10 @@ var normal_camera : Camera3D = null
 
 # A scene with objects and a camera node
 var scene : PTScene
+
+# Controls the degree of the bvh tree passed to the gpu. 
+# NOTE: Currently no support for dynamically changing it. TODO
+var bvh_max_children : int = 8
 
 # GLSL files in shaders/procedural_textures folder
 var procedural_textures = ["checker_board.comp"]
@@ -114,14 +118,18 @@ func _ready():
 			add_child(canvas)
 	
 		scene = get_node("PTScene") # Is this the best way to get Scene node?
-
-		scene.create_BVH(bvh_max_children)
+		
+		var function_name = PTBVHTree.enum_to_dict[default_bvh]
+		scene.create_BVH(bvh_max_children, function_name)
 
 		rtwd.set_scene(scene)
 
 		load_shader()
 
 		rtwd.create_buffers()
+		
+		# TODO Add support for multiple PTRenderWindows on screen
+		#  as well as support for a seperate bvh for each of them.
 		
 		#var x = ceil(1920. / 16.)
 		var x = ceili(1920. / 8.)
@@ -288,6 +296,7 @@ func add_window(window : PTRenderWindow):
 	
 	# TODO add collision check with other windows and change their size accordingly
 
+
 func save_framebuffer(work_dispatcher : PTWorkDispatcher):
 	if Engine.is_editor_hint():
 		if (scene and not scene.camera.freeze):
@@ -313,4 +322,45 @@ func save_framebuffer(work_dispatcher : PTWorkDispatcher):
 	
 	new_image.save_png(folder_path + "/temp-" +
 	Time.get_datetime_string_from_system().replace(":", "-") + ".png")
+
+
+func create_bvh(_max_children : int, function_name : String):
+	# TODO Doesnt have to load new shader when max children didnt change
+	# TODO Rework shader to work with different bvh orders without reloading
+	
+	#rtwd.rd.buffer_update(rtwd.BVH_buffer)
+	#rtwd.rd.buffer_clear(rtwd.BVH_buffer, 0, rtwd._create_bvh_byte_array().size())
+	#rtwd.free_RIDs()
+	
+	#for _set in rtwd.set_RIDs:
+		#rtwd.rd.free_rid(_set)
+	
+	# NOTE: Doenst support changing bvh order yet
+	#bvh_max_children = _max_children
+	
+	# NOTE: Remaking the BVH buffer seems to be unneccessary, can probably just 
+	#  be updated later
+	print(scene.bvh)
+	#scene.bvh = null
+	scene.create_BVH(bvh_max_children, function_name)
+	print(scene.bvh)
+	#load_shader()
+	
+	#rtwd.create_buffers()
+	rtwd.rd.free_rid(rtwd.BVH_buffer)
+	
+	rtwd.create_bvh_buffer()
+	
+	var BVH_uniforms = rtwd.uniform_sets[rtwd.BVH_set_index].values()
+	rtwd.BVH_set = rtwd.rd.uniform_set_create(BVH_uniforms, rtwd.shader, 
+			rtwd.BVH_set_index)
+	
+	#var new_bytes = rtwd._create_bvh_byte_array()
+	
+	#
+	#rtwd.BVH_buffer
+	#rtwd.rd.buffer_update(rtwd.BVH_buffer, 0, new_bytes.size(), new_bytes)
+	##rtwd.create_bvh_buffer()
+	#rtwd.bind_sets()
+	
 

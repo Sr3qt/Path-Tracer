@@ -1,12 +1,14 @@
-[gd_scene load_steps=8 format=3 uid="uid://eoscno85ldok"]
+[gd_scene load_steps=10 format=3 uid="uid://eoscno85ldok"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_render_window.gd" id="1_7js1k"]
 [ext_resource type="Script" path="res://ui_scenes/render_window_gui/gui_button_connector.gd" id="2_lirvx"]
 [ext_resource type="StyleBox" uid="uid://bq3nr6sqfrh8q" path="res://ui_scenes/render_window_gui/new_style_box_flat.tres" id="2_yf57u"]
 [ext_resource type="StyleBox" uid="uid://beqosf1vjneko" path="res://ui_scenes/render_window_gui/popup_button_background.tres" id="3_mwvv8"]
-[ext_resource type="Script" path="res://ui_scenes/render_window_gui/pt_checkbox.gd" id="4_cskkq"]
-[ext_resource type="Script" path="res://ui_scenes/render_window_gui/pt_option_button.gd" id="5_ug1bk"]
-[ext_resource type="Script" path="res://ui_scenes/render_window_gui/pt_spin_box.gd" id="6_21j3v"]
+[ext_resource type="Script" path="res://ui_scenes/render_window_gui/temp_button_focus.gd" id="4_tyw6l"]
+[ext_resource type="Script" path="res://ui_scenes/render_window_gui/custom_buttons/pt_checkbox.gd" id="5_xrsx5"]
+[ext_resource type="Script" path="res://ui_scenes/render_window_gui/custom_buttons/pt_option_button.gd" id="6_ejh8q"]
+[ext_resource type="Script" path="res://ui_scenes/render_window_gui/custom_buttons/pt_spin_box.gd" id="7_x1fht"]
+[ext_resource type="Script" path="res://ui_scenes/render_window_gui/custom_buttons/pt_button.gd" id="8_n5nil"]
 
 [node name="RenderWindowGui" type="Control"]
 custom_minimum_size = Vector2(8, 8)
@@ -18,8 +20,20 @@ offset_right = 8.0
 offset_bottom = 8.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 1
+mouse_filter = 2
 script = ExtResource("1_7js1k")
+
+[node name="FocusLossButton" type="Button" parent="."]
+show_behind_parent = true
+layout_mode = 2
+offset_left = 150.0
+offset_top = 30.0
+offset_right = 599.0
+offset_bottom = 631.0
+mouse_filter = 1
+disabled = true
+flat = true
+script = ExtResource("4_tyw6l")
 
 [node name="ButtonController" type="CheckBox" parent="."]
 custom_minimum_size = Vector2(30, 0)
@@ -30,6 +44,8 @@ offset_left = 33.0
 offset_top = -77.0
 offset_right = 132.0
 offset_bottom = -34.0
+theme_override_colors/font_color = Color(0.223529, 0.0980392, 0.027451, 1)
+theme_override_colors/font_focus_color = Color(0.223529, 0.0980392, 0.027451, 1)
 text = "Settings"
 script = ExtResource("2_lirvx")
 
@@ -68,67 +84,68 @@ theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 10
 
-[node name="GridContainer" type="GridContainer" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer"]
+[node name="BVHButtons" type="VBoxContainer" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer"]
+layout_mode = 2
+
+[node name="BVHOptions" type="GridContainer" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/BVHButtons"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/h_separation = 50
 columns = 2
 
-[node name="UseBVHLabel" type="Label" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+[node name="UseBVHLabel" type="Label" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/BVHButtons/BVHOptions"]
 layout_mode = 2
 text = "Use BVH tree"
 
-[node name="UseBVHButton" type="CheckBox" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+[node name="UseBVHButton" type="CheckBox" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/BVHButtons/BVHOptions"]
 unique_name_in_owner = true
 layout_mode = 2
 button_pressed = true
 text = "
 "
-script = ExtResource("4_cskkq")
+script = ExtResource("5_xrsx5")
 
-[node name="ShowBVHDepthLabel" type="Label" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+[node name="ShowBVHDepthLabel" type="Label" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/BVHButtons/BVHOptions"]
 layout_mode = 2
 text = "    Show BVH depth map"
 
-[node name="ShowBVHDepthButton" type="CheckBox" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+[node name="ShowBVHDepthButton" type="CheckBox" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/BVHButtons/BVHOptions"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "
 "
-script = ExtResource("4_cskkq")
+script = ExtResource("5_xrsx5")
 
-[node name="UseBVHLabel3" type="Label" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
-layout_mode = 2
-text = "    Use BVH tree"
-
-[node name="UseBVHButton3" type="CheckBox" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
-layout_mode = 2
-text = "
-"
-
-[node name="BVHTypeLabel" type="Label" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+[node name="BVHTypeLabel" type="Label" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/BVHButtons/BVHOptions"]
 layout_mode = 2
 text = "    BVH algorithm"
 
-[node name="BVHType" type="OptionButton" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+[node name="BVHType" type="OptionButton" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/BVHButtons/BVHOptions"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
-script = ExtResource("5_ug1bk")
+script = ExtResource("6_ejh8q")
 
-[node name="Label" type="Label" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+[node name="Label" type="Label" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/BVHButtons/BVHOptions"]
 layout_mode = 2
 text = "    BVH tree order"
 
-[node name="BVHTreeOrder" type="SpinBox" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/GridContainer"]
+[node name="BVHTreeOrder" type="SpinBox" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/BVHButtons/BVHOptions"]
 unique_name_in_owner = true
 layout_mode = 2
 min_value = 2.0
 max_value = 64.0
 value = 2.0
-script = ExtResource("6_21j3v")
+script = ExtResource("7_x1fht")
 
-[connection signal="toggled" from="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/GridContainer/UseBVHButton" to="ButtonController" method="_on_use_bvh_button_toggled"]
-[connection signal="toggled" from="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/GridContainer/ShowBVHDepthButton" to="ButtonController" method="_on_show_bvh_depth_button_toggled"]
-[connection signal="item_selected" from="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/GridContainer/BVHType" to="ButtonController" method="_on_bvh_type_item_selected"]
+[node name="CreateBVHButton" type="Button" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/BVHButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Create BVH
+"
+script = ExtResource("8_n5nil")
+
+[connection signal="toggled" from="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/BVHButtons/BVHOptions/UseBVHButton" to="ButtonController" method="_on_use_bvh_button_toggled"]
+[connection signal="toggled" from="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/BVHButtons/BVHOptions/ShowBVHDepthButton" to="ButtonController" method="_on_show_bvh_depth_button_toggled"]
+[connection signal="pressed" from="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/BVHButtons/CreateBVHButton" to="ButtonController" method="_on_create_bvh_button_pressed"]

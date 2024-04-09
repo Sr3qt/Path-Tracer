@@ -18,6 +18,12 @@ func _init(_minimum = Vector3(0,0,0), _maximum = Vector3(1,1,1)):
 			maximum[i] = temp
 
 
+func size():
+	"""Returns volume"""
+	var siz = maximum - minimum
+	return siz[0] * siz[1] * siz[2]
+
+
 func intersects(other : PTAABB):
 	pass
 	

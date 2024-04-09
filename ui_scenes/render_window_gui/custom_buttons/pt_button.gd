@@ -1,6 +1,6 @@
 @tool
-class_name PTSpinBox
-extends SpinBox
+class_name PTButton
+extends Button
 
 """The very advanced and high tech custom !option button! (tm pending)"""
 
@@ -14,7 +14,7 @@ func _ready():
 	# Create disabled mask
 	disabled_mask = ColorRect.new()
 	
-	disabled_mask.color = Color(170, 0, 0, 1)
+	disabled_mask.color = PTButtonController.DISABLED_COLOR
 	disabled_mask.size = size + size_margin
 	disabled_mask.position = Vector2(-2, -2)
 	
@@ -28,8 +28,7 @@ func _ready():
 
 
 func set_disable(is_disabled):
-	editable = not is_disabled
-	print("Disabled", is_disabled)
+	disabled = is_disabled
 	disabled_mask.visible = is_disabled
 		
 

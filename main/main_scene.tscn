@@ -23,6 +23,7 @@ size = Vector2(2, 2)
 
 [node name="SceneRenderer" type="Node" parent="."]
 script = ExtResource("1_c80yu")
+default_bvh = 2
 
 [node name="PTScene" type="Node" parent="SceneRenderer"]
 script = ExtResource("2_s1nmc")

@@ -12,6 +12,7 @@ var uniform_sets = [
 	{}, # Empty
 ]
 var RIDs_to_free = [] # array of RIDs that need to be freed when done with them.
+var set_RIDs = []
 
 var rd : RenderingDevice
 var shader : RID
@@ -76,28 +77,48 @@ func _init(renderer : PTRenderer, is_local = false):
 
 func create_buffers():
 	"""Creates and binds buffers to RenderDevice"""
+	
+	print("Starting to setup buffers")
+	var prev_time = Time.get_ticks_usec()
+	
+	# Trying to set up buffers without a scene makes no sense
+	if not _scene:
+		print("Set a scene to the Renderer before trying to create gpu buffers.")
+		return
+	
 	# The image buffer used in compute and fragment shader
 	image_buffer = _create_image_buffer()
 	
 	LOD_buffer = _create_uniform(
-		_lod_byte_array(), rd, camera_set_index, LOD_bind
+			_create_lod_byte_array(), rd, camera_set_index, LOD_bind
 	)
 	# List of materials
 	material_buffer = _create_uniform(
-		_create_materials(), rd, object_set_index, materials_bind
+			_create_materials_byte_array(), rd, object_set_index, materials_bind
 	)
 	# One of the object lists, for spheres
 	sphere_buffer = _create_uniform(
-		_create_spheres(), rd, object_set_index, spheres_bind
+			_create_spheres_byte_array(), rd, object_set_index, spheres_bind
 	)
 	# One of the object lists, for planes
 	plane_buffer = _create_uniform(
-		_create_planes(), rd, object_set_index, planes_bind
-	)
-	BVH_buffer = _create_uniform(
-		_scene.BVHTree.to_byte_array(), rd, BVH_set_index, BVH_bind
+			_create_planes_byte_array(), rd, object_set_index, planes_bind
 	)
 	
+	create_bvh_buffer()
+	
+	bind_sets()
+	
+	# Set texture RID for Canvas
+	var material = _renderer.canvas.get_mesh().surface_get_material(0)
+	
+	texture = material.get_shader_parameter("image_buffer")
+	texture.texture_rd_rid = image_buffer
+	
+	print("Setting up buffers took %s ms" % ((Time.get_ticks_usec() - prev_time) / 1000.))
+	
+
+func bind_sets():
 	# Bind uniforms and sets
 	# Get uniforms
 	var image_uniforms = uniform_sets[image_set_index].values()
@@ -111,14 +132,21 @@ func create_buffers():
 	object_set = rd.uniform_set_create(object_uniforms, shader, object_set_index)
 	BVH_set = rd.uniform_set_create(BVH_uniforms, shader, BVH_set_index)
 	
-	# Set texture RID for Canvas
-	var material = _renderer.canvas.get_mesh().surface_get_material(0)
+	set_RIDs.append(image_set)
+	set_RIDs.append(camera_set)
+	set_RIDs.append(object_set)
+	set_RIDs.append(BVH_set)
 	
-	texture = material.get_shader_parameter("image_buffer")
-	texture.texture_rd_rid = image_buffer
-
 
 func load_shader(shader_ : RDShaderSource):
+	#if pipeline:
+		#rd.free_rid(pipeline)
+	#if shader:
+		#rd.free_rid(shader)
+	
+	# TODO Make check if shader already exists, free aplicable RIDS
+	#  Might not need this anyways
+	
 	# Load GLSL shader
 	# Was very annoying to find since this function is not mentioned anywhere
 	#	in RDShaderSource documentation wrrr
@@ -131,11 +159,10 @@ func load_shader(shader_ : RDShaderSource):
 
 
 func free_RIDs():
-	# I don't understand garbage collection. Maybe this helps idk
 	if texture:
 		texture.texture_rd_rid = RID()
 	
-	# Frees uniforms, don't know if needed
+	# Frees uniforms, TODO Probably remove
 	for dict in uniform_sets:
 		for rid in dict.values():
 			rd.free_rid(rid)
@@ -143,6 +170,12 @@ func free_RIDs():
 	# Frees buffers and shader RIDS
 	for rid in RIDs_to_free:
 		rd.free_rid(rid)
+		
+	# TODO when RIDs are freed, remember to remove them from the arrays
+	
+	# Not needed
+	#for _set in set_RIDs:
+		#rd.free_rid(_set)
 
 
 func create_compute_list(window : PTRenderWindow = null):
@@ -231,15 +264,26 @@ func render_image():
 		#samples_per_pixel = 1
 		#max_default_depth = 8
 		#max_refraction_bounces = 8
-		rd.buffer_update(LOD_buffer, 0, _lod_byte_array().size(), _lod_byte_array())
+		var byte_array = _create_lod_byte_array()
+		rd.buffer_update(LOD_buffer, 0, byte_array.size(), byte_array)
 
 
-func _create_uniform(bytes, render_device, set_, binding):
+# TODO Make all buffers public functions
+func create_bvh_buffer():
+	# Contains the BVH tree in the form of a list
+	BVH_buffer = _create_uniform(
+			_create_bvh_byte_array(), rd, BVH_set_index, BVH_bind
+	)
+	
+
+func _create_uniform(bytes, render_device, set_, binding) -> RID:
 	"""Create and bind uniform to a shader from bytes.
 	
 	returns the uniform and buffer created in an array"""
 	
-	var buffer = render_device.storage_buffer_create(bytes.size(), bytes)
+	# TODO Remove needing to pass render device, as PTWorkDispatcher should
+	#  always have only one each.
+	var buffer : RID = render_device.storage_buffer_create(bytes.size(), bytes)
 	RIDs_to_free.append(buffer)
 	var uniform = RDUniform.new()
 	
@@ -250,6 +294,7 @@ func _create_uniform(bytes, render_device, set_, binding):
 	uniform_sets[set_][binding] = uniform
 	
 	return buffer
+
 
 func _temp_create_texture_buffer():
 	"""Creates and binds render result texture buffer aka. image_buffer"""
@@ -344,46 +389,7 @@ func _create_texture_buffer(
 	return new_texture_buffer
 
 
-func _create_spheres():
-	var bytes = PackedByteArray()
-	if _scene.objects[PTObject.ObjectType.SPHERE].size():
-		for sphere in _scene.objects[PTObject.ObjectType.SPHERE]:
-			bytes += sphere.to_byte_array()
-	else:
-		bytes = PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
-	
-	return bytes
-	
-
-func _create_planes():
-	var bytes = PackedByteArray()
-	if _scene.objects[PTObject.ObjectType.PLANE].size():
-		for plane in _scene.objects[PTObject.ObjectType.PLANE]:
-			bytes += plane.to_byte_array()
-	else:
-		bytes = PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
-	
-	return bytes
-	
-
-func _create_materials():
-	var bytes = PackedByteArray()
-	if _scene.materials:
-		for material in _scene.materials:
-			bytes += material.to_byte_array()
-			
-	return bytes
-
-
-func _update_sphere():
-	var sphere = _scene.objects[PTObject.ObjectType.SPHERE][0]
-	sphere.center.x = sin(Time.get_ticks_msec() / 1000.)
-	var bytes = sphere.to_byte_array()
-	
-	rd.buffer_update(sphere_buffer, 0, bytes.size(), bytes)
-	
-
-func _lod_byte_array():
+func _create_lod_byte_array() -> PackedByteArray:
 	var lod_array = [
 		_renderer.render_width, 
 		_renderer.render_height, 
@@ -394,7 +400,38 @@ func _lod_byte_array():
 	return PackedInt32Array(lod_array).to_byte_array()
 
 
-func _push_constant_byte_array(window : PTRenderWindow):
+func _create_materials_byte_array() -> PackedByteArray:
+	var bytes = PackedByteArray()
+	if _scene.materials:
+		for material in _scene.materials:
+			bytes += material.to_byte_array()
+			
+	return bytes
+
+
+func _create_spheres_byte_array() -> PackedByteArray:
+	var bytes = PackedByteArray()
+	if _scene.objects[PTObject.ObjectType.SPHERE].size():
+		for sphere in _scene.objects[PTObject.ObjectType.SPHERE]:
+			bytes += sphere.to_byte_array()
+	else:
+		bytes = PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
+	
+	return bytes
+	
+
+func _create_planes_byte_array() -> PackedByteArray:
+	var bytes = PackedByteArray()
+	if _scene.objects[PTObject.ObjectType.PLANE].size():
+		for plane in _scene.objects[PTObject.ObjectType.PLANE]:
+			bytes += plane.to_byte_array()
+	else:
+		bytes = PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
+	
+	return bytes
+	
+
+func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 	var bytes = PackedByteArray()
 	
 	bytes += _scene.camera.to_byte_array()
@@ -404,5 +441,22 @@ func _push_constant_byte_array(window : PTRenderWindow):
 	bytes += PackedInt32Array([window.x_offset, window.y_offset]).to_byte_array()
 	
 	return bytes
+	
+
+func _create_bvh_byte_array() -> PackedByteArray:
+	if _scene.bvh:
+		return _scene.bvh.to_byte_array()
+	else:
+		return PTBVHTree.new().to_byte_array()
+
+
+func _update_sphere():
+	# Deprecated / unused
+	var sphere = _scene.objects[PTObject.ObjectType.SPHERE][0]
+	sphere.center.x = sin(Time.get_ticks_msec() / 1000.)
+	var bytes = sphere.to_byte_array()
+	
+	rd.buffer_update(sphere_buffer, 0, bytes.size(), bytes)
+	
 
 

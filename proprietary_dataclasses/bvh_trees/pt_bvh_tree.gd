@@ -1,3 +1,4 @@
+@tool
 class_name PTBVHTree
 extends Node
 # Can potentially be Refcounted
@@ -16,15 +17,35 @@ Such implementations should have a create_BVH function which creates the actual
 tree. Creation time and SAH score should also be recorded after creation.
 """
 
-# Enum of different possible BVH algorithms, should be updated as more algortithms
-#  are added
-enum BVHType {X_SORTED}
-
-const bvh_classes = {
-	BVHType.X_SORTED : PTBVHTree
+# NOTE: Should only be used for exports. Also should not designate type but function
+## Enum of different possible BVH algorithms, should be updated as more algortithms
+##  are added. Only positive numbers (and zero) are allowed as values.
+## The user can add their of own bvh functions to bvh_functions. The only 
+##  non-optional arguments needs to a PTScene object followed by a maximum child count.
+enum BVHType {
+	X_SORTED,
+	Y_SORTED,
+	Z_SORTED,
 }
 
+const enum_to_dict = {
+	BVHType.X_SORTED : "X-Axis Sorted",
+	BVHType.Y_SORTED : "Y-Axis Sorted",
+	BVHType.Z_SORTED : "Z-Axis Sorted",
+}
+
+static var built_in_bvh_functions = {
+	"X-Axis Sorted" : PTBVHTree.x_axis_sorted,
+	"Y-Axis Sorted" : PTBVHTree.y_axis_sorted,
+	"Z-Axis Sorted" : PTBVHTree.z_axis_sorted,
+}
+
+# TODO Add setter function for ease of use
+static var bvh_functions = built_in_bvh_functions
+
 var root_node : BVHNode
+
+var _scene : PTScene
 
 # TODO probably stated elsewhere but this should probably be a class for typehinting
 # A dictionary of objects in the bvh
@@ -44,17 +65,50 @@ var SAH_cost : float
 var _index := 0 # Used to keep track of index when creating BVH_list
 
 
-func _init(max_children_ = 2):
-	max_children = max_children_
+func _init(_max_children = 2):
+	max_children = _max_children
 	root_node = BVHNode.new(null, self)
 	root_node.aabb = PTAABB.new()
 	inner_count += 1
 	
 	BVH_list = [root_node]
+	
+
+static func create_bvh_with_function_name(
+		scene : PTScene, 
+		_max_children : int,
+		_name : String,
+	) -> PTBVHTree:
+	
+	if _name not in bvh_functions.keys():
+		print("Name: %s, not in list of callable bvh functions" % _name)
+		return
+	
+	return bvh_functions[_name].call(scene, _max_children)
 
 
-func create_BVH(scene : PTScene):
-	""" Takes in a list of objects and creates a BVH tree in bytes
+static func x_axis_sorted(scene : PTScene, _max_children : int):
+	var temp = PTBVHTree.new(_max_children)
+	temp.create_BVH(scene)
+	return temp
+
+
+static func y_axis_sorted(scene : PTScene, _max_children : int):
+	var temp = PTBVHTree.new(_max_children)
+	temp.create_BVH(scene, "y")
+	return temp
+
+
+static func z_axis_sorted(scene : PTScene, _max_children : int):
+	var temp = PTBVHTree.new(_max_children)
+	temp.create_BVH(scene, "z")
+	return temp
+
+
+# TODO Give a better name, and make a naming scheme to bvh classes with multiple 
+#  algorithms 
+func create_BVH(scene : PTScene, axis := "x"):
+	""" Takes in a PTScene and creates a BVH tree
 	
 	The result of this function will be stored in a BVH_list.
 	The nodes in BVH_list will contain indices to scene.objects and 
@@ -65,6 +119,8 @@ func create_BVH(scene : PTScene):
 	
 	"""
 	
+	print("Starting to create %s-axis sorted BVH tree with %s primitives" % 
+			[axis, scene.object_count])
 	var start_time = Time.get_ticks_usec()
 	
 	var flat_object_list : Array[PTObject] = []
@@ -73,14 +129,31 @@ func create_BVH(scene : PTScene):
 		scene.ObjectType.SPHERE
 	]
 	for object in objects_to_include:
-		flat_object_list += scene.objects[object]
+		flat_object_list += scene.objects[object].duplicate()
 	
 	object_count = flat_object_list.size()
 	
+	# Sort according to given axis
+	var axis_conversion = {x = 0, y = 1, z = 2}
+	var _axis = axis_conversion[axis]
 	var axis_sort = func(a, b):
-		return a.aabb.minimum[0] > b.aabb.minimum[0]
+		return a.aabb.minimum[_axis] > b.aabb.minimum[_axis]
 	
+	
+	#print(flat_object_list.size())
+	#for object in flat_object_list:
+		#print(object.aabb.minimum[_axis])
+	#print(flat_object_list.size())
+	
+	# TODO FIX THIS PIECE OF SHIT FUNCTION RUINING MY PERFECT PROGRAM
+	#  It for some reason changes the values in the array, leading to incorrect
+	#  bvh construction with poor performance
 	flat_object_list.sort_custom(axis_sort)
+	
+	#print(flat_object_list.size())
+	#for object in flat_object_list:
+		#print(object.aabb.minimum[_axis])
+	#print(flat_object_list.size())
 	
 	# Creates tree recursively
 	root_node.add_children(_recursive_split(flat_object_list, root_node))
@@ -90,7 +163,9 @@ func create_BVH(scene : PTScene):
 	_index_node(root_node)
 	
 	creation_time = Time.get_ticks_usec() - start_time
-
+	
+	print("Finished creating %s-axis sorted BVH tree with %s inner nodes and \
+%s leaf nodes in %s ms." % [axis, inner_count, leaf_count, creation_time / 1000.])
 
 func size():
 	"""Returns the total bumber of nodes in the tree"""
@@ -114,7 +189,9 @@ func tree_SAH_cost():
 
 func to_byte_array():
 	var bytes = PackedByteArray()
+	#print("%s nodes in BVH_list" % BVH_list.size())
 	for node in BVH_list:
+		#print(node.aabb.size())
 		bytes += node.to_byte_array()
 	return bytes
 
@@ -234,6 +311,7 @@ class BVHNode:
 			if child.aabb:
 				aabb.merge(child.aabb)
 			else:
+				# TODO MOre info in warning
 				print("Warning: Child node does not have aabb")
 
 
