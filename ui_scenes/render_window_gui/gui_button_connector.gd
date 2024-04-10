@@ -35,8 +35,6 @@ func _ready():
 		%UseBVHButton.button_pressed = parent.use_bvh
 		%ShowBVHDepthButton.button_pressed = parent.show_bvh_depth
 		
-		# TODO decide which value to use
-		%BVHTreeOrder.value = parent.bvh_order
 		%BVHTreeOrder.value = parent._renderer.bvh_max_children
 		%BVHTreeOrder.previous_value = parent._renderer.bvh_max_children
 		
@@ -67,6 +65,5 @@ func _on_create_bvh_button_pressed():
 	%BVHType.previous_value = %BVHType.selected
 	%BVHTreeOrder.previous_value = %BVHTreeOrder.value
 	
-	# TODO FIX this
-	#parent._renderer.create_bvh(%BVHTreeOrder.value, bvh_function_names[%BVHType.selected])
+	parent._renderer.create_bvh(%BVHTreeOrder.value, bvh_function_names[%BVHType.selected])
 	

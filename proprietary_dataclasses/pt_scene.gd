@@ -165,13 +165,8 @@ func get_size():
 func create_BVH(max_children : int, function_name : String):
 	# TODO add check to reuse BVH if it is in cached_bvhs
 	
-	#for sphere in objects[ObjectType.SPHERE]:
-		#print(sphere.object_index)
-	
-	
 	if bvh:
 		cached_bvhs.append(bvh)
-		
 	
 	bvh = PTBVHTree.create_bvh_with_function_name(self, max_children, function_name)
 

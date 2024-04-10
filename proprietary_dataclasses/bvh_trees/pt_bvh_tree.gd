@@ -135,25 +135,12 @@ func create_BVH(scene : PTScene, axis := "x"):
 	
 	# Sort according to given axis
 	var axis_conversion = {x = 0, y = 1, z = 2}
+	#var _axis = 0
 	var _axis = axis_conversion[axis]
 	var axis_sort = func(a, b):
 		return a.aabb.minimum[_axis] > b.aabb.minimum[_axis]
 	
-	
-	#print(flat_object_list.size())
-	#for object in flat_object_list:
-		#print(object.aabb.minimum[_axis])
-	#print(flat_object_list.size())
-	
-	# TODO FIX THIS PIECE OF SHIT FUNCTION RUINING MY PERFECT PROGRAM
-	#  It for some reason changes the values in the array, leading to incorrect
-	#  bvh construction with poor performance
 	flat_object_list.sort_custom(axis_sort)
-	
-	#print(flat_object_list.size())
-	#for object in flat_object_list:
-		#print(object.aabb.minimum[_axis])
-	#print(flat_object_list.size())
 	
 	# Creates tree recursively
 	root_node.add_children(_recursive_split(flat_object_list, root_node))
@@ -297,22 +284,21 @@ class BVHNode:
 
 
 	func set_aabb():
-		# TODO This method is not secure enough
-		if is_leaf:
-			aabb = objects[0].aabb
-			if objects.size() == 1:
-				return
+		aabb = PTAABB.new(Vector3.INF, -Vector3.INF, false)
+		if is_leaf and objects:
 			for object in objects:
 				aabb.merge(object.aabb)
 			return
 		
-		aabb = children[0].aabb
 		for child in children:
 			if child.aabb:
 				aabb.merge(child.aabb)
 			else:
-				# TODO MOre info in warning
-				print("Warning: Child node does not have aabb")
+				print("Warning: Child node %s does not have aabb" % child)
+				
+		if not aabb.minimum.is_finite() or not aabb.maximum.is_finite():
+			print("AABB boundaries was not set correctly, %s, %s" % 
+			[aabb.minimum, aabb.maximum]) 
 
 
 	func add_children(new_children : Array[BVHNode]):

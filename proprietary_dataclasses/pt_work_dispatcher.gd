@@ -131,22 +131,9 @@ func bind_sets():
 	camera_set = rd.uniform_set_create(camera_uniform, shader, camera_set_index)
 	object_set = rd.uniform_set_create(object_uniforms, shader, object_set_index)
 	BVH_set = rd.uniform_set_create(BVH_uniforms, shader, BVH_set_index)
-	
-	set_RIDs.append(image_set)
-	set_RIDs.append(camera_set)
-	set_RIDs.append(object_set)
-	set_RIDs.append(BVH_set)
-	
+
 
 func load_shader(shader_ : RDShaderSource):
-	#if pipeline:
-		#rd.free_rid(pipeline)
-	#if shader:
-		#rd.free_rid(shader)
-	
-	# TODO Make check if shader already exists, free aplicable RIDS
-	#  Might not need this anyways
-	
 	# Load GLSL shader
 	# Was very annoying to find since this function is not mentioned anywhere
 	#	in RDShaderSource documentation wrrr
@@ -161,21 +148,12 @@ func load_shader(shader_ : RDShaderSource):
 func free_RIDs():
 	if texture:
 		texture.texture_rd_rid = RID()
-	
-	# Frees uniforms, TODO Probably remove
-	for dict in uniform_sets:
-		for rid in dict.values():
-			rd.free_rid(rid)
 
 	# Frees buffers and shader RIDS
 	for rid in RIDs_to_free:
 		rd.free_rid(rid)
 		
 	# TODO when RIDs are freed, remember to remove them from the arrays
-	
-	# Not needed
-	#for _set in set_RIDs:
-		#rd.free_rid(_set)
 
 
 func create_compute_list(window : PTRenderWindow = null):
@@ -188,9 +166,9 @@ func create_compute_list(window : PTRenderWindow = null):
 	if window == null:
 		window = PTRenderWindow.new()
 		
-		window.work_group_width = ceil(_renderer.render_width / 
+		window.work_group_width = ceili(_renderer.render_width / 
 										_renderer.compute_invocation_width)
-		window.work_group_height = ceil(_renderer.render_height / 
+		window.work_group_height = ceili(_renderer.render_height / 
 										_renderer.compute_invocation_height)
 		window.work_group_depth = 1
 	

@@ -3,19 +3,25 @@ extends Node
 # Can potentially be Refcounted
 
 var minimum : Vector3
+	#set(value):
+		#print(self, " Changed minimum value from %s to %s" % [minimum, value])
+		#minimum = value
 var maximum : Vector3
+	#set(value):
+		#print(self, " Changed maximum value from %s to %s" % [minimum, value])
+		#maximum = value
 
-
-func _init(_minimum = Vector3(0,0,0), _maximum = Vector3(1,1,1)):
+func _init(_minimum := Vector3.ZERO, _maximum := Vector3.ONE, range_check = true):
 	minimum = _minimum
 	maximum = _maximum
 	
-	# Make minimum the smallest in all axes
-	for i in range(3):
-		if minimum[i] > maximum[i]:
-			var temp = minimum[i]
-			minimum[i] = maximum[i]
-			maximum[i] = temp
+	# Make minimum the smallest in all axes if range_check allows it
+	if range_check:
+		for i in range(3):
+			if minimum[i] > maximum[i]:
+				var temp = minimum[i]
+				minimum[i] = maximum[i]
+				maximum[i] = temp
 
 
 func size():
@@ -34,6 +40,11 @@ func merge(other : PTAABB):
 	for i in range(3):
 		maximum[i] = max(other.maximum[i], maximum[i])
 		
+
+func copy(other : PTAABB):
+	minimum = other.minimum
+	maximum = other.maximum
+	
 
 func vec3toarr(v):
 	return [v.x, v.y, v.z]

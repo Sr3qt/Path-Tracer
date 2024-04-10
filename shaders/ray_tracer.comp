@@ -718,6 +718,7 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
     }
 
     if (show_bvh_depth) {
+        // TODO Improve visual accuracy 
         float a = float(hit_check_count) / float(BVH.list.length() * 2);
         float b = pow(a, 3.5);
         rayhit.color = vec4(a,b,1,0);

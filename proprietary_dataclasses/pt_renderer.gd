@@ -50,7 +50,6 @@ var normal_camera : Camera3D = null
 var scene : PTScene
 
 # Controls the degree of the bvh tree passed to the gpu. 
-# NOTE: Currently no support for dynamically changing it. TODO
 var bvh_max_children : int = 8
 
 # GLSL files in shaders/procedural_textures folder
@@ -330,21 +329,13 @@ func create_bvh(_max_children : int, function_name : String):
 	
 	#rtwd.rd.buffer_update(rtwd.BVH_buffer)
 	#rtwd.rd.buffer_clear(rtwd.BVH_buffer, 0, rtwd._create_bvh_byte_array().size())
-	#rtwd.free_RIDs()
 	
-	#for _set in rtwd.set_RIDs:
-		#rtwd.rd.free_rid(_set)
-	
-	# NOTE: Doenst support changing bvh order yet
-	#bvh_max_children = _max_children
+	bvh_max_children = _max_children
 	
 	# NOTE: Remaking the BVH buffer seems to be unneccessary, can probably just 
-	#  be updated later
-	print(scene.bvh)
-	#scene.bvh = null
+	#  be updated later if it uses the same size
 	scene.create_BVH(bvh_max_children, function_name)
-	print(scene.bvh)
-	#load_shader()
+	load_shader()
 	
 	#rtwd.create_buffers()
 	rtwd.rd.free_rid(rtwd.BVH_buffer)
@@ -355,12 +346,5 @@ func create_bvh(_max_children : int, function_name : String):
 	rtwd.BVH_set = rtwd.rd.uniform_set_create(BVH_uniforms, rtwd.shader, 
 			rtwd.BVH_set_index)
 	
-	#var new_bytes = rtwd._create_bvh_byte_array()
-	
-	#
-	#rtwd.BVH_buffer
-	#rtwd.rd.buffer_update(rtwd.BVH_buffer, 0, new_bytes.size(), new_bytes)
-	##rtwd.create_bvh_buffer()
-	#rtwd.bind_sets()
 	
 
