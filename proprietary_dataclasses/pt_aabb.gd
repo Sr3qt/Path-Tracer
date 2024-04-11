@@ -3,13 +3,7 @@ extends Node
 # Can potentially be Refcounted
 
 var minimum : Vector3
-	#set(value):
-		#print(self, " Changed minimum value from %s to %s" % [minimum, value])
-		#minimum = value
 var maximum : Vector3
-	#set(value):
-		#print(self, " Changed maximum value from %s to %s" % [minimum, value])
-		#maximum = value
 
 func _init(_minimum := Vector3.ZERO, _maximum := Vector3.ONE, range_check = true):
 	minimum = _minimum

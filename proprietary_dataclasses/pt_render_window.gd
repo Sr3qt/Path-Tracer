@@ -8,9 +8,7 @@ the render window"""
 enum RenderFlagsBits {
 	USE_BVH = 1,
 	SHOW_BVH_DEPTH = 2,
-	#USE_MULTISAMPLING = 4,
-	SCENE_CHANGED = 4,
-	
+	MULTISAMPLE = 4,
 	SAMPLE_ALL_TEXTURES = 8,
 }
 
@@ -18,6 +16,9 @@ var render_name := "unnamed_window"
 
 # Defualt render flags
 var flags := 0
+
+## GPU RENDER FLAGS
+## Flags that are sent to the gpu
 
 # Whether a bvh tree should be used or 
 #  if every object should be checked for ray hit
@@ -27,23 +28,60 @@ var use_bvh := true:
 		use_bvh = value
 
 # If a bvh heat map of of most expensive traversals are shown
+#  Also disables multisampling while on
 var show_bvh_depth := false:
 	set(value):
 		_set_flag_bit(RenderFlagsBits.SHOW_BVH_DEPTH, int(value))
+		_disable_multisample = value
+		_multisample = not value and enable_multisampling and not _disable_multisample
+		render_mode_changed = true
 		show_bvh_depth = value
 
-# Whether the shader can make assume nothing has changed since last frame or not
-var scene_changed := true:
+# Whether the shader will sample from previous draw call or not
+var _multisample := true:
 	set(value):
-		_set_flag_bit(RenderFlagsBits.SCENE_CHANGED, int(value))
-		scene_changed = value
+		_set_flag_bit(RenderFlagsBits.MULTISAMPLE, int(value))
+		_multisample = value
 
+# TODO Ponder over overall usefulness
 # Whether every object who is hit should sample their texture or not
 var sample_all_textures := false:
 	set(value):
 		_set_flag_bit(RenderFlagsBits.SAMPLE_ALL_TEXTURES, int(value))
+		render_mode_changed = true
 		sample_all_textures = value
 
+## OTHER RENDER FLAGS
+## Flags that dont go to the gpu
+
+# Whether multisampling is enabled by the user or not
+var enable_multisampling := true:
+	set(value):
+		_multisample = not value and enable_multisampling and not _disable_multisample
+		enable_multisampling = value
+
+# Updated whenever the camera or an object is moved
+var scene_changed = false:
+	set(value):
+		_multisample = not value and enable_multisampling and not _disable_multisample
+		scene_changed = value
+
+# If rendering should stop when frame is larger than max_samples
+var stop_rendering_on_max_samples := true
+
+var max_samples : int = 16
+
+# The number of samples that will be rendered this frame
+#  possible values: frame -> [0, max_samples)
+var frame : int = 0
+
+# Whether any flags that control *what* is rendered i.e. show_bvh_depth 
+var render_mode_changed := false
+
+# An override for various render modes that cannot utilize multisampling
+var _disable_multisample := false
+
+## OTHER STUFF
 # How many pixels are in a work group dimension
 var work_group_width_pixels = PTRenderer.compute_invocation_width
 var work_group_height_pixels = PTRenderer.compute_invocation_height
@@ -57,11 +95,6 @@ var work_group_depth := 1
 
 var x_offset := 0
 var y_offset := 0
-
-# What kind of bvh is used, if any. Is of type BVHType enum, but i can't 
-#  type hint for some reason
-var bvh_type = null
-var bvh_order : int
 
 var _renderer : PTRenderer
 
@@ -96,7 +129,7 @@ func _set_flags():
 	flags = (
 		RenderFlagsBits.USE_BVH * int(use_bvh) +
 		RenderFlagsBits.SHOW_BVH_DEPTH * int(show_bvh_depth) +
-		RenderFlagsBits.SCENE_CHANGED * int(scene_changed) +
+		RenderFlagsBits.MULTISAMPLE * int(_multisample) +
 		RenderFlagsBits.SAMPLE_ALL_TEXTURES * int(sample_all_textures)
 	)
 

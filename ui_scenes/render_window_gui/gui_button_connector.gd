@@ -17,8 +17,6 @@ var _is_plugin_instance = false
 
 
 func _ready():
-	# TODO add button to select camera angle from enum and add method to add 
-	#  new camera angle from current camera
 	
 	if get_parent()._renderer:
 		_is_plugin_instance = get_parent()._renderer._is_plugin_instance
@@ -43,6 +41,14 @@ func _ready():
 		%BVHType.selected = parent._renderer.default_bvh
 		%BVHType.previous_value = parent._renderer.default_bvh
 		
+		# TODO THINGS TO ADD:
+		#	-Display if window is rendering, current frame index
+		#	-Add way to change max_samples, as well as the render flags
+		#	-Make multisample reset button and measure time to render max_samples
+		#	-add button to select camera angle from enum and add method to add 
+		#	  new camera angle from current camera
+		#	-add ability to change camera variables, fov, gamma, focal
+
 
 func _toggled(toggled_on):
 	%PanelContainer.visible = toggled_on

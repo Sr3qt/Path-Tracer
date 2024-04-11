@@ -27,9 +27,9 @@ var camera_settings_values = {
 
 @export_file var scene_import
 
-# objects is a dictionary with ObjectTypes as keys. The values are arrays of
-#  PTObjects 
-# TODO make into a class?
+# objects is a dictionary with ObjectTypes as keys. 
+#  The values are arrays of PTObjects 
+# TODO make into a class? or split into seperate arrays
 var objects
 
 # materials should hold no duplicate materials
@@ -40,7 +40,8 @@ var bvh : PTBVHTree
 # Array of created and unused BVHs
 var cached_bvhs : Array[PTBVHTree]
 
-# Whether anything in the scene, objects, camera, either moved, got added or removed
+# Whether any objects either moved, got added or removed. 
+#  Camera is controlled seperately
 var scene_changed := false
 
 var camera : PTCamera
@@ -146,10 +147,12 @@ static func load_scene(path : String):
 
 func import(path : String):
 	""" Replaces this scenes data with data from file """
-	var out = _load_scene(path)
+	var out = PTScene._load_scene(path)
 	
 	objects = out[0]
 	materials = out[1]
+	
+	scene_changed = true
 
 
 func get_size():
@@ -186,9 +189,9 @@ func set_camera_setting(cam : CameraSetting):
 		pass
 
 
-func create_random_scene(seed):
+func create_random_scene(_seed):
 	var rng = RandomNumberGenerator.new()
-	rng.seed = seed
+	rng.seed = _seed
 	
 	# Ground
 	var ground_mat = PTMaterial.new()

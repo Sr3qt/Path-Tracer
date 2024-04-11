@@ -413,10 +413,19 @@ func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 	var bytes = PackedByteArray()
 	
 	bytes += _scene.camera.to_byte_array()
-	bytes += PackedFloat32Array([Time.get_ticks_msec() / 1000.]).to_byte_array()
-	# Filler
+	# NOTE: For some reason when time is above ~30. it seems to affect the 
+	#  degree of randomness in the shader. TODO investigate random function in shader
+	# Also a higher divisor seems to give a more volatile local noise
+	var divisor = 100_000.0
+	var repeat = 5.0 # repeat after seconds
+	# TODO ADD render_start_time and subtract it form get_ticks_msec.
+	#  THis will make time always start from the same position when multisampling
+	var time = fmod(Time.get_ticks_msec() / divisor, (repeat * 1000) / divisor)
+	
+	bytes += PackedFloat32Array([time]).to_byte_array()
 	bytes += window.flags_to_byte_array()
 	bytes += PackedInt32Array([window.x_offset, window.y_offset]).to_byte_array()
+	bytes += PackedFloat32Array([window.frame, 0, 0, 0]).to_byte_array()
 	
 	return bytes
 	

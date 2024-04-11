@@ -69,7 +69,6 @@ var samples_per_pixel = 1
 var max_default_depth = 8
 var max_refraction_bounces = 8 
 
-
 # Whether this instance was created by a plugin script or not
 var _is_plugin_instance = false
 
@@ -134,20 +133,9 @@ func _ready():
 		var x = ceili(1920. / 8.)
 		var y = ceili(1080. / 8.)
 		
-		var window1 = PTRenderWindow.new(x, y)
-		var window2 = PTRenderWindow.new(x, y, 1, 1920 / 2)
 		var better_window = WindowGui.instantiate()
 		
-		window2.show_bvh_depth = true
-		#window1.show_bvh_depth = true
-		
-		window1.sample_all_textures = true
-		
-		window1.set_anchors_preset(Control.PRESET_LEFT_WIDE)
-		window2.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
-		
-		#add_window(window1)
-		#add_window(window2)
+		#better_window.enable_multisampling = false
 		
 		better_window.work_group_width = x
 		better_window.work_group_height = y
@@ -157,24 +145,21 @@ func _ready():
 
 func _process(delta):
 	
+	## Decides if any rendering will be done at all
 	# Runtime and plugin requires different checks for window focus
 	var runtime = (get_window().has_focus() and not Engine.is_editor_hint())
 	var plugin = (_is_plugin_instance and (root_node and root_node.visible) and
 					Engine.is_editor_hint())
 					
-	var common = ((scene and scene.camera.camera_changed) and not is_rendering_disabled)
+	var common = not is_rendering_disabled
 	
 	if (runtime or plugin) and common:
-		# TODO Make flag to allow for either multi sampling or not to save resources
-		# TODO Before that add actual multisampling from different renders
-		scene.camera.camera_changed = false
-		
-		if not Engine.is_editor_hint():
-			scene.camera.camera_changed = true
-		
-		
 		for window in windows:
-			rtwd.create_compute_list(window)
+			render_window(window)
+		
+		# Reset frame values
+		scene.scene_changed = false
+		scene.camera.camera_changed = false
 		
 		# NOTE: For some reason this is neccessary for smooth performance in editor
 		if Engine.is_editor_hint():
@@ -185,7 +170,7 @@ func _process(delta):
 func _input(event):
 	if event is InputEventKey:
 		if event.pressed and event.keycode == KEY_X and not event.is_echo():
-			# For some reason the editor can never get here
+			# TODO For some reason the editor can never get here
 			save_framebuffer(rtwd)
 	
 	# Taken from work_dispatcher, TODO implement picture taking functionality
@@ -296,6 +281,44 @@ func add_window(window : PTRenderWindow):
 	# TODO add collision check with other windows and change their size accordingly
 
 
+func render_window(window : PTRenderWindow):
+	"""Might render window according to flags if flags allow it"""
+	
+	# If camera moved or scene changed
+	var movement = scene and (scene.camera.camera_changed or scene.scene_changed)
+	
+	# If rendering should stop when reached max samples
+	var stop_multisampling = (
+			window.stop_rendering_on_max_samples and
+			(window.frame > window.max_samples)
+	)
+	
+	var multisample = (window.enable_multisampling and not stop_multisampling and
+			not window._disable_multisample)
+	
+	if movement or multisample or window.render_mode_changed:
+		window.scene_changed = movement
+		
+		# If frame is above limit or a scene/camera changed caused a reset
+		if window.frame > window.max_samples or movement:
+			window.frame = 0
+		
+		#Render
+		rtwd.create_compute_list(window)
+		
+		window.frame += 1
+		
+		# Keep frame under limit until next draw call if possible
+		if ((window.frame > window.max_samples) and 
+				not window.stop_rendering_on_max_samples):
+			window.frame = 0
+		
+		# Reset frame values
+		window.scene_changed = false
+		window.render_mode_changed = false
+		
+		
+
 func save_framebuffer(work_dispatcher : PTWorkDispatcher):
 	if Engine.is_editor_hint():
 		if (scene and not scene.camera.freeze):
@@ -327,17 +350,15 @@ func create_bvh(_max_children : int, function_name : String):
 	# TODO Doesnt have to load new shader when max children didnt change
 	# TODO Rework shader to work with different bvh orders without reloading
 	
-	#rtwd.rd.buffer_update(rtwd.BVH_buffer)
-	#rtwd.rd.buffer_clear(rtwd.BVH_buffer, 0, rtwd._create_bvh_byte_array().size())
-	
 	bvh_max_children = _max_children
+	
+	scene.create_BVH(bvh_max_children, function_name)
+	scene.scene_changed = true
+	
+	load_shader()
 	
 	# NOTE: Remaking the BVH buffer seems to be unneccessary, can probably just 
 	#  be updated later if it uses the same size
-	scene.create_BVH(bvh_max_children, function_name)
-	load_shader()
-	
-	#rtwd.create_buffers()
 	rtwd.rd.free_rid(rtwd.BVH_buffer)
 	
 	rtwd.create_bvh_buffer()

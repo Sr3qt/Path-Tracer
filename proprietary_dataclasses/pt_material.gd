@@ -11,6 +11,8 @@ var opacity := 1.
 var IOR := 1.
 var refraction_depth := 0
 
+# TODO Add texture variable
+
 
 func get_rgb():
 	"""Returns albedo as rgb values from 0 to 255 in srgb space"""

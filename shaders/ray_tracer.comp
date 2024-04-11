@@ -116,7 +116,7 @@ bool flags[4];
 bool use_bvh;
 bool show_bvh_depth;
 
-bool scene_changed;
+bool multisample;
 bool sample_all_textures;
 
 
@@ -274,6 +274,7 @@ layout(push_constant, std430) restrict readonly uniform constants {
     float time;
     int flags;
     ivec2 image_offset; // How many pixels offset should the viewport origin be
+    float frame;
 } push;
 
 // UTILITY FUNCTIONS
@@ -421,7 +422,7 @@ void parse_flags() {
 
     use_bvh = flags[0];
     show_bvh_depth = flags[1];
-    scene_changed = flags[2];
+    multisample = flags[2];
     sample_all_textures = flags[3];
 }
 
@@ -950,12 +951,12 @@ void main() {
     // Apply gamma correction
     new_color.rgb = pow(new_color.rgb, vec3(push.camera.gamma));
 
-    if (scene_changed) {
-        imageStore(output_image, UVi.xy, new_color);
-    } else {
+    if (multisample) {
         vec4 prev_col = imageLoad(output_image, UVi.xy);
-        imageStore(output_image, UVi.xy, (new_color + prev_col) / 2.);
+        new_color = mix(prev_col, new_color, 1.0 / max(1.0, push.frame));
     }
+    
+    imageStore(output_image, UVi.xy, new_color);
 }
 
 

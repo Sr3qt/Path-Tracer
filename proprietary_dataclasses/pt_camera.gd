@@ -73,7 +73,7 @@ func _init(
 func _ready():
 	root_node = get_parent().get_parent().root_node
 	
-	if root_node:
+	if root_node and Engine.is_editor_hint():
 		root_node.connect("gui_input", _unhandled_input)
 	
 
@@ -145,7 +145,7 @@ func vec2array(vector):
 	return [vector.x, vector.y, vector.z]
 
 
-func to_byte_array():
+func to_byte_array() -> PackedByteArray:
 	var camera_array = (vec2array(camera_pos) + [focal_length] + 
 						vec2array(right) + [viewport_width] + 
 						vec2array(up) + [viewport_height] + 
@@ -153,8 +153,6 @@ func to_byte_array():
 	
 	return (PackedFloat32Array(camera_array).to_byte_array())
 	
-
-
 
 
 
