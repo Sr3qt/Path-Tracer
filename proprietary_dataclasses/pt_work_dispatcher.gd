@@ -90,19 +90,19 @@ func create_buffers():
 	image_buffer = _create_image_buffer()
 	
 	LOD_buffer = _create_uniform(
-			_create_lod_byte_array(), rd, camera_set_index, LOD_bind
+			_create_lod_byte_array(), camera_set_index, LOD_bind
 	)
 	# List of materials
 	material_buffer = _create_uniform(
-			_create_materials_byte_array(), rd, object_set_index, materials_bind
+			_create_materials_byte_array(), object_set_index, materials_bind
 	)
 	# One of the object lists, for spheres
 	sphere_buffer = _create_uniform(
-			_create_spheres_byte_array(), rd, object_set_index, spheres_bind
+			_create_spheres_byte_array(), object_set_index, spheres_bind
 	)
 	# One of the object lists, for planes
 	plane_buffer = _create_uniform(
-			_create_planes_byte_array(), rd, object_set_index, planes_bind
+			_create_planes_byte_array(), object_set_index, planes_bind
 	)
 	
 	create_bvh_buffer()
@@ -246,22 +246,19 @@ func render_image():
 		rd.buffer_update(LOD_buffer, 0, byte_array.size(), byte_array)
 
 
-# TODO Make all buffers public functions
 func create_bvh_buffer():
 	# Contains the BVH tree in the form of a list
 	BVH_buffer = _create_uniform(
-			_create_bvh_byte_array(), rd, BVH_set_index, BVH_bind
+			_create_bvh_byte_array(), BVH_set_index, BVH_bind
 	)
 	
 
-func _create_uniform(bytes, render_device, set_, binding) -> RID:
+func _create_uniform(bytes : PackedByteArray, _set : int, binding : int) -> RID:
 	"""Create and bind uniform to a shader from bytes.
 	
 	returns the uniform and buffer created in an array"""
 	
-	# TODO Remove needing to pass render device, as PTWorkDispatcher should
-	#  always have only one each.
-	var buffer : RID = render_device.storage_buffer_create(bytes.size(), bytes)
+	var buffer : RID = rd.storage_buffer_create(bytes.size(), bytes)
 	RIDs_to_free.append(buffer)
 	var uniform = RDUniform.new()
 	
@@ -269,43 +266,9 @@ func _create_uniform(bytes, render_device, set_, binding) -> RID:
 	uniform.binding = binding
 	uniform.add_id(buffer)
 	
-	uniform_sets[set_][binding] = uniform
+	uniform_sets[_set][binding] = uniform
 	
 	return buffer
-
-
-func _temp_create_texture_buffer():
-	"""Creates and binds render result texture buffer aka. image_buffer"""
-	var usage_bits = (
-		RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT + 
-		RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT +
-		RenderingDevice.TEXTURE_USAGE_STORAGE_BIT +
-		RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT 
-		# Remove bit for increased performance, have to add writeonly to shader buffer
-		+ RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
-	)
-	
-	#if is_local_renderer:
-		#usage_bits += RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT 
-	
-	var new_image_buffer = _create_texture_buffer(
-		RenderingDevice.TEXTURE_TYPE_2D,
-		_renderer.render_width, 
-		_renderer.render_height,
-		[],
-		1,
-		usage_bits
-	)
-	
-	var uniform := RDUniform.new()
-	uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
-	uniform.binding = image_buffer_bind
-	uniform.add_id(new_image_buffer)
-	
-	uniform_sets[image_set_index][image_buffer_bind] = uniform
-	
-	return new_image_buffer
-
 
 
 func _create_image_buffer():
@@ -322,6 +285,7 @@ func _create_image_buffer():
 	#if is_local_renderer:
 		#usage_bits += RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT 
 	
+	# TODO Explore multi-layered texture for multisampling
 	var new_image_buffer = _create_texture_buffer(
 		RenderingDevice.TEXTURE_TYPE_2D,
 		_renderer.render_width, 
@@ -436,14 +400,5 @@ func _create_bvh_byte_array() -> PackedByteArray:
 	else:
 		return PTBVHTree.new().to_byte_array()
 
-
-func _update_sphere():
-	# Deprecated / unused
-	var sphere = _scene.objects[PTObject.ObjectType.SPHERE][0]
-	sphere.center.x = sin(Time.get_ticks_msec() / 1000.)
-	var bytes = sphere.to_byte_array()
-	
-	rd.buffer_update(sphere_buffer, 0, bytes.size(), bytes)
-	
 
 

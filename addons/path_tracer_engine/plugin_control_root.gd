@@ -18,6 +18,7 @@ func _enter_tree():
 
 func _ready():
 	mouse_exited.connect(_on_root_node_mouse_exited)
+	mouse_entered.connect(_on_root_node_mouse_entered)
 	resized.connect(_on_resized)
 
 
@@ -31,6 +32,11 @@ func _on_root_node_mouse_exited():
 	if renderer.scene:
 		if renderer.scene.camera:
 			renderer.scene.camera.freeze = true
+	renderer._mouse_hover_window = false
+
+
+func _on_root_node_mouse_entered():
+	renderer._mouse_hover_window = true
 
 
 func _on_resized():

@@ -45,7 +45,7 @@ var _multisample := true:
 
 # TODO Ponder over overall usefulness
 # Whether every object who is hit should sample their texture or not
-var sample_all_textures := false:
+var sample_all_textures := true:
 	set(value):
 		_set_flag_bit(RenderFlagsBits.SAMPLE_ALL_TEXTURES, int(value))
 		render_mode_changed = true

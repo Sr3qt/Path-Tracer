@@ -35,16 +35,16 @@ const compute_invocation_depth : int = 1
 var root_node 
 
 # Realtime PTWorkDispatcher
-var rtwd : PTWorkDispatcher = null
+var rtwd : PTWorkDispatcher
 #var nrtwd : PTWorkDispatcher
 
 # Array of sub-windows
 var windows : Array[PTRenderWindow] = []
 
 # The mesh to draw to
-var canvas : MeshInstance3D = null
+var canvas : MeshInstance3D
 
-var normal_camera : Camera3D = null
+var normal_camera : Camera3D
 
 # A scene with objects and a camera node
 var scene : PTScene
@@ -65,12 +65,18 @@ var proc_textures = {
 var render_width := 1920
 var render_height := 1080
 
-var samples_per_pixel = 1
+var samples_per_pixel = 1 # Deprecated
 var max_default_depth = 8
 var max_refraction_bounces = 8 
 
-# Whether this instance was created by a plugin script or not
-var _is_plugin_instance = false
+# Whether this instance was created by a plugin script or not. Only used by plugin
+var _is_plugin_instance := false
+
+# If mouse is hovering over the render window. Only used by plugin
+var _mouse_hover_window := false
+
+# Whether anything was rendered this frame. Only used by plugin
+var _was_rendered := false
 
 
 func _ready():
@@ -135,6 +141,10 @@ func _ready():
 		
 		var better_window = WindowGui.instantiate()
 		
+		if not Engine.is_editor_hint():
+			better_window.max_samples = 256
+			better_window.stop_rendering_on_max_samples = false
+		
 		#better_window.enable_multisampling = false
 		
 		better_window.work_group_width = x
@@ -144,13 +154,14 @@ func _ready():
 
 
 func _process(delta):
+	_was_rendered = false
 	
 	## Decides if any rendering will be done at all
 	# Runtime and plugin requires different checks for window focus
 	var runtime = (get_window().has_focus() and not Engine.is_editor_hint())
 	var plugin = (_is_plugin_instance and (root_node and root_node.visible) and
 					Engine.is_editor_hint())
-					
+	
 	var common = not is_rendering_disabled
 	
 	if (runtime or plugin) and common:
@@ -162,7 +173,7 @@ func _process(delta):
 		scene.camera.camera_changed = false
 		
 		# NOTE: For some reason this is neccessary for smooth performance in editor
-		if Engine.is_editor_hint():
+		if Engine.is_editor_hint() and (_mouse_hover_window or _was_rendered):
 			var mat = canvas.mesh.surface_get_material(0)
 			mat.set_shader_parameter("is_rendering", true)
 
@@ -317,6 +328,8 @@ func render_window(window : PTRenderWindow):
 		window.scene_changed = false
 		window.render_mode_changed = false
 		
+		_was_rendered = true
+		
 		
 
 func save_framebuffer(work_dispatcher : PTWorkDispatcher):
@@ -347,18 +360,22 @@ func save_framebuffer(work_dispatcher : PTWorkDispatcher):
 
 
 func create_bvh(_max_children : int, function_name : String):
-	# TODO Doesnt have to load new shader when max children didnt change
 	# TODO Rework shader to work with different bvh orders without reloading
+	var _start = Time.get_ticks_usec()
 	
+	# TODO Add support so that all objects in scene can be rendered by bvh
+	#  THis is a bug because the shader has a fixed stack size and cannot always
+	#  accommodate for every object count and bvh order
+	var prev_max = bvh_max_children
 	bvh_max_children = _max_children
 	
 	scene.create_BVH(bvh_max_children, function_name)
 	scene.scene_changed = true
 	
-	load_shader()
+	if prev_max != bvh_max_children:
+		load_shader()
 	
-	# NOTE: Remaking the BVH buffer seems to be unneccessary, can probably just 
-	#  be updated later if it uses the same size
+	# NOTE: Removing and adding buffer seem to be as fast as trying to update it
 	rtwd.rd.free_rid(rtwd.BVH_buffer)
 	
 	rtwd.create_bvh_buffer()
@@ -366,6 +383,7 @@ func create_bvh(_max_children : int, function_name : String):
 	var BVH_uniforms = rtwd.uniform_sets[rtwd.BVH_set_index].values()
 	rtwd.BVH_set = rtwd.rd.uniform_set_create(BVH_uniforms, rtwd.shader, 
 			rtwd.BVH_set_index)
-	
+			
+	print((Time.get_ticks_usec() - _start) / 1000.)
 	
 

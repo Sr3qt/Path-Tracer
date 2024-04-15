@@ -87,6 +87,7 @@ const int is_plane = 2;
 const int is_procedural_spatial = 0; // For point hit procedural function
 const int is_procedural_flat = 1; // For uv procedural functions
 const int is_sampled_texture = 2; // For uv sampling from texture buffer
+const int is_no_texture = 3;
 
 // BVH child_index enum
 // const int is_BVHNode = 1;
@@ -117,7 +118,7 @@ bool use_bvh;
 bool show_bvh_depth;
 
 bool multisample;
-bool sample_all_textures;
+bool sample_all_textures; // Deprecated
 
 
 float random_number;
@@ -813,16 +814,12 @@ Ray scatter_ray(Ray ray_in, RayHit rayhit) {
     vec3 ray_dir = rand_vec3(rayhit.point + rayhit.ray.direction) + rayhit.normal;
 
     // If created ray pointed in opposite direction of normal
-    if (near_zero(ray_dir)) {
-        ray_dir = rayhit.normal;
-    }
+    ray_dir = near_zero(ray_dir) ? rayhit.normal : ray_dir;
 
-    if (dot(ray_dir, rayhit.normal) < 0.) {
-        ray_dir *= -1.;
-    }
+    // Make sure reflected ray points in the same way as normal
+    ray_dir = dot(ray_dir, rayhit.normal) < 0. ? ray_dir * -1.0 : ray_dir;
 
-    Ray ray_out = Ray(rayhit.point, ray_dir);
-    return ray_out;
+    return Ray(rayhit.point, ray_dir);;
 }
 
 Ray bounce_ray(Ray ray_in, RayHit rayhit) {
@@ -845,9 +842,6 @@ Ray bounce_ray(Ray ray_in, RayHit rayhit) {
 vec4 cast_ray(Ray ray, Range range) {
     // Casts a ray with bounces and returns the color of the ray
 
-    vec4 out_col = default_color;
-
-
     // Turns out computing colors in the same loop was faster, TODO maybe reconsider
     // Rayhit's color should determined in reverse order, so we to store them for later
     // RayHit rayhits[64];
@@ -855,12 +849,12 @@ vec4 cast_ray(Ray ray, Range range) {
     // Calculate rayhits
     Ray new_ray = ray;
     RayHit rayhit;
-    int i = 0;
     refraction_bounces = 0;
     vec4 new_color = vec4(1);
     vec4 tex_col = vec4(1);
 
-    for (;i < LOD.max_default_depth + refraction_bounces; i++) {
+    // for (int i = 0;i < LOD.max_default_depth; i++) {
+    for (int i = 0;i < LOD.max_default_depth + refraction_bounces; i++) {
         if (use_bvh) {
             rayhit = check_ray_hit_BVH(new_ray, range);
 
@@ -882,16 +876,12 @@ vec4 cast_ray(Ray ray, Range range) {
 
         determine_rayhit(rayhit);
 
-        
-        // Get texture if relevant
-        if (sample_all_textures || (i == 0)) {
-            tex_col = rayhit.texture_type == 0 ?  get_texture(rayhit) : vec4(1);
-        }
+        // Get texture color
+        tex_col = rayhit.texture_type == 0 ? get_texture(rayhit) : vec4(1);
 
         // TODO: implement attenuation based on incident and exiting angles
         new_color *= rayhit.color * tex_col;
 
-        
         new_ray = bounce_ray(new_ray, rayhit);
     } 
 
@@ -901,12 +891,9 @@ vec4 cast_ray(Ray ray, Range range) {
 
 // The code we want to execute in each invocation
 void main() {
-    
 
     // VARIABLE DEFINITIONS
     // ====================
-    
-    parse_flags();
 
     const float width = float(LOD.width);
     const float height = float(LOD.height);
@@ -932,21 +919,20 @@ void main() {
 
     vec3 pixel_center = pixel00_loc + (UV.x * pixel_delta_u) + (UV.y * pixel_delta_v);
 
+    // Initialize render flags
+    parse_flags();
+
     // CODE
     // ====
 
-    vec4 new_color = vec4(0,0,0,1);
-    float circle_step = 2 * pi / float(LOD.samples_per_pixel);
-    for (int i = 0; i < LOD.samples_per_pixel; ++i) {
-        float temp = fract(float(i) / float(LOD.samples_per_pixel));
-        vec3 circular_offset = pixel_delta_u / 2 * cos(float(i) * circle_step) * rand(float(push.time)) + 
-                               pixel_delta_v / 2 * sin(float(i) * circle_step) * rand(float(push.time));
-        vec3 ray_direction = pixel_center - push.camera.pos + circular_offset;
-        Ray ray = Ray(push.camera.pos, ray_direction);
+    // Create ray with offset
+    vec3 offset = (pixel_delta_u / 2) * (rand(float(push.time)) - 1.) + 
+                  (pixel_delta_v / 2) * (rand(float(push.time)) - 1.);
+    vec3 ray_direction = pixel_center - push.camera.pos + offset;
+    Ray ray = Ray(push.camera.pos, ray_direction);
 
-        new_color += cast_ray(ray, Range(0.001, infinity));
-    }
-    new_color = new_color / LOD.samples_per_pixel;
+    // Cast ray
+    vec4 new_color = cast_ray(ray, Range(0.001, infinity));
 
     // Apply gamma correction
     new_color.rgb = pow(new_color.rgb, vec3(push.camera.gamma));
@@ -955,7 +941,7 @@ void main() {
         vec4 prev_col = imageLoad(output_image, UVi.xy);
         new_color = mix(prev_col, new_color, 1.0 / max(1.0, push.frame));
     }
-    
+
     imageStore(output_image, UVi.xy, new_color);
 }
 
