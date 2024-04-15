@@ -12,13 +12,11 @@ enum RenderFlagsBits {
 	SAMPLE_ALL_TEXTURES = 8,
 }
 
-var render_name := "unnamed_window"
-
-# Defualt render flags
-var flags := 0
-
 ## GPU RENDER FLAGS
 ## Flags that are sent to the gpu
+
+# GPU render flags as an int
+var flags : int = 0
 
 # Whether a bvh tree should be used or 
 #  if every object should be checked for ray hit
@@ -36,6 +34,7 @@ var show_bvh_depth := false:
 		_multisample = not value and enable_multisampling and not _disable_multisample
 		render_mode_changed = true
 		show_bvh_depth = value
+		frame = 0
 
 # Whether the shader will sample from previous draw call or not
 var _multisample := true:
@@ -69,19 +68,42 @@ var scene_changed = false:
 # If rendering should stop when frame is larger than max_samples
 var stop_rendering_on_max_samples := true
 
-var max_samples : int = 16
-
-# The number of samples that will be rendered this frame
-#  possible values: frame -> [0, max_samples)
-var frame : int = 0
-
 # Whether any flags that control *what* is rendered i.e. show_bvh_depth 
 var render_mode_changed := false
 
 # An override for various render modes that cannot utilize multisampling
 var _disable_multisample := false
 
+# Whether this window was rendered in the last renderer draw call
+var _was_rendered := false
+
+## SAMPLE VALUES
+var max_samples : int = 16
+
+# The numbered sample that will be rendered this frame
+#  possible values: frame -> [0, max_samples)
+var frame : int = 0:
+	set(value):
+		if %FrameCounter:
+			%FrameCounter.text = "Frame: " + str(value)
+		frame = value
+
+# The seconds passed since frame 0 was rendered, 
+#  stopping when frame max_samples have been rendered
+#  Updated by PTRenderer
+var frame_times : float:
+	set(value):
+		if %FrameTimes:
+			%FrameTimes.text = "Time: %.2fs" % value
+		frame_times = value
+
+var _max_sample_start_time : float # Point in time when rendering started
+
+
 ## OTHER STUFF
+
+var render_name := "unnamed_window"
+
 # How many pixels are in a work group dimension
 var work_group_width_pixels = PTRenderer.compute_invocation_width
 var work_group_height_pixels = PTRenderer.compute_invocation_height
@@ -117,6 +139,13 @@ func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 
 	y_offset = offset_y
 	
 	set_position(Vector2(x_offset, y_offset))
+	
+
+func _ready():
+	# FocusLossButton input in plugin
+	if _renderer:
+		if _renderer._is_plugin_instance:
+			_renderer.root_node.connect("gui_input", %FocusLossButton._unhandled_input)
 
 
 func flags_to_byte_array():

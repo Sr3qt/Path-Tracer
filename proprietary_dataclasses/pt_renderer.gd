@@ -75,7 +75,7 @@ var _is_plugin_instance := false
 # If mouse is hovering over the render window. Only used by plugin
 var _mouse_hover_window := false
 
-# Whether anything was rendered this frame. Only used by plugin
+# Whether anything was rendered in the last render_window call. Only used by plugin
 var _was_rendered := false
 
 
@@ -143,9 +143,6 @@ func _ready():
 		
 		if not Engine.is_editor_hint():
 			better_window.max_samples = 256
-			better_window.stop_rendering_on_max_samples = false
-		
-		#better_window.enable_multisampling = false
 		
 		better_window.work_group_width = x
 		better_window.work_group_height = y
@@ -280,8 +277,8 @@ func load_shader():
 	
 
 func add_window(window : PTRenderWindow):
-	windows.append(window)
 	window._renderer = self
+	windows.append(window)
 	
 	if not Engine.is_editor_hint():
 		add_child(window)
@@ -301,34 +298,51 @@ func render_window(window : PTRenderWindow):
 	# If rendering should stop when reached max samples
 	var stop_multisampling = (
 			window.stop_rendering_on_max_samples and
-			(window.frame > window.max_samples)
+			(window.frame >= window.max_samples)
 	)
 	
 	var multisample = (window.enable_multisampling and not stop_multisampling and
 			not window._disable_multisample)
 	
+	# Adds the time of the last frame rendered
+	if window.frame == window.max_samples and multisample and window._was_rendered:
+		window.frame_times += (
+				Time.get_ticks_usec() - window._max_sample_start_time
+		) / 1_000_000.0
+	
 	if movement or multisample or window.render_mode_changed:
 		window.scene_changed = movement
 		
-		# If frame is above limit or a scene/camera changed caused a reset
-		if window.frame > window.max_samples or movement:
+		# Adds the time taken since last frame render started
+		if window.frame < window.max_samples and multisample and window._was_rendered:
+			window.frame_times += (
+					Time.get_ticks_usec() - window._max_sample_start_time
+			) / 1_000_000.0
+			
+		# If frame is above limit or a scene/camera/flag change caused a reset
+		if window.frame > window.max_samples or movement or window.render_mode_changed:
 			window.frame = 0
+		
+		if window.frame == 0:
+			window.frame_times = 0
+		
+		window._max_sample_start_time = Time.get_ticks_usec()
 		
 		#Render
 		rtwd.create_compute_list(window)
 		
 		window.frame += 1
 		
-		# Keep frame under limit until next draw call if possible
-		if ((window.frame > window.max_samples) and 
-				not window.stop_rendering_on_max_samples):
-			window.frame = 0
-		
 		# Reset frame values
 		window.scene_changed = false
 		window.render_mode_changed = false
 		
+		window._was_rendered = true
 		_was_rendered = true
+		
+	else:
+		window._was_rendered = false
+		
 		
 		
 
@@ -361,7 +375,7 @@ func save_framebuffer(work_dispatcher : PTWorkDispatcher):
 
 func create_bvh(_max_children : int, function_name : String):
 	# TODO Rework shader to work with different bvh orders without reloading
-	var _start = Time.get_ticks_usec()
+	#var _start = Time.get_ticks_usec()
 	
 	# TODO Add support so that all objects in scene can be rendered by bvh
 	#  THis is a bug because the shader has a fixed stack size and cannot always
@@ -384,6 +398,6 @@ func create_bvh(_max_children : int, function_name : String):
 	rtwd.BVH_set = rtwd.rd.uniform_set_create(BVH_uniforms, rtwd.shader, 
 			rtwd.BVH_set_index)
 			
-	print((Time.get_ticks_usec() - _start) / 1000.)
+	#print((Time.get_ticks_usec() - _start) / 1000.)
 	
 

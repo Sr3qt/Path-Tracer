@@ -29,7 +29,7 @@ func _ready():
 		for i in range(bvh_function_names.size()):
 			%BVHType.add_item(bvh_function_names[i].capitalize(), i)
 		
-		# Set default value for buttons
+		# Set default value for bvh buttons
 		%UseBVHButton.button_pressed = parent.use_bvh
 		%ShowBVHDepthButton.button_pressed = parent.show_bvh_depth
 		
@@ -41,13 +41,20 @@ func _ready():
 		%BVHType.selected = parent._renderer.default_bvh
 		%BVHType.previous_value = parent._renderer.default_bvh
 		
+		# Set default values for sample buttons
+		%EnableMultisampleButton.button_pressed = parent.enable_multisampling
+		%MaxSamplePauseButton.button_pressed = parent.stop_rendering_on_max_samples
+		
+		%MaxSamplesButton.value = parent.max_samples
+		%MaxSamplesButton.previous_value = parent.max_samples
+		
 		# TODO THINGS TO ADD:
-		#	-Display if window is rendering, current frame index
-		#	-Add way to change max_samples, as well as the render flags
-		#	-Make multisample reset button and measure time to render max_samples
 		#	-add button to select camera angle from enum and add method to add 
 		#	  new camera angle from current camera
 		#	-add ability to change camera variables, fov, gamma, focal
+		
+		# TODO TURN labels to rich text labels with hints on hover'
+		#  Also fix those labels' background being wrong in the editor 
 
 
 func _toggled(toggled_on):
@@ -72,4 +79,25 @@ func _on_create_bvh_button_pressed():
 	%BVHTreeOrder.previous_value = %BVHTreeOrder.value
 	
 	parent._renderer.create_bvh(%BVHTreeOrder.value, bvh_function_names[%BVHType.selected])
+
+
+func _on_enable_multisample_button_toggled(toggled_on):
+	parent.enable_multisampling = toggled_on
 	
+	%MaxSamplePauseButton.set_disable(not toggled_on)
+	%MaxSamplesButton.set_disable(not toggled_on)
+	%ClearSamples.set_disable(not toggled_on)
+
+
+func _on_max_sample_pause_button_toggled(toggled_on):
+	parent.stop_rendering_on_max_samples = toggled_on
+
+
+func _on_max_samples_button_focus_exited():
+	parent.max_samples = %MaxSamplesButton.value
+	
+	%MaxSamplesButton.previous_value = %MaxSamplesButton.value
+
+
+func _on_clear_samples_pressed():
+	parent.frame = 0

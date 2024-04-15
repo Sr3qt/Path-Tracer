@@ -1,3 +1,4 @@
+@tool
 extends Button
 
 func _unhandled_input(event: InputEvent):
@@ -6,3 +7,7 @@ func _unhandled_input(event: InputEvent):
 		grab_focus()
 		grab_click_focus()
 		release_focus()
+		
+		# NOTE: A little hacky, but the MaxSamplesButton focus_exited didnt work
+		#  Because of this it has to run as a tool, ugh
+		%ButtonController._on_max_samples_button_focus_exited()
