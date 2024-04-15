@@ -9,7 +9,6 @@ enum RenderFlagsBits {
 	USE_BVH = 1,
 	SHOW_BVH_DEPTH = 2,
 	MULTISAMPLE = 4,
-	SAMPLE_ALL_TEXTURES = 8,
 }
 
 ## GPU RENDER FLAGS
@@ -41,14 +40,6 @@ var _multisample := true:
 	set(value):
 		_set_flag_bit(RenderFlagsBits.MULTISAMPLE, int(value))
 		_multisample = value
-
-# TODO Ponder over overall usefulness
-# Whether every object who is hit should sample their texture or not
-var sample_all_textures := true:
-	set(value):
-		_set_flag_bit(RenderFlagsBits.SAMPLE_ALL_TEXTURES, int(value))
-		render_mode_changed = true
-		sample_all_textures = value
 
 ## OTHER RENDER FLAGS
 ## Flags that dont go to the gpu
@@ -158,8 +149,7 @@ func _set_flags():
 	flags = (
 		RenderFlagsBits.USE_BVH * int(use_bvh) +
 		RenderFlagsBits.SHOW_BVH_DEPTH * int(show_bvh_depth) +
-		RenderFlagsBits.MULTISAMPLE * int(_multisample) +
-		RenderFlagsBits.SAMPLE_ALL_TEXTURES * int(sample_all_textures)
+		RenderFlagsBits.MULTISAMPLE * int(_multisample)
 	)
 
 func _set_flag_bit(bit, boolean : bool):

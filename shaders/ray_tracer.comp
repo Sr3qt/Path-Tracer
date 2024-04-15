@@ -113,15 +113,15 @@ const int max_children = 2; // Replaced by script preprocessor, do NOT touch thi
 const int filler_const = int(mod(max_children, 2) + 2.) * 2; 
 
 // Flags
-bool flags[4];
+const int flag_size = 31;
+const int starting_bit = int(pow(2, flag_size - 1));
+bool flags[flag_size];
+
 bool use_bvh;
 bool show_bvh_depth;
 
 bool multisample;
-bool sample_all_textures; // Deprecated
 
-
-float random_number;
 
 // DATATYPES
 // =========
@@ -407,10 +407,10 @@ vec3 ray_at(Ray ray, float t) {
 }
 
 void parse_flags() {
-    int bit = int(pow(2, flags.length() - 1));
+    int bit = starting_bit;
     int num = push.flags;
     // Loop over the i-th bit from most significant to least
-    for (int i = flags.length() - 1; i >= 0; i--) {
+    for (int i = flag_size - 1; i >= 0; i--) {
         num -= bit;
         if (num < 0) {
             flags[i] = false;
@@ -418,13 +418,12 @@ void parse_flags() {
         } else {
             flags[i] = true;
         }
-        bit = bit / 2;
+        bit = bit >> 1;
     }
 
     use_bvh = flags[0];
     show_bvh_depth = flags[1];
     multisample = flags[2];
-    sample_all_textures = flags[3];
 }
 
 // TEXTURE STUFF
