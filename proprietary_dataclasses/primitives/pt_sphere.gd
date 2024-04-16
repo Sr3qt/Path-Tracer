@@ -1,7 +1,7 @@
 class_name PTSphere
 extends PTPrimitive3D
 
-
+# TODO Investigate why diffuse spheres are reflective on one side
 var center : Vector3
 var radius : float
 
@@ -22,5 +22,5 @@ func get_AABB():
 
 func to_byte_array():
 	return (PackedFloat32Array(PTObject.vec2array(center) + [radius]).to_byte_array() + 
-	PackedInt32Array([material_index, 1, 0, 0]).to_byte_array())
+	PackedInt32Array([material_index, 0, 0, 0]).to_byte_array())
 
