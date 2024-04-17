@@ -1,5 +1,58 @@
 // TODO implement a gpu bvh construction algorithm
 
+
+// Was never used in main
+// ChildIndex empty_child_index() {
+//     return ChildIndex(0, 0);
+// }
+
+// BVHNode empty_BVHNode() {
+//     ChildIndex children[max_children];
+//     for (int i = 0; i < max_children + filler_const / 2; i++) {
+//         children[i] = empty_child_index();
+//     }
+//     AABB bbox = AABB(vec4(0), vec4(0));
+//     return BVHNode(children, int[filler_const](0, 0), bbox, 0, 0, 0, 0);
+// }
+
+// AABB create_AABB(vec3 point1, vec3 point2) {
+//     return AABB(vec4(min(point1, point2), 0), vec4(max(point1, point2), 0));
+// }
+
+
+
+// useful when creating bvh on gpu
+// AABB sphere_AABB(Sphere sphere) {
+//     // Calculate AABB for a sphere
+//     vec3 radius_vec = vec3(sphere.radius);
+//     return AABB(vec4(sphere.center - radius_vec, 0), vec4(sphere.center + radius_vec, 0));
+// }
+
+// AABB merge_AABB(AABB box1, AABB box2) {
+//     // Make a new AABB tow fit two other AABBs
+//     AABB out_AABB;
+//     out_AABB.minimum = min(box1.minimum, box2.minimum);
+//     out_AABB.maximum = min(box1.maximum, box2.maximum);
+//     return out_AABB;
+// }
+
+// void expand_AABB(inout AABB bbox, float delta) {
+//     float padding = delta / 2.;
+//     bbox.minimum -= padding;
+//     bbox.maximum += padding;
+// }
+
+// bool intersect_AABB(AABB bbox1, AABB bbox2) {
+//     // Returns whether two AABB intersect
+//     for (int i = 0; i < 3; i++) {
+//         if (bbox1.minimum[i] > bbox2.maximum[i] || bbox1.maximum[i] < bbox2.minimum[i]) {
+//             return false;
+//         }
+//     }
+//     return true;
+// }
+
+
 // void create_BVH_list() {
 
 //     int sphere_array_length = spheres.data.length();

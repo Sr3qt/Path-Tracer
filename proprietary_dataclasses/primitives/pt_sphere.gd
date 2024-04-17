@@ -1,7 +1,6 @@
 class_name PTSphere
 extends PTPrimitive3D
 
-# TODO Investigate why diffuse spheres are reflective on one side
 var center : Vector3
 var radius : float
 

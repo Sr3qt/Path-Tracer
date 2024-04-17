@@ -52,6 +52,7 @@ func _ready():
 		#	-add button to select camera angle from enum and add method to add 
 		#	  new camera angle from current camera
 		#	-add ability to change camera variables, fov, gamma, focal
+		#	-add abilitiy to change recursive ray depth
 		
 		# TODO TURN labels to rich text labels with hints on hover'
 		#  Also fix those labels' background being wrong in the editor 

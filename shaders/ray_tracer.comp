@@ -8,6 +8,27 @@
 
 /*
 
+List of features:
+    -Supported objects:
+        3D simples:
+            - spheres
+
+        2D simples:
+            - nothing    
+
+        -planes
+    
+    - Material types:
+        -diffuse
+        -metallic
+        -transparent/glass
+    
+    -Multisampling
+
+    -Procedural (and sampled) textures (soon)
+
+
+
 POLICIES
 ========
 
@@ -68,6 +89,23 @@ LONG TERM GOALS
 // Invocations in the (x, y, z) dimension
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
+// PRE PROCESSOR STUFF
+
+/*
+Different methods to avoid self intersection
+    - method 0: Proposed in Ray Tracing Gems.
+        Use a custom function to offset intersection point when creating a new ray.
+        My implementation doesn't seem to work correctly as it produces some nasty artifacts.
+        Some of them are:
+         -visible lines in noise when multisampling is disabled
+         -weird lines on a center circle in the random scene
+         -being a little more expensive to run
+         -darker colors, although that might be more correct
+    - method 1: Proposed in Ray tracing in a weekend. 
+        Simply sets range for valid t values a little above zero.
+        TODO Preferred method until I get method 0 to work properly     
+*/
+#define self_intersect_method 0
 
 // CONSTANTS
 // =========
@@ -77,6 +115,11 @@ const float pi = 3.1415926535897932385;
 const float pi_half = pi / 2.;
 const float pi_double = pi * 2;
 const float eps = 0.00001;
+
+// Used by offset_ray function
+const float origin = 1.0 / 32.0;
+const float float_scale = 1.0 / 65536.0; 
+const float int_scale = 256.0;
 
 // object_type enumerator
 const int is_not_obj = 0;
@@ -124,6 +167,14 @@ bool show_bvh_depth;
 
 bool multisample;
 
+// Random
+// Code snippets taken from Ray tracer demo by HK-SHAO
+struct Random {
+    float seed;
+    float value;
+};
+
+Random random = Random(42, 0);
 
 // DATATYPES
 // =========
@@ -211,7 +262,7 @@ struct Range {
 
 struct AABB {
     // only xyz used, they are vec4 to fit memory allocation
-    // minimum.x < maximum.x etc. should always be true, use create_AABB function to be safe
+    // minimum.x < maximum.x etc. should always be true.
     vec4 minimum;
     vec4 maximum;
 };
@@ -306,53 +357,6 @@ RayHit empty_rayhit() {
                   vec3(0), vec2(0), vec3(0), vec4(0));
 }
 
-ChildIndex empty_child_index() {
-    return ChildIndex(0, 0);
-}
-
-// BVHNode empty_BVHNode() {
-//     ChildIndex children[max_children];
-//     for (int i = 0; i < max_children + filler_const / 2; i++) {
-//         children[i] = empty_child_index();
-//     }
-//     AABB bbox = AABB(vec4(0), vec4(0));
-//     return BVHNode(children, int[filler_const](0, 0), bbox, 0, 0, 0, 0);
-// }
-
-AABB create_AABB(vec3 point1, vec3 point2) {
-    return AABB(vec4(min(point1, point2), 0), vec4(max(point1, point2), 0));
-}
-
-AABB sphere_AABB(Sphere sphere) {
-    // Calculate AABB for a sphere
-    vec3 radius_vec = vec3(sphere.radius);
-    return AABB(vec4(sphere.center - radius_vec, 0), vec4(sphere.center + radius_vec, 0));
-}
-
-AABB merge_AABB(AABB box1, AABB box2) {
-    // Make a new AABB tow fit two other AABBs
-    AABB out_AABB;
-    out_AABB.minimum = min(box1.minimum, box2.minimum);
-    out_AABB.maximum = min(box1.maximum, box2.maximum);
-    return out_AABB;
-}
-
-void expand_AABB(inout AABB bbox, float delta) {
-    float padding = delta / 2.;
-    bbox.minimum -= padding;
-    bbox.maximum += padding;
-}
-
-bool intersect_AABB(AABB bbox1, AABB bbox2) {
-    // Returns whether two AABB intersect
-    for (int i = 0; i < 3; i++) {
-        if (bbox1.minimum[i] > bbox2.maximum[i] || bbox1.maximum[i] < bbox2.minimum[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
 float atan2(float y, float x) {
     // Apparantly more stable atan function, read:
     // https://stackoverflow.com/questions/26070410/robust-atany-x-on-glsl-for-converting-xy-coordinate-to-angle
@@ -361,8 +365,15 @@ float atan2(float y, float x) {
     return mix(pi / 2.0 - atan(x,y), atan(y,x), s); // Should perform as well as ternary
 }
 
+// Random functions
 float rand(float seed) {
     return fract((seed * 23489.52364) / 0.0836);
+}
+
+float noise(inout Random r) {
+    // Also taken from Ray Tracer Demo by HK-SHAO
+    r.value = fract(sin(r.seed++) * 43758.5453123);
+    return r.value;
 }
 
 float rand2(vec2 co) { 
@@ -373,10 +384,31 @@ vec3 rand_vec3(vec3 point) {
     // Creates a normalized vector in a random direction from a point 
     // I got tricked by the tutorial :(
     vec3 n = vec3(
-        rand2(point.xy) - 0.5, 
-        rand2(point.xz) - 0.5, 
-        rand2(point.yz) - 0.5);
+        rand(noise(random)) - 0.5, 
+        rand(noise(random)) - 0.5, 
+        rand(noise(random)) - 0.5);
+
     return normalize(n);
+}
+
+// vec3 rand_vec3(vec3 point) {
+//     // Creates a normalized vector in a random direction from a point 
+//     // I got tricked by the tutorial :(
+//     vec3 n = vec3(
+//         rand2(point.xy) - 0.5, 
+//         rand2(point.xz) - 0.5, 
+//         rand2(point.yz) - 0.5);
+//     return normalize(n);
+// }
+
+
+float hash(vec3 x) {
+    // Also taken from Ray Tracer Demo by HK-SHAO
+    uvec3 p = floatBitsToUint(x);
+    p = 1103515245U * ((p.xyz >> 1U) ^ (p.yzx));
+    uint h32 = 1103515245U * ((p.x ^ p.z) ^ (p.y >> 3U));
+    uint n = h32 ^ (h32 >> 16U);
+    return float(n) * (1.0 / float(0x7fffffff));
 }
 
 void swap(inout float a, inout float b) {
@@ -393,7 +425,23 @@ bool is_close(float value1, float value2) {
 
 bool near_zero(vec3 vec) {
     // Whether a vec3 is close to zero in all fields
-    return (vec.x < eps && vec.y < eps && vec.z < eps);
+    return (abs(vec.x) < eps && abs(vec.y) < eps && abs(vec.z) < eps);
+}
+
+vec3 offset_ray(const vec3 point, const vec3 normal) {
+    // Calculates a new point for ray intersection, which stops self intersection
+    // Implementation of algorithm in Ray Tracing Gems chapter 6.2.2.4
+    ivec3 offset = ivec3(normal * int_scale);
+    vec3 point_offset = vec3(
+        intBitsToFloat(floatBitsToInt(point.x) + ((point.x < 0.) ? -offset.x : offset.x)),
+        intBitsToFloat(floatBitsToInt(point.y) + ((point.y < 0.) ? -offset.y : offset.y)),
+        intBitsToFloat(floatBitsToInt(point.z) + ((point.z < 0.) ? -offset.z : offset.z))
+    );
+    return vec3(
+        abs(point.x) < origin ? point.x + float_scale * normal.x : point_offset.x,
+        abs(point.y) < origin ? point.y + float_scale * normal.y : point_offset.y,
+        abs(point.z) < origin ? point.z + float_scale * normal.z : point_offset.z
+    );
 }
 
 bool in_range(float value, Range range) {
@@ -755,7 +803,7 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
         //         }
         //     }
         // }
-
+        // =======================================================================
 
         // Break if no more nodes to visit, else go to next node in list
         if (to_visit_i == 0) {
@@ -786,23 +834,31 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
 // ====================
 Ray reflect_ray(Ray ray_in, RayHit rayhit) {
     // Returns a new reflected ray based on ray_in and rayhit
-    vec3 reflected_dir = reflect(ray_in.direction, rayhit.normal) * materials.data[rayhit.mtl_index].metallic;
-    vec3 dir_offset = rand_vec3(rayhit.point) * (1. - materials.data[rayhit.mtl_index].metallic);
+    
+    vec3 new_origin = rayhit.point;
 
-    Ray ray_out = Ray(rayhit.point, reflected_dir + dir_offset);
+    #if self_intersect_method==0
+    new_origin = offset_ray(rayhit.point, rayhit.normal);
+    #endif
+
+    float metallic = materials.data[rayhit.mtl_index].metallic;
+
+    vec3 reflected_dir = reflect(ray_in.direction, rayhit.normal) * metallic;
+    vec3 dir_offset = rand_vec3(rayhit.point) * (1. - metallic);
+
+    vec3 ray_dir = reflected_dir + dir_offset;
     
     // Reflects ray if it points into the object
-    if (dot(ray_out.direction, rayhit.normal) < 0.) {
-        ray_out.direction = reflect(ray_out.direction, rayhit.normal);
+    if (dot(ray_dir, rayhit.normal) < 0.) {
+        ray_dir = reflect(ray_dir, rayhit.normal);
     }
 
-    return ray_out;
+    return Ray(new_origin, ray_dir);
 }
 
 Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     // Returns a refracted or reflected ray based on ray_in and rayhit
-    Ray ray_out;
-    ray_out.origin = rayhit.point;
+    vec3 new_origin = rayhit.point;
 
     // Whether object is inside the current object
     bool is_inside = bool(dot(rayhit.normal, ray_in.direction) > 0.);
@@ -826,10 +882,15 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     float sin_theta = sqrt(1. - cos_theta * cos_theta);
     bool cannot_refract = eta * sin_theta > 1.;
 
-    // // Check for internal reflection
+    // Check for internal reflection
     if (cannot_refract) {
-        ray_out.direction = reflect(normalized_direction, normal);
-        return ray_out;
+        #if self_intersect_method==0
+        return Ray(offset_ray(new_origin, rayhit.normal), reflect(normalized_direction, normal));
+        #endif
+
+        #if self_intersect_method==1
+        return Ray(new_origin, reflect(normalized_direction, normal));
+        #endif
     } 
 
     // Schlick's approximation for reflectivety
@@ -839,8 +900,13 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     
     // Check for external reflection, TODO can add reflexivety for translucent materials
     if (reflect_chance > rand2(vec2(cos_theta, normal.x))) {
-        ray_out.direction = reflect(normalized_direction, normal);
-        return ray_out;
+        #if self_intersect_method==0
+        return Ray(offset_ray(new_origin, rayhit.normal), reflect(normalized_direction, normal));
+        #endif
+        
+        #if self_intersect_method==1
+        return Ray(new_origin, reflect(normalized_direction, normal));
+        #endif
     }
 
     current_IOR = eta_out;
@@ -848,23 +914,39 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     // If ray was inside and went out, remove from inside_of list
     if (is_inside) {
         inside_of[inside_of_count--] = ivec3(0,0,0);
+
+        #if self_intersect_method==0
+        new_origin = offset_ray(new_origin, rayhit.normal);
+        #endif
     } else {
         // If ray was outside and refracted, add to inside_of list
         inside_of[inside_of_count++] = ivec3(rayhit.object_index, rayhit.object_type, 
         materials.data[rayhit.mtl_index].refraction_depth);
+
+        #if self_intersect_method==0
+        new_origin = offset_ray(new_origin, -rayhit.normal);
+        #endif
     }
 
     // Add extra available bounces when ray refracts
     if (refraction_bounces < LOD.max_refraction_bounces - 1) {refraction_bounces++;}
-
-    ray_out.direction = refract(normalized_direction, normal, eta);
-    return ray_out;
+    
+    return Ray(new_origin, refract(normalized_direction, normal, eta));
 }
 
 Ray scatter_ray(Ray ray_in, RayHit rayhit) {
     // TODO Change the way rays are created based on roughness, less/ more scatter
+
+    #if self_intersect_method==0
+    vec3 new_origin = offset_ray(rayhit.point, rayhit.normal);
+    #endif
+
+    #if self_intersect_method==1
+    vec3 new_origin = rayhit.point;
+    #endif
+
     // Returns a scattered ray based on ray_in and rayhit
-    vec3 ray_dir = rand_vec3(rayhit.point + rayhit.ray.direction) + rayhit.normal;
+    vec3 ray_dir = rand_vec3(new_origin + rayhit.ray.direction) + rayhit.normal;
 
     // If created ray pointed in opposite direction of normal
     ray_dir = near_zero(ray_dir) ? rayhit.normal : ray_dir;
@@ -872,7 +954,7 @@ Ray scatter_ray(Ray ray_in, RayHit rayhit) {
     // Make sure reflected ray points in the same way as normal
     ray_dir = dot(ray_dir, rayhit.normal) < 0. ? ray_dir * -1.0 : ray_dir;
 
-    return Ray(rayhit.point, ray_dir);;
+    return Ray(new_origin, ray_dir);
 }
 
 Ray bounce_ray(Ray ray_in, RayHit rayhit) {
@@ -906,7 +988,6 @@ vec4 cast_ray(Ray ray, Range range) {
     vec4 new_color = vec4(1);
     vec4 tex_col = vec4(1);
 
-    // for (int i = 0;i < LOD.max_default_depth; i++) {
     for (int i = 0;i < LOD.max_default_depth + refraction_bounces; i++) {
         if (use_bvh) {
             rayhit = check_ray_hit_BVH(new_ray, range);
@@ -972,6 +1053,8 @@ void main() {
 
     vec3 pixel_center = pixel00_loc + (UV.x * pixel_delta_u) + (UV.y * pixel_delta_v);
 
+    random.seed  = hash(vec3(UV.xy, push.time));
+
     // Initialize render flags
     parse_flags();
 
@@ -985,7 +1068,13 @@ void main() {
     Ray ray = Ray(push.camera.pos, ray_direction);
 
     // Cast ray
+    #if self_intersect_method == 0
+    vec4 new_color = cast_ray(ray, Range(0.0, infinity));
+    #endif
+
+    #if self_intersect_method == 1
     vec4 new_color = cast_ray(ray, Range(0.001, infinity));
+    #endif
 
     // Apply gamma correction
     new_color.rgb = pow(new_color.rgb, vec3(push.camera.gamma));

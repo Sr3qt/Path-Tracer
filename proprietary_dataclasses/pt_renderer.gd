@@ -36,6 +36,8 @@ var root_node
 
 # Realtime PTWorkDispatcher
 var rtwd : PTWorkDispatcher
+# TODO Have a PTWorkDispatcher for every scene that can be rendered,
+#  especially thinking about plugin being able to render current scene
 #var nrtwd : PTWorkDispatcher
 
 # Array of sub-windows
@@ -86,7 +88,7 @@ func _ready():
 	
 	if not Engine.is_editor_hint():
 		# Apparently very import check for get_window (Otherwise the editor bugs out)
-		get_window().position = Vector2(250, 400)
+		get_window().position -= Vector2i(450, 100)
 
 		# Might not be needed
 		# Find camera and canvas in children 
