@@ -68,7 +68,7 @@ var render_width := 1920
 var render_height := 1080
 
 var samples_per_pixel = 1 # Deprecated
-var max_default_depth = 8
+var max_default_depth = 16
 var max_refraction_bounces = 8 
 
 # Whether this instance was created by a plugin script or not. Only used by plugin
@@ -145,6 +145,7 @@ func _ready():
 		
 		if not Engine.is_editor_hint():
 			better_window.max_samples = 256
+			better_window.stop_rendering_on_max_samples = false
 		
 		better_window.work_group_width = x
 		better_window.work_group_height = y

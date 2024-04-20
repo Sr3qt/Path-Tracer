@@ -12,7 +12,8 @@ var IOR := 1.
 var refraction_depth := 0
 
 # TODO Add texture variable
-
+# TODO Add chance to reflect for transparent objects
+# TODO Calculate current IOR of camera and pass it to gpu
 
 func get_rgb():
 	"""Returns albedo as rgb values from 0 to 255 in srgb space"""

@@ -4,6 +4,8 @@ extends Node
 
 """Base class for all visual objects"""
 
+# TODO Add support for lines and add abilitiy to visualize traced rays
+
 # Tied to object_type enum in shader
 enum ObjectType {NOT_OBJECT = 0, SPHERE = 1, PLANE = 2, MESH = 3}
 

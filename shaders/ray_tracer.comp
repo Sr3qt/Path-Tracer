@@ -27,6 +27,7 @@ List of features:
 
     -Procedural (and sampled) textures (soon)
 
+    - Refraction tracking
 
 
 POLICIES
@@ -45,10 +46,8 @@ Normals always point outwards from surfaces and are always normalized on creatio
 
 Ray depth starts at 0 and goes up as depth increases.
 
-Materials have something called refraction_depth. When two objects intersect and at least one of them
-are translucent, their refraction_depth will be compared. Whicher object which has the lowest 
-depth value will have their material represented in the intersection.
-Basically it determines if a translucent object cuts into another object or not.
+Materials have something called refraction_depth. A lower number takes priority. 
+See Refraction Tracking in PRE PROCESSOR STUFF
 
 mtl_index and object_index refer to the an material and object in the global material list and 
 object list respectively. There may be multiple object lists in which case an object_type enum
@@ -105,10 +104,28 @@ Different methods to avoid self intersection
         Simply sets range for valid t values a little above zero.
         TODO Preferred method until I get method 0 to work properly     
 */
-#define self_intersect_method 0
+#define self_intersect_method 1
+
+/*
+// Fun fact, I made it the fuck up
+Refraction tracking is the practice of answering the question, 
+if I enter 3 transparant objects, when I leave only one, what material am I in.
+Refraction tracking solves this by assigning a refraction depth value to all materials,
+and choosing the material with the lowest depth when leaving an object inside of another/others.
+
+This should, in theory, come with the abiltiy to cut objects with another object that has
+air as its material. It also allows for composite glass objects; Rays will travel through multiple
+transparent objects with the same material as if it was one homogenous mass, 
+although at a higher ray depth cost (It might not get out if max_default_depth is low).
+
+Enabling refraction tracking has a small performance impact
+*/
+#define use_refraction_tracking 1
+
 
 // CONSTANTS
 // =========
+const int int_limit = 2147483647;
 const float infinity = 1. / 0.;
 const double pi_d = 3.1415926535897932385;
 const float pi = 3.1415926535897932385;
@@ -135,16 +152,38 @@ const int is_no_texture = 3;
 // BVH child_index enum
 // const int is_BVHNode = 1;
 
-// The program will keep track of which objects a ray is inside of to do correct calculations
-//  i.e. IOR tracking
-const int max_depth_inside = 8;
-int inside_of_count = 0; // Keeps track of first vacant index in stack
-// Holds the object_index, obejct_type and refraction_depth of and object
-ivec3 inside_of[max_depth_inside];
+// Keeps values of inside_of neatly organized
+struct InsideOf {
+    int object_index;
+    int object_type;
+    int refraction_depth;
+    float IOR;
+};
 
 // IORs
 const float IOR_air = 1.0;
 float current_IOR = IOR_air;
+
+// The program will keep track of which objects a ray has passed through to do correct calculations
+//  i.e. refraction tracking
+// This is the maximum amount of overlapping geomtry that will be considered
+const int max_refraction_depth = 8;
+
+// Keeps track of first vacant index in stack
+int inside_of_count = 0;
+// Holds the object_index, obejct_type and refraction_depth of and object
+InsideOf inside_of[max_refraction_depth] = InsideOf[](
+    InsideOf(0, 0, int_limit, IOR_air),
+    InsideOf(0, 0, int_limit, IOR_air),
+    InsideOf(0, 0, int_limit, IOR_air),
+    InsideOf(0, 0, int_limit, IOR_air),
+    InsideOf(0, 0, int_limit, IOR_air),
+    InsideOf(0, 0, int_limit, IOR_air),
+    InsideOf(0, 0, int_limit, IOR_air),
+    InsideOf(0, 0, int_limit, IOR_air)
+);
+// TODO: Add support for cpu to send InsideOf buffer based on camera position
+
 
 const vec4 default_color = vec4(0.7, 0.7, 0.9, 1);
 const int max_depth = 64 * 8; // Length of rayhits to visit stack in BVH 
@@ -419,6 +458,8 @@ void swap(inout float a, inout float b) {
 }
 
 bool is_close(float value1, float value2) {
+    // TODO COnsider implementing this algorithm:
+    // https://stackoverflow.com/questions/4915462/how-should-i-do-floating-point-comparison
     // Whether a value is within an epsilon of value2
     return (value2 + eps > value1 && value1 > value2 - eps);
 }
@@ -856,26 +897,104 @@ Ray reflect_ray(Ray ray_in, RayHit rayhit) {
     return Ray(new_origin, ray_dir);
 }
 
+#define same_object (object_index == index.object_index && object_type == index.object_type)
+float get_IOR(int object_index, int object_type, int depth, float IOR) {
+    int lowest_depth = depth;
+    float IOR_out = IOR;
+    // Loop over objects that we have entered and not left, 
+    //  pick the one with the lowest refraction_depth, ignore default values
+    for (int i = 0; i < max_refraction_depth; i++) {
+        InsideOf index = inside_of[i];
+        if (index.object_index != is_not_obj && index.refraction_depth < lowest_depth &&
+                !same_object) 
+        {
+            lowest_depth = index.refraction_depth;
+            IOR_out = index.IOR;
+        }
+    }
+
+    return IOR_out;
+}
+
+void remove_object_from_inside_of(int object_index, int object_type) {
+    int shift = 0;
+    for (int i = 0; i < inside_of_count - 1; i++) {
+        InsideOf index = inside_of[i];
+        if (same_object) {
+            shift = 1;
+        }
+        inside_of[i] = inside_of[i + shift];
+    }
+    inside_of_count--;
+}
+
 Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     // Returns a refracted or reflected ray based on ray_in and rayhit
+    // TODO: Add support for cpu to send InsideOf buffer based on camera position
+    
     vec3 new_origin = rayhit.point;
 
     // Whether object is inside the current object
     bool is_inside = bool(dot(rayhit.normal, ray_in.direction) > 0.);
     float eta_in = current_IOR;
 
-    // if (inside_of_count == 1) {}
+    Material material = materials.data[rayhit.mtl_index];
 
-    float eta_out = (is_inside) ? IOR_air : materials.data[rayhit.mtl_index].IOR;
+    float eta_out = (is_inside) ? IOR_air : material.IOR;
 
-    float eta;
-    eta = eta_in / eta_out;
+    #if use_refraction_tracking == 0
+    float eta = eta_in / eta_out;
+    
+    vec3 normal = (is_inside) ? -rayhit.normal : rayhit.normal;
+    #endif
 
-    // TODO: Finish refraction depth thingy, glass inside glass renders wrongly
-    // for (int i = 0; i < inside_of_count; i++) {}
+    #if use_refraction_tracking == 1
+    if (inside_of_count == 0) {
+        // We are not inside any object, we might be going into this object
+        eta_out = material.IOR;
+    } else if (inside_of_count == 1 && is_inside) {
+        eta_out = IOR_air;
+    } else {
+        if (is_inside) {
+            // We are inside the current object and disregard its own material as a possible eta_out
+            eta_out = get_IOR(rayhit.object_index, rayhit.object_type, int_limit, IOR_air);
+        } else {
+            // We are outside the current object and its material can be a possible eta_out
+            eta_out = get_IOR(rayhit.object_index, rayhit.object_type, 
+            material.refraction_depth, material.IOR);
+        }
+    }
+
+    float eta = eta_in / eta_out;
+    
+    vec3 normal = (is_inside) ? -rayhit.normal : rayhit.normal;
+
+    // If ratio is one the ray will travel in a straight line
+    if (is_close(eta, 1.0)) {
+        // If ray was inside and went out, remove from inside_of list
+        if (is_inside) {
+            remove_object_from_inside_of(rayhit.object_index, rayhit.object_type);
+        } else {
+            // If ray was outside and refracted, add to inside_of list
+            inside_of[inside_of_count++] = InsideOf(rayhit.object_index, rayhit.object_type, 
+                material.refraction_depth, material.IOR);
+        }
+    
+        #if self_intersect_method==0
+        new_origin = offset_ray(new_origin, -normal);
+        #endif
+
+        // TODO Only invalidate color if this object has the same color as the previous object
+        rayhit.hit = false;
+
+        // Add extra available bounces when ray refracts/goes through another object
+        if (refraction_bounces < LOD.max_refraction_bounces - 1) {refraction_bounces++;}
+
+        return Ray(new_origin, ray_in.direction);
+    }
+    #endif
 
     vec3 normalized_direction = normalize(ray_in.direction);
-    vec3 normal = (is_inside) ? -rayhit.normal : rayhit.normal;
 
     // Calculate whether angle is shallow enough to disallow refraction
     float cos_theta = min(dot(-normalized_direction, normal), 1.);
@@ -885,7 +1004,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     // Check for internal reflection
     if (cannot_refract) {
         #if self_intersect_method==0
-        return Ray(offset_ray(new_origin, rayhit.normal), reflect(normalized_direction, normal));
+        return Ray(offset_ray(new_origin, normal), reflect(normalized_direction, normal));
         #endif
 
         #if self_intersect_method==1
@@ -901,7 +1020,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     // Check for external reflection, TODO can add reflexivety for translucent materials
     if (reflect_chance > rand2(vec2(cos_theta, normal.x))) {
         #if self_intersect_method==0
-        return Ray(offset_ray(new_origin, rayhit.normal), reflect(normalized_direction, normal));
+        return Ray(offset_ray(new_origin, normal), reflect(normalized_direction, normal));
         #endif
         
         #if self_intersect_method==1
@@ -913,22 +1032,18 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
 
     // If ray was inside and went out, remove from inside_of list
     if (is_inside) {
-        inside_of[inside_of_count--] = ivec3(0,0,0);
-
-        #if self_intersect_method==0
-        new_origin = offset_ray(new_origin, rayhit.normal);
-        #endif
+        remove_object_from_inside_of(rayhit.object_index, rayhit.object_type);
     } else {
         // If ray was outside and refracted, add to inside_of list
-        inside_of[inside_of_count++] = ivec3(rayhit.object_index, rayhit.object_type, 
-        materials.data[rayhit.mtl_index].refraction_depth);
-
-        #if self_intersect_method==0
-        new_origin = offset_ray(new_origin, -rayhit.normal);
-        #endif
+        inside_of[inside_of_count++] = InsideOf(rayhit.object_index, rayhit.object_type, 
+            material.refraction_depth, material.IOR);
     }
+    
+    #if self_intersect_method==0
+    new_origin = offset_ray(new_origin, -normal);
+    #endif
 
-    // Add extra available bounces when ray refracts
+    // Add extra available bounces when ray refracts/goes through another object
     if (refraction_bounces < LOD.max_refraction_bounces - 1) {refraction_bounces++;}
     
     return Ray(new_origin, refract(normalized_direction, normal, eta));
@@ -957,7 +1072,7 @@ Ray scatter_ray(Ray ray_in, RayHit rayhit) {
     return Ray(new_origin, ray_dir);
 }
 
-Ray bounce_ray(Ray ray_in, RayHit rayhit) {
+Ray bounce_ray(Ray ray_in, inout RayHit rayhit) {
     // Creates a new ray based material properties from the previous rayhit
 
     // TODO Make more sophisticated function choosing
@@ -1013,10 +1128,14 @@ vec4 cast_ray(Ray ray, Range range) {
         // Get texture color
         tex_col = rayhit.texture_type == 0 ? get_texture(rayhit) : vec4(1);
 
-        // TODO: implement attenuation based on incident and exiting angles
-        new_color *= rayhit.color * tex_col;
-
         new_ray = bounce_ray(new_ray, rayhit);
+
+        // TODO: implement attenuation based on incident and exiting angles
+        
+        // Rayhit is invalidated if the ray goes through two transparent objects with the same material 
+        if (rayhit.hit) {
+            new_color *= rayhit.color * tex_col;
+        }
     } 
 
     return new_color;
@@ -1073,7 +1192,7 @@ void main() {
     #endif
 
     #if self_intersect_method == 1
-    vec4 new_color = cast_ray(ray, Range(0.001, infinity));
+    vec4 new_color = cast_ray(ray, Range(0.0001, infinity));
     #endif
 
     // Apply gamma correction

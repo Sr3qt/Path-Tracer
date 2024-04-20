@@ -15,13 +15,15 @@ two scenes.
 static var ObjectType = PTObject.ObjectType
 
 # Semi-Temp
-enum CameraSetting {top_down, corner, book_ex, center, middle}
+enum CameraSetting {top_down, corner, book_ex, center, left, right, middle}
 
 var camera_settings_values = {
 	CameraSetting.top_down : [Vector3(0, 8, -15), Vector3(0,0,-6), 106.],
 	CameraSetting.corner : [Vector3(-11, 3, -11), Vector3(0,0,0), 106.],
 	CameraSetting.book_ex : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.],
 	CameraSetting.center : [Vector3(0, 0, 1), Vector3(0,0,0), 106.],
+	CameraSetting.left : [Vector3(0, 0, 1), Vector3(-1,0,1), 106.],
+	CameraSetting.right : [Vector3(0, 0, 1), Vector3(1,0,1), 106.],
 	CameraSetting.middle : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.]
 }
 
@@ -93,7 +95,7 @@ func _ready():
 		#camera = PTCamera.new()
 	
 	if not Engine.is_editor_hint():
-		set_camera_setting(CameraSetting.middle)
+		set_camera_setting(CameraSetting.left)
 	else:
 		set_camera_setting(CameraSetting.corner)
 	

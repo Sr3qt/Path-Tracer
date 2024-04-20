@@ -1,9 +1,10 @@
-[gd_scene load_steps=9 format=3 uid="uid://d3dfmywq1wbly"]
+[gd_scene load_steps=10 format=3 uid="uid://d3dfmywq1wbly"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_renderer.gd" id="1_c80yu"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_scene.gd" id="2_s1nmc"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera.gd" id="3_i3qtc"]
 [ext_resource type="Shader" path="res://shaders/canvas.gdshader" id="4_2ftiq"]
+[ext_resource type="Script" path="res://main/test_node.gd" id="4_nld3g"]
 [ext_resource type="Texture2D" uid="uid://bdbvcujyyuudb" path="res://temps/temp.png" id="5_5weid"]
 
 [sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_2mxip"]
@@ -27,9 +28,13 @@ default_bvh = 2
 
 [node name="PTScene" type="Node" parent="SceneRenderer"]
 script = ExtResource("2_s1nmc")
+scene_import = "res://main/sphere_scene3.txt"
 
 [node name="PTCamera" type="Node" parent="SceneRenderer/PTScene"]
 script = ExtResource("3_i3qtc")
+
+[node name="Node" type="Node" parent="SceneRenderer/PTScene/PTCamera"]
+script = ExtResource("4_nld3g")
 
 [node name="Preview" type="MeshInstance3D" parent="."]
 visible = false
