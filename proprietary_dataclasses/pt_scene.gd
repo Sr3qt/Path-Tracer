@@ -192,11 +192,11 @@ func set_camera_setting(cam : CameraSetting):
 	if camera:
 		var temp = camera_settings_values[cam]
 		
-		camera.camera_pos = temp[0]
+		camera.position = temp[0]
 		
 		camera.look_at(temp[1])
 		
-		camera.hfov = temp[2]
+		camera.fov = temp[2] / camera.aspect_ratio
 		camera.set_viewport_size()
 	else:
 		push_warning("PT: Cannot set camera settings when no camera has been attached \

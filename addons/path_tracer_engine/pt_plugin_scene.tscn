@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://addons/path_tracer_engine/plugin_control_root.gd" id="1_2v5h1"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_renderer.gd" id="2_k81n4"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_scene.gd" id="3_g8rfj"]
-[ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera.gd" id="4_e827o"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="4_nu68s"]
 
 [node name="RootControl" type="Button"]
 clip_contents = true
@@ -12,6 +12,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+focus_mode = 1
 mouse_filter = 1
 flat = true
 script = ExtResource("1_2v5h1")
@@ -41,10 +42,8 @@ script = ExtResource("3_g8rfj")
 scene_import = ""
 starting_scene = null
 
-[node name="PTCamera" type="Node" parent="VBoxContainer/SubViewportContainer/SubViewport/PluginRenderer/PTScene"]
-script = ExtResource("4_e827o")
-hfov = 35.5556
-camera_pos = Vector3(13, 2, 3)
+[node name="PTCamera" type="Camera3D" parent="VBoxContainer/SubViewportContainer/SubViewport/PluginRenderer/PTScene"]
+script = ExtResource("4_nu68s")
 
 [node name="MenuButton" type="MenuButton" parent="VBoxContainer"]
 layout_mode = 2

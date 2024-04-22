@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_renderer.gd" id="1_c80yu"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_scene.gd" id="2_s1nmc"]
-[ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera.gd" id="3_i3qtc"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="3_r6xni"]
 [ext_resource type="Script" path="res://main/test_node.gd" id="4_nld3g"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_tqxlx"]
@@ -17,13 +17,14 @@ default_bvh = 2
 script = ExtResource("2_s1nmc")
 scene_import = "res://main/sphere_scene3.txt"
 
-[node name="PTCamera" type="Node" parent="SceneRenderer/PTScene"]
-script = ExtResource("3_i3qtc")
-aspect_ratio_y = 16
-camera_pos = Vector3(0, 0, 1)
+[node name="PTCamera" type="Camera3D" parent="SceneRenderer/PTScene"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+fov = 64.9
+script = ExtResource("3_r6xni")
 
 [node name="TestNode" type="Node" parent="SceneRenderer/PTScene/PTCamera"]
 script = ExtResource("4_nld3g")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.43416, 1.25075, -2.58621)
 mesh = SubResource("SphereMesh_tqxlx")

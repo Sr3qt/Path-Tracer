@@ -9,42 +9,19 @@ uniform sampler2D preview_image_buffer : filter_nearest, source_color;
 
 uniform bool is_rendering = false;
 
-struct temp {
-	float h;
-};
-
-float hallo(temp hal[10]) {
-	return 0.;
-}
 
 void vertex() {
-	POSITION = vec4(VERTEX, 1);
-	
-	bool a = false;
-	
+	if (is_rendering) {
+		POSITION = vec4(VERTEX, 1);
+	}
 }
-
 
 
 void fragment() {
-//	vec4 original = texture(SCREEN_TEXTURE, SCREEN_UV);
-//	ALBEDO = original.rgb;
-
-//	mat3 ma = mat3([[0,0,0], [0,0,0], [0,0,0]]);
-
-	vec2 new_pos; 
-	vec2 pos = SCREEN_UV;
-	new_pos = pos;
-	vec4 color = texture(image_buffer, new_pos);
-	vec4 c = texture(image_buffer, vec2(0.1,0));
-	vec4 new_color = texture(preview_image_buffer, new_pos);
-	
-	temp ha[10];
-	float haa[4] = float[](1., 0.0, 0.3, 0.3);
-	hallo(ha);
+	vec4 color = texture(image_buffer, SCREEN_UV);
+	vec4 new_color = texture(preview_image_buffer, SCREEN_UV);
 
 	// COnvertion from srgb to rgb
-//	ALBEDO = pow(color.rgb, vec3(2.2, 2.2, 2.2));	
 	float gamma = 1.35;
 	float gamma1 = 2.2;
 	

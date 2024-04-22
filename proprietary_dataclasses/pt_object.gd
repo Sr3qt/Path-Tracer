@@ -1,6 +1,6 @@
 class_name PTObject
 extends Node
-# Can potentially be Refcounted
+# TODO Inherit from meshInsatnacce 3d probably
 
 """Base class for all visual objects"""
 

@@ -48,6 +48,12 @@ func _ready():
 		%MaxSamplesButton.value = parent.max_samples
 		%MaxSamplesButton.previous_value = parent.max_samples
 		
+		# NOTE: Apparently linedit focus is seperate from the spinbox, 
+		#  which doesn't have focus to begin with. 
+		#  Therefore we have to manually bind it.
+		%MaxSamplesButton.get_line_edit().connect("focus_exited", 
+				_on_max_samples_button_focus_exited)
+		
 		# TODO THINGS TO ADD:
 		#	-add button to select camera angle from enum and add method to add 
 		#	  new camera angle from current camera
@@ -79,7 +85,8 @@ func _on_create_bvh_button_pressed():
 	%BVHType.previous_value = %BVHType.selected
 	%BVHTreeOrder.previous_value = %BVHTreeOrder.value
 	
-	parent._renderer.create_bvh(%BVHTreeOrder.value, bvh_function_names[%BVHType.selected])
+	parent._renderer.create_bvh(%BVHTreeOrder.value, 
+			bvh_function_names[%BVHType.selected])
 
 
 func _on_enable_multisample_button_toggled(toggled_on):
@@ -102,3 +109,9 @@ func _on_max_samples_button_focus_exited():
 
 func _on_clear_samples_pressed():
 	parent.frame = 0
+
+
+func _on_disable_render_button_toggled(toggled_on):
+	parent._renderer.is_rendering_disabled = toggled_on
+
+

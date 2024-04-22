@@ -25,6 +25,7 @@ const compute_invocation_depth : int = 1
 		if canvas:
 			var mat = canvas.mesh.surface_get_material(0)
 			mat.set_shader_parameter("is_rendering", not value)
+			canvas.visible = not value
 		is_rendering_disabled = value
 
 ## The BVH type created on startup
@@ -35,7 +36,7 @@ const compute_invocation_depth : int = 1
 var root_node 
 
 # Realtime PTWorkDispatcher
-var rtwd : PTWorkDispatcher
+var wd : PTWorkDispatcher
 # TODO Have a PTWorkDispatcher for every scene that can be rendered,
 #  especially thinking about plugin being able to render current scene
 #var nrtwd : PTWorkDispatcher
@@ -45,8 +46,6 @@ var windows : Array[PTRenderWindow] = []
 
 # The mesh to draw to
 var canvas : MeshInstance3D
-
-var normal_camera : Camera3D
 
 # A scene with objects and a camera node
 var scene : PTScene
@@ -80,6 +79,9 @@ var _mouse_hover_window := false
 # Whether anything was rendered in the last render_window call. Only used by plugin
 var _was_rendered := false
 
+# USE LATER
+#EditorInterface.get_editor_viewport_3d(idx).get_camera_3d()
+
 
 func _ready():
 	if _is_plugin_hint:
@@ -90,50 +92,31 @@ func _ready():
 		# Apparently very import check for get_window (Otherwise the editor bugs out)
 		get_window().position -= Vector2i(450, 100)
 
-		# Might not be needed
-		# Find camera and canvas in children 
-		for child in get_children():
-			if child is Camera3D: # TODO more secure way of identifying camera and canvas
-				normal_camera = child
-			if child is MeshInstance3D:
-				canvas = child
-
 	# Only allow runtime and plugin instances to create child nodes
 	if not Engine.is_editor_hint() or _is_plugin_hint:
-		if not rtwd:
-			rtwd = PTWorkDispatcher.new(self)
+		if not wd:
+			wd = PTWorkDispatcher.new(self)
 		
-		if not normal_camera:
-			# Create godot camera to observe canvas
-			normal_camera = Camera3D.new()
-			normal_camera.position += Vector3(0,0,1)
-			add_child(normal_camera)
-
 		if not canvas:
-			# Prepare canvas shader
-			var mat = ShaderMaterial.new()
-			mat.shader = load("res://shaders/canvas.gdshader")
-			mat.set_shader_parameter("image_buffer", Texture2DRD.new())
-			mat.set_shader_parameter("is_rendering", not is_rendering_disabled)
+			canvas = create_canvas()
 			
-			# Create a canvas to which rendered images will be drawn
-			canvas = MeshInstance3D.new()
-			canvas.mesh = QuadMesh.new()
-			canvas.mesh.size = Vector2(2, 2)
-			canvas.mesh.surface_set_material(0, mat)
-			add_child(canvas)
-	
 		# TODO Turn scene / wd setup into function which stores them in an array
+		# TODO IF PTRenderer is a singleton, Scenes can add themselves
 		scene = get_node("PTScene") # Is this the best way to get Scene node?
+		
+		
+		# TODO MOve this to a current_camera setter 
+		scene.camera.add_child(canvas)
+		
 		if scene:
 			var function_name = PTBVHTree.enum_to_dict[default_bvh]
 			scene.create_BVH(bvh_max_children, function_name)
 
-			rtwd.set_scene(scene)
+			wd.set_scene(scene)
 
 			load_shader()
 
-			rtwd.create_buffers()
+			wd.create_buffers()
 		
 		# TODO Add support for multiple PTRenderWindows on screen
 		#  as well as support for a seperate bvh for each of them.
@@ -198,7 +181,7 @@ func _input(event):
 	if event is InputEventKey:
 		if event.pressed and event.keycode == KEY_X and not event.is_echo():
 			# TODO For some reason the editor can never get here
-			save_framebuffer(rtwd)
+			save_framebuffer(wd)
 	
 	# Taken from work_dispatcher, TODO implement picture taking functionality
 	## TODO: Make loading bar
@@ -227,7 +210,7 @@ func _input(event):
 func _exit_tree():
 	if not Engine.is_editor_hint():
 		
-		var image = rtwd.rd.texture_get_data(rtwd.image_buffer, 0)
+		var image = wd.rd.texture_get_data(wd.image_buffer, 0)
 		# Changing the renderer render size should always create a new buffer, so
 		#  this code should always yield a correct result
 		var new_image = Image.create_from_data(
@@ -239,10 +222,10 @@ func _exit_tree():
 		)
 		new_image.save_png("temps/temp.png")
 		
-		rtwd.free_RIDs()
+		wd.free_RIDs()
 	
 	if _is_plugin_hint:
-		rtwd.free_RIDs()
+		wd.free_RIDs()
 
 
 func raise_error(msg):
@@ -253,6 +236,7 @@ func raise_error(msg):
 	msg = prepend + ": " + msg
 	
 	push_error(msg)
+
 
 func load_shader():
 	var file := FileAccess.open("res://shaders/ray_tracer.comp", 
@@ -295,7 +279,8 @@ func load_shader():
 		function_definitons += text
 	
 	# Inserts function definitions
-	res = res.replace("//procedural_texture_function_definition_hook", function_definitons)
+	res = res.replace("//procedural_texture_function_definition_hook", 
+			function_definitons)
 	
 	# Inserts function calls
 	res = res.replace("//procedural_texture_function_call_hook", function_calls)
@@ -304,7 +289,7 @@ func load_shader():
 	var shader = RDShaderSource.new()
 	shader.source_compute = res
 	
-	rtwd.load_shader(shader)
+	wd.load_shader(shader)
 	
 
 func add_window(window : PTRenderWindow):
@@ -361,7 +346,7 @@ func render_window(window : PTRenderWindow):
 		window._max_sample_start_time = Time.get_ticks_usec()
 		
 		#Render
-		rtwd.create_compute_list(window)
+		wd.create_compute_list(window)
 		
 		window.frame += 1
 		
@@ -405,6 +390,24 @@ func save_framebuffer(work_dispatcher : PTWorkDispatcher):
 	Time.get_datetime_string_from_system().replace(":", "-") + ".png")
 
 
+func create_canvas():
+	# Create canvas that will display rendered image
+	# Prepare canvas shader
+	var mat = ShaderMaterial.new()
+	mat.shader = load("res://shaders/canvas.gdshader")
+	mat.set_shader_parameter("image_buffer", Texture2DRD.new())
+	mat.set_shader_parameter("is_rendering", not is_rendering_disabled)
+	
+	# Create a canvas to which rendered images will be drawn
+	var canvas := MeshInstance3D.new()
+	canvas.position -= Vector3(0,0,1)
+	canvas.mesh = QuadMesh.new()
+	canvas.mesh.size = Vector2(2, 2)
+	canvas.mesh.surface_set_material(0, mat)
+	
+	return canvas
+
+
 func create_bvh(_max_children : int, function_name : String):
 	# TODO Rework shader to work with different bvh orders without reloading
 	#var _start = Time.get_ticks_usec()
@@ -422,13 +425,13 @@ func create_bvh(_max_children : int, function_name : String):
 		load_shader()
 	
 	# NOTE: Removing and adding buffer seem to be as fast as trying to update it
-	rtwd.rd.free_rid(rtwd.BVH_buffer)
+	wd.rd.free_rid(wd.BVH_buffer)
 	
-	rtwd.create_bvh_buffer()
+	wd.create_bvh_buffer()
 	
-	var BVH_uniforms = rtwd.uniform_sets[rtwd.BVH_set_index].values()
-	rtwd.BVH_set = rtwd.rd.uniform_set_create(BVH_uniforms, rtwd.shader, 
-			rtwd.BVH_set_index)
+	var BVH_uniforms = wd.uniform_sets[wd.BVH_set_index].values()
+	wd.BVH_set = wd.rd.uniform_set_create(BVH_uniforms, wd.shader, 
+			wd.BVH_set_index)
 			
 	#print((Time.get_ticks_usec() - _start) / 1000.)
 	

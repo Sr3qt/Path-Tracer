@@ -18,7 +18,6 @@ var previous_value = value:
 		_value_changed(value)
 
 
-
 func _ready():
 	# Create disabled mask
 	disabled_mask = ColorRect.new()

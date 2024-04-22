@@ -58,7 +58,7 @@ func _init():
 			else:
 				inside_of.insert(inside_of_count, Vector4(sphere[0], sphere[1], 0, 1.6))
 				inside_of_count += 1
-			print("went stragiht " + str(i))
+			#print("went stragiht " + str(i))
 			continue
 
 		current_ior = eta_out
@@ -68,4 +68,4 @@ func _init():
 		else:
 			inside_of.insert(inside_of_count, Vector4(sphere[0], sphere[1], 0, 1.6))
 			inside_of_count += 1
-		print("refracted " + str(i))
+		#print("refracted " + str(i))

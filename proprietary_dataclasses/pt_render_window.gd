@@ -2,7 +2,7 @@
 class_name PTRenderWindow
 extends Control
 
-"""Class for showing gui and passing render flags for a smaller portion of 
+"""Class for showing gui and passing render flags for a portion of 
 the render window"""
 
 enum RenderFlagsBits {
@@ -90,7 +90,6 @@ var frame_times : float:
 
 var _max_sample_start_time : float # Point in time when rendering started
 
-
 ## OTHER STUFF
 
 var render_name := "unnamed_window"
@@ -130,13 +129,6 @@ func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 
 	
 	set_position(Vector2(x_offset, y_offset))
 	
-
-func _ready():
-	# COnnect FocusLossButton input in plugin
-	if _renderer:
-		if _renderer._is_plugin_hint:
-			_renderer.root_node.connect("gui_input", %FocusLossButton._unhandled_input)
-
 
 func flags_to_byte_array():
 	var flag_array = PackedInt32Array([flags])

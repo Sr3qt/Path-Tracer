@@ -1,6 +1,6 @@
 class_name PTMaterial
 extends Node
-# Can potentially be Refcounted
+# TODO Make into a resource
 
 
 # Similar to GPU material, default value is the same as air

@@ -20,12 +20,17 @@ func _ready():
 	mouse_exited.connect(_on_root_node_mouse_exited)
 	mouse_entered.connect(_on_root_node_mouse_entered)
 	resized.connect(_on_resized)
+	focus_entered.connect(_focus_entered)
 
 
 func _pressed():
 	if renderer.scene:
 		if renderer.scene.camera:
 			renderer.scene.camera.freeze = false
+
+
+func _focus_entered():
+	release_focus()
 
 
 func _on_root_node_mouse_exited():
