@@ -1,6 +1,7 @@
 class_name PTAABB
 extends Node
 # Can potentially be Refcounted
+# TODO Look into whether this can just inherit AABB
 
 var minimum : Vector3
 var maximum : Vector3

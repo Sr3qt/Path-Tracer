@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://addons/path_tracer_engine/plugin_control_root.gd" id="1_2v5h1"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_renderer.gd" id="2_k81n4"]
-[ext_resource type="Script" path="res://proprietary_dataclasses/pt_scene.gd" id="3_g8rfj"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="3_fdg8n"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="4_nu68s"]
 
 [node name="RootControl" type="Button"]
@@ -38,7 +38,7 @@ script = ExtResource("2_k81n4")
 max_default_depth = 16
 
 [node name="PTScene" type="Node" parent="VBoxContainer/SubViewportContainer/SubViewport/PluginRenderer"]
-script = ExtResource("3_g8rfj")
+script = ExtResource("3_fdg8n")
 scene_import = ""
 starting_scene = null
 

@@ -2,9 +2,9 @@
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_render_window.gd" id="1_7js1k"]
 [ext_resource type="Script" path="res://ui_scenes/render_window_gui/gui_button_connector.gd" id="2_lirvx"]
+[ext_resource type="Script" path="res://ui_scenes/render_window_gui/temp_button_focus.gd" id="2_pn3ng"]
 [ext_resource type="StyleBox" uid="uid://bq3nr6sqfrh8q" path="res://ui_scenes/render_window_gui/new_style_box_flat.tres" id="2_yf57u"]
 [ext_resource type="StyleBox" uid="uid://beqosf1vjneko" path="res://ui_scenes/render_window_gui/popup_button_background.tres" id="3_mwvv8"]
-[ext_resource type="Script" path="res://ui_scenes/render_window_gui/temp_button_focus.gd" id="4_tyw6l"]
 [ext_resource type="Script" path="res://ui_scenes/render_window_gui/custom_buttons/pt_checkbox.gd" id="5_xrsx5"]
 [ext_resource type="Script" path="res://ui_scenes/render_window_gui/custom_buttons/pt_option_button.gd" id="6_ejh8q"]
 [ext_resource type="Script" path="res://ui_scenes/render_window_gui/custom_buttons/pt_spin_box.gd" id="7_x1fht"]
@@ -35,7 +35,7 @@ grow_vertical = 2
 mouse_filter = 1
 disabled = true
 flat = true
-script = ExtResource("4_tyw6l")
+script = ExtResource("2_pn3ng")
 
 [node name="FrameCounter" type="Label" parent="."]
 unique_name_in_owner = true
