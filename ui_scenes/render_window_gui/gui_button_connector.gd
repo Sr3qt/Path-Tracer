@@ -13,15 +13,15 @@ const CHANGED_VALUE_COLOR = Color(220, 165, 0, 0.6)
 var bvh_function_names
 # TODO Update this and BVHType option button when new bvh added
 
-var _is_plugin_instance = false
+var _is_plugin_hint = false
 
 
 func _ready():
 	
 	if get_parent()._renderer:
-		_is_plugin_instance = get_parent()._renderer._is_plugin_instance
+		_is_plugin_hint = get_parent()._renderer._is_plugin_hint
 	
-	if not Engine.is_editor_hint() or _is_plugin_instance:
+	if not Engine.is_editor_hint() or _is_plugin_hint:
 		%PanelContainer.visible = false
 		
 		# Initialize bvh dropdown menu

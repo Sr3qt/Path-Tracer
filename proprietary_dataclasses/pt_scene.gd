@@ -15,7 +15,7 @@ two scenes.
 static var ObjectType = PTObject.ObjectType
 
 # Semi-Temp
-enum CameraSetting {top_down, corner, book_ex, center, left, right, middle}
+enum CameraSetting {none, top_down, corner, book_ex, center, left, right, middle}
 
 var camera_settings_values = {
 	CameraSetting.top_down : [Vector3(0, 8, -15), Vector3(0,0,-6), 106.],
@@ -28,6 +28,13 @@ var camera_settings_values = {
 }
 
 @export_file var scene_import
+
+## Overrides starting camera values with predefined sets of values
+@export var starting_camera := CameraSetting.none
+
+## Overrides scene_import, Seect one of the built-in scenes
+@export_enum("none", "random_scene", "scene1", "scene2", "scene3") 
+var starting_scene = "none"
 
 # objects is a dictionary with ObjectTypes as keys. 
 #  The values are arrays of PTObjects 
@@ -57,7 +64,6 @@ func _init(
 		_camera : PTCamera = null
 	):
 	
-	# TODO add safeguards for running in editor
 	# Create objects dict if one was not passed
 	if _object_dict:
 		objects = _object_dict
@@ -76,28 +82,34 @@ func _init(
 
 
 func _ready():
-	# TODO Add option to not create scene when added to tree
 	# Create default random scene if no imports
-	if scene_import:
-		import(scene_import)
-	else:
-		create_random_scene(0)
-	
-	get_size()
-	
-	if camera == null:
-		for child in get_children():
-			if child is PTCamera:
-				camera = child
-				break
-	
-	#if camera == null:
-		#camera = PTCamera.new()
+	if not Engine.is_editor_hint():
+		if starting_scene == "none":
+			if scene_import:
+				import(scene_import)
+			# If starting scene is none and no scene_import given
+		elif starting_scene == "random_scene":
+			create_random_scene(0)
+		else:
+			var path = "res://main/sphere_" + starting_scene + ".txt"
+			import(path)
+			
+	if not Engine.is_editor_hint() or get_parent()._is_plugin_hint:
+		get_size()
+		
+		if camera == null:
+			for child in get_children():
+				if child is PTCamera:
+					camera = child
+					break
+			pass
 	
 	if not Engine.is_editor_hint():
-		set_camera_setting(CameraSetting.left)
-	else:
-		set_camera_setting(CameraSetting.corner)
+		if starting_camera != CameraSetting.none:
+			set_camera_setting(starting_camera)
+	elif get_parent()._is_plugin_hint:
+		set_camera_setting(CameraSetting.book_ex)
+		create_random_scene(0)
 	
 # Only relevant for when the structure of the scene changes, 
 #  i.e adding / removing objects
@@ -187,8 +199,8 @@ func set_camera_setting(cam : CameraSetting):
 		camera.hfov = temp[2]
 		camera.set_viewport_size()
 	else:
-		# TODO make warning
-		pass
+		push_warning("PT: Cannot set camera settings when no camera has been attached \
+to the scene")
 
 
 func create_random_scene(_seed):

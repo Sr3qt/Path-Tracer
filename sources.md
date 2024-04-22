@@ -9,14 +9,24 @@ One of the best places to start with raytracing is the [_Ray Tracing in One Week
 
 Another great resource is the PBR book. It's great if you are not already familiar with 3D rendering and need a helper. 
 
-Free to use book: [Ratracing gems](https://link.springer.com/book/10.1007/978-1-4842-4427-2)
+Free to use book: [Raytracing gems](https://link.springer.com/book/10.1007/978-1-4842-4427-2)
+
+
+## GPU precision considerations
+
+Much smarter people than me, mention edge cases were simple functions are prone to errors due to floating point imprecision. Because of this some nice people on stack overflow have written those simple functions accounting for edge cases, so we can just copy-paste.
+
+- More robust atan by HuaTham [link](https://stackoverflow.com/questions/26070410/robust-atany-x-on-glsl-for-converting-xy-coordinate-to-angle)
+
+- How to do floating point comparison by P-Gn [link](https://stackoverflow.com/questions/4915462/how-should-i-do-floating-point-comparison)
+- 
 
 ## Camera / Color theory
 
 Unironically one of the deepest fields out of everything required to build a ray tracer. Luckily only surface level knowledge is required for most use cases, but if you want to learn more, here are some useful resources:
 
 - Why use gamma: [Understanding Gamma Correction](https://www.cambridgeincolour.com/tutorials/gamma-correction.htm). Cambridge in Colour
-- Common color conversion forumlas, used by OpneCV - [Color conversions](https://docs.opencv.org/3.1.0/de/d25/imgproc_color_conversions.html) 
+- Common color conversion forumlas, used by OpenCV - [Color conversions](https://docs.opencv.org/3.1.0/de/d25/imgproc_color_conversions.html) 
 
 
 [Back to the top](#sources)😭

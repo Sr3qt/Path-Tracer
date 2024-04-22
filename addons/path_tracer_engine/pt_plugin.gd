@@ -4,7 +4,6 @@ extends EditorPlugin
 const MainPanel = preload("res://addons/path_tracer_engine/pt_plugin_scene.tscn")
 
 var main_panel_instance
-var renderer # Might not be necessary
 
 var is_docked := true
 var is_main := !is_docked
@@ -14,7 +13,7 @@ var is_main := !is_docked
 func _enter_tree():
 	print("EdiorPlugin entered tree")
 	main_panel_instance = MainPanel.instantiate()
-	main_panel_instance._is_plugin_instance = true
+	main_panel_instance._is_plugin_hint = true
 	
 	EditorInterface.get_file_system_dock().has_focus()
 	
@@ -24,7 +23,6 @@ func _enter_tree():
 	if is_docked:
 		add_control_to_dock(EditorPlugin.DOCK_SLOT_RIGHT_UL, main_panel_instance)
 	
-	renderer = main_panel_instance.renderer
 	
 	_make_visible(false)
 

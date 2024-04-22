@@ -4,15 +4,15 @@ extends Button
 var renderer : PTRenderer
 var viewport : Viewport
 
-var _is_plugin_instance := false
+var _is_plugin_hint := false
 
 
 func _enter_tree():
-	if _is_plugin_instance:
+	if _is_plugin_hint:
 		renderer = %PluginRenderer
 		viewport = %SubViewport
 		
-		renderer._is_plugin_instance = true
+		renderer._is_plugin_hint = true
 		renderer.root_node = self
 
 
@@ -43,4 +43,10 @@ func _on_resized():
 	
 	viewport.size.x = size.x
 	
-	viewport.size.y = size.x / renderer.scene.camera.aspect_ratio
+	if renderer.scene:
+		if renderer.scene.camera:
+			viewport.size.y = size.x / renderer.scene.camera.aspect_ratio
+			return
+	
+	# Fallback ratio if no camera exists
+	viewport.size.y = size.x / (16.0 / 9.0)

@@ -1,24 +1,11 @@
-[gd_scene load_steps=10 format=3 uid="uid://d3dfmywq1wbly"]
+[gd_scene load_steps=6 format=3 uid="uid://d3dfmywq1wbly"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_renderer.gd" id="1_c80yu"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_scene.gd" id="2_s1nmc"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera.gd" id="3_i3qtc"]
-[ext_resource type="Shader" path="res://shaders/canvas.gdshader" id="4_2ftiq"]
 [ext_resource type="Script" path="res://main/test_node.gd" id="4_nld3g"]
-[ext_resource type="Texture2D" uid="uid://bdbvcujyyuudb" path="res://temps/temp.png" id="5_5weid"]
 
-[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_2mxip"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_tnndh"]
-render_priority = 0
-shader = ExtResource("4_2ftiq")
-shader_parameter/is_rendering = false
-shader_parameter/image_buffer = SubResource("PlaceholderTexture2D_2mxip")
-shader_parameter/preview_image_buffer = ExtResource("5_5weid")
-
-[sub_resource type="QuadMesh" id="QuadMesh_lfpsb"]
-material = SubResource("ShaderMaterial_tnndh")
-size = Vector2(2, 2)
+[sub_resource type="SphereMesh" id="SphereMesh_tqxlx"]
 
 [node name="NewNode3D" type="Node3D"]
 
@@ -32,10 +19,11 @@ scene_import = "res://main/sphere_scene3.txt"
 
 [node name="PTCamera" type="Node" parent="SceneRenderer/PTScene"]
 script = ExtResource("3_i3qtc")
+aspect_ratio_y = 16
+camera_pos = Vector3(0, 0, 1)
 
-[node name="Node" type="Node" parent="SceneRenderer/PTScene/PTCamera"]
+[node name="TestNode" type="Node" parent="SceneRenderer/PTScene/PTCamera"]
 script = ExtResource("4_nld3g")
 
-[node name="Preview" type="MeshInstance3D" parent="."]
-visible = false
-mesh = SubResource("QuadMesh_lfpsb")
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_tqxlx")

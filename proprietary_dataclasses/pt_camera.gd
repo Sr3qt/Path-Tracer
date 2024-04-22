@@ -2,6 +2,8 @@
 class_name PTCamera
 extends Node
 
+# TODO Change to inherit from Camera3D
+
 """ Controls rendering paramaters and position in 3d space
 
 Replaces Camera3D for path traced rendering
@@ -23,19 +25,22 @@ var mouse_sensitivity_y := 0.01
 var move_speed := 3.5
 
 # Render variables
-# TODO make variables exportable to editor or changable during run time. move to PTRENDEREr
-var aspect_ratio := 16. / 9.
+@export var aspect_ratio_x : int = 16
+@export var aspect_ratio_y : int = 9
+var aspect_ratio := float(aspect_ratio_x) / float(aspect_ratio_y)
 
-var focal_length := 1.
-var hfov := 106. # In degrees
+@export var focal_length := 1.
+## Horizontal fov in degrees
+@export var hfov := 106. 
 var vfov := hfov / aspect_ratio
-var gamma = 1. / 2.2
+@export var gamma : float = 1. / 2.2
 
 # Viewport is the physical surface through which rays are initially cast 
 var viewport_width : float
 var viewport_height : float
 
-var camera_pos : Vector3
+
+@export var camera_pos := Vector3(0,0,0)
 var view_vectors := PackedVector3Array([Vector3(1,0,0), Vector3(0,1,0), Vector3(0,0,1)])
 var right: Vector3:
 	get: return view_vectors[0]
@@ -49,14 +54,16 @@ var forward: Vector3:
 	
 
 func _init(
-		pos := Vector3(0,0,0), 
+		pos := Vector3.INF, 
 		looking_at := Vector3(0,0,-1), 
 		_aspect_ratio : float = aspect_ratio, 
 		horizontal_fov : float = hfov, 
 		_focal_length : float = focal_length
 	): # :(
 	
-	camera_pos = pos
+	if pos != Vector3.INF:
+		camera_pos = pos
+	
 	look_at(looking_at)
 	
 	aspect_ratio = _aspect_ratio
@@ -71,6 +78,9 @@ func _init(
 
 
 func _ready():
+	aspect_ratio = float(aspect_ratio_x) / float(aspect_ratio_y)
+	set_viewport_size()
+	
 	root_node = get_parent().get_parent().root_node
 	
 	if root_node and Engine.is_editor_hint():

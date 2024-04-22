@@ -113,7 +113,6 @@ var _renderer : PTRenderer
 
 
 func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 0):
-	# TODO add safeguards for running in editor
 	_set_flags()
 	
 	custom_minimum_size = Vector2(work_group_width_pixels, work_group_height_pixels)
@@ -133,9 +132,9 @@ func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 
 	
 
 func _ready():
-	# FocusLossButton input in plugin
+	# COnnect FocusLossButton input in plugin
 	if _renderer:
-		if _renderer._is_plugin_instance:
+		if _renderer._is_plugin_hint:
 			_renderer.root_node.connect("gui_input", %FocusLossButton._unhandled_input)
 
 

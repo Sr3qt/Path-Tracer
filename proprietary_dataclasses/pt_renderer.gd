@@ -31,7 +31,7 @@ const compute_invocation_depth : int = 1
 @export var default_bvh : PTBVHTree.BVHType = PTBVHTree.BVHType.X_SORTED
 
 # Since the scene will become a subtree in the plugin, 
-#  root_node is a convenient pointer to the relative root node 
+#  root_node is a convenient pointer to the relative root node, Only used by plugin
 var root_node 
 
 # Realtime PTWorkDispatcher
@@ -68,11 +68,11 @@ var render_width := 1920
 var render_height := 1080
 
 var samples_per_pixel = 1 # Deprecated
-var max_default_depth = 16
-var max_refraction_bounces = 8 
+@export var max_default_depth : int = 8
+@export var max_refraction_bounces : int = 8 
 
 # Whether this instance was created by a plugin script or not. Only used by plugin
-var _is_plugin_instance := false
+var _is_plugin_hint := false
 
 # If mouse is hovering over the render window. Only used by plugin
 var _mouse_hover_window := false
@@ -82,7 +82,7 @@ var _was_rendered := false
 
 
 func _ready():
-	if _is_plugin_instance:
+	if _is_plugin_hint:
 		print("Plugin renderer _ready start")
 		print(self)
 	
@@ -99,7 +99,7 @@ func _ready():
 				canvas = child
 
 	# Only allow runtime and plugin instances to create child nodes
-	if not Engine.is_editor_hint() or _is_plugin_instance:
+	if not Engine.is_editor_hint() or _is_plugin_hint:
 		if not rtwd:
 			rtwd = PTWorkDispatcher.new(self)
 		
@@ -123,16 +123,17 @@ func _ready():
 			canvas.mesh.surface_set_material(0, mat)
 			add_child(canvas)
 	
+		# TODO Turn scene / wd setup into function which stores them in an array
 		scene = get_node("PTScene") # Is this the best way to get Scene node?
-		
-		var function_name = PTBVHTree.enum_to_dict[default_bvh]
-		scene.create_BVH(bvh_max_children, function_name)
+		if scene:
+			var function_name = PTBVHTree.enum_to_dict[default_bvh]
+			scene.create_BVH(bvh_max_children, function_name)
 
-		rtwd.set_scene(scene)
+			rtwd.set_scene(scene)
 
-		load_shader()
+			load_shader()
 
-		rtwd.create_buffers()
+			rtwd.create_buffers()
 		
 		# TODO Add support for multiple PTRenderWindows on screen
 		#  as well as support for a seperate bvh for each of them.
@@ -159,12 +160,27 @@ func _process(delta):
 	## Decides if any rendering will be done at all
 	# Runtime and plugin requires different checks for window focus
 	var runtime = (get_window().has_focus() and not Engine.is_editor_hint())
-	var plugin = (_is_plugin_instance and (root_node and root_node.visible) and
+	var plugin = (_is_plugin_hint and (root_node and root_node.visible) and
 					Engine.is_editor_hint())
 	
 	var common = not is_rendering_disabled
 	
 	if (runtime or plugin) and common:
+		## Double check everything with warnings
+		# Check if scene exists
+		if not scene and not is_rendering_disabled:
+			raise_error("No scene has been set. Rendering is therefore disabled.")
+			is_rendering_disabled = true
+			
+		# Check if camera exists
+		if scene and not scene.camera and not is_rendering_disabled:
+			raise_error("No camera has been set. Rendering is therefore disabled.")
+			is_rendering_disabled = true
+		
+		if is_rendering_disabled:
+			return
+		
+		# If no warnings are raised, this will render
 		for window in windows:
 			render_window(window)
 		
@@ -225,9 +241,18 @@ func _exit_tree():
 		
 		rtwd.free_RIDs()
 	
-	if _is_plugin_instance:
+	if _is_plugin_hint:
 		rtwd.free_RIDs()
 
+
+func raise_error(msg):
+	var prepend = "PT"
+	if _is_plugin_hint:
+		prepend += " Plugin"
+	
+	msg = prepend + ": " + msg
+	
+	push_error(msg)
 
 func load_shader():
 	var file := FileAccess.open("res://shaders/ray_tracer.comp", 
@@ -250,12 +275,15 @@ func load_shader():
 	for filename in procedural_textures:
 		var path = "res://shaders/procedural_textures/" + filename
 		var tex_file := FileAccess.open(path, FileAccess.READ_WRITE)
+		if not tex_file:
+			push_error("PT: No procedural texture file not found: " + filename +
+					" in " + path)
 		var text = tex_file.get_as_text()
 		
 		var function_index = text.find(default_function_name)
 		if function_index == -1:
-			# TODO add warning
-			print("No procedural texture found in file: " + filename)
+			push_error("PT: No procedural texture fucntion found in file: " + 
+					filename + " in " + path)
 		
 		text = text.replace(default_function_name, base_function_name + str(i))
 		
@@ -296,7 +324,8 @@ func render_window(window : PTRenderWindow):
 	"""Might render window according to flags if flags allow it"""
 	
 	# If camera moved or scene changed
-	var movement = scene and (scene.camera.camera_changed or scene.scene_changed)
+	var movement = scene and scene.camera and (
+				scene.camera.camera_changed or scene.scene_changed)
 	
 	# If rendering should stop when reached max samples
 	var stop_multisampling = (
