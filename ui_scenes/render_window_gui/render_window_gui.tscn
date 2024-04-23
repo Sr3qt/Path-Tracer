@@ -140,6 +140,13 @@ text = "Toggle rendering
 "
 script = ExtResource("8_n5nil")
 
+[node name="LinkCameraButton" type="Button" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/AllSettings"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "Link camera to editor"
+script = ExtResource("8_n5nil")
+
 [node name="BVHContainer" type="VBoxContainer" parent="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/AllSettings"]
 layout_mode = 2
 
@@ -259,6 +266,7 @@ text = "Clear Samples"
 script = ExtResource("8_n5nil")
 
 [connection signal="toggled" from="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/AllSettings/DisableRenderButton" to="ButtonController" method="_on_disable_render_button_toggled"]
+[connection signal="toggled" from="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/AllSettings/LinkCameraButton" to="ButtonController" method="_on_link_camera_button_toggled"]
 [connection signal="toggled" from="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/AllSettings/BVHContainer/BVHOptions/UseBVHButton" to="ButtonController" method="_on_use_bvh_button_toggled"]
 [connection signal="toggled" from="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/AllSettings/BVHContainer/BVHOptions/ShowBVHDepthButton" to="ButtonController" method="_on_show_bvh_depth_button_toggled"]
 [connection signal="pressed" from="MarginContainer/PanelContainer/ScrollContainer/MarginContainer/AllSettings/BVHContainer/CreateBVHButton" to="ButtonController" method="_on_create_bvh_button_pressed"]

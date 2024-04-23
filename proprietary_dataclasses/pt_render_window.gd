@@ -66,7 +66,7 @@ var render_mode_changed := false
 var _disable_multisample := false
 
 # Whether this window was rendered in the last renderer draw call
-var _was_rendered := false
+var was_rendered := false
 
 ## SAMPLE VALUES
 var max_samples : int = 16
@@ -88,7 +88,7 @@ var frame_times : float:
 			%FrameTimes.text = "Time: %.2fs" % value
 		frame_times = value
 
-var _max_sample_start_time : float # Point in time when rendering started
+var max_sample_start_time : float # Point in time when rendering started
 
 ## OTHER STUFF
 
@@ -108,7 +108,7 @@ var work_group_depth := 1
 var x_offset := 0
 var y_offset := 0
 
-var _renderer : PTRenderer
+var renderer : PTRenderer
 
 
 func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 0):

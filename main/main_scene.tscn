@@ -15,7 +15,7 @@ default_bvh = 2
 
 [node name="PTScene" type="Node" parent="SceneRenderer"]
 script = ExtResource("2_s1nmc")
-scene_import = "res://main/sphere_scene3.txt"
+scene_import = "res://main/sphere_scene4.txt"
 
 [node name="PTCamera" type="Camera3D" parent="SceneRenderer/PTScene"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
@@ -26,5 +26,5 @@ script = ExtResource("3_r6xni")
 script = ExtResource("4_nld3g")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.43416, 1.25075, -2.58621)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, -2)
 mesh = SubResource("SphereMesh_tqxlx")

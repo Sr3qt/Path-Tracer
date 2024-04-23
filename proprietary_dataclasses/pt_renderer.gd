@@ -39,7 +39,6 @@ var root_node
 var wd : PTWorkDispatcher
 # TODO Have a PTWorkDispatcher for every scene that can be rendered,
 #  especially thinking about plugin being able to render current scene
-#var nrtwd : PTWorkDispatcher
 
 # Array of sub-windows
 var windows : Array[PTRenderWindow] = []
@@ -49,6 +48,16 @@ var canvas : MeshInstance3D
 
 # A scene with objects and a camera node
 var scene : PTScene
+
+# Editor camera. Only used by plugin
+var editor_camera : Camera3D
+
+# Whether the current camera will follow editor_camera. Only used by plugin
+var is_camera_linked = true:
+	set(value):
+		if editor_camera:
+			editor_camera.set_cull_mask_value(20, value)
+		is_camera_linked = value
 
 # Controls the degree of the bvh tree passed to the gpu. 
 var bvh_max_children : int = 8
@@ -73,14 +82,8 @@ var samples_per_pixel = 1 # Deprecated
 # Whether this instance was created by a plugin script or not. Only used by plugin
 var _is_plugin_hint := false
 
-# If mouse is hovering over the render window. Only used by plugin
-var _mouse_hover_window := false
-
 # Whether anything was rendered in the last render_window call. Only used by plugin
-var _was_rendered := false
-
-# USE LATER
-#EditorInterface.get_editor_viewport_3d(idx).get_camera_3d()
+var was_rendered := false
 
 
 func _ready():
@@ -104,10 +107,21 @@ func _ready():
 		# TODO IF PTRenderer is a singleton, Scenes can add themselves
 		scene = get_node("PTScene") # Is this the best way to get Scene node?
 		
-		
 		# TODO MOve this to a current_camera setter 
 		scene.camera.add_child(canvas)
 		
+		if _is_plugin_hint:
+			# NOTE: The editor stores the editor_camera's transforms and copies them
+			#  on input event. Therefore moving the camera in the plugin dock
+			#  can only move the camera until an input in the editor is detected.
+			#  This is why moving in the dock was removed, preferring to just use 
+			#  the editors camera
+			
+			# Get Editor Camera
+			editor_camera = EditorInterface.get_editor_viewport_3d(0).get_camera_3d()
+			# Show canvas to editor camera by default if true
+			editor_camera.set_cull_mask_value(20, is_camera_linked)
+			
 		if scene:
 			var function_name = PTBVHTree.enum_to_dict[default_bvh]
 			scene.create_BVH(bvh_max_children, function_name)
@@ -137,8 +151,14 @@ func _ready():
 		add_window(better_window)
 
 
-func _process(delta):
-	_was_rendered = false
+func _process(_delta):
+	was_rendered = false
+	
+	# If editor camera moved, copy the data to scene.camera
+	if _is_plugin_hint and editor_camera and is_camera_linked:
+		if (not (editor_camera.position == scene.camera.position and 
+				editor_camera.transform == scene.camera.transform)):
+			copy_camera(editor_camera, scene.camera)
 	
 	## Decides if any rendering will be done at all
 	# Runtime and plugin requires different checks for window focus
@@ -152,6 +172,7 @@ func _process(delta):
 		## Double check everything with warnings
 		# Check if scene exists
 		if not scene and not is_rendering_disabled:
+			# TODO Add path to where warning came from ?
 			raise_error("No scene has been set. Rendering is therefore disabled.")
 			is_rendering_disabled = true
 			
@@ -160,21 +181,21 @@ func _process(delta):
 			raise_error("No camera has been set. Rendering is therefore disabled.")
 			is_rendering_disabled = true
 		
-		if is_rendering_disabled:
-			return
-		
-		# If no warnings are raised, this will render
-		for window in windows:
-			render_window(window)
-		
-		# Reset frame values
+		if not is_rendering_disabled:
+			# If no warnings are raised, this will render
+			for window in windows:
+				render_window(window)
+			
+			# NOTE: For some reason this is neccessary for smooth performance in editor
+			if Engine.is_editor_hint() and was_rendered:
+				var mat = canvas.mesh.surface_get_material(0)
+				mat.set_shader_parameter("is_rendering", true)
+	
+	# Reset frame values
+	if scene:
 		scene.scene_changed = false
-		scene.camera.camera_changed = false
-		
-		# NOTE: For some reason this is neccessary for smooth performance in editor
-		if Engine.is_editor_hint() and (_mouse_hover_window or _was_rendered):
-			var mat = canvas.mesh.surface_get_material(0)
-			mat.set_shader_parameter("is_rendering", true)
+		if scene.camera:
+			scene.camera.camera_changed = false
 
 
 func _input(event):
@@ -183,29 +204,9 @@ func _input(event):
 			# TODO For some reason the editor can never get here
 			save_framebuffer(wd)
 	
-	# Taken from work_dispatcher, TODO implement picture taking functionality
-	## TODO: Make loading bar
-	## TODO: MAke able to take images with long render time
-	## Takes picture
-	#if Input.is_key_pressed(KEY_X) and not is_taking_picture:
-		## Make last changes to camera settings
-		#samples_per_pixel = 80
-		#max_default_depth = 16
-		#max_refraction_bounces = 16
-		#rd.buffer_update(LOD_buffer, 0, _lod_byte_array().size(), _lod_byte_array())
-		#
-		### Currently disabled
-		##is_taking_picture = true
-		##is_rendering = false
-		#_image_render_start = Time.get_ticks_msec()
-		#
-	## Don't send work when window is not focused
-	#if get_window() != null: # For some reason get_window can return null
-		#if get_window().has_focus() and is_rendering:
-			#create_compute_list()
-		#
-	#if is_taking_picture:
-		#render_image()
+	# TODO MAke able to take images with long render time with loading bar
+	#  Long term goal, maybe
+
 
 func _exit_tree():
 	if not Engine.is_editor_hint():
@@ -293,7 +294,7 @@ func load_shader():
 	
 
 func add_window(window : PTRenderWindow):
-	window._renderer = self
+	window.renderer = self
 	windows.append(window)
 	
 	if not Engine.is_editor_hint():
@@ -322,18 +323,18 @@ func render_window(window : PTRenderWindow):
 			not window._disable_multisample)
 	
 	# Adds the time of the last frame rendered
-	if window.frame == window.max_samples and multisample and window._was_rendered:
+	if window.frame == window.max_samples and multisample and window.was_rendered:
 		window.frame_times += (
-				Time.get_ticks_usec() - window._max_sample_start_time
+				Time.get_ticks_usec() - window.max_sample_start_time
 		) / 1_000_000.0
 	
 	if movement or multisample or window.render_mode_changed:
 		window.scene_changed = movement
 		
 		# Adds the time taken since last frame render started
-		if window.frame < window.max_samples and multisample and window._was_rendered:
+		if window.frame < window.max_samples and multisample and window.was_rendered:
 			window.frame_times += (
-					Time.get_ticks_usec() - window._max_sample_start_time
+					Time.get_ticks_usec() - window.max_sample_start_time
 			) / 1_000_000.0
 			
 		# If frame is above limit or a scene/camera/flag change caused a reset
@@ -343,9 +344,9 @@ func render_window(window : PTRenderWindow):
 		if window.frame == 0:
 			window.frame_times = 0
 		
-		window._max_sample_start_time = Time.get_ticks_usec()
+		window.max_sample_start_time = Time.get_ticks_usec()
 		
-		#Render
+		# Create work for gpu
 		wd.create_compute_list(window)
 		
 		window.frame += 1
@@ -354,19 +355,16 @@ func render_window(window : PTRenderWindow):
 		window.scene_changed = false
 		window.render_mode_changed = false
 		
-		window._was_rendered = true
-		_was_rendered = true
+		window.was_rendered = true
+		was_rendered = true
 		
 	else:
-		window._was_rendered = false
-		
-		
+		window.was_rendered = false
 		
 
 func save_framebuffer(work_dispatcher : PTWorkDispatcher):
 	if Engine.is_editor_hint():
-		if (scene and not scene.camera.freeze):
-			print("Taking pictures in the editor is not currently supported.")
+		print("Taking pictures in the editor is not currently supported.")
 		return
 		
 	var image = work_dispatcher.rd.texture_get_data(work_dispatcher.image_buffer, 0)
@@ -399,8 +397,11 @@ func create_canvas():
 	mat.set_shader_parameter("is_rendering", not is_rendering_disabled)
 	
 	# Create a canvas to which rendered images will be drawn
+	@warning_ignore("shadowed_variable")
 	var canvas := MeshInstance3D.new()
 	canvas.position -= Vector3(0,0,1)
+	canvas.set_layer_mask_value(20, true)
+	canvas.set_layer_mask_value(1, false)
 	canvas.mesh = QuadMesh.new()
 	canvas.mesh.size = Vector2(2, 2)
 	canvas.mesh.surface_set_material(0, mat)
@@ -435,4 +436,16 @@ func create_bvh(_max_children : int, function_name : String):
 			
 	#print((Time.get_ticks_usec() - _start) / 1000.)
 	
+
+func copy_camera(from : Camera3D, to : Camera3D):
+	#to.position = from.position
+	to.translate(to.position - from.position)
+	
+	to.transform = from.transform
+	to.fov = from.fov
+	
+	if to is PTCamera:
+		to.set_viewport_size()
+
+
 

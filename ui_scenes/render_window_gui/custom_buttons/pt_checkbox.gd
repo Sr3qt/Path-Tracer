@@ -24,7 +24,7 @@ func _ready():
 	disabled_mask.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
-func set_disable(is_disabled):
-	disabled = is_disabled
+func set_disable(_is_disabled):
+	disabled = _is_disabled
 	if disabled_mask:
-		disabled_mask.visible = is_disabled
+		disabled_mask.visible = _is_disabled

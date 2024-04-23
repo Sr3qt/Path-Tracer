@@ -45,9 +45,9 @@ func _ready():
 	item_selected.connect(_item_selected)
 
 
-func set_disable(is_disabled):
-	disabled = is_disabled
-	disabled_mask.visible = is_disabled
+func set_disable(_is_disabled):
+	disabled = _is_disabled
+	disabled_mask.visible = _is_disabled
 	if is_disabled:
 		changed_mask.visible = false
 	else:

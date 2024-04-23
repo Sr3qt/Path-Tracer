@@ -18,8 +18,8 @@ var _is_plugin_hint = false
 
 func _ready():
 	
-	if get_parent()._renderer:
-		_is_plugin_hint = get_parent()._renderer._is_plugin_hint
+	if get_parent().renderer:
+		_is_plugin_hint = get_parent().renderer._is_plugin_hint
 	
 	if not Engine.is_editor_hint() or _is_plugin_hint:
 		%PanelContainer.visible = false
@@ -33,13 +33,13 @@ func _ready():
 		%UseBVHButton.button_pressed = parent.use_bvh
 		%ShowBVHDepthButton.button_pressed = parent.show_bvh_depth
 		
-		%BVHTreeOrder.value = parent._renderer.bvh_max_children
-		%BVHTreeOrder.previous_value = parent._renderer.bvh_max_children
+		%BVHTreeOrder.value = parent.renderer.bvh_max_children
+		%BVHTreeOrder.previous_value = parent.renderer.bvh_max_children
 		
 		# Set default values for option button
 		#  NOTE: Indexes should work as long as BVHType enums are positive
-		%BVHType.selected = parent._renderer.default_bvh
-		%BVHType.previous_value = parent._renderer.default_bvh
+		%BVHType.selected = parent.renderer.default_bvh
+		%BVHType.previous_value = parent.renderer.default_bvh
 		
 		# Set default values for sample buttons
 		%EnableMultisampleButton.button_pressed = parent.enable_multisampling
@@ -53,6 +53,12 @@ func _ready():
 		#  Therefore we have to manually bind it.
 		%MaxSamplesButton.get_line_edit().connect("focus_exited", 
 				_on_max_samples_button_focus_exited)
+		
+		# Set defualt for camera link button
+		if _is_plugin_hint:
+			_on_link_camera_button_toggled(parent.renderer.is_camera_linked)
+		else:
+			%LinkCameraButton.set_disable(true)
 		
 		# TODO THINGS TO ADD:
 		#	-add button to select camera angle from enum and add method to add 
@@ -85,7 +91,7 @@ func _on_create_bvh_button_pressed():
 	%BVHType.previous_value = %BVHType.selected
 	%BVHTreeOrder.previous_value = %BVHTreeOrder.value
 	
-	parent._renderer.create_bvh(%BVHTreeOrder.value, 
+	parent.renderer.create_bvh(%BVHTreeOrder.value, 
 			bvh_function_names[%BVHType.selected])
 
 
@@ -112,6 +118,11 @@ func _on_clear_samples_pressed():
 
 
 func _on_disable_render_button_toggled(toggled_on):
-	parent._renderer.is_rendering_disabled = toggled_on
+	parent.renderer.is_rendering_disabled = toggled_on
 
+
+func _on_link_camera_button_toggled(toggled_on):
+	parent.renderer.is_camera_linked = toggled_on
+	%LinkCameraButton.text = ("Unlink camera from editor" if toggled_on else
+			"Link camera to editor")
 

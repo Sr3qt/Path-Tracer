@@ -166,8 +166,10 @@ func create_compute_list(window : PTRenderWindow = null):
 	if window == null:
 		window = PTRenderWindow.new()
 		
+		@warning_ignore("integer_division")
 		window.work_group_width = ceili(_renderer.render_width / 
 										_renderer.compute_invocation_width)
+		@warning_ignore("integer_division")
 		window.work_group_height = ceili(_renderer.render_height / 
 										_renderer.compute_invocation_height)
 		window.work_group_depth = 1

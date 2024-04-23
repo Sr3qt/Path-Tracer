@@ -1,13 +1,15 @@
+@tool
 class_name PTCamera
 extends Camera3D
 
-""" Controls rendering paramaters and position in 3d space
+""" Controls rendering paramaters and position in 3D space
 
-Replaces Camera3D for path traced rendering
+Extends Camera3D for path traced rendering
 """
 
 # Whether any camera settings has changed
 # TODO Make camera_changed fool proof (no input from user required)
+# TODO Checkout Node3D.set_notify_transform()
 var camera_changed := false
 
 # Render variables

@@ -83,7 +83,7 @@ func _init(
 
 func _ready():
 	# Create default random scene if no imports
-	if not Engine.is_editor_hint():
+	if not Engine.is_editor_hint() or get_parent()._is_plugin_hint:
 		if starting_scene == "none":
 			if scene_import:
 				import(scene_import)
@@ -93,8 +93,7 @@ func _ready():
 		else:
 			var path = "res://main/sphere_" + starting_scene + ".txt"
 			import(path)
-			
-	if not Engine.is_editor_hint() or get_parent()._is_plugin_hint:
+		
 		get_size()
 		
 		if camera == null:
@@ -109,7 +108,6 @@ func _ready():
 			set_camera_setting(starting_camera)
 	elif get_parent()._is_plugin_hint:
 		set_camera_setting(CameraSetting.book_ex)
-		create_random_scene(0)
 	
 # Only relevant for when the structure of the scene changes, 
 #  i.e adding / removing objects

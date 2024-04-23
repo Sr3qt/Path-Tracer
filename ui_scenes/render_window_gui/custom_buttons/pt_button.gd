@@ -2,7 +2,7 @@
 class_name PTButton
 extends Button
 
-"""The very advanced and high tech custom !option button! (tm pending)"""
+"""The very advanced and high tech custom !button! (tm pending)"""
 
 
 var disabled_mask
@@ -27,10 +27,10 @@ func _ready():
 	resized.connect(_on_resized)
 
 
-func set_disable(is_disabled):
-	disabled = is_disabled
+func set_disable(_is_disabled):
+	disabled = _is_disabled
 	if disabled_mask:
-		disabled_mask.visible = is_disabled
+		disabled_mask.visible = _is_disabled
 		
 
 func _on_resized():
