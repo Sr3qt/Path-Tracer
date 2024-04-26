@@ -22,7 +22,7 @@ func _init(
 	mesh.radius = p_radius
 	mesh.height = p_radius * 2
 	
-	# TODO TL;DR aabb is in local space
+	
 	if p_center != Vector3.ZERO:
 		position = p_center
 	

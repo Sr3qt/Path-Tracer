@@ -83,7 +83,7 @@ func create_buffers():
 	
 	# Trying to set up buffers without a scene makes no sense
 	if not _scene:
-		print("Set a scene to the Renderer before trying to create gpu buffers.")
+		push_warning("Set a scene to the Renderer before trying to create gpu buffers.")
 		return
 	
 	# The image buffer used in compute and fragment shader
@@ -375,6 +375,13 @@ func _create_planes_byte_array() -> PackedByteArray:
 	return bytes
 	
 
+func _create_bvh_byte_array() -> PackedByteArray:
+	if _scene.bvh:
+		return _scene.bvh.to_byte_array()
+	else:
+		return PTBVHTree.new().to_byte_array()
+
+
 func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 	var bytes = PackedByteArray()
 	
@@ -392,12 +399,5 @@ func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 	
 	return bytes
 	
-
-func _create_bvh_byte_array() -> PackedByteArray:
-	if _scene.bvh:
-		return _scene.bvh.to_byte_array()
-	else:
-		return PTBVHTree.new().to_byte_array()
-
 
 

@@ -20,11 +20,12 @@ var _scene : PTScene
 
 
 func _enter_tree():
-	# Find scene when entering tree
-	var parent = get_parent()
-	if parent is PTScene:
-		_scene = parent
-		parent.add_object(self)
+	# Find scene when entering tree if scene is not set
+	if not _scene:
+		var parent = get_parent()
+		if parent is PTScene:
+			_scene = parent
+			parent.add_object(self)
 
 
 func _get_property_list():

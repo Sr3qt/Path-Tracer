@@ -40,14 +40,20 @@ var wd : PTWorkDispatcher
 # TODO Have a PTWorkDispatcher for every scene that can be rendered,
 #  especially thinking about plugin being able to render current scene
 
+# An array of WorkDispatchers for each scene
+var wds : Array[PTWorkDispatcher]
+
 # Array of sub-windows
 var windows : Array[PTRenderWindow] = []
 
-# The mesh to draw to
-var canvas : MeshInstance3D
-
 # A scene with objects and a camera node
 var scene : PTScene
+
+# An array of scenes. Primarily used by plugin
+var scenes : Array[PTScene]
+
+# The mesh to draw to
+var canvas : MeshInstance3D
 
 # Editor camera. Only used by plugin
 var editor_camera : Camera3D
@@ -107,8 +113,6 @@ func _ready():
 		# TODO IF PTRenderer is a singleton, Scenes can add themselves
 		scene = get_node("PTScene") # Is this the best way to get Scene node?
 		
-		# TODO MOve this to a current_camera setter 
-		scene.camera.add_child(canvas)
 		
 		if _is_plugin_hint:
 			# NOTE: The editor stores the editor_camera's transforms and copies them
@@ -127,6 +131,8 @@ func _ready():
 			editor_camera.set_cull_mask_value(20, is_camera_linked)
 			
 		if scene:
+			# TODO MOve this to a current_camera setter 
+			scene.camera.add_child(canvas)
 			var function_name = PTBVHTree.enum_to_dict[default_bvh]
 			scene.create_BVH(bvh_max_children, function_name)
 
@@ -392,6 +398,11 @@ func save_framebuffer(work_dispatcher : PTWorkDispatcher):
 	Time.get_datetime_string_from_system().replace(":", "-") + ".png")
 
 
+func add_scene(_scene):
+	"""Adds a scene to renderer"""
+
+
+
 func create_canvas():
 	# Create canvas that will display rendered image
 	# Prepare canvas shader
@@ -440,6 +451,24 @@ func create_bvh(_max_children : int, function_name : String):
 			
 	#print((Time.get_ticks_usec() - _start) / 1000.)
 	
+
+func update_object(_scene, object):
+	"""Updates an individual object in the buffer"""
+	# TODO This is just a test. Will see if it is performanant enough
+	
+	# Find right wd based on _scene
+	
+	var buffer
+	match object.get_type():
+		PTObject.ObjectType.SPHERE:
+			buffer = wd.sphere_buffer
+		
+		PTObject.ObjectType.PLANE:
+			buffer = wd.plane_buffer
+	
+	var bytes = object.to_byte_array()
+	wd.rd.buffer_update(buffer, object.object_index * bytes.size(), bytes.size(), bytes)
+
 
 func copy_camera(from : Camera3D, to : Camera3D):
 	#to.position = from.position

@@ -57,6 +57,9 @@ var camera : PTCamera
 
 var object_count : int = 0
 
+# TEMP
+var renderer : PTRenderer
+
 
 func _init(
 		_object_dict = {}, 
@@ -124,7 +127,7 @@ func update_object(object : PTObject):
 	object
 	
 	# Send request to update buffer
-	
+	renderer.update_object(self, object)
 	
 	scene_changed = true
 
@@ -159,6 +162,7 @@ static func array2vec(a):
 	return Vector3(a[0], a[1], a[2])
 
 
+# TODO DEPRECATE load functions
 static func load_scene(path : String):
 	""" Returns new scene with data from file """
 	var out = _load_scene(path)
@@ -173,6 +177,11 @@ func import(path : String):
 	objects = out[0]
 	materials = out[1]
 	
+	for object_type in objects.values():
+		for object in object_type:
+			object._scene = self
+			add_child(object)
+		
 	scene_changed = true
 
 
