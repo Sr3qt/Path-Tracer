@@ -1,17 +1,16 @@
+@tool
 class_name PTMaterial
-extends Node
-# TODO Make into a resource
+extends Resource
 
+# Similar to GPU material. Default value is white diffuse
+@export_color_no_alpha var albedo := Color(1, 1, 1)
+@export_range(0.0, 1.0) var roughness := 0.0
+@export_range(0.0, 1.0) var metallic := 0.0
+@export_range(0.0, 1.0) var opacity := 1.0
+@export var IOR := 1.0
+@export var refraction_depth : int = 0
 
-# Similar to GPU material, default value is the same as air
-var albedo := Vector3(1, 1, 1) # Stored as linear color values from 0 to 1
-var roughness := 0.
-var metallic := 0.
-var opacity := 1.
-var IOR := 1.
-var refraction_depth := 0
-
-# TODO Add texture variable
+# TODO Add texture variable to material or object
 # TODO Add chance to reflect for transparent objects
 # TODO Calculate current IOR of camera and pass it to gpu
 
@@ -40,7 +39,8 @@ func is_equal(other : PTMaterial):
 	)
 
 func to_byte_array():
-	var floats_array = PTObject.vec2array(albedo) + [
+	
+	var floats_array = [albedo.r, albedo.g, albedo.b] + [
 		roughness,
 		metallic,
 		opacity,

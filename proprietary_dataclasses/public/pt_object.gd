@@ -1,6 +1,6 @@
+@tool
 class_name PTObject
-extends Node
-# TODO Inherit from meshInsatnacce 3d probably
+extends MeshInstance3D
 
 """Base class for all visual objects"""
 
@@ -9,8 +9,7 @@ extends Node
 # Tied to object_type enum in shader
 enum ObjectType {NOT_OBJECT = 0, SPHERE = 1, PLANE = 2, MESH = 3}
 
-var material : PTMaterial
-var aabb : PTAABB
+@export var material : PTMaterial
 
 # Indices relevant to _scene
 var object_index : int
@@ -19,8 +18,37 @@ var material_index : int
 # The scene this object is part of
 var _scene : PTScene
 
-static func vec2array(vector : Vector3):
+
+func _enter_tree():
+	# Find scene when entering tree
+	var parent = get_parent()
+	if parent is PTScene:
+		_scene = parent
+		parent.add_object(self)
+
+
+func _get_property_list():
+	# TODO Overriding previous classes export might be possible in godot 4.3
+	var properties = []
+	properties.append({
+		"name": "mesh",
+		"type": TYPE_RID,
+		"usage": PROPERTY_USAGE_NO_EDITOR,
+		"hint": PROPERTY_HINT_RESOURCE_TYPE,
+		"hint_string": "Don't change the mesh"
+	})
+	
+	return properties
+	
+
+static func vector_to_array(vector : Vector3):
 	return [vector.x, vector.y, vector.z]
+
+
+static func aabb_to_byte_array(aabb : AABB) -> PackedByteArray:
+	var new_aabb = aabb.abs()
+	var arr = vector_to_array(aabb.position) + [0] + vector_to_array(aabb.end) + [0]
+	return PackedFloat32Array(arr).to_byte_array()
 
 
 func get_material() -> PTMaterial:
@@ -40,3 +68,9 @@ func get_type():
 		return ObjectType.PLANE
 	else:
 		return ObjectType.NOT_OBJECT
+
+
+func get_global_aabb():
+	"""Returns the objects aabb in world coordinates"""
+	return global_transform * get_aabb()
+

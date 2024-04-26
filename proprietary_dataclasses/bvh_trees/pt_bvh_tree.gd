@@ -51,6 +51,8 @@ var _scene : PTScene
 # A dictionary of objects in the bvh
 var objects_dict
 
+# TODO MAke object to leaf node dictionary
+
 var BVH_list : Array[BVHNode] = []
 
 var max_children : int
@@ -68,7 +70,7 @@ var _index := 0 # Used to keep track of index when creating BVH_list
 func _init(_max_children = 2):
 	max_children = _max_children
 	root_node = BVHNode.new(null, self)
-	root_node.aabb = PTAABB.new()
+	#root_node.aabb = AABB()
 	inner_count += 1
 	
 	BVH_list = [root_node]
@@ -138,7 +140,7 @@ func create_BVH(scene : PTScene, axis := "x"):
 	#var _axis = 0
 	var _axis = axis_conversion[axis]
 	var axis_sort = func(a, b):
-		return a.aabb.minimum[_axis] > b.aabb.minimum[_axis]
+		return a.get_global_aabb().position[_axis] > b.get_global_aabb().end[_axis]
 	
 	flat_object_list.sort_custom(axis_sort)
 	
@@ -153,6 +155,12 @@ func create_BVH(scene : PTScene, axis := "x"):
 	
 	print("Finished creating %s-axis sorted BVH tree with %s inner nodes and \
 %s leaf nodes in %s ms." % [axis, inner_count, leaf_count, creation_time / 1000.])
+
+
+func update_aabb(object : PTObject):
+	# TODO Find leaf node with object and call update_aabb on it
+	""""""
+
 
 func size():
 	"""Returns the total bumber of nodes in the tree"""
@@ -169,6 +177,7 @@ func depth():
 		current_node = current_node.children[0]
 		counter += 1
 	return counter
+
 
 func tree_SAH_cost():
 	"Calculates the SAH cost for the whole tree"
@@ -259,7 +268,7 @@ class BVHNode:
 	var index : int # Index of this node in BVH_list
 	var children : Array[BVHNode] # Reference to child BVHNodes
 	var children_indices : Array[int] # List of indices to child BVHNodes in the BVH_list
-	var aabb : PTAABB
+	var aabb : AABB
 	
 	# Leaf nodes in the tree have no children and have a list pointing to objects
 	#  The object list is no larger than _tree.max_children
@@ -284,21 +293,26 @@ class BVHNode:
 
 
 	func set_aabb():
-		aabb = PTAABB.new(Vector3.INF, -Vector3.INF, false)
 		if is_leaf and objects:
+			aabb = objects[0].get_global_aabb()
 			for object in objects:
-				aabb.merge(object.aabb)
+				aabb = aabb.merge(object.get_global_aabb())
 			return
 		
-		for child in children:
-			if child.aabb:
-				aabb.merge(child.aabb)
-			else:
-				print("Warning: Child node %s does not have aabb" % child)
-				
-		if not aabb.minimum.is_finite() or not aabb.maximum.is_finite():
-			print("AABB boundaries was not set correctly, %s, %s" % 
-			[aabb.minimum, aabb.maximum]) 
+		if children.size() > 0:
+			aabb = children[0].aabb
+			for child in children:
+				if child.aabb:
+					aabb = aabb.merge(child.aabb)
+				else:
+					push_warning("Warning: Child node %s does not have aabb" % child)
+
+
+	func update_aabb(new_aabb : AABB):
+		aabb = aabb.merge(new_aabb)
+		if parent != null:
+			parent.update_aabb(new_aabb)
+
 
 
 	func add_children(new_children : Array[BVHNode]):
@@ -306,7 +320,7 @@ class BVHNode:
 			children += new_children
 			set_aabb() # Update aabb
 		else:
-			print("Warning: Cannot fit child node")
+			push_warning("Warning: Cannot fit child node")
 
 
 	func to_byte_array():
@@ -325,7 +339,7 @@ class BVHNode:
 		child_indices_array.resize(_tree.max_children * 2 + 
 								   int((_tree.max_children % 2) + 2) * 2)
 		
-		var bbox_bytes = aabb.to_byte_array()
+		var bbox_bytes = PTObject.aabb_to_byte_array(aabb)
 		var other = [size(), parent_index, index, 0]
 		var other_bytes = PackedInt32Array(other).to_byte_array()
 		

@@ -1,7 +1,10 @@
-class_name PTAABB
+#class_name PTAABB
 extends Node
+## @deprecated
+
 # Can potentially be Refcounted
 # TODO Look into whether this can just inherit AABB
+# TODO HOnestly just use defualt AABB. THIS IS NOW DEPRECATED
 
 var minimum : Vector3
 var maximum : Vector3
@@ -25,18 +28,18 @@ func size():
 	return siz[0] * siz[1] * siz[2]
 
 
-func intersects(other : PTAABB):
+func intersects(other):
 	pass
 	
 
-func merge(other : PTAABB):
+func merge(other):
 	for i in range(3):
 		minimum[i] = min(other.minimum[i], minimum[i])
 	for i in range(3):
 		maximum[i] = max(other.maximum[i], maximum[i])
 		
 
-func copy(other : PTAABB):
+func copy(other):
 	minimum = other.minimum
 	maximum = other.maximum
 	

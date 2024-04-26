@@ -118,6 +118,17 @@ func _ready():
 	#"""Sets every object's material index according to this scene's material list"""
 	
 
+func update_object(object : PTObject):
+	## Called by an object when its properties changed
+	# Send request to update bvh
+	object
+	
+	# Send request to update buffer
+	
+	
+	scene_changed = true
+
+
 func add_object(object : PTObject):
 	"""Adds an object to """
 	var type = object.get_type()
@@ -126,8 +137,7 @@ func add_object(object : PTObject):
 	
 	object_count += 1
 	
-	# TODO: Add hash function to material, and make dict or
-	#  Make a global material index that keeps track of all material instances
+	# TODO Leave the optimization of using the same material to the user
 	# First check for object reference in array
 	var material_index = materials.find(object.material)
 	if material_index == -1:
@@ -141,7 +151,6 @@ func add_object(object : PTObject):
 			object.material_index = material_index
 	else:
 		object.material_index = material_index
-		
 		
 	scene_changed = true
 
@@ -262,6 +271,7 @@ func create_random_scene(_seed):
 			add_object(new_sphere)
 	
 
+# TODO THINK ABOUT DEPRECATING THIS FUNCTION
 static func _load_scene(path : String):
 	var file = FileAccess.open(path, FileAccess.READ)
 	var text = file.get_as_text()
@@ -282,7 +292,7 @@ static func _load_scene(path : String):
 		if line.begins_with("mtl "):
 			var values = line.split(" ", false)
 			var material = PTMaterial.new()
-			material.albedo = Vector3(float(values[2]), 
+			material.albedo = Color(float(values[2]), 
 									  float(values[3]), 
 									  float(values[4]))
 			material.roughness = float(values[5])

@@ -1,3 +1,4 @@
+@tool
 class_name PTPrimitive3D
 extends PTObject
 

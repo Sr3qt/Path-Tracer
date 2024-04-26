@@ -1,18 +1,54 @@
+@tool
 class_name PTPlane
 extends PTPrimitive3D
 
+@export var normal := Vector3.UP:
+	set(value):
+		if value == Vector3.ZERO:
+			push_warning("Cannot set plane normal to zero vector.")
+			return
+		
+		if mesh is PlaneMesh and value != normal:
+			rotate_to_new_normal(value)
+			normal = value
+			translate_with_new_d(distance)
+@export var distance : float = 0.0:
+	set(value):
+		translate_with_new_d(value)
+		distance = value
 
-var normal : Vector3
-var distance : float
 
-
-func _init(normal_ : Vector3, distance_ : float, material_ : PTMaterial, mtl_i):
-	normal = normal_
-	distance = distance_
-	material = material_
-	material_index = mtl_i 
+func _init(
+		p_normal := Vector3.UP, 
+		p_distance : float = 0.0, 
+		p_material := PTMaterial.new(), 
+		mtl_i = 0):
+	mesh = PlaneMesh.new()
+	mesh.size = Vector2(1000, 1000)
 	
+	if p_normal != Vector3.UP:
+		normal = p_normal
+	if p_distance != 0.0:
+		distance = p_distance
+	material = p_material
+	material_index = mtl_i 
+
+
+func rotate_to_new_normal(new_normal : Vector3):
+	var axis = new_normal.cross(normal).normalized()
+	var angle = normal.signed_angle_to(new_normal, axis)
+	
+	var prev_origin = position
+	transform.origin = Vector3.ZERO
+	transform = transform.rotated(axis, angle)
+	transform.origin = prev_origin
+	position = prev_origin
+
+
+func translate_with_new_d(new_d):
+	position = new_d * normal
+
 
 func to_byte_array():
-	return (PackedFloat32Array(PTObject.vec2array(normal) + [distance]).to_byte_array() +
+	return (PackedFloat32Array(PTObject.vector_to_array(normal) + [distance]).to_byte_array() +
 	PackedInt32Array([material_index, 1, 0, 0]).to_byte_array())

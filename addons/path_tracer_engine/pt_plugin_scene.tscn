@@ -35,6 +35,7 @@ render_target_update_mode = 4
 [node name="PluginRenderer" type="Node" parent="VBoxContainer/SubViewportContainer/SubViewport"]
 unique_name_in_owner = true
 script = ExtResource("2_k81n4")
+is_rendering_disabled = true
 max_default_depth = 16
 
 [node name="PTScene" type="Node" parent="VBoxContainer/SubViewportContainer/SubViewport/PluginRenderer"]

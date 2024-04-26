@@ -9,8 +9,8 @@
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_plane.gd" id="7_o0jqa"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_tuk0m"]
-radius = 2.0
-height = 4.0
+radius = 1.54
+height = 3.08
 
 [sub_resource type="Resource" id="Resource_3pihx"]
 script = ExtResource("6_8f7np")
@@ -68,26 +68,9 @@ script = ExtResource("3_r6xni")
 script = ExtResource("4_nld3g")
 
 [node name="PTSphere" type="MeshInstance3D" parent="SceneRenderer/PTScene"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.33345, 5.02253, -8.74285)
 mesh = SubResource("SphereMesh_tuk0m")
 script = ExtResource("5_ims40")
-radius = 2.0
-material = SubResource("Resource_3pihx")
-mesh = SubResource("SphereMesh_tuk0m")
-
-[node name="PTSphere2" type="MeshInstance3D" parent="SceneRenderer/PTScene"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.33345, 5.02253, 1.89297)
-mesh = SubResource("SphereMesh_tuk0m")
-script = ExtResource("5_ims40")
-radius = 2.0
-material = SubResource("Resource_3pihx")
-mesh = SubResource("SphereMesh_tuk0m")
-
-[node name="PTSphere3" type="MeshInstance3D" parent="SceneRenderer/PTScene"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.74208, 7.18451, -2.78733)
-mesh = SubResource("SphereMesh_tuk0m")
-script = ExtResource("5_ims40")
-radius = 2.0
+radius = 1.54
 material = SubResource("Resource_3pihx")
 mesh = SubResource("SphereMesh_tuk0m")
 

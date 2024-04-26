@@ -119,7 +119,11 @@ func _ready():
 			
 			# Get Editor Camera
 			editor_camera = EditorInterface.get_editor_viewport_3d(0).get_camera_3d()
-			# Show canvas to editor camera by default if true
+			
+			# Unlink camera if rendering is disabled
+			is_camera_linked = is_camera_linked and not is_rendering_disabled
+			
+			# Show canvas to editor camera by default if is_camera_linked
 			editor_camera.set_cull_mask_value(20, is_camera_linked)
 			
 		if scene:
@@ -142,7 +146,7 @@ func _ready():
 		var better_window = WindowGui.instantiate()
 		
 		if not Engine.is_editor_hint():
-			better_window.max_samples = 256
+			better_window.max_samples = 300
 			better_window.stop_rendering_on_max_samples = false
 		
 		better_window.work_group_width = x

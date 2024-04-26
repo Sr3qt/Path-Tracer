@@ -60,6 +60,9 @@ func _ready():
 		else:
 			%LinkCameraButton.set_disable(true)
 		
+		# Set default for rendering disabled
+		%DisableRenderButton.button_pressed = parent.renderer.is_rendering_disabled
+		
 		# TODO THINGS TO ADD:
 		#	-add button to select camera angle from enum and add method to add 
 		#	  new camera angle from current camera
