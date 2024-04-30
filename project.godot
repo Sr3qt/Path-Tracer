@@ -17,6 +17,10 @@ run/flush_stdout_on_print=true
 run/max_fps=300
 config/icon="res://icon.svg"
 
+[autoload]
+
+PTRendererAuto="*res://proprietary_dataclasses/pt_renderer.gd"
+
 [display]
 
 window/vsync/vsync_mode=0

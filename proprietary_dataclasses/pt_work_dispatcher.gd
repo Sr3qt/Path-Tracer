@@ -109,11 +109,10 @@ func create_buffers():
 	
 	bind_sets()
 	
-	# Set texture RID for Canvas
+	# Get texture RID for Canvas
 	var material = _renderer.canvas.get_mesh().surface_get_material(0)
 	
 	texture = material.get_shader_parameter("image_buffer")
-	texture.texture_rd_rid = image_buffer
 	
 	print("Setting up buffers took %s ms" % ((Time.get_ticks_usec() - prev_time) / 1000.))
 	
@@ -349,7 +348,8 @@ func _create_materials_byte_array() -> PackedByteArray:
 	if _scene.materials:
 		for material in _scene.materials:
 			bytes += material.to_byte_array()
-			
+	else:
+		bytes += PTMaterial.new().to_byte_array()
 	return bytes
 
 
@@ -385,7 +385,10 @@ func _create_bvh_byte_array() -> PackedByteArray:
 func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 	var bytes = PackedByteArray()
 	
-	bytes += _scene.camera.to_byte_array()
+	if PTRendererAuto._is_plugin_hint:
+		bytes += PTRendererAuto._pt_editor_camera.to_byte_array()
+	else:
+		bytes += _scene.camera.to_byte_array()
 	# A higher divisor seems to give a more volatile local noise
 	#  If set to low, refractive materials might not multisample correctly
 	# TODO Still required to reset time

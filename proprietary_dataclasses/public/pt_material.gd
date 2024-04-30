@@ -10,6 +10,7 @@ extends Resource
 @export var IOR := 1.0
 @export var refraction_depth : int = 0
 
+# TODO Add update material call when properties change
 # TODO Add texture variable to material or object
 # TODO Add chance to reflect for transparent objects
 # TODO Calculate current IOR of camera and pass it to gpu

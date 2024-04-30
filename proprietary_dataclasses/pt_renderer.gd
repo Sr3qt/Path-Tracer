@@ -2,11 +2,10 @@
 class_name PTRenderer
 extends Node
 
-# TODO This class probably fits well as a singleton, research how to do that
-"""This node should be the root node of a scene with PTScene object added as a child.
+"""This node is a Singleton with the responsibility of rendering the current scene.
 
-This node has the responsibility to take render settings and pass them to 
-a the correct PTWorkDispatcher, wich will actually make the gpu render an image.
+PTScenes will add themselves to this Singleton. The user can ask PTRenderer 
+to swap scenes.
 
 """
 
@@ -18,47 +17,55 @@ const compute_invocation_width : int = 8
 const compute_invocation_height : int = 8
 const compute_invocation_depth : int = 1
 
-## Override for stopping rendering. When enabled no work will be pushed to the 
-##  GPU the screen will be white.
+## General override for stopping rendering. When enabled no work will be pushed to the 
+##  GPU and the screen will be white.
 @export var is_rendering_disabled := false:
 	set(value):
-		if canvas:
-			var mat = canvas.mesh.surface_get_material(0)
-			mat.set_shader_parameter("is_rendering", not value)
-			canvas.visible = not value
 		is_rendering_disabled = value
+		_set_canvas_visibility()
 
-## The BVH type created on startup
-@export var default_bvh : PTBVHTree.BVHType = PTBVHTree.BVHType.X_SORTED
+## Override for stopping rendering. Specifically for when no scene is present.
+var no_scene_is_active := true:
+	set(value):
+		no_scene_is_active = value
+		_set_canvas_visibility()
+
+func _set_canvas_visibility():
+	if canvas:
+		var is_rendering = not is_rendering_disabled and not no_scene_is_active
+		var mat = canvas.mesh.surface_get_material(0)
+		mat.set_shader_parameter("is_rendering", is_rendering)
+		canvas.visible = is_rendering
 
 # Since the scene will become a subtree in the plugin, 
 #  root_node is a convenient pointer to the relative root node, Only used by plugin
-var root_node 
+# DEPRECATED
+#var root_node 
 
-# Realtime PTWorkDispatcher
-var wd : PTWorkDispatcher
-# TODO Have a PTWorkDispatcher for every scene that can be rendered,
-#  especially thinking about plugin being able to render current scene
 
-# An array of WorkDispatchers for each scene
-var wds : Array[PTWorkDispatcher]
+var wd : PTWorkDispatcher # Current PTWorkDispatcher for the current scene
+var wds : Array[PTWorkDispatcher] # An array of WorkDispatchers for each scene
+
+var scene : PTScene # The scene currently in use
+var scenes : Array[PTScene] # An array of scenes. Primarily used by plugin
+var scene_index : int # Index to current scene in scenes. 
+					  #  The same index is used for wds array.
+
+# An indexing dictionary translating editing-scene root nodes to scene_index 
+var root_node_to_scene = {}
 
 # Array of sub-windows
 var windows : Array[PTRenderWindow] = []
 
-# A scene with objects and a camera node
-var scene : PTScene
-
-# An array of scenes. Primarily used by plugin
-var scenes : Array[PTScene]
-
 # The mesh to draw to
 var canvas : MeshInstance3D
 
-# Editor camera. Only used by plugin
+# The camera used by the editor in 3D main panel. Only used by plugin
 var editor_camera : Camera3D
+# Used to transfer editor camera attributes to gpu
+var _pt_editor_camera : PTCamera
 
-# Whether the current camera will follow editor_camera. Only used by plugin
+# Whether the _pt_editor_camera will follow editor_camera. Only used by plugin
 var is_camera_linked = true:
 	set(value):
 		if editor_camera:
@@ -78,6 +85,7 @@ var proc_textures = {
 	
 	}
 
+# TODO Make render settings node similar to WorldEnvironment
 var render_width := 1920
 var render_height := 1080
 
@@ -86,6 +94,8 @@ var samples_per_pixel = 1 # Deprecated
 @export var max_refraction_bounces : int = 8 
 
 # Whether this instance was created by a plugin script or not. Only used by plugin
+# There should only be one PTRenderer instance running while Engine.is_editor_hint
+#  is true. TODO Remove this from all scripts if possible
 var _is_plugin_hint := false
 
 # Whether anything was rendered in the last render_window call. Only used by plugin
@@ -93,68 +103,45 @@ var was_rendered := false
 
 
 func _ready():
-	if _is_plugin_hint:
-		print("Plugin renderer _ready start")
-		print(self)
 	
+	# REMOVE in final
 	if not Engine.is_editor_hint():
 		# Apparently very import check for get_window (Otherwise the editor bugs out)
 		get_window().position -= Vector2i(450, 100)
 
-	# Only allow runtime and plugin instances to create child nodes
-	if not Engine.is_editor_hint() or _is_plugin_hint:
-		if not wd:
-			wd = PTWorkDispatcher.new(self)
-		
-		if not canvas:
-			canvas = create_canvas()
-			
-		# TODO Turn scene / wd setup into function which stores them in an array
-		# TODO IF PTRenderer is a singleton, Scenes can add themselves
-		scene = get_node("PTScene") # Is this the best way to get Scene node?
-		
-		
-		if _is_plugin_hint:
-			# NOTE: The editor stores the editor_camera's transforms and copies them
-			#  on input event. Therefore moving the camera in the plugin dock
-			#  can only move the camera until an input in the editor is detected.
-			#  This is why moving in the dock was removed, preferring to just use 
-			#  the editors camera
-			
-			# Get Editor Camera
-			editor_camera = EditorInterface.get_editor_viewport_3d(0).get_camera_3d()
-			
-			# Unlink camera if rendering is disabled
-			is_camera_linked = is_camera_linked and not is_rendering_disabled
-			
-			# Show canvas to editor camera by default if is_camera_linked
-			editor_camera.set_cull_mask_value(20, is_camera_linked)
-			
-		if scene:
-			# TODO MOve this to a current_camera setter 
-			scene.camera.add_child(canvas)
-			var function_name = PTBVHTree.enum_to_dict[default_bvh]
-			scene.create_BVH(bvh_max_children, function_name)
 
-			wd.set_scene(scene)
-
-			load_shader()
-
-			wd.create_buffers()
+	if not canvas:
+		canvas = create_canvas()
+	
+	# If the Renderer is running in the editor, a single camera is used 
+	#  instead of using each scene's camera
+	if _is_plugin_hint:
+		# NOTE: The editor stores the editor_camera's transforms and copies them
+		#  on input event. Therefore moving the camera in the plugin dock
+		#  can only move the camera until an input in the editor is detected.
+		#  This is why moving in the dock was removed, preferring to just use 
+		#  the editors camera.
 		
-		# TODO Add support for multiple PTRenderWindows on screen
-		#  as well as support for a seperate bvh for each of them.
+		# Get Editor Camera
+		editor_camera = EditorInterface.get_editor_viewport_3d(0).get_camera_3d()
 		
-		#var x = ceil(1920. / 16.)
+		# Unlink camera if rendering is disabled
+		is_camera_linked = is_camera_linked and not is_rendering_disabled
+		
+		# Show canvas to editor camera if is_camera_linked
+		editor_camera.set_cull_mask_value(20, is_camera_linked)
+	
+	# TODO Add support for multiple PTRenderWindows on screen
+	#  as well as support for a seperate bvh for each of them.
+	
+	if not Engine.is_editor_hint():
 		var x = ceili(1920. / 8.)
 		var y = ceili(1080. / 8.)
 		
 		var better_window = WindowGui.instantiate()
-		
-		if not Engine.is_editor_hint():
-			better_window.max_samples = 300
-			better_window.stop_rendering_on_max_samples = false
-		
+		better_window.max_samples = 300
+		better_window.stop_rendering_on_max_samples = false
+	
 		better_window.work_group_width = x
 		better_window.work_group_height = y
 		
@@ -166,32 +153,30 @@ func _process(_delta):
 	
 	# If editor camera moved, copy the data to scene.camera
 	if _is_plugin_hint and editor_camera and is_camera_linked:
-		if (not (editor_camera.position == scene.camera.position and 
-				editor_camera.transform == scene.camera.transform)):
-			copy_camera(editor_camera, scene.camera)
+		if (not (editor_camera.position == _pt_editor_camera.position and 
+				editor_camera.transform == _pt_editor_camera.transform)):
+			copy_camera(editor_camera, _pt_editor_camera)
 	
 	## Decides if any rendering will be done at all
 	# Runtime and plugin requires different checks for window focus
 	var runtime = (get_window().has_focus() and not Engine.is_editor_hint())
-	var plugin = (_is_plugin_hint and (root_node and root_node.visible) and
-					Engine.is_editor_hint())
+	var plugin = (_is_plugin_hint and Engine.is_editor_hint())
 	
-	var common = not is_rendering_disabled
+	var common = not is_rendering_disabled and not no_scene_is_active
 	
 	if (runtime or plugin) and common:
 		## Double check everything with warnings
-		# Check if scene exists
-		if not scene and not is_rendering_disabled:
+		if not scene:
 			# TODO Add path to where warning came from ?
 			raise_error("No scene has been set. Rendering is therefore disabled.")
-			is_rendering_disabled = true
-			
-		# Check if camera exists
-		if scene and not scene.camera and not is_rendering_disabled:
+			no_scene_is_active = true
+		
+		if scene and not scene.camera:
 			raise_error("No camera has been set. Rendering is therefore disabled.")
 			is_rendering_disabled = true
 		
-		if not is_rendering_disabled:
+		common = not is_rendering_disabled and not no_scene_is_active
+		if common:
 			# If no warnings are raised, this will render
 			for window in windows:
 				render_window(window)
@@ -206,12 +191,14 @@ func _process(_delta):
 		scene.scene_changed = false
 		if scene.camera:
 			scene.camera.camera_changed = false
+	
+	if _is_plugin_hint:
+		_pt_editor_camera.camera_changed = false
 
 
 func _input(event):
 	if event is InputEventKey:
 		if event.pressed and event.keycode == KEY_X and not event.is_echo():
-			# TODO For some reason the editor can never get here
 			save_framebuffer(wd)
 	
 	# TODO MAke able to take images with long render time with loading bar
@@ -237,6 +224,15 @@ func _exit_tree():
 	
 	if _is_plugin_hint:
 		wd.free_RIDs()
+
+
+## It is plugin_control_root's responsibility to call this function
+func _set_plugin_camera(cam : PTCamera):
+	if not canvas:
+		canvas = create_canvas()
+	
+	_pt_editor_camera = cam
+	_pt_editor_camera.add_child(canvas)
 
 
 func raise_error(msg):
@@ -300,7 +296,7 @@ func load_shader():
 	var shader = RDShaderSource.new()
 	shader.source_compute = res
 	
-	wd.load_shader(shader)
+	return shader
 	
 
 func add_window(window : PTRenderWindow):
@@ -309,9 +305,6 @@ func add_window(window : PTRenderWindow):
 	
 	if not Engine.is_editor_hint():
 		add_child(window)
-	else:
-		# This was the easiest way to give the window input events
-		get_parent().get_parent().add_child.call_deferred(window)
 	
 	# TODO add collision check with other windows and change their size accordingly
 
@@ -320,8 +313,10 @@ func render_window(window : PTRenderWindow):
 	"""Might render window according to flags if flags allow it"""
 	
 	# If camera moved or scene changed
-	var movement = scene and scene.camera and (
-				scene.camera.camera_changed or scene.scene_changed)
+	var camera_moved = ((scene and scene.camera and scene.camera.camera_changed) or 
+			(_is_plugin_hint and _pt_editor_camera.camera_changed))
+	
+	var movement = camera_moved or scene.scene_changed
 	
 	# If rendering should stop when reached max samples
 	var stop_multisampling = (
@@ -338,42 +333,45 @@ func render_window(window : PTRenderWindow):
 				Time.get_ticks_usec() - window.max_sample_start_time
 		) / 1_000_000.0
 	
-	if movement or multisample or window.render_mode_changed:
-		window.scene_changed = movement
-		
-		# Adds the time taken since last frame render started
-		if window.frame < window.max_samples and multisample and window.was_rendered:
-			window.frame_times += (
-					Time.get_ticks_usec() - window.max_sample_start_time
-			) / 1_000_000.0
-			
-		# If frame is above limit or a scene/camera/flag change caused a reset
-		if window.frame > window.max_samples or movement or window.render_mode_changed:
-			window.frame = 0
-		
-		if window.frame == 0:
-			window.frame_times = 0
-		
-		window.max_sample_start_time = Time.get_ticks_usec()
-		
-		# Create work for gpu
-		wd.create_compute_list(window)
-		
-		window.frame += 1
-		
-		# Reset frame values
-		window.scene_changed = false
-		window.render_mode_changed = false
-		
-		window.was_rendered = true
-		was_rendered = true
-		
-	else:
+	# If window will not render return
+	if not (movement or multisample or window.render_mode_changed):
 		window.was_rendered = false
+		return
+	
+	# RENDER
+	window.scene_changed = movement
+	
+	# Adds the time taken since last frame render started
+	if window.frame < window.max_samples and multisample and window.was_rendered:
+		window.frame_times += (
+				Time.get_ticks_usec() - window.max_sample_start_time
+		) / 1_000_000.0
 		
+	# If frame is above limit or a scene/camera/flag change caused a reset
+	if window.frame > window.max_samples or movement or window.render_mode_changed:
+		window.frame = 0
+	
+	if window.frame == 0:
+		window.frame_times = 0
+	
+	window.max_sample_start_time = Time.get_ticks_usec()
+	
+	# Create work for gpu
+	wd.create_compute_list(window)
+	
+	window.frame += 1
+	
+	# Reset frame values
+	window.scene_changed = false
+	window.render_mode_changed = false
+	
+	window.was_rendered = true
+	was_rendered = true
+	
 
 func save_framebuffer(work_dispatcher : PTWorkDispatcher):
 	if Engine.is_editor_hint():
+		# TODO add picture taking support for editor
 		print("Taking pictures in the editor is not currently supported.")
 		return
 		
@@ -398,9 +396,74 @@ func save_framebuffer(work_dispatcher : PTWorkDispatcher):
 	Time.get_datetime_string_from_system().replace(":", "-") + ".png")
 
 
-func add_scene(_scene):
+func add_scene(new_scene):
 	"""Adds a scene to renderer"""
+	
+	if new_scene == null:
+		return
+	
+	if root_node_to_scene.has(new_scene.owner):
+		push_warning("More than one PTScene per Godot scene is currently not supported.")
+		push_warning(new_scene, " was not added to the renderer.")
+		return
+		
+	root_node_to_scene[new_scene.owner] = scenes.size()
+	
+	var function_name = PTBVHTree.enum_to_dict[new_scene.default_bvh]
+	new_scene.create_BVH(bvh_max_children, function_name)
+	
+	if not canvas:
+		canvas = create_canvas()
+	
+	# Create new WD
+	var new_wd = PTWorkDispatcher.new(self)
+	new_wd.set_scene(new_scene)
+	new_wd.load_shader(load_shader())
+	new_wd.create_buffers()
+	
+	wds.append(new_wd)
+	scenes.append(new_scene)
+	
+	# Set new_scene to scene if no scene was previously active
+	if no_scene_is_active:
+		no_scene_is_active = false
+		scene = new_scene
+		wd = new_wd
+		wd.texture.texture_rd_rid = wd.image_buffer
+		if not PTRendererAuto._is_plugin_hint:
+			if scene.camera:
+				scene.camera.look_at_from_position(Vector3.ZERO, Vector3(0,0,-1))
+				scene.camera.add_child(canvas)
+		else:
+			if _pt_editor_camera:
+				_pt_editor_camera.look_at_from_position(Vector3.ZERO, Vector3(0,0,-1))
+	
 
+func change_scene(scene_root):
+	if scene_root == null or not root_node_to_scene.has(scene_root):
+		# scene_root is a new empty node or a root without a PTScene in the scene
+		scene = null
+		no_scene_is_active = true
+		return
+	
+	# Remove (and later add) canvas from camera in runtime
+	if not _is_plugin_hint:
+		if scene and scene.camera:
+			scene.camera.remove_child(canvas)
+	
+	scene_index = root_node_to_scene[scene_root]
+	scene = scenes[scene_index]
+	wd = wds[scene_index]
+	# Change buffer displayed on canvas
+	wd.texture.texture_rd_rid = wd.image_buffer
+	
+	no_scene_is_active = false
+	
+	if not _is_plugin_hint:
+		if scene.camera:
+			scene.camera.add_child(canvas)
+			
+	# TODO Update GUI values
 
 
 func create_canvas():
@@ -471,7 +534,6 @@ func update_object(_scene, object):
 
 
 func copy_camera(from : Camera3D, to : Camera3D):
-	#to.position = from.position
 	to.translate(to.position - from.position)
 	
 	to.transform = from.transform

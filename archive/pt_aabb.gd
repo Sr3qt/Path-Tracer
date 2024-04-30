@@ -3,8 +3,8 @@ extends Node
 ## @deprecated
 
 # Can potentially be Refcounted
-# TODO Look into whether this can just inherit AABB
-# TODO HOnestly just use defualt AABB. THIS IS NOW DEPRECATED
+# TOD O Look into whether this can just inherit AABB
+# TOD O HOnestly just use defualt AABB. THIS IS NOW DEPRECATED
 
 var minimum : Vector3
 var maximum : Vector3

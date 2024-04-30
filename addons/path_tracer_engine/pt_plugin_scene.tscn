@@ -1,12 +1,12 @@
-[gd_scene load_steps=5 format=3 uid="uid://dokumyccncfdd"]
+[gd_scene load_steps=4 format=3 uid="uid://dokumyccncfdd"]
 
 [ext_resource type="Script" path="res://addons/path_tracer_engine/plugin_control_root.gd" id="1_2v5h1"]
-[ext_resource type="Script" path="res://proprietary_dataclasses/pt_renderer.gd" id="2_k81n4"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="3_fdg8n"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_camera.gd" id="4_57u0y"]
 
-[node name="RootControl" type="Button"]
+[node name="RootControl" type="Control"]
 clip_contents = true
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -14,7 +14,6 @@ grow_horizontal = 2
 grow_vertical = 2
 focus_mode = 1
 mouse_filter = 1
-flat = true
 script = ExtResource("1_2v5h1")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
@@ -32,17 +31,13 @@ handle_input_locally = false
 size = Vector2i(1080, 720)
 render_target_update_mode = 4
 
-[node name="PluginRenderer" type="Node" parent="VBoxContainer/SubViewportContainer/SubViewport"]
-unique_name_in_owner = true
-script = ExtResource("2_k81n4")
-is_rendering_disabled = true
-max_default_depth = 16
-
-[node name="PTScene" type="Node" parent="VBoxContainer/SubViewportContainer/SubViewport/PluginRenderer"]
+[node name="PTScene" type="Node" parent="VBoxContainer/SubViewportContainer/SubViewport"]
 script = ExtResource("3_fdg8n")
 scene_import = "res://main/sphere_scene4.txt"
 
-[node name="PTCamera" type="Camera3D" parent="VBoxContainer/SubViewportContainer/SubViewport/PluginRenderer/PTScene"]
+[node name="PTCamera" type="Camera3D" parent="VBoxContainer/SubViewportContainer/SubViewport/PTScene"]
+transform = Transform3D(0.224859, -0.144453, 0.963624, 0, 0.98895, 0.14825, -0.974391, -0.0333354, 0.222375, 13, 2, 3)
+fov = 20.0
 script = ExtResource("4_57u0y")
 
 [node name="MenuButton" type="MenuButton" parent="VBoxContainer"]

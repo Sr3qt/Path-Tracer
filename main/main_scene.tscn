@@ -1,6 +1,5 @@
-[gd_scene load_steps=16 format=3 uid="uid://d3dfmywq1wbly"]
+[gd_scene load_steps=15 format=3 uid="uid://d3dfmywq1wbly"]
 
-[ext_resource type="Script" path="res://proprietary_dataclasses/pt_renderer.gd" id="1_c80yu"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="2_s1nmc"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="3_r6xni"]
 [ext_resource type="Script" path="res://main/test_node.gd" id="4_nld3g"]
@@ -26,7 +25,7 @@ size = Vector2(1000, 1000)
 
 [sub_resource type="Resource" id="Resource_chg66"]
 script = ExtResource("6_8f7np")
-albedo = Color(1, 1, 1, 1)
+albedo = Color(0.678431, 0.0509804, 0.333333, 1)
 roughness = 0.0
 metallic = 0.0
 opacity = 1.0
@@ -52,22 +51,18 @@ refraction_depth = 0
 
 [node name="NewNode3D" type="Node3D"]
 
-[node name="SceneRenderer" type="Node" parent="."]
-script = ExtResource("1_c80yu")
-default_bvh = 2
-
-[node name="PTScene" type="Node" parent="SceneRenderer"]
+[node name="PTScene" type="Node" parent="."]
 script = ExtResource("2_s1nmc")
 
-[node name="PTCamera" type="Camera3D" parent="SceneRenderer/PTScene"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
-fov = 64.9
+[node name="PTCamera" type="Camera3D" parent="PTScene"]
+transform = Transform3D(0.224859, -0.144453, 0.963624, 0, 0.98895, 0.14825, -0.974391, -0.0333354, 0.222375, 13, 2, 3)
+fov = 20.0
 script = ExtResource("3_r6xni")
 
-[node name="TestNode" type="Node" parent="SceneRenderer/PTScene/PTCamera"]
+[node name="TestNode" type="Node" parent="PTScene/PTCamera"]
 script = ExtResource("4_nld3g")
 
-[node name="PTSphere" type="MeshInstance3D" parent="SceneRenderer/PTScene"]
+[node name="PTSphere" type="MeshInstance3D" parent="PTScene"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.33345, 5.02253, -8.74285)
 mesh = SubResource("SphereMesh_tuk0m")
 script = ExtResource("5_ims40")
@@ -75,7 +70,7 @@ radius = 2.0
 material = SubResource("Resource_3pihx")
 mesh = SubResource("SphereMesh_tuk0m")
 
-[node name="PTSphere2" type="MeshInstance3D" parent="SceneRenderer/PTScene"]
+[node name="PTSphere2" type="MeshInstance3D" parent="PTScene"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.33345, 5.02253, 1.89297)
 mesh = SubResource("SphereMesh_tuk0m")
 script = ExtResource("5_ims40")
@@ -83,18 +78,18 @@ radius = 2.0
 material = SubResource("Resource_3pihx")
 mesh = SubResource("SphereMesh_tuk0m")
 
-[node name="PTSphere3" type="MeshInstance3D" parent="SceneRenderer/PTScene"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.74208, 7.18451, -2.78733)
+[node name="PTSphere3" type="MeshInstance3D" parent="PTScene"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.74208, 5.21853, -2.78733)
 mesh = SubResource("SphereMesh_tuk0m")
 script = ExtResource("5_ims40")
 radius = 2.0
 material = SubResource("Resource_3pihx")
 mesh = SubResource("SphereMesh_tuk0m")
 
-[node name="PTPlane" type="MeshInstance3D" parent="SceneRenderer/PTScene"]
+[node name="PTPlane" type="MeshInstance3D" parent="PTScene"]
 transform = Transform3D(0.721215, -2.80142e-06, -0.692702, -5.43892e-06, 1, -2.71946e-06, 0.692697, -2.98023e-06, 0.721221, 0, -0.33, 0)
 mesh = SubResource("PlaneMesh_jeorl")
-skeleton = NodePath("../../../MeshInstance3D2")
+skeleton = NodePath("../../MeshInstance3D2")
 script = ExtResource("7_o0jqa")
 distance = -0.33
 material = SubResource("Resource_chg66")

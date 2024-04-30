@@ -38,8 +38,8 @@ func _ready():
 		
 		# Set default values for option button
 		#  NOTE: Indexes should work as long as BVHType enums are positive
-		%BVHType.selected = parent.renderer.default_bvh
-		%BVHType.previous_value = parent.renderer.default_bvh
+		#%BVHType.selected = parent.renderer.default_bvh
+		#%BVHType.previous_value = parent.renderer.default_bvh
 		
 		# Set default values for sample buttons
 		%EnableMultisampleButton.button_pressed = parent.enable_multisampling

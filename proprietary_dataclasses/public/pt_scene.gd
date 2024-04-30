@@ -2,12 +2,13 @@
 class_name PTScene
 extends Node
 
-"""THis class is to hold PTObjects, PTMaterials and PTBVH for a scene
+"""This class is to hold PTObjects, PTMaterials, PTCamera and PTBVH for a scene.
 
-It should be able to save and load from a file
+It's responsibility is to keep track of objects and materials, as well as any
+changes to them or the BVH. The camera is self sufficient.
 
-It should interface well with with the rendering class, being able to easily swap
-two scenes.
+It should be able to save and load from a file*
+
 
 """
 
@@ -36,6 +37,8 @@ var camera_settings_values = {
 @export_enum("none", "random_scene", "scene1", "scene2", "scene3") 
 var starting_scene = "none"
 
+@export var default_bvh := PTBVHTree.BVHType.X_SORTED
+
 # objects is a dictionary with ObjectTypes as keys. 
 #  The values are arrays of PTObjects 
 # TODO make into a class? or split into seperate arrays
@@ -56,9 +59,6 @@ var scene_changed := false
 var camera : PTCamera
 
 var object_count : int = 0
-
-# TEMP
-var renderer : PTRenderer
 
 
 func _init(
@@ -85,8 +85,9 @@ func _init(
 
 
 func _ready():
+	
 	# Create default random scene if no imports
-	if not Engine.is_editor_hint() or get_parent()._is_plugin_hint:
+	if not Engine.is_editor_hint() or PTRendererAuto._is_plugin_hint:
 		if starting_scene == "none":
 			if scene_import:
 				import(scene_import)
@@ -109,17 +110,11 @@ func _ready():
 	if not Engine.is_editor_hint():
 		if starting_camera != CameraSetting.none:
 			set_camera_setting(starting_camera)
-	elif get_parent()._is_plugin_hint:
+	elif PTRendererAuto._is_plugin_hint:
 		set_camera_setting(CameraSetting.book_ex)
 	
-# Only relevant for when the structure of the scene changes, 
-#  i.e adding / removing objects
-#func set_object_indices():
-	#"""Sets every object's object index according to this scene's objects"""
-#
-#func set_material_index():
-	#"""Sets every object's material index according to this scene's material list"""
-	
+	PTRendererAuto.add_scene(self)
+
 
 func update_object(object : PTObject):
 	## Called by an object when its properties changed
@@ -127,7 +122,7 @@ func update_object(object : PTObject):
 	object
 	
 	# Send request to update buffer
-	renderer.update_object(self, object)
+	PTRendererAuto.update_object(self, object)
 	
 	scene_changed = true
 

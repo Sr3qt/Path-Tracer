@@ -48,7 +48,8 @@ static func vector_to_array(vector : Vector3):
 
 static func aabb_to_byte_array(aabb : AABB) -> PackedByteArray:
 	var new_aabb = aabb.abs()
-	var arr = vector_to_array(aabb.position) + [0] + vector_to_array(aabb.end) + [0]
+	var arr = (vector_to_array(new_aabb.position) + [0] + 
+			vector_to_array(new_aabb.end) + [0])
 	return PackedFloat32Array(arr).to_byte_array()
 
 

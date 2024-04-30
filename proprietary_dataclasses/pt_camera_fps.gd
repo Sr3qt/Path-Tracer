@@ -16,10 +16,13 @@ var freeze := true # stops input movement
 func _ready():
 	super._ready()
 	
-	root_node = get_parent().get_parent().root_node
-	
-	if root_node and Engine.is_editor_hint():
-		root_node.connect("gui_input", _input)
+	# DEPRECATED
+	#var grandpa = get_parent().get_parent()
+	#if grandpa is PTRenderer:
+		#root_node = grandpa.root_node
+	#
+	#if root_node and Engine.is_editor_hint():
+		#root_node.connect("gui_input", _input)
 	
 
 func _process(delta):
