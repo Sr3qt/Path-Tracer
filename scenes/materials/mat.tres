@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="PTMaterial" load_steps=2 format=3 uid="uid://cxexu78qhbeqx"]
+
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_material.gd" id="1_sy4f4"]
+
+[resource]
+script = ExtResource("1_sy4f4")
+albedo = Color(0, 0.7, 1, 1)
+roughness = 0.0
+metallic = 0.0
+opacity = 1.0
+IOR = 1.0
+refraction_depth = 0

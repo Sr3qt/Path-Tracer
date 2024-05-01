@@ -55,5 +55,5 @@ func _get_plugin_icon():
 
 
 func _scene_swapped(scene_root):
-	PTRendererAuto.change_scene(scene_root)
+	PTRendererAuto._plugin_change_scene(scene_root)
 

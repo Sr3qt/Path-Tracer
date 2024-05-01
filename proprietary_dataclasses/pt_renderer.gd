@@ -52,7 +52,19 @@ var scene_index : int # Index to current scene in scenes.
 					  #  The same index is used for wds array.
 
 # An indexing dictionary translating editing-scene root nodes to scene_index 
-var root_node_to_scene = {}
+
+# A dicitionary that keeps track of multiple PTScenes within one Godot scene.
+# Only use by plugin, for runtime scene tracker see
+var root_node_to_scene = {
+	# Example:
+	# root_node : {
+	#	"last_index" : 1 # This is an index to this sublist, ptscene1
+	#	"scenes" : [ptscene0, ptscene1] # Array of PTScenes within root_node scene
+	# }
+}
+
+var scene_to_scene_index = {}
+
 
 # Array of sub-windows
 var windows : Array[PTRenderWindow] = []
@@ -172,6 +184,8 @@ func _process(_delta):
 			no_scene_is_active = true
 		
 		if scene and not scene.camera:
+			# TODO ADD Reporting node configuration warnings
+			# https://docs.godotengine.org/en/stable/tutorials/plugins/running_code_in_the_editor.html 
 			raise_error("No camera has been set. Rendering is therefore disabled.")
 			is_rendering_disabled = true
 		
@@ -186,6 +200,13 @@ func _process(_delta):
 				var mat = canvas.mesh.surface_get_material(0)
 				mat.set_shader_parameter("is_rendering", true)
 	
+	# Re-create buffers if asked for
+	if wd:
+		for _scene in scenes:
+			if _scene.added_object:
+				re_create_buffers(_scene)
+	
+	
 	# Reset frame values
 	if scene:
 		scene.scene_changed = false
@@ -194,6 +215,22 @@ func _process(_delta):
 	
 	if _is_plugin_hint:
 		_pt_editor_camera.camera_changed = false
+
+# Temp placement
+func re_create_buffers(_scene : PTScene):
+	var _wd = wds[scene_to_scene_index[_scene]]
+	var buffers : Array[PTObject.ObjectType] = []
+	print()
+	print("Expanding object buffers for ", _scene)
+	print(_scene.added_types)
+	for key in _scene.added_types.keys():
+		if _scene.added_types[key]:
+			_scene.added_types[key] = false
+			buffers.append(key)
+	wd.expand_object_buffers(buffers)
+	
+	_scene.added_object = false
+
 
 
 func _input(event):
@@ -396,62 +433,86 @@ func save_framebuffer(work_dispatcher : PTWorkDispatcher):
 	Time.get_datetime_string_from_system().replace(":", "-") + ".png")
 
 
-func add_scene(new_scene):
+
+func add_scene(new_ptscene : PTScene):
 	"""Adds a scene to renderer"""
 	
-	if new_scene == null:
+	# Maybe redundant check
+	if new_ptscene == null:
+		push_warning("PT: Tried to add null scene.")
 		return
 	
-	if root_node_to_scene.has(new_scene.owner):
-		push_warning("More than one PTScene per Godot scene is currently not supported.")
-		push_warning(new_scene, " was not added to the renderer.")
-		return
+	# If in editor, add translation layer from ptscenes owner to ptscene
+	if Engine.is_editor_hint():
+		var scene_owner = new_ptscene.owner if new_ptscene.owner else new_ptscene
 		
-	root_node_to_scene[new_scene.owner] = scenes.size()
+		if root_node_to_scene.has(scene_owner):
+			print(new_ptscene.owner)
+			push_warning(new_ptscene.owner)
+			
+			root_node_to_scene[scene_owner]["scenes"].append(new_ptscene)
+		else:
+			root_node_to_scene[scene_owner] = {
+					"last_index" : 0, 
+					"scenes" : [new_ptscene]
+			}
 	
-	var function_name = PTBVHTree.enum_to_dict[new_scene.default_bvh]
-	new_scene.create_BVH(bvh_max_children, function_name)
+	scene_to_scene_index[new_ptscene] = scenes.size()
+	scenes.append(new_ptscene)
+	
+	print()
+	print(new_ptscene.owner, " Root node")
+	print(new_ptscene, " PTScene node")
+	print()
+	
+	if new_ptscene.object_count > 0:
+		var function_name = PTBVHTree.enum_to_dict[new_ptscene.default_bvh]
+		new_ptscene.create_BVH(bvh_max_children, function_name)
 	
 	if not canvas:
 		canvas = create_canvas()
 	
 	# Create new WD
 	var new_wd = PTWorkDispatcher.new(self)
-	new_wd.set_scene(new_scene)
+	new_wd.set_scene(new_ptscene)
 	new_wd.load_shader(load_shader())
 	new_wd.create_buffers()
 	
 	wds.append(new_wd)
-	scenes.append(new_scene)
 	
-	# Set new_scene to scene if no scene was previously active
-	if no_scene_is_active:
+	# Set new_ptscene to scene if no scene was previously active and is in runtime
+	if not PTRendererAuto._is_plugin_hint and no_scene_is_active:
 		no_scene_is_active = false
-		scene = new_scene
+		scene = new_ptscene
 		wd = new_wd
 		wd.texture.texture_rd_rid = wd.image_buffer
-		if not PTRendererAuto._is_plugin_hint:
-			if scene.camera:
-				scene.camera.look_at_from_position(Vector3.ZERO, Vector3(0,0,-1))
-				scene.camera.add_child(canvas)
-		else:
-			if _pt_editor_camera:
-				_pt_editor_camera.look_at_from_position(Vector3.ZERO, Vector3(0,0,-1))
+		if scene.camera:
+			scene.camera.add_child(canvas)
 	
 
-func change_scene(scene_root):
+## Wrapper function for the plugin to change scenes
+func _plugin_change_scene(scene_root):
 	if scene_root == null or not root_node_to_scene.has(scene_root):
 		# scene_root is a new empty node or a root without a PTScene in the scene
 		scene = null
 		no_scene_is_active = true
 		return
 	
+	var temp_dict = root_node_to_scene[scene_root]
+	
+	var scene_to_change : PTScene = temp_dict["scenes"][temp_dict["last_index"]]
+	
+	change_scene(scene_to_change)
+
+
+func change_scene(new_scene : PTScene):
+	
 	# Remove (and later add) canvas from camera in runtime
 	if not _is_plugin_hint:
 		if scene and scene.camera:
 			scene.camera.remove_child(canvas)
 	
-	scene_index = root_node_to_scene[scene_root]
+	scene_index = scene_to_scene_index[new_scene]
 	scene = scenes[scene_index]
 	wd = wds[scene_index]
 	# Change buffer displayed on canvas

@@ -1,0 +1,67 @@
+[gd_scene load_steps=12 format=3 uid="uid://dst7lxx3r8flq"]
+
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_62w38"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_camera.gd" id="2_yae3g"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_sphere.gd" id="3_gqr7y"]
+[ext_resource type="Resource" uid="uid://b4yj315rx77td" path="res://scenes/materials/metal.tres" id="4_8mqj1"]
+[ext_resource type="Resource" uid="uid://cxexu78qhbeqx" path="res://scenes/materials/mat.tres" id="5_opa7l"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_material.gd" id="6_4b34r"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_mxcbc"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_kj4xv"]
+radius = 0.7
+height = 1.4
+
+[sub_resource type="SphereMesh" id="SphereMesh_f3exn"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_dpbhi"]
+radius = 1.0
+height = 2.0
+
+[sub_resource type="Resource" id="Resource_abvtt"]
+script = ExtResource("6_4b34r")
+albedo = Color(1, 1, 1, 1)
+roughness = 0.0
+metallic = 0.0
+opacity = 1.0
+IOR = 1.0
+refraction_depth = 0
+
+[node name="PTScene" type="Node"]
+script = ExtResource("1_62w38")
+
+[node name="PTCamera" type="Camera3D" parent="."]
+transform = Transform3D(0.224859, -0.144453, 0.963624, 0, 0.98895, 0.14825, -0.974391, -0.0333354, 0.222375, 13, 2, 3)
+fov = 20.0
+script = ExtResource("2_yae3g")
+
+[node name="PTSphere" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.5, -2)
+mesh = SubResource("SphereMesh_mxcbc")
+script = ExtResource("3_gqr7y")
+radius = 0.5
+material = ExtResource("4_8mqj1")
+mesh = SubResource("SphereMesh_mxcbc")
+
+[node name="PTSphere2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -1)
+mesh = SubResource("SphereMesh_kj4xv")
+script = ExtResource("3_gqr7y")
+radius = 0.7
+material = ExtResource("5_opa7l")
+mesh = SubResource("SphereMesh_kj4xv")
+
+[node name="PTSphere3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, -0.2, -0.8)
+mesh = SubResource("SphereMesh_f3exn")
+script = ExtResource("3_gqr7y")
+radius = 0.5
+material = ExtResource("5_opa7l")
+mesh = SubResource("SphereMesh_f3exn")
+
+[node name="PTSphere4" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_dpbhi")
+script = ExtResource("3_gqr7y")
+material = SubResource("Resource_abvtt")
+mesh = SubResource("SphereMesh_dpbhi")

@@ -2,6 +2,21 @@ class_name PTWorkDispatcher
 extends Node
 # Can potentially be Refcounted
 
+"""The work dispatcher sends work to the gpu by orders of PTRenderer"""
+
+# How many objects can be added without needing to update any buffers.
+# This means that the buffers' sizes are divisible by the step count.
+#  Mostly useful for plugin, but might be important for runtime as well.
+const SPHERE_COUNT_STEP = 64
+const PLANE_COUNT_STEP = 16
+# How many materials can be added without needing to update any buffers
+const MATERIAL_COUNT_STEP = 16
+
+# How many objects can fit in each buffer
+var sphere_buffer_size : int = 0
+var plane_buffer_size : int = 0
+
+var material_buffer_size : int = 0
 
 # Holds the uniforms that will be bound to a set
 var uniform_sets = [
@@ -89,22 +104,11 @@ func create_buffers():
 	# The image buffer used in compute and fragment shader
 	image_buffer = _create_image_buffer()
 	
-	LOD_buffer = _create_uniform(
-			_create_lod_byte_array(), camera_set_index, LOD_bind
-	)
-	# List of materials
-	material_buffer = _create_uniform(
-			_create_materials_byte_array(), object_set_index, materials_bind
-	)
-	# One of the object lists, for spheres
-	sphere_buffer = _create_uniform(
-			_create_spheres_byte_array(), object_set_index, spheres_bind
-	)
-	# One of the object lists, for planes
-	plane_buffer = _create_uniform(
-			_create_planes_byte_array(), object_set_index, planes_bind
-	)
 	
+	create_lod_buffer()
+	create_material_buffer()
+	create_sphere_buffer()
+	create_plane_buffer()
 	create_bvh_buffer()
 	
 	bind_sets()
@@ -116,6 +120,32 @@ func create_buffers():
 	
 	print("Setting up buffers took %s ms" % ((Time.get_ticks_usec() - prev_time) / 1000.))
 	
+
+func create_lod_buffer():
+	LOD_buffer = _create_uniform(
+			_create_lod_byte_array(), camera_set_index, LOD_bind
+	)
+
+func create_sphere_buffer():
+	sphere_buffer = _create_uniform(
+			_create_spheres_byte_array(), object_set_index, spheres_bind
+	)
+
+func create_plane_buffer():
+	plane_buffer = _create_uniform(
+			_create_planes_byte_array(), object_set_index, planes_bind
+	)
+
+func create_material_buffer():
+	material_buffer = _create_uniform(
+			_create_materials_byte_array(), object_set_index, materials_bind
+	)
+
+func create_bvh_buffer():
+	# Contains the BVH tree in the form of a list
+	BVH_buffer = _create_uniform(
+			_create_bvh_byte_array(), BVH_set_index, BVH_bind
+	)
 
 func bind_sets():
 	# Bind uniforms and sets
@@ -152,7 +182,17 @@ func free_RIDs():
 	for rid in RIDs_to_free:
 		rd.free_rid(rid)
 		
-	# TODO when RIDs are freed, remember to remove them from the arrays
+	RIDs_to_free = []
+
+
+func free_rid(rid):
+	"""Free a single rid"""
+	var index = RIDs_to_free.find(rid)
+	if index != -1:
+		RIDs_to_free.remove_at(index)
+		rd.free_rid(rid)
+	else:
+		push_warning("PT: RID " + str(rid) + " is not meant to be freed.")
 
 
 func create_compute_list(window : PTRenderWindow = null):
@@ -247,13 +287,6 @@ func render_image():
 		rd.buffer_update(LOD_buffer, 0, byte_array.size(), byte_array)
 
 
-func create_bvh_buffer():
-	# Contains the BVH tree in the form of a list
-	BVH_buffer = _create_uniform(
-			_create_bvh_byte_array(), BVH_set_index, BVH_bind
-	)
-	
-
 func _create_uniform(bytes : PackedByteArray, _set : int, binding : int) -> RID:
 	"""Create and bind uniform to a shader from bytes.
 	
@@ -344,20 +377,38 @@ func _create_lod_byte_array() -> PackedByteArray:
 
 
 func _create_materials_byte_array() -> PackedByteArray:
-	var bytes = PackedByteArray()
-	if _scene.materials:
+	var bytes := PackedByteArray()
+	var size : int = _scene.material_count
+	if size:
 		for material in _scene.materials:
 			bytes += material.to_byte_array()
+		
+		# Fill rest of bytes with empty
+		if material_buffer_size == 0:
+			material_buffer_size = (size / MATERIAL_COUNT_STEP + 1) * MATERIAL_COUNT_STEP
+		
+		for i in range(material_buffer_size - size):
+			bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
+		
 	else:
 		bytes += PTMaterial.new().to_byte_array()
 	return bytes
 
 
 func _create_spheres_byte_array() -> PackedByteArray:
-	var bytes = PackedByteArray()
-	if _scene.objects[PTObject.ObjectType.SPHERE].size():
+	var bytes := PackedByteArray()
+	var size : int = _scene.sphere_count
+	if size:
 		for sphere in _scene.objects[PTObject.ObjectType.SPHERE]:
 			bytes += sphere.to_byte_array()
+		
+		# Fill rest of bytes with empty
+		if sphere_buffer_size == 0:
+			sphere_buffer_size = (size / SPHERE_COUNT_STEP + 1) * SPHERE_COUNT_STEP
+		
+		for i in range(sphere_buffer_size - size):
+			bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
+		
 	else:
 		bytes = PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
 	
@@ -366,9 +417,18 @@ func _create_spheres_byte_array() -> PackedByteArray:
 
 func _create_planes_byte_array() -> PackedByteArray:
 	var bytes = PackedByteArray()
-	if _scene.objects[PTObject.ObjectType.PLANE].size():
+	var size : int = _scene.plane_count
+	if size:
 		for plane in _scene.objects[PTObject.ObjectType.PLANE]:
 			bytes += plane.to_byte_array()
+		
+		# Fill rest of bytes with empty
+		if plane_buffer_size == 0:
+			plane_buffer_size = (size / PLANE_COUNT_STEP + 1) * PLANE_COUNT_STEP
+		
+		for i in range(plane_buffer_size - size):
+			bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
+		
 	else:
 		bytes = PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
 	
@@ -403,4 +463,52 @@ func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 	return bytes
 	
 
+## Will expand a given object buffer by its respective step constant times given steps.
+##  NOT_AN_OBJECT is assumed to be material buffer.
+## Setting steps to -1 skips creating a set. By defualt will create buffer to 
+##  fit objects in scene. If objects already fit, do nothing.
+func expand_object_buffer(object_type : PTObject.ObjectType, steps : int = 0):
+	match object_type:
+		PTObject.ObjectType.NOT_OBJECT:
+			if material_buffer_size >= _scene.material_count:
+				print("Material buffer already fits. No buffer expansion")
+				return
+			if steps < 1:
+				material_buffer_size = _scene.material_count / MATERIAL_COUNT_STEP + 1
+			else:
+				material_buffer_size = material_buffer_size + MATERIAL_COUNT_STEP * steps
+			free_rid(material_buffer)
+			create_material_buffer()
+		PTObject.ObjectType.SPHERE:
+			if sphere_buffer_size >= _scene.sphere_count:
+				print("Sphere buffer already fits. No buffer expansion")
+				return
+			if steps < 1:
+				sphere_buffer_size = _scene.sphere_count / SPHERE_COUNT_STEP + 1
+			else:
+				sphere_buffer_size = sphere_buffer_size + SPHERE_COUNT_STEP * steps
+			free_rid(sphere_buffer)
+			create_sphere_buffer()
+		PTObject.ObjectType.PLANE:
+			if plane_buffer_size >= _scene.plane_count:
+				print("Plane buffer already fits. No buffer expansion")
+				return
+			if steps < 1:
+				plane_buffer_size = _scene.plane_count / PLANE_COUNT_STEP + 1
+			else:
+				plane_buffer_size = plane_buffer_size + PLANE_COUNT_STEP * steps
+			free_rid(plane_buffer)
+			create_plane_buffer()
+	
+	if steps != -1:
+		var uniforms = uniform_sets[object_set_index].values()
+		object_set = rd.uniform_set_create(uniforms, shader, object_set_index)
+
+
+func expand_object_buffers(object_types : Array[PTObject.ObjectType]):
+	for object_type in object_types:
+		expand_object_buffer(object_type, -1)
+	
+	var uniforms = uniform_sets[object_set_index].values()
+	object_set = rd.uniform_set_create(uniforms, shader, object_set_index)
 

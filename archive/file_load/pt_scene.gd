@@ -1,11 +1,16 @@
-@tool
-class_name PTScene
+#@tool
+#class_name PTScene
 extends Node
+
+## HOLDS THE DEPRECATED LOAD FUNCTIONS
 
 """This class is to hold PTObjects, PTMaterials, PTCamera and PTBVH for a scene.
 
 It's responsibility is to keep track of objects and materials, as well as any
 changes to them or the BVH. The camera is self sufficient.
+
+It should be able to save and load from a file*
+
 
 """
 
@@ -25,15 +30,16 @@ var camera_settings_values = {
 	CameraSetting.middle : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.]
 }
 
+@export_file var scene_import
+
 ## Overrides starting camera values with predefined sets of values
 @export var starting_camera := CameraSetting.none
 
-@export var default_bvh := PTBVHTree.BVHType.X_SORTED
+## Overrides scene_import, Seect one of the built-in scenes
+@export_enum("none", "random_scene", "scene1", "scene2", "scene3") 
+var starting_scene = "none"
 
-@export var create_random_scene_ := false:
-	set(value):
-		create_random_scene(0)
-		print("Created random scene")
+@export var default_bvh := PTBVHTree.BVHType.X_SORTED
 
 # objects is a dictionary with ObjectTypes as keys. 
 #  The values are arrays of PTObjects 
@@ -55,22 +61,6 @@ var scene_changed := false
 var camera : PTCamera
 
 var object_count : int = 0
-var sphere_count : int = 0:
-	get:
-		return objects[PTObject.ObjectType.SPHERE].size()
-var plane_count : int = 0:
-	get:
-		return objects[PTObject.ObjectType.PLANE].size()
-var material_count : int = 0:
-	get:
-		return materials.size()
-
-var added_object := false # Whether an object (or material) was added this frame
-var added_types = {
-	PTObject.ObjectType.NOT_OBJECT : false, # Interpreted as a material
-	PTObject.ObjectType.SPHERE : false,
-	PTObject.ObjectType.PLANE : false,
-}
 
 
 func _init(
@@ -97,7 +87,18 @@ func _init(
 
 
 func _ready():
+	
+	# Create default random scene if no imports
 	if not Engine.is_editor_hint() or PTRendererAuto._is_plugin_hint:
+		if starting_scene == "none":
+			if scene_import:
+				import(scene_import)
+			# If starting scene is none and no scene_import given
+		elif starting_scene == "random_scene":
+			create_random_scene(0)
+		else:
+			var path = "res://main/sphere_" + starting_scene + ".txt"
+			import(path)
 		
 		get_size()
 		
@@ -114,11 +115,6 @@ func _ready():
 	elif PTRendererAuto._is_plugin_hint:
 		set_camera_setting(CameraSetting.book_ex)
 	
-	# Scene will probably trigger this when objects add themselves to the scene
-	added_object = false
-	for key in added_types.keys():
-		added_types[key] = false
-	
 	PTRendererAuto.add_scene(self)
 
 
@@ -132,25 +128,14 @@ func update_object(object : PTObject):
 	
 	scene_changed = true
 
-# TODO add method to remove object
+
 func add_object(object : PTObject):
 	"""Adds an object to """
 	var type = object.get_type()
 	object.object_index = objects[type].size()
 	objects[type].append(object)
 	
-	if not object.get_parent():
-		print("Added child")
-		add_child(object)
-		
-		# TEMP seems dangerous to keep
-		#object.owner = self
-	
-	# Increment counters
 	object_count += 1
-	
-	added_object = true
-	added_types[type] = true
 	
 	# TODO Leave the optimization of using the same material to the user
 	# First check for object reference in array
@@ -162,18 +147,40 @@ func add_object(object : PTObject):
 			# Add to list
 			object.material_index = materials.size()
 			materials.append(object.material)
-			added_types[PTObject.ObjectType.NOT_OBJECT] = true
 		else:
 			object.material_index = material_index
 	else:
 		object.material_index = material_index
 		
 	scene_changed = true
-	
 
 
 static func array2vec(a):
 	return Vector3(a[0], a[1], a[2])
+
+
+# TODO DEPRECATE load functions
+static func load_scene(path : String):
+	""" Returns new scene with data from file """
+	var out = _load_scene(path)
+	
+	#return PTScene.new(out[0], out[1])
+	
+
+func import(path : String):
+	""" Replaces this scenes data with data from file """
+	#var out = PTScene._load_scene(path)
+	var out
+	
+	objects = out[0]
+	materials = out[1]
+	
+	for object_type in objects.values():
+		for object in object_type:
+			object._scene = self
+			add_child(object)
+		
+	scene_changed = true
 
 
 func get_size():
@@ -192,7 +199,7 @@ func create_BVH(max_children : int, function_name : String):
 	if bvh:
 		cached_bvhs.append(bvh)
 	
-	bvh = PTBVHTree.create_bvh_with_function_name(self, max_children, function_name)
+	#bvh = PTBVHTree.create_bvh_with_function_name(self, max_children, function_name)
 
 
 func set_camera_setting(cam : CameraSetting):
@@ -216,7 +223,7 @@ func create_random_scene(_seed):
 	
 	# Ground
 	var ground_mat = PTMaterial.new()
-	ground_mat.albedo = Color(0.5, 0.5, 0.5)
+	ground_mat.albedo = Vector3(0.5, 0.5, 0.5)
 	
 	add_object(PTPlane.new(Vector3(0, 1, 0), -1., ground_mat, 0))
 	#add_object(PTSphere.new(Vector3(0, -1000, 0), 1000, ground_mat, 0))
@@ -229,12 +236,12 @@ func create_random_scene(_seed):
 	
 	# Diffuse
 	var mat2 = PTMaterial.new()
-	mat2.albedo = Color(0.4, 0.2, 0.1)
+	mat2.albedo = Vector3(0.4, 0.2, 0.1)
 	add_object(PTSphere.new(Vector3(-4, 1, 0), 1, mat2, 0))
 	
 	# Metallic
 	var mat3 = PTMaterial.new()
-	mat3.albedo = Color(0.7, 0.6, 0.5)
+	mat3.albedo = Vector3(0.7, 0.6, 0.5)
 	mat3.metallic = 1.
 	add_object(PTSphere.new(Vector3(4, 1, 0), 1, mat3, 0))
 	
@@ -248,19 +255,19 @@ func create_random_scene(_seed):
 			var choose_material = rng.randf()
 			var material = PTMaterial.new()
 			
-			var color = Color(rng.randf(), rng.randf(), rng.randf())
+			var color = Vector3(rng.randf(), rng.randf(), rng.randf())
 			
 			if choose_material < 0.8:
 				pass
 			elif choose_material < 0.95:
 				# Metal
-				color = Color(rng.randf_range(0.5, 1.), 
+				color = Vector3(rng.randf_range(0.5, 1.), 
 								rng.randf_range(0.5, 1.),
 								rng.randf_range(0.5, 1.))
 				material.metallic = choose_material + 0.05
 			else:
 				# Glass
-				color = Color(rng.randf_range(0.88, 1.), 
+				color = Vector3(rng.randf_range(0.88, 1.), 
 								rng.randf_range(0.88, 1.),
 								rng.randf_range(0.88, 1.))
 				material.opacity = 0.
@@ -270,6 +277,65 @@ func create_random_scene(_seed):
 			var new_sphere = PTSphere.new(center, radius, material, 0)
 			add_object(new_sphere)
 	
+
+# TODO THINK ABOUT DEPRECATING THIS FUNCTION
+static func _load_scene(path : String):
+	var file = FileAccess.open(path, FileAccess.READ)
+	var text = file.get_as_text()
+	file.close()
+	
+	var mtl_index = {}
+	var mtl_list : Array[PTMaterial] = []
+	var sphere_list : Array[PTObject] = []
+	var plane_list : Array[PTObject] = []
+	var objects_dict = {
+		ObjectType.SPHERE : sphere_list,
+		ObjectType.PLANE : plane_list
+	}
+	for line in text.split("\n", false):
+		if line.begins_with("#"):
+			continue
+		
+		if line.begins_with("mtl "):
+			var values = line.split(" ", false)
+			var material = PTMaterial.new()
+			material.albedo = Color(float(values[2]), 
+									  float(values[3]), 
+									  float(values[4]))
+			material.roughness = float(values[5])
+			material.metallic = float(values[6])
+			material.opacity = float(values[7])
+			material.IOR = float(values[8])
+			material.refraction_depth = int(values[9])
+			
+			mtl_index[values[1]] = mtl_list.size()
+			mtl_list.append(material)
+		
+		if line.begins_with("sphere"):
+			var numbers = line.split_floats(" ", false).slice(1)
+			var center = array2vec(numbers.slice(0, 3))
+			var material_index = mtl_index[line.split(" ", false)[-1]]
+			var material = mtl_list[material_index]
+			var sphere = PTSphere.new(center, numbers[3], material, material_index)
+			
+			sphere.object_index = sphere_list.size()
+			sphere_list.append(sphere)
+		
+		elif line.begins_with("plane"):
+			var numbers = line.split_floats(" ", false).slice(1)
+			var normal = array2vec(numbers.slice(0, 3))
+			var material_index = mtl_index[line.split(" ", false)[-1]]
+			var material = mtl_list[material_index]
+			var plane = PTPlane.new(normal, numbers[3], material, material_index)
+			
+			plane.object_index = plane_list.size()
+			plane_list.append(plane)
+	
+	return [objects_dict, mtl_list]
+
+
+
+
 
 
 

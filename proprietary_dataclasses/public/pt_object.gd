@@ -9,7 +9,7 @@ extends MeshInstance3D
 # Tied to object_type enum in shader
 enum ObjectType {NOT_OBJECT = 0, SPHERE = 1, PLANE = 2, MESH = 3}
 
-@export var material : PTMaterial
+@export var material : PTMaterial = null
 
 # Indices relevant to _scene
 var object_index : int
