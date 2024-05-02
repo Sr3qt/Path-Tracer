@@ -33,7 +33,7 @@ func _init(
 	
 
 
-func _set(property, value):
+func _set(property, _value):
 	if _scene:
 		# NOTE: Position is for transform property in the editor, while transform
 		#  notification is for moving objects in 3D

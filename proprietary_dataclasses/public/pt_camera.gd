@@ -37,7 +37,7 @@ func _ready():
 	set_notify_transform(true)
 
 
-func _set(property, value):
+func _set(property, _value):
 	if property == "position":
 		camera_changed = true
 	

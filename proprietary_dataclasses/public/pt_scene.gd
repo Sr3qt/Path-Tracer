@@ -10,7 +10,7 @@ changes to them or the BVH. The camera is self sufficient.
 """
 
 # Enum for different custom 3D object types
-static var ObjectType = PTObject.ObjectType
+const ObjectType = PTObject.ObjectType
 
 # Semi-Temp
 enum CameraSetting {none, top_down, corner, book_ex, center, left, right, middle}
@@ -35,10 +35,15 @@ var camera_settings_values = {
 		create_random_scene(0)
 		print("Created random scene")
 
-# objects is a dictionary with ObjectTypes as keys. 
-#  The values are arrays of PTObjects 
-# TODO make into a class? or split into seperate arrays
-var objects
+# Object lists
+var spheres : Array[PTSphere]
+var planes : Array[PTPlane]
+
+# Simple dict to choose the right list
+var objects = {
+	ObjectType.SPHERE : spheres,
+	ObjectType.PLANE : planes,
+}
 
 # materials should hold no duplicate materials
 var materials : Array[PTMaterial]
@@ -57,45 +62,13 @@ var scene_changed := false
 var camera : PTCamera
 
 var object_count : int = 0
-var sphere_count : int = 0:
-	get:
-		return objects[PTObject.ObjectType.SPHERE].size()
-var plane_count : int = 0:
-	get:
-		return objects[PTObject.ObjectType.PLANE].size()
-var material_count : int = 0:
-	get:
-		return materials.size()
 
 var added_object := false # Whether an object (or material) was added this frame
 var added_types = {
-	PTObject.ObjectType.NOT_OBJECT : false, # Interpreted as a material
-	PTObject.ObjectType.SPHERE : false,
-	PTObject.ObjectType.PLANE : false,
+	ObjectType.NOT_OBJECT : false, # Interpreted as a material
+	ObjectType.SPHERE : false,
+	ObjectType.PLANE : false,
 }
-
-
-func _init(
-		_object_dict = {}, 
-		_materials : Array[PTMaterial] = [], 
-		_camera : PTCamera = null
-	):
-	
-	# Create objects dict if one was not passed
-	if _object_dict:
-		objects = _object_dict
-		get_size()
-	else:
-		var sphere_list : Array[PTObject] = []
-		var plane_list : Array[PTObject] = []
-		objects = {
-			ObjectType.SPHERE : sphere_list,
-			ObjectType.PLANE : plane_list
-		}
-	
-	materials = _materials
-	
-	camera = _camera
 
 
 func _ready():
@@ -133,8 +106,9 @@ func update_material(material):
 
 func update_object(object : PTObject):
 	## Called by an object when its properties changed
-	# Send request to update bvh
-	object
+	# Send request to update bvh if object is in it
+	if PTBVHTree.objects_to_include.has(object.get_type()):
+		bvh.update_aabb(object)
 	
 	# Send request to update buffer
 	PTRendererAuto.update_object(self, object)

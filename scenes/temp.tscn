@@ -32,7 +32,7 @@ fov = 20.0
 script = ExtResource("2_1oi20")
 
 [node name="PTSphere" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.397772, -0.917484, 0, 0.917484, 0.397772, 1.472, 3.549, 1.132)
+transform = Transform3D(1, 0, 0, 0, 0.393428, -0.919355, 0, 0.919355, 0.393428, -6.96567, 1.76679, 1.132)
 mesh = SubResource("SphereMesh_px034")
 script = ExtResource("3_8wdme")
 radius = 1.395
@@ -40,10 +40,7 @@ material = ExtResource("4_5ktls")
 mesh = SubResource("SphereMesh_px034")
 
 [node name="PTPlane" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.977659, 0.207118, 0.0358461, -0.210197, 0.963338, 0.166726, 1.27059e-08, -0.170536, 0.985351, -0.17845, -0.83, 0)
 mesh = SubResource("PlaneMesh_ah8wi")
 script = ExtResource("5_n3fca")
-normal = Vector3(0.215, 1, 0)
-distance = -0.83
 material = SubResource("Resource_oq5jp")
 mesh = SubResource("PlaneMesh_ah8wi")

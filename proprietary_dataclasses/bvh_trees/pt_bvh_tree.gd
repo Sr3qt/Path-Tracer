@@ -43,15 +43,13 @@ static var built_in_bvh_functions = {
 # TODO Add setter function for ease of use
 static var bvh_functions = built_in_bvh_functions
 
+const objects_to_include : Array[PTObject.ObjectType] = [
+	PTObject.ObjectType.SPHERE,
+]
+
 var root_node : BVHNode
 
-var _scene : PTScene
-
-# TODO probably stated elsewhere but this should probably be a class for typehinting
-# A dictionary of objects in the bvh
-var objects_dict
-
-# TODO MAke object to leaf node dictionary
+var object_to_leaf = {}
 
 var BVH_list : Array[BVHNode] = []
 
@@ -65,12 +63,12 @@ var creation_time : int # In usecs
 var SAH_cost : float
 
 var _index := 0 # Used to keep track of index when creating BVH_list
+var updated_nodes : Array[BVHNode] = [] # Nodes that need to update their buffer
 
 
 func _init(_max_children = 2):
 	max_children = _max_children
 	root_node = BVHNode.new(null, self)
-	#root_node.aabb = AABB()
 	inner_count += 1
 	
 	BVH_list = [root_node]
@@ -89,19 +87,19 @@ static func create_bvh_with_function_name(
 	return bvh_functions[_name].call(scene, _max_children)
 
 
-static func x_axis_sorted(scene : PTScene, _max_children : int):
+static func x_axis_sorted(scene : PTScene, _max_children : int) -> PTBVHTree:
 	var temp = PTBVHTree.new(_max_children)
 	temp.create_BVH(scene)
 	return temp
 
 
-static func y_axis_sorted(scene : PTScene, _max_children : int):
+static func y_axis_sorted(scene : PTScene, _max_children : int) -> PTBVHTree:
 	var temp = PTBVHTree.new(_max_children)
 	temp.create_BVH(scene, "y")
 	return temp
 
 
-static func z_axis_sorted(scene : PTScene, _max_children : int):
+static func z_axis_sorted(scene : PTScene, _max_children : int) -> PTBVHTree:
 	var temp = PTBVHTree.new(_max_children)
 	temp.create_BVH(scene, "z")
 	return temp
@@ -127,17 +125,13 @@ func create_BVH(scene : PTScene, axis := "x"):
 	
 	var flat_object_list : Array[PTObject] = []
 	
-	var objects_to_include = [
-		scene.ObjectType.SPHERE
-	]
 	for object in objects_to_include:
-		flat_object_list += scene.objects[object].duplicate()
+		flat_object_list.append_array(scene.objects[object])
 	
 	object_count = flat_object_list.size()
 	
 	# Sort according to given axis
 	var axis_conversion = {x = 0, y = 1, z = 2}
-	#var _axis = 0
 	var _axis = axis_conversion[axis]
 	var axis_sort = func(a, b):
 		return a.get_global_aabb().position[_axis] > b.get_global_aabb().end[_axis]
@@ -158,8 +152,16 @@ func create_BVH(scene : PTScene, axis := "x"):
 
 
 func update_aabb(object : PTObject):
-	# TODO Find leaf node with object and call update_aabb on it
-	""""""
+	var node : BVHNode = object_to_leaf[object]
+	node.update_aabb()
+
+
+# TODO Implement later
+func add_object():
+	pass
+
+func remove_object():
+	pass
 
 
 func size():
@@ -183,18 +185,16 @@ func tree_SAH_cost():
 	"Calculates the SAH cost for the whole tree"
 
 
-func to_byte_array():
-	var bytes = PackedByteArray()
-	#print("%s nodes in BVH_list" % BVH_list.size())
+func to_byte_array() -> PackedByteArray:
+	var bytes := PackedByteArray()
 	for node in BVH_list:
-		#print(node.aabb.size())
 		bytes += node.to_byte_array()
 	return bytes
 
 
 func _recursive_split(object_list : Array[PTObject], parent) -> Array[BVHNode]:
 	""""""
-
+	
 	# Will distriute objects evenly with first indices having slightly more
 	@warning_ignore("integer_division")
 	var even_division = object_list.size() / max_children
@@ -229,6 +229,7 @@ func _set_leaf(node : BVHNode, objects : Array[PTObject]):
 	node.objects = objects
 	# Transfer object indices from objects to nodes
 	for object in objects:
+		object_to_leaf[object] = node
 		node.object_indices.append(object.object_index)
 	
 	node.set_aabb()
@@ -262,7 +263,7 @@ class BVHNode:
 	intention is to hold information.
 	"""
 	
-	var _tree : PTBVHTree # Reference to the tree this node is a part of
+	var tree : PTBVHTree # Reference to the tree this node is a part of
 	var parent : BVHNode # Reference to parent BVHNode
 	var parent_index : int # Index to parent BVHNode in BVH_list
 	var index : int # Index of this node in BVH_list
@@ -271,28 +272,24 @@ class BVHNode:
 	var aabb : AABB
 	
 	# Leaf nodes in the tree have no children and have a list pointing to objects
-	#  The object list is no larger than _tree.max_children
+	#  The object list is no larger than tree.max_children
 	var is_leaf := false
-	var objects : Array[PTObject] = [] 
-	# List of indices to objects in the objects_dict
+	var objects : Array[PTObject] = []
+	# List of indices to objects in their respective object lists
 	var object_indices : Array[int] = []
 	
 	
-	func _init(parent_, tree):
-		parent = parent_
-		_tree = tree
-
-
-	func add_child():
-		pass
-
-
-	func size():
+	func _init(p_parent, p_tree):
+		parent = p_parent
+		tree = p_tree
+	
+	
+	func size() -> int:
 		"""Returns number of children and number of references to objects"""
 		return children.size() + objects.size()
-
-
-	func set_aabb():
+	
+	
+	func set_aabb() -> void:
 		if is_leaf and objects:
 			aabb = objects[0].get_global_aabb()
 			for object in objects:
@@ -306,25 +303,25 @@ class BVHNode:
 					aabb = aabb.merge(child.aabb)
 				else:
 					push_warning("Warning: Child node %s does not have aabb" % child)
-
-
-	func update_aabb(new_aabb : AABB):
-		aabb = aabb.merge(new_aabb)
+	
+	
+	func update_aabb() -> void:
+		tree.updated_nodes.append(self)
+		set_aabb()
 		if parent != null:
-			parent.update_aabb(new_aabb)
-
-
-
-	func add_children(new_children : Array[BVHNode]):
-		if size() + new_children.size() <= _tree.max_children:
+			parent.update_aabb()
+	
+	
+	func add_children(new_children : Array[BVHNode]) -> void:
+		if size() + new_children.size() <= tree.max_children:
 			children += new_children
 			set_aabb() # Update aabb
 		else:
 			push_warning("Warning: Cannot fit child node")
-
-
-	func to_byte_array():
-		var child_indices_array = []
+	
+	
+	func to_byte_array() -> PackedByteArray:
+		var child_indices_array := []
 		
 		# Add children nodes and objects to children list
 		for i in children_indices:
@@ -336,14 +333,14 @@ class BVHNode:
 			child_indices_array += [_index, type]
 		
 		# Needed for buffer alignement
-		child_indices_array.resize(_tree.max_children * 2 + 
-								   int((_tree.max_children % 2) + 2) * 2)
+		child_indices_array.resize(tree.max_children * 2 + 
+								   int((tree.max_children % 2) + 2) * 2)
 		
-		var bbox_bytes = PTObject.aabb_to_byte_array(aabb)
-		var other = [size(), parent_index, index, 0]
-		var other_bytes = PackedInt32Array(other).to_byte_array()
+		var bbox_bytes : PackedByteArray = PTObject.aabb_to_byte_array(aabb)
+		var other : Array[int] = [size(), parent_index, index, 0]
+		var other_bytes : PackedByteArray = PackedInt32Array(other).to_byte_array()
 		
-		var child_indices_bytes = PackedInt32Array(child_indices_array).to_byte_array()
+		var child_indices_bytes : PackedByteArray = PackedInt32Array(child_indices_array).to_byte_array()
 		
 		return child_indices_bytes + bbox_bytes + other_bytes
 

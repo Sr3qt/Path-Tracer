@@ -51,14 +51,14 @@ func _get_property_list():
 	return properties
 	
 
-static func vector_to_array(vector : Vector3):
+static func vector_to_array(vector : Vector3) -> Array[float]:
 	return [vector.x, vector.y, vector.z]
 
 
 static func aabb_to_byte_array(aabb : AABB) -> PackedByteArray:
-	var new_aabb = aabb.abs()
-	var arr = (vector_to_array(new_aabb.position) + [0] + 
-			vector_to_array(new_aabb.end) + [0])
+	var new_aabb := aabb.abs()
+	var arr = (vector_to_array(new_aabb.position) + [0.0] + 
+			vector_to_array(new_aabb.end) + [0.0])
 	return PackedFloat32Array(arr).to_byte_array()
 
 
@@ -71,7 +71,7 @@ func get_material() -> PTMaterial:
 	return null
 
 
-func get_type():
+func get_type() -> ObjectType:
 	"""Returns the PTObject sub type"""
 	if self is PTSphere:
 		return ObjectType.SPHERE
@@ -81,7 +81,7 @@ func get_type():
 		return ObjectType.NOT_OBJECT
 
 
-func get_global_aabb():
+func get_global_aabb() -> AABB:
 	"""Returns the objects aabb in world coordinates"""
 	return global_transform * get_aabb()
 

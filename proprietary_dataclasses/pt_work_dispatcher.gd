@@ -391,7 +391,7 @@ func _create_lod_byte_array() -> PackedByteArray:
 
 func _create_materials_byte_array() -> PackedByteArray:
 	var bytes := PackedByteArray()
-	var size : int = _scene.material_count
+	var size : int = _scene.materials.size()
 	for material in _scene.materials:
 		bytes += material.to_byte_array()
 	
@@ -408,7 +408,7 @@ func _create_materials_byte_array() -> PackedByteArray:
 
 func _create_spheres_byte_array() -> PackedByteArray:
 	var bytes := PackedByteArray()
-	var size : int = _scene.sphere_count
+	var size : int = _scene.spheres.size()
 	for sphere in _scene.objects[PTObject.ObjectType.SPHERE]:
 		bytes += sphere.to_byte_array()
 	
@@ -425,7 +425,7 @@ func _create_spheres_byte_array() -> PackedByteArray:
 
 func _create_planes_byte_array() -> PackedByteArray:
 	var bytes = PackedByteArray()
-	var size : int = _scene.plane_count
+	var size : int = _scene.planes.size()
 	for plane in _scene.objects[PTObject.ObjectType.PLANE]:
 		bytes += plane.to_byte_array()
 	

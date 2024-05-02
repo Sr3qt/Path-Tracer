@@ -600,14 +600,15 @@ func update_material(_scene, material):
 	scene_wd.rd.buffer_update(buffer, _scene.material_to_index[material] * bytes.size(), bytes.size(), bytes)
 
 
-func update_object(_scene, object):
+func update_object(_scene : PTScene, object : PTObject):
 	"""Updates an individual object in the buffer"""
 	# TODO This is just a test. Will see if it is performanant enough
 	
 	# Find right wd based on _scene
-	var scene_wd = wds[scene_to_scene_index[_scene]]
+	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
 	
-	var buffer
+	# Update object buffer
+	var buffer : RID
 	match object.get_type():
 		PTObject.ObjectType.SPHERE:
 			buffer = scene_wd.sphere_buffer
@@ -615,9 +616,27 @@ func update_object(_scene, object):
 		PTObject.ObjectType.PLANE:
 			buffer = scene_wd.plane_buffer
 	
-	var bytes = object.to_byte_array()
-	scene_wd.rd.buffer_update(buffer, object.object_index * bytes.size(), bytes.size(), bytes)
-
+	var obj_bytes : PackedByteArray = object.to_byte_array()
+	scene_wd.rd.buffer_update(
+			buffer, 
+			object.object_index * obj_bytes.size(), 
+			obj_bytes.size(), 
+			obj_bytes
+	)
+	
+	# return early if object cannot be in bvh
+	if not PTBVHTree.objects_to_include.has(object.get_type()):
+		return
+	
+	# Update BVH buffer if applicable
+	for node in _scene.bvh.updated_nodes:
+		var bvh_bytes : PackedByteArray = node.to_byte_array()
+		scene_wd.rd.buffer_update(
+				scene_wd.BVH_buffer, 
+				node.index * bvh_bytes.size(), 
+				bvh_bytes.size(), 
+				bvh_bytes
+		)
 
 func copy_camera(from : Camera3D, to : Camera3D):
 	to.translate(to.position - from.position)
