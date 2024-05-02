@@ -30,9 +30,15 @@ var no_scene_is_active := true:
 		no_scene_is_active = value
 		_set_canvas_visibility()
 
+var no_camera_is_active := true:
+	set(value):
+		no_camera_is_active = value
+		_set_canvas_visibility()
+
 func _set_canvas_visibility():
 	if canvas:
-		var is_rendering = not is_rendering_disabled and not no_scene_is_active
+		var is_rendering = (not is_rendering_disabled and not no_scene_is_active 
+				and not no_camera_is_active)
 		var mat = canvas.mesh.surface_get_material(0)
 		mat.set_shader_parameter("is_rendering", is_rendering)
 		canvas.visible = is_rendering
@@ -174,22 +180,26 @@ func _process(_delta):
 	var runtime = (get_window().has_focus() and not Engine.is_editor_hint())
 	var plugin = (_is_plugin_hint and Engine.is_editor_hint())
 	
-	var common = not is_rendering_disabled and not no_scene_is_active
+	var common = (not is_rendering_disabled and not no_scene_is_active and 
+			not no_camera_is_active)
 	
 	if (runtime or plugin) and common:
 		## Double check everything with warnings
 		if not scene:
 			# TODO Add path to where warning came from ?
-			raise_error("No scene has been set. Rendering is therefore disabled.")
+			raise_error("No scene has been set. \
+					Rendering is therefore temporarily disabled.")
 			no_scene_is_active = true
 		
-		if scene and not scene.camera:
+		elif not scene.camera and not Engine.is_editor_hint():
 			# TODO ADD Reporting node configuration warnings
 			# https://docs.godotengine.org/en/stable/tutorials/plugins/running_code_in_the_editor.html 
-			raise_error("No camera has been set. Rendering is therefore disabled.")
-			is_rendering_disabled = true
+			raise_error("No camera has been set in current scene. \
+					Rendering is therefore temporarily disabled.")
+			no_camera_is_active = true
 		
-		common = not is_rendering_disabled and not no_scene_is_active
+		common = (not is_rendering_disabled and not no_scene_is_active and 
+				not no_camera_is_active)
 		if common:
 			# If no warnings are raised, this will render
 			for window in windows:
@@ -268,6 +278,7 @@ func _set_plugin_camera(cam : PTCamera):
 	if not canvas:
 		canvas = create_canvas()
 	
+	no_camera_is_active = false
 	_pt_editor_camera = cam
 	_pt_editor_camera.add_child(canvas)
 
@@ -487,8 +498,11 @@ func add_scene(new_ptscene : PTScene):
 		wd = new_wd
 		wd.texture.texture_rd_rid = wd.image_buffer
 		if scene.camera:
+			no_camera_is_active = false
 			scene.camera.add_child(canvas)
-	
+		else:
+			raise_error("No camera has been set in current scene. \
+					Rendering is therefore temporarily disabled.")
 
 ## Wrapper function for the plugin to change scenes
 func _plugin_change_scene(scene_root):
@@ -522,6 +536,7 @@ func change_scene(new_scene : PTScene):
 	
 	if not _is_plugin_hint:
 		if scene.camera:
+			no_camera_is_active = false
 			scene.camera.add_child(canvas)
 			
 	# TODO Update GUI values
@@ -576,22 +591,32 @@ func create_bvh(_max_children : int, function_name : String):
 	#print((Time.get_ticks_usec() - _start) / 1000.)
 	
 
+func update_material(_scene, material):
+	# Find right wd based on _scene
+	var scene_wd = wds[scene_to_scene_index[_scene]]
+	var buffer = scene_wd.material_buffer
+
+	var bytes = material.to_byte_array()
+	scene_wd.rd.buffer_update(buffer, _scene.material_to_index[material] * bytes.size(), bytes.size(), bytes)
+
+
 func update_object(_scene, object):
 	"""Updates an individual object in the buffer"""
 	# TODO This is just a test. Will see if it is performanant enough
 	
 	# Find right wd based on _scene
+	var scene_wd = wds[scene_to_scene_index[_scene]]
 	
 	var buffer
 	match object.get_type():
 		PTObject.ObjectType.SPHERE:
-			buffer = wd.sphere_buffer
+			buffer = scene_wd.sphere_buffer
 		
 		PTObject.ObjectType.PLANE:
-			buffer = wd.plane_buffer
+			buffer = scene_wd.plane_buffer
 	
 	var bytes = object.to_byte_array()
-	wd.rd.buffer_update(buffer, object.object_index * bytes.size(), bytes.size(), bytes)
+	scene_wd.rd.buffer_update(buffer, object.object_index * bytes.size(), bytes.size(), bytes)
 
 
 func copy_camera(from : Camera3D, to : Camera3D):

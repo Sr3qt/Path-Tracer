@@ -42,6 +42,8 @@ var objects
 
 # materials should hold no duplicate materials
 var materials : Array[PTMaterial]
+# Inverse of materials
+var material_to_index = {}
 
 # Current BVH that would be used by the Renderer
 var bvh : PTBVHTree
@@ -122,6 +124,13 @@ func _ready():
 	PTRendererAuto.add_scene(self)
 
 
+# TODO Update material when its removed and a new one is added
+func update_material(material):
+	PTRendererAuto.update_material(self, material)
+	
+	scene_changed = true
+
+
 func update_object(object : PTObject):
 	## Called by an object when its properties changed
 	# Send request to update bvh
@@ -132,7 +141,9 @@ func update_object(object : PTObject):
 	
 	scene_changed = true
 
+
 # TODO add method to remove object
+# TODO Add and remove objects from bvh
 func add_object(object : PTObject):
 	"""Adds an object to """
 	var type = object.get_type()
@@ -152,19 +163,17 @@ func add_object(object : PTObject):
 	added_object = true
 	added_types[type] = true
 	
-	# TODO Leave the optimization of using the same material to the user
-	# First check for object reference in array
+	# Check for object reference in array
 	var material_index = materials.find(object.material)
 	if material_index == -1:
-		# Second check for equal properties in array
-		material_index = object.material.find_in_array(materials)
-		if material_index == -1:
-			# Add to list
-			object.material_index = materials.size()
-			materials.append(object.material)
-			added_types[PTObject.ObjectType.NOT_OBJECT] = true
-		else:
-			object.material_index = material_index
+		# DEPRECATED check for equal properties
+		# Add to list if not alreadt in it
+		object.material_index = materials.size()
+		material_to_index[object.material] = materials.size()
+		materials.append(object.material)
+		object.material.connect("material_changed", update_material)
+		
+		added_types[PTObject.ObjectType.NOT_OBJECT] = true
 	else:
 		object.material_index = material_index
 		

@@ -1,0 +1,49 @@
+[gd_scene load_steps=10 format=3 uid="uid://c8qptlvl2wmde"]
+
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_4n3re"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_1oi20"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_sphere.gd" id="3_8wdme"]
+[ext_resource type="Resource" uid="uid://cxexu78qhbeqx" path="res://scenes/materials/mat.tres" id="4_5ktls"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_plane.gd" id="5_n3fca"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_material.gd" id="6_677ub"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_px034"]
+radius = 1.395
+height = 2.79
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ah8wi"]
+size = Vector2(1000, 1000)
+
+[sub_resource type="Resource" id="Resource_oq5jp"]
+script = ExtResource("6_677ub")
+albedo = Color(0.470588, 0.486275, 0.00392157, 1)
+roughness = 0.0
+metallic = 0.934
+opacity = 1.0
+IOR = 1.0
+refraction_depth = 0
+
+[node name="PTScene" type="Node"]
+script = ExtResource("1_4n3re")
+
+[node name="PTCameraFPS" type="Camera3D" parent="."]
+transform = Transform3D(0.224859, -0.144453, 0.963624, 0, 0.98895, 0.14825, -0.974391, -0.0333354, 0.222375, 13, 2, 3)
+fov = 20.0
+script = ExtResource("2_1oi20")
+
+[node name="PTSphere" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.397772, -0.917484, 0, 0.917484, 0.397772, 1.472, 3.549, 1.132)
+mesh = SubResource("SphereMesh_px034")
+script = ExtResource("3_8wdme")
+radius = 1.395
+material = ExtResource("4_5ktls")
+mesh = SubResource("SphereMesh_px034")
+
+[node name="PTPlane" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.977659, 0.207118, 0.0358461, -0.210197, 0.963338, 0.166726, 1.27059e-08, -0.170536, 0.985351, -0.17845, -0.83, 0)
+mesh = SubResource("PlaneMesh_ah8wi")
+script = ExtResource("5_n3fca")
+normal = Vector3(0.215, 1, 0)
+distance = -0.83
+material = SubResource("Resource_oq5jp")
+mesh = SubResource("PlaneMesh_ah8wi")

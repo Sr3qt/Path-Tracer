@@ -11,7 +11,7 @@ func _enter_tree():
 	if _is_plugin_hint:
 		viewport = %SubViewport
 		
-		var camera = viewport.get_child(0).get_child(0)
+		var camera = viewport.get_child(0)
 		
 		PTRendererAuto._set_plugin_camera(camera)
 		

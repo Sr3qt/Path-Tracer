@@ -245,46 +245,59 @@ func set_scene(scene : PTScene):
 	_scene = scene
 	
 
-func render_image():
-	"""Render image over time, possibly needed to be called multiple times"""
+# TODO Find a way for the cpu to wait for buffer access
+
+## Will expand a given object buffer by its respective step constant times given steps.
+##  NOT_AN_OBJECT is assumed to be material buffer.
+## Setting steps to -1 skips creating a set. By defualt will create buffer to 
+##  fit objects in scene. If objects already fit, do nothing.
+func expand_object_buffer(object_type : PTObject.ObjectType, steps : int = 0):
+	match object_type:
+		PTObject.ObjectType.NOT_OBJECT:
+			if material_buffer_size >= _scene.material_count:
+				print("Material buffer already fits. No buffer expansion")
+				return
+			if steps < 1:
+				@warning_ignore("integer_division")
+				material_buffer_size = _scene.material_count / MATERIAL_COUNT_STEP + 1
+			else:
+				material_buffer_size = material_buffer_size + MATERIAL_COUNT_STEP * steps
+			free_rid(material_buffer)
+			create_material_buffer()
+		PTObject.ObjectType.SPHERE:
+			if sphere_buffer_size >= _scene.sphere_count:
+				print("Sphere buffer already fits. No buffer expansion")
+				return
+			if steps < 1:
+				@warning_ignore("integer_division")
+				sphere_buffer_size = _scene.sphere_count / SPHERE_COUNT_STEP + 1
+			else:
+				sphere_buffer_size = sphere_buffer_size + SPHERE_COUNT_STEP * steps
+			free_rid(sphere_buffer)
+			create_sphere_buffer()
+		PTObject.ObjectType.PLANE:
+			if plane_buffer_size >= _scene.plane_count:
+				print("Plane buffer already fits. No buffer expansion")
+				return
+			if steps < 1:
+				@warning_ignore("integer_division")
+				plane_buffer_size = _scene.plane_count / PLANE_COUNT_STEP + 1
+			else:
+				plane_buffer_size = plane_buffer_size + PLANE_COUNT_STEP * steps
+			free_rid(plane_buffer)
+			create_plane_buffer()
 	
-	var before = Time.get_ticks_msec()
+	if steps != -1:
+		var uniforms = uniform_sets[object_set_index].values()
+		object_set = rd.uniform_set_create(uniforms, shader, object_set_index)
+
+
+func expand_object_buffers(object_types : Array[PTObject.ObjectType]):
+	for object_type in object_types:
+		expand_object_buffer(object_type, -1)
 	
-	var finished_render = false
-	
-	#create_compute_list()
-	
-	# CPU waits for texture data to be ready.
-	# TODO Find a way for the cpu to wait for buffer access
-	var before_render = Time.get_ticks_msec()
-	
-	if finished_render:
-		#var image = rd.texture_get_data(image_buffer, 0)
-		var after_render = Time.get_ticks_msec()
-		
-		#var new_image = Image.create_from_data(render_width, render_height, false,
-											   #Image.FORMAT_RGBAF, image)
-											#
-		#
-		#var folder_path = "res://renders/temps/" + Time.get_date_string_from_system()
-		#
-		## Make folder for today if it doesnt exist
-		#if not DirAccess.dir_exists_absolute(folder_path):
-			#DirAccess.make_dir_absolute(folder_path)
-		#
-		#new_image.save_png(folder_path + "/temp-" +
-		#Time.get_datetime_string_from_system().replace(":", "-") + ".png")
-		
-		print("---------------------------------------")
-		print("Render time: " + str(after_render - before_render) + " ms")
-		print("Total time: " + str(Time.get_ticks_msec() - before) + " ms")
-		print("---------------------------------------")
-	
-		#samples_per_pixel = 1
-		#max_default_depth = 8
-		#max_refraction_bounces = 8
-		var byte_array = _create_lod_byte_array()
-		rd.buffer_update(LOD_buffer, 0, byte_array.size(), byte_array)
+	var uniforms = uniform_sets[object_set_index].values()
+	object_set = rd.uniform_set_create(uniforms, shader, object_set_index)
 
 
 func _create_uniform(bytes : PackedByteArray, _set : int, binding : int) -> RID:
@@ -379,38 +392,33 @@ func _create_lod_byte_array() -> PackedByteArray:
 func _create_materials_byte_array() -> PackedByteArray:
 	var bytes := PackedByteArray()
 	var size : int = _scene.material_count
-	if size:
-		for material in _scene.materials:
-			bytes += material.to_byte_array()
-		
-		# Fill rest of bytes with empty
-		if material_buffer_size == 0:
-			material_buffer_size = (size / MATERIAL_COUNT_STEP + 1) * MATERIAL_COUNT_STEP
-		
-		for i in range(material_buffer_size - size):
-			bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
-		
-	else:
+	for material in _scene.materials:
+		bytes += material.to_byte_array()
+	
+	# Fill rest of bytes with empty
+	if material_buffer_size == 0:
+		@warning_ignore("integer_division")
+		material_buffer_size = (size / MATERIAL_COUNT_STEP + 1) * MATERIAL_COUNT_STEP
+	
+	for i in range(material_buffer_size - size):
 		bytes += PTMaterial.new().to_byte_array()
+		
 	return bytes
 
 
 func _create_spheres_byte_array() -> PackedByteArray:
 	var bytes := PackedByteArray()
 	var size : int = _scene.sphere_count
-	if size:
-		for sphere in _scene.objects[PTObject.ObjectType.SPHERE]:
-			bytes += sphere.to_byte_array()
-		
-		# Fill rest of bytes with empty
-		if sphere_buffer_size == 0:
-			sphere_buffer_size = (size / SPHERE_COUNT_STEP + 1) * SPHERE_COUNT_STEP
-		
-		for i in range(sphere_buffer_size - size):
-			bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
-		
-	else:
-		bytes = PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
+	for sphere in _scene.objects[PTObject.ObjectType.SPHERE]:
+		bytes += sphere.to_byte_array()
+	
+	# Fill rest of bytes with empty
+	if sphere_buffer_size == 0:
+		@warning_ignore("integer_division")
+		sphere_buffer_size = (size / SPHERE_COUNT_STEP + 1) * SPHERE_COUNT_STEP
+	
+	for i in range(sphere_buffer_size - size):
+		bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
 	
 	return bytes
 	
@@ -418,19 +426,16 @@ func _create_spheres_byte_array() -> PackedByteArray:
 func _create_planes_byte_array() -> PackedByteArray:
 	var bytes = PackedByteArray()
 	var size : int = _scene.plane_count
-	if size:
-		for plane in _scene.objects[PTObject.ObjectType.PLANE]:
-			bytes += plane.to_byte_array()
-		
-		# Fill rest of bytes with empty
-		if plane_buffer_size == 0:
-			plane_buffer_size = (size / PLANE_COUNT_STEP + 1) * PLANE_COUNT_STEP
-		
-		for i in range(plane_buffer_size - size):
-			bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
-		
-	else:
-		bytes = PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
+	for plane in _scene.objects[PTObject.ObjectType.PLANE]:
+		bytes += plane.to_byte_array()
+	
+	# Fill rest of bytes with empty
+	if plane_buffer_size == 0:
+		@warning_ignore("integer_division")
+		plane_buffer_size = (size / PLANE_COUNT_STEP + 1) * PLANE_COUNT_STEP
+	
+	for i in range(plane_buffer_size - size):
+		bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
 	
 	return bytes
 	
@@ -451,9 +456,9 @@ func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 		bytes += _scene.camera.to_byte_array()
 	# A higher divisor seems to give a more volatile local noise
 	#  If set to low, refractive materials might not multisample correctly
-	# TODO Still required to reset time
 	var divisor = 100_000.0
-	var time = Time.get_ticks_msec() / divisor
+	var repeat = 10.0 # in seconds
+	var time = fmod(Time.get_ticks_msec() / divisor, (repeat * 1000) / divisor)
 	
 	bytes += PackedFloat32Array([time]).to_byte_array()
 	bytes += window.flags_to_byte_array()
@@ -462,53 +467,3 @@ func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 	
 	return bytes
 	
-
-## Will expand a given object buffer by its respective step constant times given steps.
-##  NOT_AN_OBJECT is assumed to be material buffer.
-## Setting steps to -1 skips creating a set. By defualt will create buffer to 
-##  fit objects in scene. If objects already fit, do nothing.
-func expand_object_buffer(object_type : PTObject.ObjectType, steps : int = 0):
-	match object_type:
-		PTObject.ObjectType.NOT_OBJECT:
-			if material_buffer_size >= _scene.material_count:
-				print("Material buffer already fits. No buffer expansion")
-				return
-			if steps < 1:
-				material_buffer_size = _scene.material_count / MATERIAL_COUNT_STEP + 1
-			else:
-				material_buffer_size = material_buffer_size + MATERIAL_COUNT_STEP * steps
-			free_rid(material_buffer)
-			create_material_buffer()
-		PTObject.ObjectType.SPHERE:
-			if sphere_buffer_size >= _scene.sphere_count:
-				print("Sphere buffer already fits. No buffer expansion")
-				return
-			if steps < 1:
-				sphere_buffer_size = _scene.sphere_count / SPHERE_COUNT_STEP + 1
-			else:
-				sphere_buffer_size = sphere_buffer_size + SPHERE_COUNT_STEP * steps
-			free_rid(sphere_buffer)
-			create_sphere_buffer()
-		PTObject.ObjectType.PLANE:
-			if plane_buffer_size >= _scene.plane_count:
-				print("Plane buffer already fits. No buffer expansion")
-				return
-			if steps < 1:
-				plane_buffer_size = _scene.plane_count / PLANE_COUNT_STEP + 1
-			else:
-				plane_buffer_size = plane_buffer_size + PLANE_COUNT_STEP * steps
-			free_rid(plane_buffer)
-			create_plane_buffer()
-	
-	if steps != -1:
-		var uniforms = uniform_sets[object_set_index].values()
-		object_set = rd.uniform_set_create(uniforms, shader, object_set_index)
-
-
-func expand_object_buffers(object_types : Array[PTObject.ObjectType]):
-	for object_type in object_types:
-		expand_object_buffer(object_type, -1)
-	
-	var uniforms = uniform_sets[object_set_index].values()
-	object_set = rd.uniform_set_create(uniforms, shader, object_set_index)
-

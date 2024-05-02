@@ -26,6 +26,15 @@ func _enter_tree():
 		if parent is PTScene:
 			_scene = parent
 			parent.add_object(self)
+	
+	set_notify_transform(true)
+
+
+func _notification(what):
+	match what:
+		NOTIFICATION_TRANSFORM_CHANGED:
+			if _scene:
+				_scene.update_object(self)
 
 
 func _get_property_list():

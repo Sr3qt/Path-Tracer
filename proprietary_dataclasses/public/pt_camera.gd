@@ -8,8 +8,6 @@ Extends Camera3D for path traced rendering
 """
 
 # Whether any camera settings has changed
-# TODO Make camera_changed fool proof (no input from user required)
-# TODO Checkout Node3D.set_notify_transform()
 var camera_changed := false
 
 # Render variables
@@ -35,19 +33,24 @@ var forward: Vector3:
 func _ready():
 	aspect_ratio = float(aspect_ratio_x) / float(aspect_ratio_y)
 	set_viewport_size()
+	
+	set_notify_transform(true)
 
 
 func _set(property, value):
 	if property == "position":
 		camera_changed = true
 	
-	if property == "transform":
-		if transform != value:
-			camera_changed = true
-	
 	if property == "fov":
 		camera_changed = true
 		
+
+## NOTE: There might not be a difference between this and having a _set check
+func _notification(what):
+	match what:
+		NOTIFICATION_TRANSFORM_CHANGED:
+			camera_changed = true
+
 
 func set_viewport_size():
 	var theta = deg_to_rad(fov)
