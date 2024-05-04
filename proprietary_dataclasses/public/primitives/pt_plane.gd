@@ -39,10 +39,11 @@ func rotate_to_new_normal(new_normal : Vector3):
 	var angle = normal.signed_angle_to(new_normal, axis)
 	
 	var prev_origin = position
-	transform.origin = Vector3.ZERO
-	transform = transform.rotated(axis, angle)
-	transform.origin = prev_origin
-	position = prev_origin
+	var temp_transform = Transform3D(transform)
+	temp_transform.origin = Vector3.ZERO
+	temp_transform = temp_transform.rotated(axis, angle)
+	temp_transform.origin = prev_origin
+	transform = temp_transform
 
 
 func translate_with_new_d(new_d):

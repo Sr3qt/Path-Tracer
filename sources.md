@@ -11,6 +11,8 @@ Another great resource is the PBR book. It's great if you are not already famili
 
 Free to use book: [Raytracing gems](https://link.springer.com/book/10.1007/978-1-4842-4427-2)
 
+A cool website I did not see until recently is [Scratchapixel.com](https://www.scratchapixel.com/index.html). It seems to have a lot of beginner friendly learning resources on both traditional rasterizing and ray-tracing/path-tracing.
+
 
 ## GPU precision considerations
 
@@ -41,4 +43,12 @@ There are many considerations for choosing specific BVH algorithms over another.
   - "Chitalu et al. [CDK20] combine LBVH with an ostensibly-implicit layout... [ ] ... This algorithm is the fastest construction algorithm to date."
   - "[Talking about 2015 Bittner algorithm]  This algorithm produces BVHs of the highest possible quality at the cost of higher build times."
 
-- If you need help implementing a certain algorithm, [this](https://github.com/madmann91/bvh) is a c++ library of different BVH creation algorithms by madmann91.
+- If you need help implementing a certain algorithm, [here](https://github.com/madmann91/bvh) is a c++ library of different BVH creation algorithms by madmann91.
+
+## Fast Ray-Triangle Intersection
+
+For complex scenes a fast ray-triangle intersection test is crucial for maintaining passable performance.
+
+- The most known and one of the best performing intersection algorithms is the Möller-Trumbore algorithm. The original paper is freely available and can be found [here](http://www.graphics.cornell.edu/pubs/1997/MT97.pdf) and a branchless glsl implementation by BrunoLevy can be found [here](https://stackoverflow.com/questions/42740765/intersection-between-line-and-triangle-in-3d/42752998#42752998)
+
+- According to some guy on StackOverflow (Gaslight Deceive Subvert), the fastest algorithm they tested was made by Havel and Herout, claiming it to be twice as fast as the tried and true Möller-trumbore algorithm. [Here](https://stackoverflow.com/a/44837726) is a implemntation in C.

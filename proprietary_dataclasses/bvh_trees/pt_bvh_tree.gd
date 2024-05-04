@@ -45,6 +45,7 @@ static var bvh_functions = built_in_bvh_functions
 
 const objects_to_include : Array[PTObject.ObjectType] = [
 	PTObject.ObjectType.SPHERE,
+	PTObject.ObjectType.TRIANGLE,
 ]
 
 var root_node : BVHNode

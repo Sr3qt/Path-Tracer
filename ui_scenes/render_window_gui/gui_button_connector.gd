@@ -58,7 +58,7 @@ func _ready():
 		if _is_plugin_hint:
 			_on_link_camera_button_toggled(parent.renderer.is_camera_linked)
 		else:
-			%LinkCameraButton.set_disable(true)
+			%LinkCameraButton.visible = false
 		
 		# Set default for rendering disabled
 		%DisableRenderButton.button_pressed = parent.renderer.is_rendering_disabled

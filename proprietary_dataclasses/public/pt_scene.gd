@@ -38,11 +38,13 @@ var camera_settings_values = {
 # Object lists
 var spheres : Array[PTSphere]
 var planes : Array[PTPlane]
+var triangles : Array[PTTriangle]
 
 # Simple dict to choose the right list
 var objects = {
 	ObjectType.SPHERE : spheres,
 	ObjectType.PLANE : planes,
+	ObjectType.TRIANGLE : triangles,
 }
 
 # materials should hold no duplicate materials
@@ -68,6 +70,7 @@ var added_types = {
 	ObjectType.NOT_OBJECT : false, # Interpreted as a material
 	ObjectType.SPHERE : false,
 	ObjectType.PLANE : false,
+	ObjectType.TRIANGLE : false,
 }
 
 
@@ -86,8 +89,6 @@ func _ready():
 	if not Engine.is_editor_hint():
 		if starting_camera != CameraSetting.none:
 			set_camera_setting(starting_camera)
-	elif PTRendererAuto._is_plugin_hint:
-		set_camera_setting(CameraSetting.book_ex)
 	
 	# Scene will probably trigger this when objects add themselves to the scene
 	added_object = false
@@ -136,6 +137,9 @@ func add_object(object : PTObject):
 	
 	added_object = true
 	added_types[type] = true
+	
+	if not object.material:
+		object.material = PTMaterial.new()
 	
 	# Check for object reference in array
 	var material_index = materials.find(object.material)

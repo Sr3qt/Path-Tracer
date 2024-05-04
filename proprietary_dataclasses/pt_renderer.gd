@@ -615,6 +615,9 @@ func update_object(_scene : PTScene, object : PTObject):
 		
 		PTObject.ObjectType.PLANE:
 			buffer = scene_wd.plane_buffer
+		
+		PTObject.ObjectType.TRIANGLE:
+			buffer = scene_wd.triangle_buffer
 	
 	var obj_bytes : PackedByteArray = object.to_byte_array()
 	scene_wd.rd.buffer_update(

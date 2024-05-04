@@ -1,24 +1,65 @@
-[gd_scene load_steps=10 format=3 uid="uid://c8qptlvl2wmde"]
+[gd_scene load_steps=18 format=3 uid="uid://c8qptlvl2wmde"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_4n3re"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_1oi20"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_sphere.gd" id="3_8wdme"]
 [ext_resource type="Resource" uid="uid://cxexu78qhbeqx" path="res://scenes/materials/mat.tres" id="4_5ktls"]
-[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_plane.gd" id="5_n3fca"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_material.gd" id="6_677ub"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_plane.gd" id="7_8kqfv"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_triangle.gd" id="7_qmtfy"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_px034"]
 radius = 1.395
 height = 2.79
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_ah8wi"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_w10fq"]
+
+[sub_resource type="Resource" id="Resource_r8b3q"]
+script = ExtResource("6_677ub")
+albedo = Color(0.129412, 1, 1, 1)
+roughness = 0.0
+metallic = 0.0
+opacity = 1.0
+IOR = 1.0
+refraction_depth = 0
+
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_ytlbb"]
+
+[sub_resource type="Resource" id="Resource_3e08u"]
+script = ExtResource("6_677ub")
+albedo = Color(0.870588, 0.337255, 1, 1)
+roughness = 0.0
+metallic = 0.0
+opacity = 1.0
+IOR = 1.0
+refraction_depth = 0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_25ywl"]
+emission = Color(0.34902, 0.34902, 0.34902, 1)
+emission_energy_multiplier = 4.22
+
+[sub_resource type="SphereMesh" id="SphereMesh_2nqa7"]
+material = SubResource("StandardMaterial3D_25ywl")
+radius = 1.0
+height = 2.0
+
+[sub_resource type="Resource" id="Resource_31vpg"]
+script = ExtResource("6_677ub")
+albedo = Color(1, 0.129412, 0.188235, 1)
+roughness = 0.0
+metallic = 0.9
+opacity = 1.0
+IOR = 1.0
+refraction_depth = 0
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_rdukm"]
 size = Vector2(1000, 1000)
 
-[sub_resource type="Resource" id="Resource_oq5jp"]
+[sub_resource type="Resource" id="Resource_3vnnv"]
 script = ExtResource("6_677ub")
-albedo = Color(0.470588, 0.486275, 0.00392157, 1)
+albedo = Color(1, 1, 1, 1)
 roughness = 0.0
-metallic = 0.934
+metallic = 0.0
 opacity = 1.0
 IOR = 1.0
 refraction_depth = 0
@@ -28,19 +69,45 @@ script = ExtResource("1_4n3re")
 
 [node name="PTCameraFPS" type="Camera3D" parent="."]
 transform = Transform3D(0.224859, -0.144453, 0.963624, 0, 0.98895, 0.14825, -0.974391, -0.0333354, 0.222375, 13, 2, 3)
-fov = 20.0
 script = ExtResource("2_1oi20")
 
 [node name="PTSphere" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.393428, -0.919355, 0, 0.919355, 0.393428, -6.96567, 1.76679, 1.132)
+transform = Transform3D(1, 0, 0, 0, 0.109318, -0.994006, 0, 0.994006, 0.109318, -6.96567, 1.76679, 1.132)
 mesh = SubResource("SphereMesh_px034")
 script = ExtResource("3_8wdme")
 radius = 1.395
 material = ExtResource("4_5ktls")
 mesh = SubResource("SphereMesh_px034")
 
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("ImmediateMesh_w10fq")
+script = ExtResource("7_qmtfy")
+vertex1 = Vector3(-1, -1, 0)
+vertex3 = Vector3(1, 1, 0)
+material = SubResource("Resource_r8b3q")
+mesh = SubResource("ImmediateMesh_w10fq")
+
+[node name="PTTriangle" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.855537, 1.70591, 0.508483, -0.819451, -0.123398, 1.79274, 1.58025, -0.987558, 0.654348, 0.901246, 1.6992, 2.69506)
+mesh = SubResource("ImmediateMesh_ytlbb")
+script = ExtResource("7_qmtfy")
+vertex1 = Vector3(-0.67031, 1, -0.742081)
+vertex2 = Vector3(2.0827, 0, 0.813851)
+vertex3 = Vector3(1.34062, 0, 1.48416)
+material = SubResource("Resource_3e08u")
+mesh = SubResource("ImmediateMesh_ytlbb")
+
+[node name="PTSphere2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5551, 0, 2)
+mesh = SubResource("SphereMesh_2nqa7")
+script = ExtResource("3_8wdme")
+material = SubResource("Resource_31vpg")
+mesh = SubResource("SphereMesh_2nqa7")
+
 [node name="PTPlane" type="MeshInstance3D" parent="."]
-mesh = SubResource("PlaneMesh_ah8wi")
-script = ExtResource("5_n3fca")
-material = SubResource("Resource_oq5jp")
-mesh = SubResource("PlaneMesh_ah8wi")
+transform = Transform3D(-0.814297, 0.500525, -0.293919, 0.55192, 0.824458, -0.125097, 0.179709, -0.264085, -0.947607, 0, 0, 0)
+mesh = SubResource("PlaneMesh_rdukm")
+script = ExtResource("7_8kqfv")
+material = SubResource("Resource_3vnnv")
+mesh = SubResource("PlaneMesh_rdukm")

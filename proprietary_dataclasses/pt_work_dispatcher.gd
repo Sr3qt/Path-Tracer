@@ -9,12 +9,14 @@ extends Node
 #  Mostly useful for plugin, but might be important for runtime as well.
 const SPHERE_COUNT_STEP = 64
 const PLANE_COUNT_STEP = 16
+const TRIANGLE_COUNT_STEP = 16
 # How many materials can be added without needing to update any buffers
 const MATERIAL_COUNT_STEP = 16
 
 # How many objects can fit in each buffer
 var sphere_buffer_size : int = 0
 var plane_buffer_size : int = 0
+var triangle_buffer_size : int = 0
 
 var material_buffer_size : int = 0
 
@@ -36,20 +38,21 @@ var pipeline : RID
 var texture : Texture2DRD
 
 # Set / binding indices
-var image_set_index := 0
-var image_buffer_bind := 0
-var image_size_bind := 1
+const image_set_index : int = 0
+const image_buffer_bind : int = 0
+const image_size_bind : int = 1
 
-var camera_set_index := 1
-var LOD_bind := 0 # For sample per pixel, bounce depth etc.
+const camera_set_index : int = 1
+const LOD_bind : int = 0 # For sample per pixel, bounce depth etc.
 
-var object_set_index := 2
-var materials_bind := 0
-var spheres_bind := 1
-var planes_bind := 2
+const object_set_index : int = 2
+const materials_bind : int = 0
+const spheres_bind : int = 1
+const planes_bind : int = 2
+const triangle_bind : int =  3
 
-var BVH_set_index := 3
-var BVH_bind := 0
+const BVH_set_index : int = 3
+const BVH_bind : int = 0
 
 # Set RIDs
 var image_set : RID
@@ -66,6 +69,7 @@ var LOD_buffer : RID
 var material_buffer : RID
 var sphere_buffer : RID
 var plane_buffer : RID
+var triangle_buffer : RID
 
 var BVH_buffer : RID
 
@@ -104,11 +108,12 @@ func create_buffers():
 	# The image buffer used in compute and fragment shader
 	image_buffer = _create_image_buffer()
 	
-	
+	# TODO Add statistics buffer which the gpu can write to
 	create_lod_buffer()
 	create_material_buffer()
 	create_sphere_buffer()
 	create_plane_buffer()
+	create_triangle_buffer()
 	create_bvh_buffer()
 	
 	bind_sets()
@@ -134,6 +139,11 @@ func create_sphere_buffer():
 func create_plane_buffer():
 	plane_buffer = _create_uniform(
 			_create_planes_byte_array(), object_set_index, planes_bind
+	)
+
+func create_triangle_buffer():
+	triangle_buffer = _create_uniform(
+			_create_triangles_byte_array(), object_set_index, triangle_bind
 	)
 
 func create_material_buffer():
@@ -254,36 +264,47 @@ func set_scene(scene : PTScene):
 func expand_object_buffer(object_type : PTObject.ObjectType, steps : int = 0):
 	match object_type:
 		PTObject.ObjectType.NOT_OBJECT:
-			if material_buffer_size >= _scene.material_count:
+			if material_buffer_size >= _scene.materials.size():
 				print("Material buffer already fits. No buffer expansion")
 				return
 			if steps < 1:
 				@warning_ignore("integer_division")
-				material_buffer_size = _scene.material_count / MATERIAL_COUNT_STEP + 1
+				material_buffer_size = _scene.materials.size() / MATERIAL_COUNT_STEP + 1
 			else:
 				material_buffer_size = material_buffer_size + MATERIAL_COUNT_STEP * steps
 			free_rid(material_buffer)
 			create_material_buffer()
 		PTObject.ObjectType.SPHERE:
-			if sphere_buffer_size >= _scene.sphere_count:
+			if sphere_buffer_size >= _scene.spheres.size():
 				print("Sphere buffer already fits. No buffer expansion")
 				return
 			if steps < 1:
 				@warning_ignore("integer_division")
-				sphere_buffer_size = _scene.sphere_count / SPHERE_COUNT_STEP + 1
+				sphere_buffer_size = _scene.spheres.size() / SPHERE_COUNT_STEP + 1
 			else:
 				sphere_buffer_size = sphere_buffer_size + SPHERE_COUNT_STEP * steps
 			free_rid(sphere_buffer)
 			create_sphere_buffer()
 		PTObject.ObjectType.PLANE:
-			if plane_buffer_size >= _scene.plane_count:
+			if plane_buffer_size >= _scene.planes.size():
 				print("Plane buffer already fits. No buffer expansion")
 				return
 			if steps < 1:
 				@warning_ignore("integer_division")
-				plane_buffer_size = _scene.plane_count / PLANE_COUNT_STEP + 1
+				plane_buffer_size = _scene.planes.size() / PLANE_COUNT_STEP + 1
 			else:
 				plane_buffer_size = plane_buffer_size + PLANE_COUNT_STEP * steps
+			free_rid(plane_buffer)
+			create_plane_buffer()
+		PTObject.ObjectType.TRIANGLE:
+			if triangle_buffer_size >= _scene.triangles.size():
+				print("Plane buffer already fits. No buffer expansion")
+				return
+			if steps < 1:
+				@warning_ignore("integer_division")
+				triangle_buffer_size = _scene.triangles.size() / TRIANGLE_COUNT_STEP + 1
+			else:
+				triangle_buffer_size = triangle_buffer_size + TRIANGLE_COUNT_STEP * steps
 			free_rid(plane_buffer)
 			create_plane_buffer()
 	
@@ -439,6 +460,24 @@ func _create_planes_byte_array() -> PackedByteArray:
 	
 	return bytes
 	
+
+func _create_triangles_byte_array() -> PackedByteArray:
+	var bytes = PackedByteArray()
+	var size : int = _scene.triangles.size()
+	for triangle in _scene.objects[PTObject.ObjectType.TRIANGLE]:
+		bytes += triangle.to_byte_array()
+	
+	# Fill rest of bytes with empty
+	if triangle_buffer_size == 0:
+		@warning_ignore("integer_division")
+		triangle_buffer_size = (size / PLANE_COUNT_STEP + 1) * PLANE_COUNT_STEP
+	
+	for i in range(triangle_buffer_size - size):
+		bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
+	
+	return bytes
+	
+
 
 func _create_bvh_byte_array() -> PackedByteArray:
 	if _scene.bvh:

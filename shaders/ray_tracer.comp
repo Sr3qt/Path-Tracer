@@ -131,7 +131,7 @@ const double pi_d = 3.1415926535897932385;
 const float pi = 3.1415926535897932385;
 const float pi_half = pi / 2.;
 const float pi_double = pi * 2;
-const float eps = 0.00001;
+const float eps = 1e-6;
 
 // Used by offset_ray function
 const float origin = 1.0 / 32.0;
@@ -142,6 +142,7 @@ const float int_scale = 256.0;
 const int is_not_obj = 0;
 const int is_sphere = 1;
 const int is_plane = 2;
+const int is_triangle = 3;
 
 // texture_type enumerator
 const int is_procedural_spatial = 0; // For point hit procedural function
@@ -259,6 +260,8 @@ struct Plane {
     vec3 normal;
     float d;
     int mtl_index;
+    // TODO Turn texture type into a 2-bit flag stored in texture_index
+    //  or make it obsolete
     int texture_index;
     int texture_type;
     int filler1;
@@ -273,13 +276,29 @@ struct Sphere {
     int filler1;
 };
 
+struct Triangle {
+    vec3 point1;
+    float filler1;
+    vec3 point2;
+    float filler2;
+    vec3 point3;
+    float filler3;
+    vec3 normal;
+    float filler4;
+
+    int mtl_index;
+    int texture_index;
+    int texture_type;
+    int filler5;
+};
+
 struct RayHit {
     // TODO Optimize rayhit memory consumption
     bool hit; // Whether the ray actually hit something
     bool is_initialized; // Whether values like point and normal are determined
 
     // Stored on-hit
-    Ray ray;
+    Ray ray; // TODO Remove as it is not needed
     float t; // Paramater value for ray
     int object_type; // enum for what type of object was hit
     int object_index; // The index of object hit in their respective object list, provided by object_type
@@ -358,6 +377,10 @@ layout(set = 2, binding = 1, std430) restrict readonly buffer SpheresBuffer {
 layout(set = 2, binding = 2, std430) restrict readonly buffer PlanesBuffer {
     Plane data[];
 } planes;
+
+layout(set = 2, binding = 3, std430) restrict readonly buffer TrainglesBuffer {
+    Triangle data[];
+} triangles;
 
 // BVH tree in list form
 layout(set = 3, binding = 0, std430) restrict readonly buffer BVH_List {
@@ -469,6 +492,10 @@ bool near_zero(vec3 vec) {
     return (abs(vec.x) < eps && abs(vec.y) < eps && abs(vec.z) < eps);
 }
 
+bool near_zero(float f) {
+    return (abs(f) < eps);
+}
+
 vec3 offset_ray(const vec3 point, const vec3 normal) {
     // Calculates a new point for ray intersection, which stops self intersection
     // Implementation of algorithm in Ray Tracing Gems chapter 6.2.2.4
@@ -573,6 +600,7 @@ vec4 hit_skybox(Ray ray, inout RayHit rayhit) {
 }
 
 void set_rayhit(inout RayHit rayhit, float t, Ray ray, int object_type, int object_index) {
+    // TODO Set range on rayhit
     rayhit.hit = true;
     rayhit.t = t;
     rayhit.ray = ray;
@@ -672,12 +700,95 @@ RayHit hit_planes(Ray ray, Range t_range, inout RayHit rayhit) {
     return rayhit;
 }
 
+
+
+// RAY-TRIANGLE INTERSECTION FUNCTIONS
+// ===================================
+
+bool hit_triangle_MT_branchless(Ray ray, int triangle_index, Range t_range, inout RayHit rayhit) {
+    // Implementation of the Moller-Trumbore algorithm made by BrunoLevy, fitted to project
+    // https://stackoverflow.com/a/42752998
+
+    vec3 A = triangles.data[triangle_index].point1;
+    vec3 B = triangles.data[triangle_index].point2;
+    vec3 C = triangles.data[triangle_index].point3;
+
+    vec3 E1 = B-A;
+    vec3 E2 = C-A;
+    vec3 N = cross(E1,E2);
+    float det = -dot(ray.direction, N);
+    float invdet = 1.0 / det;
+    vec3 AO  = ray.origin - A;
+    vec3 DAO = cross(AO, ray.direction);
+    float u =  dot(E2,DAO) * invdet;
+    float v = -dot(E1,DAO) * invdet;
+    float t =  dot(AO,N)  * invdet;
+
+
+    if ((det >= 1e-6 && in_range(t, t_range) && t < rayhit.t && u >= 0.0 && v >= 0.0 && (u+v) <= 1.0)) {
+        set_rayhit(rayhit, t, ray, is_triangle, triangle_index);
+        return true;
+    }
+
+    return false;
+}
+
+bool hit_triangle_MT(Ray ray, int triangle_index, Range t_range, inout RayHit rayhit) {
+    // Implementation of the Moller-Trumbore algorithm made by BrunoLevy, fitted to project
+    // https://stackoverflow.com/a/42752998
+
+    vec3 A = triangles.data[triangle_index].point1;
+    vec3 B = triangles.data[triangle_index].point2;
+    vec3 C = triangles.data[triangle_index].point3;
+    
+    vec3 E1 = B-A;
+    vec3 E2 = C-A;
+    vec3 N = cross(E1,E2);
+    float det = -dot(ray.direction, N);
+    // TODO Add global backface cull flag and object flag
+
+
+    // If ray is parallel to triangle plane
+    if (near_zero(det)) {
+        return false;
+    }
+
+    float invdet = 1.0 / det;
+    vec3 AO = ray.origin - A;
+    float t = dot(AO,N) * invdet;
+
+    
+    if (!in_range(t, t_range) || t > rayhit.t) {
+        return false;
+    }
+
+    vec3 DAO = cross(AO, ray.direction);
+    float u = dot(C - A, DAO) * invdet;
+    float v = -dot(B - A, DAO) * invdet;
+
+    if (u >= 0.0 && v >= 0.0 && (u+v) <= 1.0) {
+        set_rayhit(rayhit, t, ray, is_triangle, triangle_index);
+        return true;
+    }
+
+    return false;
+}
+
+
 RayHit hit_object(Ray ray, Range range, inout RayHit rayhit, int object_index, int object_type) {
     // Chooses the appropriate hit_ function for given object_type
     if (object_type == is_sphere) {
         return hit_sphere(ray, object_index, range, rayhit);
+    } else if (object_type == is_triangle) {
+        hit_triangle_MT(ray, object_index, range, rayhit);
+        return rayhit;
     }
 }
+
+
+// OTHER RAY FUNCTIONS
+// ===================
+
 
 RayHit determine_rayhit(inout RayHit rayhit) {
     // Resolves intersextion point, normal and other information from rayhit 
@@ -701,6 +812,14 @@ RayHit determine_rayhit(inout RayHit rayhit) {
         rayhit.texture_type = plane.texture_type;
         rayhit.normal = plane.normal;
         rayhit.color = vec4(materials.data[rayhit.mtl_index].albedo, 1);
+    
+    } else if (rayhit.object_type == is_triangle) {
+        Triangle triangle = triangles.data[rayhit.object_index];
+        rayhit.mtl_index = triangle.mtl_index;
+        rayhit.texture_index = triangle.texture_index;
+        rayhit.texture_type = triangle.texture_type;
+        rayhit.normal = triangle.normal;
+        rayhit.color = vec4(materials.data[rayhit.mtl_index].albedo, 1);
     }
 
     rayhit.is_initialized = true;
@@ -711,6 +830,7 @@ RayHit check_ray_hit(Ray ray, Range range) {
     
     RayHit rayhit = empty_rayhit();
     hit_spheres(ray, range, rayhit);
+    hit_triangle_MT_branchless(ray, 1, range, rayhit);
     
     hit_planes(ray, range, rayhit);
 

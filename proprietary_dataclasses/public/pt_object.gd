@@ -7,7 +7,7 @@ extends MeshInstance3D
 # TODO Add support for lines and add abilitiy to visualize traced rays
 
 # Tied to object_type enum in shader
-enum ObjectType {NOT_OBJECT = 0, SPHERE = 1, PLANE = 2, MESH = 3}
+enum ObjectType {NOT_OBJECT = 0, SPHERE = 1, PLANE = 2, TRIANGLE = 3, MESH = 4}
 
 @export var material : PTMaterial = null
 
@@ -77,6 +77,8 @@ func get_type() -> ObjectType:
 		return ObjectType.SPHERE
 	elif self is PTPlane:
 		return ObjectType.PLANE
+	elif self is PTTriangle:
+		return ObjectType.TRIANGLE
 	else:
 		return ObjectType.NOT_OBJECT
 
@@ -84,4 +86,10 @@ func get_type() -> ObjectType:
 func get_global_aabb() -> AABB:
 	"""Returns the objects aabb in world coordinates"""
 	return global_transform * get_aabb()
+
+
+func to_byte_array() -> PackedByteArray:
+	push_warning("No 'to_byte_array' function set for object " + str(self) + ". \
+	A default function will be used instead.")
+	return PackedInt32Array([0,0,0,0,0,0,0,0]).to_byte_array()
 
