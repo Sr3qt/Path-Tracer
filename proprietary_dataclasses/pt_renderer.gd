@@ -632,14 +632,15 @@ func update_object(_scene : PTScene, object : PTObject):
 		return
 	
 	# Update BVH buffer if applicable
-	for node in _scene.bvh.updated_nodes:
-		var bvh_bytes : PackedByteArray = node.to_byte_array()
-		scene_wd.rd.buffer_update(
-				scene_wd.BVH_buffer, 
-				node.index * bvh_bytes.size(), 
-				bvh_bytes.size(), 
-				bvh_bytes
-		)
+	if _scene.bvh:
+		for node in _scene.bvh.updated_nodes:
+			var bvh_bytes : PackedByteArray = node.to_byte_array()
+			scene_wd.rd.buffer_update(
+					scene_wd.BVH_buffer, 
+					node.index * bvh_bytes.size(), 
+					bvh_bytes.size(), 
+					bvh_bytes
+			)
 
 func copy_camera(from : Camera3D, to : Camera3D):
 	to.translate(to.position - from.position)

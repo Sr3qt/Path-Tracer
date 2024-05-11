@@ -75,6 +75,9 @@ var added_types = {
 
 
 func _ready():
+	# TODO GODOT seems to delete a gdscene's objects when that scene has not 
+	#  been in use for a long time. This makes reloading that scene really 
+	#  expensive (time consuming) for us. Fix
 	if not Engine.is_editor_hint() or PTRendererAuto._is_plugin_hint:
 		
 		get_size()
@@ -108,7 +111,7 @@ func update_material(material):
 func update_object(object : PTObject):
 	## Called by an object when its properties changed
 	# Send request to update bvh if object is in it
-	if PTBVHTree.objects_to_include.has(object.get_type()):
+	if bvh and PTBVHTree.objects_to_include.has(object.get_type()):
 		bvh.update_aabb(object)
 	
 	# Send request to update buffer
@@ -138,7 +141,7 @@ func add_object(object : PTObject):
 	added_object = true
 	added_types[type] = true
 	
-	if not object.material:
+	if not object.material and not Engine.is_editor_hint():
 		object.material = PTMaterial.new()
 	
 	# Check for object reference in array

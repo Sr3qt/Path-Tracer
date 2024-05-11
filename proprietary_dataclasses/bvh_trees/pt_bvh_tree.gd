@@ -331,7 +331,8 @@ class BVHNode:
 		for i in range(objects.size()):
 			var type = objects[i].get_type()
 			var _index = object_indices[i]
-			child_indices_array += [_index, type]
+			#print((type << 24))
+			child_indices_array += [_index + (type << 24), 0]
 		
 		# Needed for buffer alignement
 		child_indices_array.resize(tree.max_children * 2 + 
@@ -343,6 +344,6 @@ class BVHNode:
 		
 		var child_indices_bytes : PackedByteArray = PackedInt32Array(child_indices_array).to_byte_array()
 		
-		return child_indices_bytes + bbox_bytes + other_bytes
+		return bbox_bytes + child_indices_bytes + other_bytes
 
 

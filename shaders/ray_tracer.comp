@@ -1,20 +1,18 @@
 #version 450
 
-// Made by following the "Ray Tracing in One Weekend Series"
+// Based on the great tutorial "Ray Tracing in One Weekend Series"
 //  by Peter Shirley, Trevor David Black, Steve Hollasch 
 //  https://raytracing.github.io/books/RayTracingInOneWeekend.html
-
-// Currently following "Ray Tracing The Next Week"
 
 /*
 
 List of features:
-    -Supported objects:
+    - Supported objects:
         3D simples:
             - spheres
 
         2D simples:
-            - nothing    
+            - triangles  
 
         -planes
     
@@ -23,9 +21,9 @@ List of features:
         -metallic
         -transparent/glass
     
-    -Multisampling
+    - Multisampling
 
-    -Procedural (and sampled) textures (soon)
+    - Procedural (and sampled) textures (soon)
 
     - Refraction tracking
 
@@ -49,9 +47,10 @@ Ray depth starts at 0 and goes up as depth increases.
 Materials have something called refraction_depth. A lower number takes priority. 
 See Refraction Tracking in PRE PROCESSOR STUFF
 
-mtl_index and object_index refer to the an material and object in the global material list and 
+mtl_index and object_index refer to a material and an object in the global material list and 
 object list respectively. There may be multiple object lists in which case an object_type enum
-will determine which object list object_index points to.
+will determine which object list object_index points to. The object_type and object_index is 
+encoded in an object_id. object_id is an unique identifier for every object.
 
 texture_index and texture_type, similarly to object_index and object_type, point to a texture 
 and specifies what kind of texture it is respectively, however texture index either points to 
@@ -65,7 +64,7 @@ The function's name should be "procedural_texture".
 LONG TERM GOALS
 ===============
 
-    - Add detail when standing still
+    - Add detail when standing still -- DONE --
 
     - Add skybox
 
@@ -139,6 +138,7 @@ const float float_scale = 1.0 / 65536.0;
 const float int_scale = 256.0;
 
 // object_type enumerator
+// From now on, the object_type is encoded as the first byte of an object_id
 const int is_not_obj = 0;
 const int is_sphere = 1;
 const int is_plane = 2;
@@ -153,10 +153,12 @@ const int is_no_texture = 3;
 // BVH child_index enum
 // const int is_BVHNode = 1;
 
+// TODO Maybe object_id can removed and the shader just removes the first
+//  JUST USE MATERIAL INDEX AS IDENTIFIER 
+//  matching ior and refraction_depth
 // Keeps values of inside_of neatly organized
 struct InsideOf {
-    int object_index;
-    int object_type;
+    int object_id;
     int refraction_depth;
     float IOR;
 };
@@ -172,16 +174,16 @@ const int max_refraction_depth = 8;
 
 // Keeps track of first vacant index in stack
 int inside_of_count = 0;
-// Holds the object_index, obejct_type and refraction_depth of and object
+// Holds the object_id, obejct_type and refraction_depth of and object
 InsideOf inside_of[max_refraction_depth] = InsideOf[](
-    InsideOf(0, 0, int_limit, IOR_air),
-    InsideOf(0, 0, int_limit, IOR_air),
-    InsideOf(0, 0, int_limit, IOR_air),
-    InsideOf(0, 0, int_limit, IOR_air),
-    InsideOf(0, 0, int_limit, IOR_air),
-    InsideOf(0, 0, int_limit, IOR_air),
-    InsideOf(0, 0, int_limit, IOR_air),
-    InsideOf(0, 0, int_limit, IOR_air)
+    InsideOf(0, int_limit, IOR_air),
+    InsideOf(0, int_limit, IOR_air),
+    InsideOf(0, int_limit, IOR_air),
+    InsideOf(0, int_limit, IOR_air),
+    InsideOf(0, int_limit, IOR_air),
+    InsideOf(0, int_limit, IOR_air),
+    InsideOf(0, int_limit, IOR_air),
+    InsideOf(0, int_limit, IOR_air)
 );
 // TODO: Add support for cpu to send InsideOf buffer based on camera position
 
@@ -277,6 +279,7 @@ struct Sphere {
 };
 
 struct Triangle {
+    // TODO SO MUCH SPACE OPTIMIZATION
     vec3 point1;
     float filler1;
     vec3 point2;
@@ -295,20 +298,18 @@ struct Triangle {
 struct RayHit {
     // TODO Optimize rayhit memory consumption
     bool hit; // Whether the ray actually hit something
-    bool is_initialized; // Whether values like point and normal are determined
 
     // Stored on-hit
-    Ray ray; // TODO Remove as it is not needed
     float t; // Paramater value for ray
-    int object_type; // enum for what type of object was hit
-    int object_index; // The index of object hit in their respective object list, provided by object_type
+    int object_id; // The index of object hit in their respective object list, provided by object_type
 
     // Retrieved later
     int mtl_index; // Material of the object hit
     int texture_index;
     int texture_type;
-    vec3 point; // Intersection point between sphere and ray
     vec2 uv;
+
+    vec3 point; // Intersection point between sphere and ray
     vec3 normal;
     vec4 color; // Whatever color the rayhit is determined to be 
 };
@@ -338,12 +339,12 @@ struct BVHNode {
     //  points to its parents, its own and its childrens indicies in the list. 
     //  Instead of pointing to a child node it might point to an object in specified object list
     
+    AABB bbox; // Bounding box that encompasses all children 
     // TODO: compact BVHNode struct, its a little to big.
     // TODO: Experiment with making children just a list of indices, and make some BVHNodes point to 
     //  only objects. Those nodes will have flag for wether they are nodes or not.
     ChildIndex children[max_children]; // List of children, see ChildIndex
     int temp_fill[filler_const];
-    AABB bbox; // Bounding box that encompasses all children 
     int child_count; // Says how many ChildIndixes actually exist and are valid
     int parent; // Index to parent in BVH list. This value is currently unused.
     int self; // Index to self in the BVH list, -1 means the node position is not finalized
@@ -364,7 +365,7 @@ layout(set = 1, binding = 0, std430) restrict readonly buffer LODBuffer {
     int max_refraction_bounces; // How many total extra bounces can occur on refraction
 } LOD;
 
-// Materials to index
+// Materials
 layout(set = 2, binding = 0, std430) restrict readonly buffer MaterialBuffer {
     Material data[];
 } materials;
@@ -382,7 +383,6 @@ layout(set = 2, binding = 3, std430) restrict readonly buffer TrainglesBuffer {
     Triangle data[];
 } triangles;
 
-// BVH tree in list form
 layout(set = 3, binding = 0, std430) restrict readonly buffer BVH_List {
     BVHNode list[];
 } BVH;
@@ -402,21 +402,8 @@ Ray empty_ray() {
     return Ray(vec3(0), vec3(0));
 }
 
-Material empty_material() {
-    return Material(vec3(0), 0., 0., 1., IOR_air, 0);
-}
-
-Sphere empty_sphere() {
-    return Sphere(vec3(0), 0., 0, 0, 0, 0);
-}
-
-Plane empty_plane() {
-    return Plane(vec3(0), 0., 0, 0, 0, 0);
-}
-
 RayHit empty_rayhit() {
-    return RayHit(false, false, empty_ray(), infinity, 0, 0, 0, 0, 0,
-                  vec3(0), vec2(0), vec3(0), vec4(0));
+    return RayHit(false, infinity, 0, 0, 0, 0, vec2(0), vec3(0), vec3(0), vec4(0));
 }
 
 float atan2(float y, float x) {
@@ -546,6 +533,16 @@ void parse_flags() {
     multisample = flags[2];
 }
 
+int get_object_type(int index) {
+    return index >> 24;
+}
+
+int get_object_index(int index) {
+    const int three_last_bytes = 16777215;
+    return index & three_last_bytes;
+}
+
+
 // TEXTURE STUFF
 // =============
 
@@ -599,13 +596,11 @@ vec4 hit_skybox(Ray ray, inout RayHit rayhit) {
     return default_color;
 }
 
-void set_rayhit(inout RayHit rayhit, float t, Ray ray, int object_type, int object_index) {
-    // TODO Set range on rayhit
+void set_rayhit(inout RayHit rayhit, float t, int object_id) {
+    // TODO Set range on ray-hit instead of rayhit
     rayhit.hit = true;
     rayhit.t = t;
-    rayhit.ray = ray;
-    rayhit.object_type = object_type;
-    rayhit.object_index = object_index;
+    rayhit.object_id = object_id;
 }
 
 bool hit_AABB(Ray ray, AABB bbox, Range range, vec3 inv_dir, bvec3 is_dir_neg) {
@@ -626,9 +621,9 @@ bool hit_AABB(Ray ray, AABB bbox, Range range, vec3 inv_dir, bvec3 is_dir_neg) {
     return true;
 }
 
-RayHit hit_sphere(Ray ray, int sphere_index, Range t_range, inout RayHit rayhit) {
+RayHit hit_sphere(Ray ray, int object_id, Range t_range, inout RayHit rayhit) {
 
-    Sphere sphere = spheres.data[sphere_index];
+    Sphere sphere = spheres.data[get_object_index(object_id)];
     // Calculate the determinant of quadratic formula
     vec3 oc = ray.origin - sphere.center;
     float a = dot(ray.direction, ray.direction);
@@ -654,7 +649,7 @@ RayHit hit_sphere(Ray ray, int sphere_index, Range t_range, inout RayHit rayhit)
     }
 
     // Set rayhit variables
-    set_rayhit(rayhit, root, ray, is_sphere, sphere_index);
+    set_rayhit(rayhit, root, object_id);
 
     return rayhit;
 }
@@ -663,14 +658,14 @@ RayHit hit_spheres(Ray ray, Range t_range, inout RayHit rayhit) {
     if (near_zero(vec3(spheres.data[0].radius))) {return rayhit;} // Early return if no spheres in scene
     // Uses global scope sphere array to bypass function parameter limitations
     for (int i = 0; i < spheres.data.length(); ++i) {
-        hit_sphere(ray, i, t_range, rayhit);
+        hit_sphere(ray, i + (is_sphere << 24), t_range, rayhit);
     }
     return rayhit;
 }
 
-RayHit hit_plane(Ray ray, int plane_index, Range t_range, inout RayHit rayhit) {
+RayHit hit_plane(Ray ray, int object_id, Range t_range, inout RayHit rayhit) {
     
-    Plane plane = planes.data[plane_index];
+    Plane plane = planes.data[get_object_index(object_id)];
 
     float intersection_t = ((plane.d - dot(ray.origin, plane.normal)) /
                             dot(plane.normal, ray.direction));
@@ -686,7 +681,7 @@ RayHit hit_plane(Ray ray, int plane_index, Range t_range, inout RayHit rayhit) {
     }
 
     // Set rayhit variables
-    set_rayhit(rayhit, intersection_t, ray, is_plane, plane_index);
+    set_rayhit(rayhit, intersection_t, object_id);
 
     return rayhit;
 }
@@ -695,7 +690,7 @@ RayHit hit_planes(Ray ray, Range t_range, inout RayHit rayhit) {
     if (near_zero(planes.data[0].normal)) {return rayhit;} // Early return if no planes in scene
     // Uses global scope planes array to bypass function parameter limitations
     for (int i = 0; i < planes.data.length(); ++i) {
-        hit_plane(ray, i, t_range, rayhit);
+        hit_plane(ray, i + (is_plane << 24), t_range, rayhit);
     }
     return rayhit;
 }
@@ -705,9 +700,11 @@ RayHit hit_planes(Ray ray, Range t_range, inout RayHit rayhit) {
 // RAY-TRIANGLE INTERSECTION FUNCTIONS
 // ===================================
 
-bool hit_triangle_MT_branchless(Ray ray, int triangle_index, Range t_range, inout RayHit rayhit) {
+bool hit_triangle_MT_branchless(Ray ray, int object_id, Range t_range, inout RayHit rayhit) {
     // Implementation of the Moller-Trumbore algorithm made by BrunoLevy, fitted to project
     // https://stackoverflow.com/a/42752998
+
+    int triangle_index = get_object_index(object_id);
 
     vec3 A = triangles.data[triangle_index].point1;
     vec3 B = triangles.data[triangle_index].point2;
@@ -726,16 +723,18 @@ bool hit_triangle_MT_branchless(Ray ray, int triangle_index, Range t_range, inou
 
 
     if ((det >= 1e-6 && in_range(t, t_range) && t < rayhit.t && u >= 0.0 && v >= 0.0 && (u+v) <= 1.0)) {
-        set_rayhit(rayhit, t, ray, is_triangle, triangle_index);
+        set_rayhit(rayhit, t, object_id);
         return true;
     }
 
     return false;
 }
 
-bool hit_triangle_MT(Ray ray, int triangle_index, Range t_range, inout RayHit rayhit) {
+bool hit_triangle_MT(Ray ray, int object_id, Range t_range, inout RayHit rayhit) {
     // Implementation of the Moller-Trumbore algorithm made by BrunoLevy, fitted to project
     // https://stackoverflow.com/a/42752998
+
+    int triangle_index = get_object_index(object_id);
 
     vec3 A = triangles.data[triangle_index].point1;
     vec3 B = triangles.data[triangle_index].point2;
@@ -767,7 +766,7 @@ bool hit_triangle_MT(Ray ray, int triangle_index, Range t_range, inout RayHit ra
     float v = -dot(B - A, DAO) * invdet;
 
     if (u >= 0.0 && v >= 0.0 && (u+v) <= 1.0) {
-        set_rayhit(rayhit, t, ray, is_triangle, triangle_index);
+        set_rayhit(rayhit, t, object_id);
         return true;
     }
 
@@ -775,12 +774,14 @@ bool hit_triangle_MT(Ray ray, int triangle_index, Range t_range, inout RayHit ra
 }
 
 
-RayHit hit_object(Ray ray, Range range, inout RayHit rayhit, int object_index, int object_type) {
+RayHit hit_object(Ray ray, Range range, inout RayHit rayhit, int object_id) {
     // Chooses the appropriate hit_ function for given object_type
+    int object_type = get_object_type(object_id);
+
     if (object_type == is_sphere) {
-        return hit_sphere(ray, object_index, range, rayhit);
+        return hit_sphere(ray, object_id, range, rayhit);
     } else if (object_type == is_triangle) {
-        hit_triangle_MT(ray, object_index, range, rayhit);
+        hit_triangle_MT(ray, object_id, range, rayhit);
         return rayhit;
     }
 }
@@ -790,39 +791,39 @@ RayHit hit_object(Ray ray, Range range, inout RayHit rayhit, int object_index, i
 // ===================
 
 
-RayHit determine_rayhit(inout RayHit rayhit) {
+RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
     // Resolves intersextion point, normal and other information from rayhit 
-    rayhit.point = ray_at(rayhit.ray, rayhit.t);
+    rayhit.point = ray_at(ray_in, rayhit.t);
+
+    int object_type = get_object_type(rayhit.object_id);
+    int object_index = get_object_index(rayhit.object_id);
 
     // Procedure for hitting sphere
-    if (rayhit.object_type == is_sphere) {
-        Sphere sphere = spheres.data[rayhit.object_index];
+    if (object_type == is_sphere) {
+        Sphere sphere = spheres.data[object_index];
         rayhit.mtl_index = sphere.mtl_index;
         rayhit.texture_index = sphere.texture_index;
         rayhit.texture_type = sphere.texture_type;
         rayhit.normal = (rayhit.point - sphere.center) / sphere.radius;
-        rayhit.color = vec4(materials.data[rayhit.mtl_index].albedo, 1);
         rayhit.uv = sphere_get_uv(rayhit.point);
 
     // Procedure for hitting plane
-    } else if (rayhit.object_type == is_plane) {
-        Plane plane = planes.data[rayhit.object_index];
+    } else if (object_type == is_plane) {
+        Plane plane = planes.data[object_index];
         rayhit.mtl_index = plane.mtl_index;
         rayhit.texture_index = plane.texture_index;
         rayhit.texture_type = plane.texture_type;
         rayhit.normal = plane.normal;
-        rayhit.color = vec4(materials.data[rayhit.mtl_index].albedo, 1);
     
-    } else if (rayhit.object_type == is_triangle) {
-        Triangle triangle = triangles.data[rayhit.object_index];
+    } else if (object_type == is_triangle) {
+        Triangle triangle = triangles.data[object_index];
         rayhit.mtl_index = triangle.mtl_index;
         rayhit.texture_index = triangle.texture_index;
         rayhit.texture_type = triangle.texture_type;
         rayhit.normal = triangle.normal;
-        rayhit.color = vec4(materials.data[rayhit.mtl_index].albedo, 1);
     }
 
-    rayhit.is_initialized = true;
+    rayhit.color = vec4(materials.data[rayhit.mtl_index].albedo, 1);
     return rayhit;
 }
 
@@ -899,17 +900,19 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
         if (!small_break) {
             if (hit_AABB(ray, node.bbox, range, inv_direction, dir_is_negative)) {
                 // Loop over child indices to add them to stack or do hit check
+                // TODO: OPTIMIZE WITH CONSTATN LOOP
                 for (int i = node.child_count; i > 0; i--) {
                     ChildIndex tochild = node.children[i - 1];
                     // If children[i].index points to inner node, add it to to_visit
-                    if (tochild.object_type == is_not_obj) {
+                    int object_type = get_object_type(tochild.index);
+                    if (object_type == is_not_obj) {
                         to_visit[to_visit_i++] = tochild.index;
                     } 
                     // children[i].index points to object_index, do a hit test
                     else {
                         // float t_before = rayhit.t;
                         // bool hit_before = rayhit.hit;
-                        hit_object(ray, range, rayhit, tochild.index, tochild.object_type);
+                        hit_object(ray, range, rayhit, tochild.index);
                         hit_check_count++;
                         
                         // if (!hit_before && rayhit.hit) {last_bvhnode = node.self;}
@@ -1017,15 +1020,15 @@ Ray reflect_ray(Ray ray_in, RayHit rayhit) {
     return Ray(new_origin, ray_dir);
 }
 
-#define same_object (object_index == index.object_index && object_type == index.object_type)
-float get_IOR(int object_index, int object_type, int depth, float IOR) {
+#define same_object (object_id == index.object_id)
+float get_IOR(int object_id, int depth, float IOR) {
     int lowest_depth = depth;
     float IOR_out = IOR;
     // Loop over objects that we have entered and not left, 
     //  pick the one with the lowest refraction_depth, ignore default values
     for (int i = 0; i < max_refraction_depth; i++) {
         InsideOf index = inside_of[i];
-        if (index.object_index != is_not_obj && index.refraction_depth < lowest_depth &&
+        if (index.object_id != is_not_obj && index.refraction_depth < lowest_depth &&
                 !same_object) 
         {
             lowest_depth = index.refraction_depth;
@@ -1036,11 +1039,11 @@ float get_IOR(int object_index, int object_type, int depth, float IOR) {
     return IOR_out;
 }
 
-void remove_object_from_inside_of(int object_index, int object_type) {
+void remove_object_from_inside_of(int object_id) {
     int shift = 0;
     for (int i = 0; i < inside_of_count - 1; i++) {
         InsideOf index = inside_of[i];
-        if (same_object) {
+        if (object_id == index.object_id) {
             shift = 1;
         }
         inside_of[i] = inside_of[i + shift];
@@ -1077,11 +1080,10 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     } else {
         if (is_inside) {
             // We are inside the current object and disregard its own material as a possible eta_out
-            eta_out = get_IOR(rayhit.object_index, rayhit.object_type, int_limit, IOR_air);
+            eta_out = get_IOR(rayhit.object_id, int_limit, IOR_air);
         } else {
             // We are outside the current object and its material can be a possible eta_out
-            eta_out = get_IOR(rayhit.object_index, rayhit.object_type, 
-            material.refraction_depth, material.IOR);
+            eta_out = get_IOR(rayhit.object_id,  material.refraction_depth, material.IOR);
         }
     }
 
@@ -1093,11 +1095,12 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     if (is_close(eta, 1.0)) {
         // If ray was inside and went out, remove from inside_of list
         if (is_inside) {
-            remove_object_from_inside_of(rayhit.object_index, rayhit.object_type);
+            remove_object_from_inside_of(rayhit.object_id);
         } else {
             // If ray was outside and refracted, add to inside_of list
-            inside_of[inside_of_count++] = InsideOf(rayhit.object_index, rayhit.object_type, 
-                material.refraction_depth, material.IOR);
+            inside_of[inside_of_count++] = InsideOf(
+                rayhit.object_id, material.refraction_depth, material.IOR
+            );
         }
     
         #if self_intersect_method==0
@@ -1152,11 +1155,12 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
 
     // If ray was inside and went out, remove from inside_of list
     if (is_inside) {
-        remove_object_from_inside_of(rayhit.object_index, rayhit.object_type);
+        remove_object_from_inside_of(rayhit.object_id);
     } else {
         // If ray was outside and refracted, add to inside_of list
-        inside_of[inside_of_count++] = InsideOf(rayhit.object_index, rayhit.object_type, 
-            material.refraction_depth, material.IOR);
+        inside_of[inside_of_count++] = InsideOf(
+            rayhit.object_id, material.refraction_depth, material.IOR
+        );
     }
     
     #if self_intersect_method==0
@@ -1181,7 +1185,7 @@ Ray scatter_ray(Ray ray_in, RayHit rayhit) {
     #endif
 
     // Returns a scattered ray based on ray_in and rayhit
-    vec3 ray_dir = rand_vec3(new_origin + rayhit.ray.direction) + rayhit.normal;
+    vec3 ray_dir = rand_vec3(new_origin + ray_in.direction) + rayhit.normal;
 
     // If created ray pointed in opposite direction of normal
     ray_dir = near_zero(ray_dir) ? rayhit.normal : ray_dir;
@@ -1243,7 +1247,7 @@ vec4 cast_ray(Ray ray, Range range) {
             break;
         }
 
-        determine_rayhit(rayhit);
+        determine_rayhit(new_ray, rayhit);
 
         // Get texture color
         tex_col = rayhit.texture_type == 0 ? get_texture(rayhit) : vec4(1);
