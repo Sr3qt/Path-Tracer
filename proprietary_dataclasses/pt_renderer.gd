@@ -253,24 +253,8 @@ func _input(event):
 
 
 func _exit_tree():
-	if not Engine.is_editor_hint():
-		
-		var image = wd.rd.texture_get_data(wd.image_buffer, 0)
-		# Changing the renderer render size should always create a new buffer, so
-		#  this code should always yield a correct result
-		var new_image = Image.create_from_data(
-			render_width, 
-			render_height, 
-			false,
-			Image.FORMAT_RGBAF, 
-			image
-		)
-		new_image.save_png("temps/temp.png")
-		
-		wd.free_RIDs()
-	
-	if _is_plugin_hint:
-		wd.free_RIDs()
+	for _wd in wds:
+		_wd.free_RIDs()
 
 
 ## It is plugin_control_root's responsibility to call this function
@@ -293,6 +277,7 @@ func raise_error(msg):
 	push_error(msg)
 
 
+# TODO Move to a preprocessor script ?
 func load_shader():
 	var file := FileAccess.open("res://shaders/ray_tracer.comp", 
 		FileAccess.READ_WRITE)

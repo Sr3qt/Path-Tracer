@@ -326,24 +326,20 @@ class BVHNode:
 		
 		# Add children nodes and objects to children list
 		for i in children_indices:
-			child_indices_array += [i, 0]
+			child_indices_array.append(i)
 		
 		for i in range(objects.size()):
-			var type = objects[i].get_type()
-			var _index = object_indices[i]
-			#print((type << 24))
-			child_indices_array += [_index + (type << 24), 0]
+			var type : int = objects[i].get_type()
+			var _index : int = object_indices[i]
+			child_indices_array.append(_index + (type << 24))
 		
 		# Needed for buffer alignement
-		child_indices_array.resize(tree.max_children * 2 + 
-								   int((tree.max_children % 2) + 2) * 2)
+		#child_indices_array.resize(tree.max_children)
+		child_indices_array.resize(tree.max_children + 
+								   int((tree.max_children % 4) - 4) * -1)
 		
 		var bbox_bytes : PackedByteArray = PTObject.aabb_to_byte_array(aabb)
-		var other : Array[int] = [size(), parent_index, index, 0]
-		var other_bytes : PackedByteArray = PackedInt32Array(other).to_byte_array()
 		
-		var child_indices_bytes : PackedByteArray = PackedInt32Array(child_indices_array).to_byte_array()
-		
-		return bbox_bytes + child_indices_bytes + other_bytes
+		return PackedInt32Array(child_indices_array).to_byte_array() + bbox_bytes
 
 

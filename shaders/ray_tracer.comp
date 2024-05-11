@@ -4,6 +4,9 @@
 //  by Peter Shirley, Trevor David Black, Steve Hollasch 
 //  https://raytracing.github.io/books/RayTracingInOneWeekend.html
 
+// Noise functions taken from Ray Tracer Demo godot project by HK-SAO
+// https://godotengine.org/asset-library/asset/1550 
+
 /*
 
 List of features:
@@ -150,12 +153,9 @@ const int is_procedural_flat = 1; // For uv procedural functions
 const int is_sampled_texture = 2; // For uv sampling from texture buffer
 const int is_no_texture = 3;
 
-// BVH child_index enum
-// const int is_BVHNode = 1;
-
 // TODO Maybe object_id can removed and the shader just removes the first
-//  JUST USE MATERIAL INDEX AS IDENTIFIER 
 //  matching ior and refraction_depth
+//  JUST USE MATERIAL INDEX AS IDENTIFIER 
 // Keeps values of inside_of neatly organized
 struct InsideOf {
     int object_id;
@@ -197,7 +197,8 @@ int last_bvhnode = 0;
 
 // Maximum number of children a BVHNode can have
 const int max_children = 2; // Replaced by script preprocessor, do NOT touch this line
-const int filler_const = int(mod(max_children, 2) + 2.) * 2; 
+// NOTE: For some weird reason adding unneseccary padding gives a small performance boost
+const int filler_const = -1 * int(mod(max_children, 4) - 4.); 
 
 // Flags
 const int flag_size = 31;
@@ -322,34 +323,17 @@ struct Range {
 struct AABB {
     // only xyz used, they are vec4 to fit memory allocation
     // minimum.x < maximum.x etc. should always be true.
+    // The w value is unused by the aabb, so it can be filled with whatever is useful
     vec4 minimum;
     vec4 maximum;
 };
 
-struct ChildIndex {
-    // Small struct to add labels to child indices in a BVHNode
-    int index; // Points to a child BVHNode if object_type is 0, else it points to an object 
-    int object_type; // Specifies the object_type index points to. If object_type is 0, it points to
-    // another BVHNode
-};
-
-// BVH should be shared across all groups, how doe? Might make compute shader to make BVH
 struct BVHNode {
-    // A BVHNode is an node in a n-ary tree. They are stored in a global BVH buffer. Every node 
-    //  points to its parents, its own and its childrens indicies in the list. 
-    //  Instead of pointing to a child node it might point to an object in specified object list
-    
-    AABB bbox; // Bounding box that encompasses all children 
-    // TODO: compact BVHNode struct, its a little to big.
-    // TODO: Experiment with making children just a list of indices, and make some BVHNodes point to 
-    //  only objects. Those nodes will have flag for wether they are nodes or not.
-    ChildIndex children[max_children]; // List of children, see ChildIndex
+    // A BVHNode is an node in a n-ary tree. They are stored in a global BVH buffer. 
+    // Every node points to either child nodes or to objects with object_ids.
+    int children[max_children];
     int temp_fill[filler_const];
-    int child_count; // Says how many ChildIndixes actually exist and are valid
-    int parent; // Index to parent in BVH list. This value is currently unused.
-    int self; // Index to self in the BVH list, -1 means the node position is not finalized
-    // -2 means BVHNode doesn't exist. This value is currently unused.
-    int filler;
+    AABB bbox; 
 };
 
 
@@ -430,8 +414,7 @@ float rand2(vec2 co) {
 }
 
 vec3 rand_vec3(vec3 point) {
-    // Creates a normalized vector in a random direction from a point 
-    // I got tricked by the tutorial :(
+    // Creates a normalized vector in a random direction from a point
     vec3 n = vec3(
         rand(noise(random)) - 0.5, 
         rand(noise(random)) - 0.5, 
@@ -439,17 +422,6 @@ vec3 rand_vec3(vec3 point) {
 
     return normalize(n);
 }
-
-// vec3 rand_vec3(vec3 point) {
-//     // Creates a normalized vector in a random direction from a point 
-//     // I got tricked by the tutorial :(
-//     vec3 n = vec3(
-//         rand2(point.xy) - 0.5, 
-//         rand2(point.xz) - 0.5, 
-//         rand2(point.yz) - 0.5);
-//     return normalize(n);
-// }
-
 
 float hash(vec3 x) {
     // Also taken from Ray Tracer Demo by HK-SHAO
@@ -815,6 +787,7 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         rayhit.texture_type = plane.texture_type;
         rayhit.normal = plane.normal;
     
+    // Procedure for hitting triangle
     } else if (object_type == is_triangle) {
         Triangle triangle = triangles.data[object_index];
         rayhit.mtl_index = triangle.mtl_index;
@@ -880,6 +853,7 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
         // If ray already hit something, ignore aabbs which are not in the same octant as the 
         //  ray origin relative to the intersection point
         if (rayhit.hit) {
+            // TODO Consider calculating point on-hit so we can skip these calculations
             new_point = ray.origin + ray.direction * rayhit.t;
             vec4 new_min = node.bbox.minimum;
             vec4 new_max = node.bbox.maximum;
@@ -900,19 +874,21 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
         if (!small_break) {
             if (hit_AABB(ray, node.bbox, range, inv_direction, dir_is_negative)) {
                 // Loop over child indices to add them to stack or do hit check
-                // TODO: OPTIMIZE WITH CONSTATN LOOP
-                for (int i = node.child_count; i > 0; i--) {
-                    ChildIndex tochild = node.children[i - 1];
-                    // If children[i].index points to inner node, add it to to_visit
-                    int object_type = get_object_type(tochild.index);
-                    if (object_type == is_not_obj) {
-                        to_visit[to_visit_i++] = tochild.index;
+                for (int i = 0; i < max_children; i++) {
+                    int tochild = node.children[i];
+
+                    // If child is invalid, skip
+                    if (tochild == 0) {continue;}
+
+                    if (get_object_type(tochild) == is_not_obj) {
+                        // If children[i] points to inner node, add it to to_visit
+                        to_visit[to_visit_i++] = tochild;
                     } 
-                    // children[i].index points to object_index, do a hit test
                     else {
+                        // children[i] points to object_index, do a hit test
                         // float t_before = rayhit.t;
                         // bool hit_before = rayhit.hit;
-                        hit_object(ray, range, rayhit, tochild.index);
+                        hit_object(ray, range, rayhit, tochild);
                         hit_check_count++;
                         
                         // if (!hit_before && rayhit.hit) {last_bvhnode = node.self;}
@@ -923,8 +899,10 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
         }
         small_break = false;
 
-
         // ATTEMPT AT STARTING BVH SEARCH FROM PREVIOUSLY HIT OBJECT'S BVHNODE
+        // Also currently broken, because BVHNode was changed.
+        // To fix you can smuggle self and parent values in AABB.maximum.w and AABB.minimum.w 
+        //  with a macro. Remember to change to_byte_array for bvhnodes.
         // ===================================================================
         // This attempt wasn't very succsessfull, performance was worse, but that might be because of
         // inoptimal bvh tree
@@ -944,11 +922,11 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
         //     parent = BVH.list[parent.parent];
         //     highest_parent = parent.self;
         //     for (int i = parent.child_count; i > 0; i--) {
-        //         ChildIndex new_child = parent.children[i - 1];
+        //         int new_child = parent.children[i - 1];
                 
         //         // If parent's child is not the node we just calculated
-        //         if (new_child.index != node.self) {
-        //             to_visit[to_visit_i++] = new_child.index;
+        //         if (new_child != node.self) {
+        //             to_visit[to_visit_i++] = new_child;
         //         }
         //     }
         // }
@@ -959,11 +937,11 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
         //     BVHNode parent = BVH.list[node.parent];
         //     highest_parent = parent.self;
         //     for (int i = parent.child_count; i > 0; i--) {
-        //         ChildIndex new_child = parent.children[i - 1];
+        //         int new_child = parent.children[i - 1];
                 
         //         // If parent's child is not the node we just calculated
-        //         if (new_child.index != node.self) {
-        //             to_visit[to_visit_i++] = new_child.index;
+        //         if (new_child != node.self) {
+        //             to_visit[to_visit_i++] = new_child;
         //         }
         //     }
         // }
