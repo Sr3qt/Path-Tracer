@@ -10,10 +10,12 @@ extends MeshInstance3D
 enum ObjectType {NOT_OBJECT = 0, SPHERE = 1, PLANE = 2, TRIANGLE = 3, MESH = 4}
 
 @export var material : PTMaterial = null
+@export var texture : PTTexture
 
 # Indices relevant to _scene
 var object_index : int
 var material_index : int
+var texture_id : int
 
 # The scene this object is part of
 var _scene : PTScene

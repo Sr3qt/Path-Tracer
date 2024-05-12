@@ -269,7 +269,7 @@ func raise_error(msg):
 
 
 # TODO Move to a preprocessor script ?
-func load_shader():
+func load_shader(ptscene : PTScene):
 	var file := FileAccess.open("res://shaders/ray_tracer.comp", 
 		FileAccess.READ_WRITE)
 	var res = file.get_as_text()
@@ -281,33 +281,36 @@ func load_shader():
 	"const int max_children = %s;" % bvh_max_children)
 
 	# Insert procedural texture functions
-	var default_function_name = "procedural_texture"
-	var base_function_name = "procedural_texture_function"
+	const DEFUALT_FUNCTION_NAME = "procedural_texture"
+	const BASE_FUNCTION_NAME = "_procedural_texture_function"
 	
 	var i = 1
 	var function_definitons = ""
 	var function_calls = ""
-	for filename in procedural_textures:
-		var path = "res://shaders/procedural_textures/" + filename
+	for texture in ptscene.textures:
+		if not texture is PTProceduralTexture:
+			continue
+		var path = texture.texture_path
 		var tex_file := FileAccess.open(path, FileAccess.READ_WRITE)
 		if not tex_file:
-			push_error("PT: No procedural texture file not found: " + filename +
-					" in " + path)
+			push_error("PT: No procedural texture file found: " + 
+					texture.texture_path + " in " + path)
 		var text = tex_file.get_as_text()
 		
-		var function_index = text.find(default_function_name)
+		var function_index = text.find(DEFUALT_FUNCTION_NAME)
 		if function_index == -1:
-			push_error("PT: No procedural texture fucntion found in file: " + 
-					filename + " in " + path)
+			push_error("PT: No procedural texture function found in file: " + 
+					texture.texture_path + " in " + path)
 		
-		text = text.replace(default_function_name, base_function_name + str(i))
+		text = text.replace(DEFUALT_FUNCTION_NAME, BASE_FUNCTION_NAME + str(i))
 		
 		function_calls += (
 			"else if (function == %s) {\n" % i + "		return " +
-			base_function_name + str(i) + "(pos);\n	}\n	"
+			BASE_FUNCTION_NAME + str(i) + "(pos);\n	}\n	"
 		)
 		
 		function_definitons += text
+		i += 1
 	
 	# Inserts function definitions
 	res = res.replace("//procedural_texture_function_definition_hook", 
@@ -464,7 +467,7 @@ func add_scene(new_ptscene : PTScene):
 	# Create new WD
 	var new_wd = PTWorkDispatcher.new(self)
 	new_wd.set_scene(new_ptscene)
-	new_wd.load_shader(load_shader())
+	new_wd.load_shader(load_shader(new_ptscene))
 	new_wd.create_buffers()
 	
 	wds.append(new_wd)
@@ -556,7 +559,7 @@ func create_bvh(_max_children : int, function_name : String):
 	scene.scene_changed = true
 	
 	if prev_max != bvh_max_children:
-		load_shader()
+		load_shader(scene)
 	
 	# NOTE: Removing and adding buffer seem to be as fast as trying to update it
 	wd.rd.free_rid(wd.BVH_buffer)

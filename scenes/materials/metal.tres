@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="PTMaterial" load_steps=2 format=3 uid="uid://b4yj315rx77td"]
 
-[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_material.gd" id="1_v1imk"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_material.gd" id="1_v1imk"]
+
 
 [resource]
 script = ExtResource("1_v1imk")

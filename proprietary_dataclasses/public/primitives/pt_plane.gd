@@ -60,4 +60,4 @@ func translate_with_new_d(new_d):
 
 func to_byte_array():
 	return (PackedFloat32Array(PTObject.vector_to_array(normal) + [distance]).to_byte_array() +
-	PackedInt32Array([material_index, 1, 0, 0]).to_byte_array())
+	PackedInt32Array([material_index, texture_id, 0, 0]).to_byte_array())

@@ -56,8 +56,9 @@ will determine which object list object_index points to. The object_type and obj
 encoded in an object_id. object_id is an unique identifier for every object.
 
 texture_index and texture_type, similarly to object_index and object_type, point to a texture 
-and specifies what kind of texture it is respectively, however texture index either points to 
-a texture in an array or, if texture_type is zero, to a procedural_texture_function.
+and specifies what kind of texture it is respectively. Similarly to object_index and object_type,
+textrue_index and texture_type is consolidated into a texture_id. texture_type can have the flag
+is_sampled which means the texture is sampled. If not then the texture is procedurally generated.
 
 Procedural textures are single function files which takes in a vec3 position and returns a vec4 color.
 These functions are written in a seperate file and inserted into this file by the preprocessor. 
@@ -71,7 +72,7 @@ LONG TERM GOALS
 
     - Add skybox
 
-    - Add surface textures
+    - Add surface textures -- ALMOST --
 
     - Make set theory functions possible with objects like add and subtract 
         (can see insides of objects)
@@ -80,7 +81,7 @@ LONG TERM GOALS
 
     - Add lighting
 
-    - Make a real time ray tracer with triangle geometry (will be scuffed)
+    - Make a real time ray tracer with triangle geometry (will be scuffed) -- ALMOST --
 
     - Implement meshlets for more dynamic materials and better culling (for traingles)
 
@@ -148,10 +149,13 @@ const int is_plane = 2;
 const int is_triangle = 3;
 
 // texture_type enumerator
-const int is_procedural_spatial = 0; // For point hit procedural function
-const int is_procedural_flat = 1; // For uv procedural functions
-const int is_sampled_texture = 2; // For uv sampling from texture buffer
-const int is_no_texture = 3;
+const int is_sampled = 1;
+const int is_spatial = 2;
+
+const int is_procedural_flat = 0; // For uv procedural functions
+const int is_procedural_spatial = 2; // For point hit procedural function
+const int is_sampled_texture = 1; // For uv sampling from texture buffer
+const int is_no_texture = 4;
 
 // TODO Maybe object_id can removed and the shader just removes the first
 //  matching ior and refraction_depth
@@ -263,9 +267,9 @@ struct Plane {
     vec3 normal;
     float d;
     int mtl_index;
-    // TODO Turn texture type into a 2-bit flag stored in texture_index
+    // TODO Turn texture type into a 2-bit flag stored in texture_id
     //  or make it obsolete
-    int texture_index;
+    int texture_id;
     int texture_type;
     int filler1;
 };
@@ -274,7 +278,7 @@ struct Sphere {
     vec3 center;
     float radius;
     int mtl_index;
-    int texture_index;
+    int texture_id;
     int texture_type;
     int filler1;
 };
@@ -291,7 +295,7 @@ struct Triangle {
     float filler4;
 
     int mtl_index;
-    int texture_index;
+    int texture_id;
     int texture_type;
     int filler5;
 };
@@ -306,7 +310,7 @@ struct RayHit {
 
     // Retrieved later
     int mtl_index; // Material of the object hit
-    int texture_index;
+    int texture_id;
     int texture_type;
     vec2 uv;
 
@@ -505,13 +509,22 @@ void parse_flags() {
     multisample = flags[2];
 }
 
-int get_object_type(int index) {
-    return index >> 24;
+int get_object_type(int object_id) {
+    return object_id >> 24;
 }
 
-int get_object_index(int index) {
-    const int three_last_bytes = 16777215;
-    return index & three_last_bytes;
+int get_object_index(int object_id) {
+    const int three_last_bytes = int_limit >> 8;
+    return object_id & three_last_bytes;
+}
+
+int get_texture_type(int texture_id) {
+    return texture_id >> 30;
+}
+
+int get_texture_index(int texture_id) {
+    const int thirty_last_bits = int_limit >> 2;
+    return texture_id & thirty_last_bits;
 }
 
 
@@ -528,7 +541,7 @@ vec2 sphere_get_uv(vec3 pos) {
 
 }
 
-// Preprocessor will place procedural texture definitions here
+// Preprocessor will place procedural function definitions here
 //procedural_texture_function_definition_hook
 
 vec4 procedural_texture(vec3 pos, int function) {
@@ -543,20 +556,21 @@ vec4 procedural_texture(vec3 pos, int function) {
     // Preprocessor will insert procedural texture functions here
     //procedural_texture_function_call_hook
 
-    // Also return white when function not found
-    return vec4(1);
+    // Return black when function not found
+    return vec4(0);
 }
 
 
 vec4 get_texture(RayHit rayhit) {
-    if (rayhit.texture_type == is_procedural_spatial) {
-        // return vec4(0.9);
-        return procedural_texture(rayhit.point, rayhit.texture_index);
+    int texture_type = get_texture_type(rayhit.texture_id);
+    vec3 sampled_point = (texture_type & is_spatial) > 0 ? rayhit.point : vec3(rayhit.uv, 0);
+    
+    if ((texture_type & is_sampled) > 0) {
+        // TODO DO SAMPLED TEXTURE HERE
+        return vec4(1);
     }
-    else if (rayhit.texture_type == is_procedural_flat) {
-        return procedural_texture(vec3(rayhit.uv, 0), rayhit.texture_index);
-    }
-    // TODO Add sampled textures
+    
+    return procedural_texture(sampled_point, get_texture_index(rayhit.texture_id));
 }
 
 
@@ -774,7 +788,7 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
     if (object_type == is_sphere) {
         Sphere sphere = spheres.data[object_index];
         rayhit.mtl_index = sphere.mtl_index;
-        rayhit.texture_index = sphere.texture_index;
+        rayhit.texture_id = sphere.texture_id;
         rayhit.texture_type = sphere.texture_type;
         rayhit.normal = (rayhit.point - sphere.center) / sphere.radius;
         rayhit.uv = sphere_get_uv(rayhit.point);
@@ -783,7 +797,7 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
     } else if (object_type == is_plane) {
         Plane plane = planes.data[object_index];
         rayhit.mtl_index = plane.mtl_index;
-        rayhit.texture_index = plane.texture_index;
+        rayhit.texture_id = plane.texture_id;
         rayhit.texture_type = plane.texture_type;
         rayhit.normal = plane.normal;
     
@@ -791,7 +805,7 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
     } else if (object_type == is_triangle) {
         Triangle triangle = triangles.data[object_index];
         rayhit.mtl_index = triangle.mtl_index;
-        rayhit.texture_index = triangle.texture_index;
+        rayhit.texture_id = triangle.texture_id;
         rayhit.texture_type = triangle.texture_type;
         rayhit.normal = triangle.normal;
     }
@@ -1228,7 +1242,7 @@ vec4 cast_ray(Ray ray, Range range) {
         determine_rayhit(new_ray, rayhit);
 
         // Get texture color
-        tex_col = rayhit.texture_type == 0 ? get_texture(rayhit) : vec4(1);
+        tex_col = get_texture(rayhit);
 
         new_ray = bounce_ray(new_ray, rayhit);
 

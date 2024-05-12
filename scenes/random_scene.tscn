@@ -1,10 +1,12 @@
-[gd_scene load_steps=982 format=3 uid="uid://d2apulkojbvfc"]
+[gd_scene load_steps=985 format=3 uid="uid://d2apulkojbvfc"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_66lth"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_8wgmd"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_plane.gd" id="3_itbio"]
-[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_material.gd" id="4_7y0c5"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_material.gd" id="4_7y0c5"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_sphere.gd" id="5_7ufyn"]
+[ext_resource type="Resource" uid="uid://d26oqh6e47y3v" path="res://scenes/textures/checker_board_flat.tres" id="5_nikp3"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_procedural_texture.gd" id="7_6dhbo"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_rvm40"]
 size = Vector2(1000, 1000)
@@ -56,6 +58,11 @@ metallic = 1.0
 opacity = 1.0
 IOR = 1.0
 refraction_depth = 0
+
+[sub_resource type="Resource" id="Resource_h4n1g"]
+script = ExtResource("7_6dhbo")
+texture_path = "res://shaders/procedural_textures/checker_board_spatial.comp"
+is_spatial = true
 
 [sub_resource type="SphereMesh" id="SphereMesh_owce4"]
 radius = 0.2
@@ -6364,6 +6371,7 @@ mesh = SubResource("PlaneMesh_rvm40")
 script = ExtResource("3_itbio")
 distance = -1.0
 material = SubResource("Resource_2pcqp")
+texture = ExtResource("5_nikp3")
 mesh = SubResource("PlaneMesh_rvm40")
 
 [node name="@MeshInstance3D@21099" type="MeshInstance3D" parent="."]
@@ -6378,6 +6386,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 1, 0)
 mesh = SubResource("SphereMesh_k6xvh")
 script = ExtResource("5_7ufyn")
 material = SubResource("Resource_gu1fu")
+texture = ExtResource("5_nikp3")
 mesh = SubResource("SphereMesh_k6xvh")
 
 [node name="@MeshInstance3D@21101" type="MeshInstance3D" parent="."]
@@ -6385,6 +6394,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1, 0)
 mesh = SubResource("SphereMesh_ciqvg")
 script = ExtResource("5_7ufyn")
 material = SubResource("Resource_ilwqr")
+texture = SubResource("Resource_h4n1g")
 mesh = SubResource("SphereMesh_ciqvg")
 
 [node name="@MeshInstance3D@21102" type="MeshInstance3D" parent="."]

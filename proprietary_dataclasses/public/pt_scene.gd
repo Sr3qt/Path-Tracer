@@ -32,8 +32,9 @@ var camera_settings_values = {
 
 @export var create_random_scene_ := false:
 	set(value):
-		create_random_scene(0)
-		print("Created random scene")
+		create_random_scene_ = value
+		#create_random_scene(0)
+		#print("Created random scene")
 
 # Object lists
 var spheres : Array[PTSphere]
@@ -47,10 +48,13 @@ var objects = {
 	ObjectType.TRIANGLE : triangles,
 }
 
-# materials should hold no duplicate materials
 var materials : Array[PTMaterial]
 # Inverse of materials
 var material_to_index = {}
+
+var textures : Array[PTTexture] = [null]
+# Convert a texture into an id used by shader
+var texture_to_texture_id = {}
 
 # Current BVH that would be used by the Renderer
 var bvh : PTBVHTree
@@ -136,13 +140,15 @@ func add_object(object : PTObject):
 	added_object = true
 	added_types[type] = true
 	
+	scene_changed = true
+	
+	# Add object material to materials if applicable
 	if not object.material and not Engine.is_editor_hint():
 		object.material = PTMaterial.new()
 	
 	# Check for object reference in array
 	var material_index = materials.find(object.material)
 	if material_index == -1:
-		# DEPRECATED check for equal properties
 		# Add to list if not alreadt in it
 		object.material_index = materials.size()
 		material_to_index[object.material] = materials.size()
@@ -152,9 +158,28 @@ func add_object(object : PTObject):
 		added_types[PTObject.ObjectType.NOT_OBJECT] = true
 	else:
 		object.material_index = material_index
-		
-	scene_changed = true
 	
+	# Add object texture to textures if applicable
+	if not object.texture:
+		object.texture_id = 0
+		return
+	
+	# Check for object reference in array
+	var texture_index = textures.find(object.texture)
+	if texture_index == -1:
+		# Add to list if not already in it
+		texture_index = textures.size()
+		textures.append(object.texture)
+		
+		object.texture_id = object.texture.get_texture_id(texture_index)
+		
+		texture_to_texture_id[object.texture] = object.texture_id
+		# TODO add texture updatiung buffer/ shader
+		#object.material.connect("material_changed", update_material)
+		#
+		#added_types[PTObject.ObjectType.NOT_OBJECT] = true
+	else:
+		object.texture_id = object.texture.get_texture_id(texture_index)
 
 
 static func array2vec(a):

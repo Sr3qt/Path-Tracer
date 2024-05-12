@@ -1,8 +1,9 @@
 
-const float divisor = (1. / .5);
+
 
 vec4 procedural_texture(vec3 pos) {
-    vec3 new_pos = floor(pos * divisor);
+    const float divisor1 = (1. / .5);
+    vec3 new_pos = floor(pos * divisor1);
     float sum = new_pos.x + new_pos.y + new_pos.z;
 
 

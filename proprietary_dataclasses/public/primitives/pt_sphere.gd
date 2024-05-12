@@ -50,5 +50,5 @@ func _set(property, _value):
 
 func to_byte_array():
 	return (PackedFloat32Array(PTObject.vector_to_array(position) + [radius]).to_byte_array() + 
-	PackedInt32Array([material_index, 0, 0, 0]).to_byte_array())
+	PackedInt32Array([material_index, texture_id, 0, 0]).to_byte_array())
 

@@ -5,8 +5,9 @@
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_sphere.gd" id="3_gqr7y"]
 [ext_resource type="Resource" uid="uid://b4yj315rx77td" path="res://scenes/materials/metal.tres" id="4_8mqj1"]
 [ext_resource type="Resource" uid="uid://cxexu78qhbeqx" path="res://scenes/materials/mat.tres" id="5_opa7l"]
-[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_material.gd" id="6_4b34r"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_material.gd" id="6_4b34r"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_plane.gd" id="7_1p3o1"]
+
 
 [sub_resource type="SphereMesh" id="SphereMesh_mxcbc"]
 

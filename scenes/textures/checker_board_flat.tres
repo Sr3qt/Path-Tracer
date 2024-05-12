@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="PTProceduralTexture" load_steps=2 format=3 uid="uid://d26oqh6e47y3v"]
+
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_procedural_texture.gd" id="1_lsivs"]
+
+[resource]
+script = ExtResource("1_lsivs")
+texture_path = "res://shaders/procedural_textures/checker_board.comp"
+is_spatial = true

@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_3d2ma"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_sphere.gd" id="3_khgji"]
 [ext_resource type="Resource" uid="uid://c2uprx1vfv2es" path="res://scenes/materials/ground.tres" id="4_u3avn"]
-[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_material.gd" id="4_w7rf0"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_material.gd" id="4_w7rf0"]
 [ext_resource type="Resource" uid="uid://btdf5em7vpob6" path="res://scenes/materials/glass.tres" id="6_l00f7"]
 [ext_resource type="Resource" uid="uid://cuflma2dqwvqp" path="res://scenes/materials/right.tres" id="7_4ko10"]
 
