@@ -62,7 +62,7 @@ var scene_index : int # Index to current scene in scenes.
 # A dicitionary that keeps track of multiple PTScenes within one Godot scene.
 # Only use by plugin, for runtime scene tracker see
 var root_node_to_scene = {
-	# Example:
+	## Example:
 	# root_node : {
 	#	"last_index" : 1 # This is an index to this sublist, ptscene1
 	#	"scenes" : [ptscene0, ptscene1] # Array of PTScenes within root_node scene
@@ -111,11 +111,6 @@ var samples_per_pixel = 1 # Deprecated
 @export var max_default_depth : int = 8
 @export var max_refraction_bounces : int = 8 
 
-# Whether this instance was created by a plugin script or not. Only used by plugin
-# There should only be one PTRenderer instance running while Engine.is_editor_hint
-#  is true. TODO Remove this from all scripts if possible
-var _is_plugin_hint := false
-
 # Whether anything was rendered in the last render_window call. Only used by plugin
 var was_rendered := false
 
@@ -139,7 +134,7 @@ func _ready():
 	
 	# If the Renderer is running in the editor, a single camera is used 
 	#  instead of using each scene's camera
-	if _is_plugin_hint:
+	if Engine.is_editor_hint():
 		# NOTE: The editor stores the editor_camera's transforms and copies them
 		#  on input event. Therefore moving the camera in the plugin dock
 		#  can only move the camera until an input in the editor is detected.
@@ -182,7 +177,7 @@ func _process(_delta):
 	was_rendered = false
 	
 	# If editor camera moved, copy the data to scene.camera
-	if _is_plugin_hint and editor_camera and is_camera_linked:
+	if Engine.is_editor_hint() and editor_camera and is_camera_linked:
 		if (not (editor_camera.position == _pt_editor_camera.position and 
 				editor_camera.transform == _pt_editor_camera.transform)):
 			copy_camera(editor_camera, _pt_editor_camera)
@@ -190,7 +185,7 @@ func _process(_delta):
 	## Decides if any rendering will be done at all
 	# Runtime and plugin requires different checks for window focus
 	var runtime = (get_window().has_focus() and not Engine.is_editor_hint())
-	var plugin = (_is_plugin_hint and Engine.is_editor_hint())
+	var plugin = (Engine.is_editor_hint())
 	
 	var common = (not is_rendering_disabled and not no_scene_is_active and 
 			not no_camera_is_active)
@@ -199,15 +194,15 @@ func _process(_delta):
 		## Double check everything with warnings
 		if not scene:
 			# TODO Add path to where warning came from ?
-			raise_error("No scene has been set. \
-					Rendering is therefore temporarily disabled.")
+			raise_error("No scene has been set.\n" +
+					"Rendering is therefore temporarily disabled.")
 			no_scene_is_active = true
 		
 		elif not scene.camera and not Engine.is_editor_hint():
 			# TODO ADD Reporting node configuration warnings
 			# https://docs.godotengine.org/en/stable/tutorials/plugins/running_code_in_the_editor.html 
-			raise_error("No camera has been set in current scene. \
-					Rendering is therefore temporarily disabled.")
+			raise_error("No camera has been set in current scene.\n" +
+					"Rendering is therefore temporarily disabled.")
 			no_camera_is_active = true
 		
 		common = (not is_rendering_disabled and not no_scene_is_active and 
@@ -235,7 +230,7 @@ func _process(_delta):
 		if scene.camera:
 			scene.camera.camera_changed = false
 	
-	if _is_plugin_hint:
+	if Engine.is_editor_hint():
 		_pt_editor_camera.camera_changed = false
 
 
@@ -265,7 +260,7 @@ func _set_plugin_camera(cam : PTCamera):
 
 func raise_error(msg):
 	var prepend = "PT"
-	if _is_plugin_hint:
+	if Engine.is_editor_hint():
 		prepend += " Plugin"
 	
 	msg = prepend + ": " + msg
@@ -343,7 +338,7 @@ func render_window(window : PTRenderWindow):
 	
 	# If camera moved or scene changed
 	var camera_moved = ((scene and scene.camera and scene.camera.camera_changed) or 
-			(_is_plugin_hint and _pt_editor_camera.camera_changed))
+			(Engine.is_editor_hint() and _pt_editor_camera.camera_changed))
 	
 	var movement = camera_moved or scene.scene_changed
 	
@@ -475,7 +470,7 @@ func add_scene(new_ptscene : PTScene):
 	wds.append(new_wd)
 	
 	# Set new_ptscene to scene if no scene was previously active and is in runtime
-	if not PTRendererAuto._is_plugin_hint and no_scene_is_active:
+	if not Engine.is_editor_hint() and no_scene_is_active:
 		no_scene_is_active = false
 		scene = new_ptscene
 		wd = new_wd
@@ -484,8 +479,8 @@ func add_scene(new_ptscene : PTScene):
 			no_camera_is_active = false
 			scene.camera.add_child(canvas)
 		else:
-			raise_error("No camera has been set in current scene. \
-					Rendering is therefore temporarily disabled.")
+			raise_error("No camera has been set in current scene.\n" +
+					"Rendering is therefore temporarily disabled.")
 
 
 ## Wrapper function for the plugin to change scenes
@@ -506,7 +501,7 @@ func _plugin_change_scene(scene_root):
 func change_scene(new_scene : PTScene):
 	
 	# Remove (and later add) canvas from camera in runtime
-	if not _is_plugin_hint:
+	if not Engine.is_editor_hint():
 		if scene and scene.camera:
 			scene.camera.remove_child(canvas)
 	
@@ -518,7 +513,7 @@ func change_scene(new_scene : PTScene):
 	
 	no_scene_is_active = false
 	
-	if not _is_plugin_hint:
+	if not Engine.is_editor_hint():
 		if scene.camera:
 			no_camera_is_active = false
 			scene.camera.add_child(canvas)
@@ -584,9 +579,9 @@ func update_material(_scene, material):
 	scene_wd.rd.buffer_update(buffer, _scene.material_to_index[material] * bytes.size(), bytes.size(), bytes)
 
 
+## NOTE: This function is not optimized for moving many objects at the same time
 func update_object(_scene : PTScene, object : PTObject):
 	"""Updates an individual object in the buffer"""
-	# TODO This is just a test. Will see if it is performanant enough
 	
 	# Find right wd based on _scene
 	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]

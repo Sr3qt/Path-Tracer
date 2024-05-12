@@ -75,11 +75,7 @@ var added_types = {
 
 
 func _ready():
-	# TODO GODOT seems to delete a gdscene's objects when that scene has not 
-	#  been in use for a long time. This makes reloading that scene really 
-	#  expensive (time consuming) for us. Fix
-	if not Engine.is_editor_hint() or PTRendererAuto._is_plugin_hint:
-		
+	if not Engine.is_editor_hint():
 		get_size()
 		
 		if camera == null:
@@ -87,13 +83,12 @@ func _ready():
 				if child is PTCamera:
 					camera = child
 					break
-			pass
-	
-	if not Engine.is_editor_hint():
+		
 		if starting_camera != CameraSetting.none:
 			set_camera_setting(starting_camera)
 	
 	# Scene will probably trigger this when objects add themselves to the scene
+	#  Set to false to skip trigger
 	added_object = false
 	for key in added_types.keys():
 		added_types[key] = false

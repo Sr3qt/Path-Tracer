@@ -25,9 +25,6 @@ func _enter_tree():
 		
 		PTRendererAuto.add_window(better_window)
 		viewport.get_parent().add_child(better_window)
-		
-		PTRendererAuto._is_plugin_hint = true
-		#PTRendererAuto.root_node = self
 
 
 func _ready():

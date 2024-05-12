@@ -489,7 +489,7 @@ func _create_bvh_byte_array() -> PackedByteArray:
 func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 	var bytes = PackedByteArray()
 	
-	if PTRendererAuto._is_plugin_hint:
+	if Engine.is_editor_hint():
 		bytes += PTRendererAuto._pt_editor_camera.to_byte_array()
 	else:
 		bytes += _scene.camera.to_byte_array()
