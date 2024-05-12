@@ -15,21 +15,25 @@ func _init(
 		p_vertex1 := Vector3.LEFT,
 		p_vertex2 := Vector3.FORWARD,
 		p_vertex3 := Vector3.ZERO,
-		p_material := PTMaterial.new(), 
+		p_material : PTMaterial = null, 
 	):
 	
-	mesh = ImmediateMesh.new()
-	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
-	mesh.surface_add_vertex(Vector3.LEFT)
-	mesh.surface_add_vertex(Vector3.FORWARD)
-	mesh.surface_add_vertex(Vector3.ZERO)
-	mesh.surface_end()
+	if Engine.is_editor_hint():
+		mesh = ImmediateMesh.new()
+		mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+		mesh.surface_add_vertex(Vector3.LEFT)
+		mesh.surface_add_vertex(Vector3.FORWARD)
+		mesh.surface_add_vertex(Vector3.ZERO)
+		mesh.surface_end()
 	
 	vertex1 = p_vertex1
 	vertex2 = p_vertex2
 	vertex3 = p_vertex3
 	
-	material = p_material
+	if not p_material:
+		material = PTMaterial.new()
+	else:
+		material = p_material
 
 
 func _get_aabb():

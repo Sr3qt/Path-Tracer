@@ -119,8 +119,14 @@ var _is_plugin_hint := false
 # Whether anything was rendered in the last render_window call. Only used by plugin
 var was_rendered := false
 
+var startup_time = 0
+
+func _init():
+	print("Renderer init time: ", (Time.get_ticks_usec()) / 1000., "ms ")
+
 
 func _ready():
+	startup_time = Time.get_ticks_usec()
 	
 	# REMOVE in final
 	if not Engine.is_editor_hint():
@@ -167,6 +173,12 @@ func _ready():
 
 
 func _process(_delta):
+	if startup_time:
+		print()
+		print("Total startup time")
+		print((Time.get_ticks_usec()) / 1000., "ms ")
+		#print((Time.get_ticks_usec() - startup_time) / 1000., "ms ")
+		startup_time = 0
 	was_rendered = false
 	
 	# If editor camera moved, copy the data to scene.camera
@@ -225,22 +237,6 @@ func _process(_delta):
 	
 	if _is_plugin_hint:
 		_pt_editor_camera.camera_changed = false
-
-# Temp placement
-func re_create_buffers(_scene : PTScene):
-	var _wd = wds[scene_to_scene_index[_scene]]
-	var buffers : Array[PTObject.ObjectType] = []
-	print()
-	print("Expanding object buffers for ", _scene)
-	print(_scene.added_types)
-	for key in _scene.added_types.keys():
-		if _scene.added_types[key]:
-			_scene.added_types[key] = false
-			buffers.append(key)
-	wd.expand_object_buffers(buffers)
-	
-	_scene.added_object = false
-
 
 
 func _input(event):
@@ -404,7 +400,8 @@ func render_window(window : PTRenderWindow):
 
 func save_framebuffer(work_dispatcher : PTWorkDispatcher):
 	if Engine.is_editor_hint():
-		# TODO add picture taking support for editor
+		# TODO add picture taking support for editor. Add a physical button to 
+		#  press instead of keybind
 		print("Taking pictures in the editor is not currently supported.")
 		return
 		
@@ -457,6 +454,7 @@ func add_scene(new_ptscene : PTScene):
 	scenes.append(new_ptscene)
 	
 	print()
+	print((Time.get_ticks_usec()) / 1000., "ms ")
 	print(new_ptscene.owner, " Root node")
 	print(new_ptscene, " PTScene node")
 	print()
@@ -488,6 +486,7 @@ func add_scene(new_ptscene : PTScene):
 		else:
 			raise_error("No camera has been set in current scene. \
 					Rendering is therefore temporarily disabled.")
+
 
 ## Wrapper function for the plugin to change scenes
 func _plugin_change_scene(scene_root):
@@ -635,6 +634,21 @@ func copy_camera(from : Camera3D, to : Camera3D):
 	
 	if to is PTCamera:
 		to.set_viewport_size()
+
+
+func re_create_buffers(_scene : PTScene):
+	var _wd = wds[scene_to_scene_index[_scene]]
+	var buffers : Array[PTObject.ObjectType] = []
+	print()
+	print("Expanding object buffers for ", _scene)
+	print(_scene.added_types)
+	for key in _scene.added_types.keys():
+		if _scene.added_types[key]:
+			_scene.added_types[key] = false
+			buffers.append(key)
+	wd.expand_object_buffers(buffers)
+	
+	_scene.added_object = false
 
 
 

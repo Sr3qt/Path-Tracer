@@ -18,6 +18,7 @@ var material_index : int
 # The scene this object is part of
 var _scene : PTScene
 
+var transform_before 
 
 func _enter_tree():
 	# Find scene when entering tree if scene is not set
@@ -27,14 +28,16 @@ func _enter_tree():
 			_scene = parent
 			parent.add_object(self)
 	
+	transform_before = Transform3D(transform)
 	set_notify_transform(true)
 
 
 func _notification(what):
 	match what:
 		NOTIFICATION_TRANSFORM_CHANGED:
-			if _scene:
+			if _scene and transform != transform_before:
 				_scene.update_object(self)
+				transform_before = Transform3D(transform)
 
 
 func _get_property_list():

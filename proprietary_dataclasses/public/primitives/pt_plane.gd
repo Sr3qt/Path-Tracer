@@ -19,18 +19,26 @@ extends PTPrimitive3D
 
 
 func _init(
-		p_normal := Vector3.UP, 
-		p_distance : float = 0.0, 
-		p_material := PTMaterial.new(), 
-		mtl_i = 0):
-	mesh = PlaneMesh.new()
-	mesh.size = Vector2(1000, 1000)
+			p_normal := Vector3.UP, 
+			p_distance : float = 0.0, 
+			p_material : PTMaterial = null, 
+			mtl_i = 0
+	):
+	
+	if Engine.is_editor_hint():
+		mesh = PlaneMesh.new()
+		mesh.size = Vector2(1000, 1000)
 	
 	if p_normal != Vector3.UP:
 		normal = p_normal
 	if p_distance != 0.0:
 		distance = p_distance
-	material = p_material
+	
+	if not p_material:
+		material = PTMaterial.new()
+	else:
+		material = p_material
+	
 	material_index = mtl_i 
 
 
