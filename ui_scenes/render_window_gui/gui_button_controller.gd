@@ -122,3 +122,6 @@ func _on_link_camera_button_toggled(toggled_on):
 	%LinkCameraButton.text = ("Unlink camera from editor" if toggled_on else
 			"Link camera to editor")
 
+
+func _on_screenshot_button_pressed():
+	PTRendererAuto.take_screenshot()

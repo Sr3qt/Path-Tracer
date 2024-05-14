@@ -37,9 +37,9 @@ var no_camera_is_active := true:
 
 func _set_canvas_visibility():
 	if canvas:
-		var is_rendering = (not is_rendering_disabled and not no_scene_is_active 
+		var is_rendering := (not is_rendering_disabled and not no_scene_is_active 
 				and not no_camera_is_active)
-		var mat = canvas.mesh.surface_get_material(0)
+		var mat : ShaderMaterial = canvas.mesh.surface_get_material(0)
 		mat.set_shader_parameter("is_rendering", is_rendering)
 		canvas.visible = is_rendering
 
@@ -76,7 +76,7 @@ var editor_camera : Camera3D
 var _pt_editor_camera : PTCamera
 
 # Whether the _pt_editor_camera will follow editor_camera. Only used by plugin
-var is_camera_linked = true:
+var is_camera_linked := true:
 	set(value):
 		if editor_camera:
 			editor_camera.set_cull_mask_value(20, value)
@@ -103,20 +103,21 @@ var startup_time = 0
 # NOTE: Scenes add themselves.
 var scenes_to_remove_objects : Array[PTScene]
 
+var screenshot_folder := "res://renders/temps/" + Time.get_date_string_from_system() + "/"
 
-func _init():
+
+func _init() -> void:
 	print("Renderer init time: ", (Time.get_ticks_usec()) / 1000., "ms ")
 
 
-func _ready():
+func _ready() -> void:
 	startup_time = Time.get_ticks_usec()
 	
 	# REMOVE in final
 	if not Engine.is_editor_hint():
 		# Apparently very import check for get_window (Otherwise the editor bugs out)
 		get_window().position -= Vector2i(450, 100)
-
-
+	
 	if not canvas:
 		canvas = create_canvas()
 	
@@ -138,14 +139,11 @@ func _ready():
 		# Show canvas to editor camera if is_camera_linked
 		editor_camera.set_cull_mask_value(20, is_camera_linked)
 	
-	# TODO Add support for multiple PTRenderWindows on screen
-	#  as well as support for a seperate bvh for each of them.
-	
 	if not Engine.is_editor_hint():
-		var x = ceili(1920. / 8.)
-		var y = ceili(1080. / 8.)
+		var x := ceili(1920. / 8.)
+		var y := ceili(1080. / 8.)
 		
-		var better_window = WindowGui.instantiate()
+		var better_window : PTRenderWindow = WindowGui.instantiate()
 		better_window.max_samples = 300
 		better_window.stop_rendering_on_max_samples = false
 	
@@ -155,7 +153,7 @@ func _ready():
 		add_window(better_window)
 
 
-func _process(_delta):
+func _process(_delta) -> void:
 	if startup_time:
 		print()
 		print("Total startup time")
@@ -204,7 +202,7 @@ func _process(_delta):
 			
 			# NOTE: For some reason this is neccessary for smooth performance in editor
 			if Engine.is_editor_hint() and was_rendered:
-				var mat = canvas.mesh.surface_get_material(0)
+				var mat : ShaderMaterial = canvas.mesh.surface_get_material(0)
 				mat.set_shader_parameter("is_rendering", true)
 	
 	# Re-create buffers if asked for
@@ -223,22 +221,24 @@ func _process(_delta):
 		_pt_editor_camera.camera_changed = false
 
 
-func _input(event):
-	if event is InputEventKey:
-		if event.pressed and event.keycode == KEY_X and not event.is_echo():
-			save_framebuffer(wd)
+# TODO Remove input event?
+func _input(event) -> void:
+	if not Engine.is_editor_hint():
+		if event is InputEventKey:
+			if event.pressed and event.keycode == KEY_X and not event.is_echo():
+				take_screenshot()
 	
 	# TODO MAke able to take images with long render time with loading bar
 	#  Long term goal, maybe
 
 
-func _exit_tree():
+func _exit_tree() -> void:
 	for _wd in wds:
 		_wd.free_RIDs()
 
 
 ## It is plugin_control_root's responsibility to call this function
-func _set_plugin_camera(cam : PTCamera):
+func _set_plugin_camera(cam : PTCamera) -> void:
 	if not canvas:
 		canvas = create_canvas()
 	
@@ -247,8 +247,8 @@ func _set_plugin_camera(cam : PTCamera):
 	_pt_editor_camera.add_child(canvas)
 
 
-func raise_error(msg):
-	var prepend = "PT"
+func raise_error(msg : String) -> void:
+	var prepend := "PT"
 	if Engine.is_editor_hint():
 		prepend += " Plugin"
 	
@@ -258,10 +258,10 @@ func raise_error(msg):
 
 
 # TODO Move to a preprocessor script ?
-func load_shader(ptscene : PTScene):
+func load_shader(ptscene : PTScene) -> RDShaderSource:
 	var file := FileAccess.open("res://shaders/ray_tracer.comp", 
 		FileAccess.READ_WRITE)
-	var res = file.get_as_text()
+	var res := file.get_as_text()
 	file.close()
 	
 	# Do changes
@@ -273,20 +273,20 @@ func load_shader(ptscene : PTScene):
 	const DEFUALT_FUNCTION_NAME = "procedural_texture"
 	const BASE_FUNCTION_NAME = "_procedural_texture_function"
 	
-	var i = 1
-	var function_definitons = ""
-	var function_calls = ""
+	var i : int = 1
+	var function_definitons := ""
+	var function_calls := ""
 	for texture in ptscene.textures:
 		if not texture is PTProceduralTexture:
 			continue
-		var path = texture.texture_path
+		var path : String = texture.texture_path
 		var tex_file := FileAccess.open(path, FileAccess.READ_WRITE)
 		if not tex_file:
 			push_error("PT: No procedural texture file found: " + 
 					texture.texture_path + " in " + path)
-		var text = tex_file.get_as_text()
+		var text := tex_file.get_as_text()
 		
-		var function_index = text.find(DEFUALT_FUNCTION_NAME)
+		var function_index : int = text.find(DEFUALT_FUNCTION_NAME)
 		if function_index == -1:
 			push_error("PT: No procedural texture function found in file: " + 
 					texture.texture_path + " in " + path)
@@ -309,23 +309,23 @@ func load_shader(ptscene : PTScene):
 	res = res.replace("//procedural_texture_function_call_hook", function_calls)
 	
 	# Set shader
-	var shader = RDShaderSource.new()
+	var shader := RDShaderSource.new()
 	shader.source_compute = res
 	
 	return shader
 	
 
-func add_window(window : PTRenderWindow):
+## Although PTRenderer can store multiple PTRenderWindows, there is currently
+##  no plan to support multiple windows simultaniously.
+func add_window(window : PTRenderWindow) -> void:
 	window.renderer = self
 	windows.append(window)
 	
 	if not Engine.is_editor_hint():
 		add_child(window)
-	
-	# TODO add collision check with other windows and change their size accordingly
 
 
-func render_window(window : PTRenderWindow):
+func render_window(window : PTRenderWindow) -> void:
 	"""Might render window according to flags if flags allow it"""
 	
 	# If camera moved or scene changed
@@ -385,14 +385,17 @@ func render_window(window : PTRenderWindow):
 	was_rendered = true
 	
 
-func save_framebuffer(work_dispatcher : PTWorkDispatcher):
-	if Engine.is_editor_hint():
-		# TODO add picture taking support for editor. Add a physical button to 
-		#  press instead of keybind
-		print("Taking pictures in the editor is not currently supported.")
-		return
-		
-	var image = work_dispatcher.rd.texture_get_data(work_dispatcher.image_buffer, 0)
+## Saves the last rendered image as a png. 
+## The defualt directory is "res://renders/temps/[date_for_today]/".
+## The directory can be changed with the property "screenshot_folder"
+func take_screenshot() -> void:
+	if not wd:
+		if Engine.is_editor_hint():
+			push_warning("PT: No valid scene is selected for taking screenshot.")
+			return
+		push_warning("PT: No valid PTScene is selected for taking screenshot.")
+	
+	var image : PackedByteArray = wd.rd.texture_get_data(wd.image_buffer, 0)
 	# Changing the renderer render size should always create a new buffer, so
 	#  this code should always yield a correct result
 	var new_image = Image.create_from_data(
@@ -403,18 +406,22 @@ func save_framebuffer(work_dispatcher : PTWorkDispatcher):
 		image
 	)
 	
-	var folder_path = "res://renders/temps/" + Time.get_date_string_from_system()
+	var defualt_folder_path := (
+			"res://renders/temps/" + Time.get_date_string_from_system() + "/"
+	)
 	
-	# Make folder for today if it doesnt exist
-	if not DirAccess.dir_exists_absolute(folder_path):
-		DirAccess.make_dir_absolute(folder_path)
+	if screenshot_folder == defualt_folder_path:
+		# Make folder for today if it doesnt exist
+		if not DirAccess.dir_exists_absolute(screenshot_folder):
+			DirAccess.make_dir_recursive_absolute(screenshot_folder)
 	
-	new_image.save_png(folder_path + "/temp-" +
-	Time.get_datetime_string_from_system().replace(":", "-") + ".png")
+	new_image.save_png(screenshot_folder +
+			Time.get_datetime_string_from_system().replace(":", "-") + ".png")
+	
+	print("PT: Picture taken :)")
 
 
-
-func add_scene(new_ptscene : PTScene):
+func add_scene(new_ptscene : PTScene) -> void:
 	"""Adds a scene to renderer"""
 	
 	# Maybe redundant check
@@ -464,23 +471,15 @@ func add_scene(new_ptscene : PTScene):
 	
 	# Set new_ptscene to scene if no scene was previously active and is in runtime
 	if not Engine.is_editor_hint() and no_scene_is_active:
-		no_scene_is_active = false
-		scene = new_ptscene
-		wd = new_wd
-		wd.texture.texture_rd_rid = wd.image_buffer
-		if scene.camera:
-			no_camera_is_active = false
-			scene.camera.add_child(canvas)
-		else:
-			raise_error("No camera has been set in current scene.\n" +
-					"Rendering is therefore temporarily disabled.")
+		change_scene(new_ptscene)
 
 
 ## Wrapper function for the plugin to change scenes
-func _plugin_change_scene(scene_root):
+func _plugin_change_scene(scene_root) -> void:
 	if scene_root == null or not root_node_to_scene.has(scene_root):
 		# scene_root is a new empty node or a root without a PTScene in the scene
 		scene = null
+		wd = null
 		no_scene_is_active = true
 		return
 	
@@ -491,7 +490,7 @@ func _plugin_change_scene(scene_root):
 	change_scene(scene_to_change)
 
 
-func change_scene(new_scene : PTScene):
+func change_scene(new_scene : PTScene) -> void:
 	
 	# Remove (and later add) canvas from camera in runtime
 	if not Engine.is_editor_hint():
@@ -514,14 +513,14 @@ func change_scene(new_scene : PTScene):
 	# TODO Update GUI values
 
 
-func add_scene_to_remove_objects(ptscene : PTScene):
+func add_scene_to_remove_objects(ptscene : PTScene) -> void:
 	if ptscene in scenes_to_remove_objects:
 		return
 	scenes_to_remove_objects.append(ptscene)
 
 
 ## Removes objects from any queue in scenes
-func _object_queue_remove():
+func _object_queue_remove() -> void:
 	for _scene in scenes_to_remove_objects:
 		if not _scene: # If scene is null; idk can prob remove
 			push_warning("Help; Scene is no longer valid for deletion.")
@@ -536,13 +535,17 @@ func _object_queue_remove():
 	scenes_to_remove_objects.clear()
 
 
-func create_canvas():
+func create_canvas() -> MeshInstance3D:
 	# Create canvas that will display rendered image
 	# Prepare canvas shader
-	var mat = ShaderMaterial.new()
-	mat.shader = load("res://shaders/canvas.gdshader")
+	var mat := ShaderMaterial.new()
+	mat.shader = preload("res://shaders/canvas.gdshader")
 	mat.set_shader_parameter("image_buffer", Texture2DRD.new())
 	mat.set_shader_parameter("is_rendering", not is_rendering_disabled)
+	
+	var mesh := QuadMesh.new()
+	mesh.size = Vector2(2, 2)
+	mesh.surface_set_material(0, mat)
 	
 	# Create a canvas to which rendered images will be drawn
 	@warning_ignore("shadowed_variable")
@@ -550,21 +553,19 @@ func create_canvas():
 	canvas.position -= Vector3(0,0,1)
 	canvas.set_layer_mask_value(20, true)
 	canvas.set_layer_mask_value(1, false)
-	canvas.mesh = QuadMesh.new()
-	canvas.mesh.size = Vector2(2, 2)
-	canvas.mesh.surface_set_material(0, mat)
+	canvas.mesh = mesh
 	
 	return canvas
 
 
-func create_bvh(_max_children : int, function_name : String):
+func create_bvh(_max_children : int, function_name : String) -> void:
 	# TODO Rework shader to work with different bvh orders without reloading
 	#var _start = Time.get_ticks_usec()
 	
 	# TODO Add support so that all objects in scene can be rendered by bvh
 	#  THis is a bug because the shader has a fixed stack size and cannot always
 	#  accommodate for every object count and bvh order
-	var prev_max = bvh_max_children
+	var prev_max : int = bvh_max_children
 	bvh_max_children = _max_children
 	
 	scene.create_BVH(bvh_max_children, function_name)
@@ -578,24 +579,29 @@ func create_bvh(_max_children : int, function_name : String):
 	
 	wd.create_bvh_buffer()
 	
-	var BVH_uniforms = wd.uniform_sets[wd.BVH_set_index].values()
+	var BVH_uniforms : Array[RDUniform] = wd.uniform_sets[wd.BVH_set_index].values()
 	wd.BVH_set = wd.rd.uniform_set_create(BVH_uniforms, wd.shader, 
 			wd.BVH_set_index)
 			
 	#print((Time.get_ticks_usec() - _start) / 1000.)
 	
 
-func update_material(_scene, material):
+func update_material(_scene : PTScene, material : PTMaterial) -> void:
 	# Find right wd based on _scene
-	var scene_wd = wds[scene_to_scene_index[_scene]]
-	var buffer = scene_wd.material_buffer
+	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
+	var buffer : RID = scene_wd.material_buffer
 
-	var bytes = material.to_byte_array()
-	scene_wd.rd.buffer_update(buffer, _scene.material_to_index[material] * bytes.size(), bytes.size(), bytes)
+	var bytes : PackedByteArray = material.to_byte_array()
+	scene_wd.rd.buffer_update(
+			buffer, 
+			_scene.material_to_index[material] * bytes.size(), 
+			bytes.size(), 
+			bytes
+	)
 
 
 ## NOTE: This function is not optimized for moving many objects at the same time
-func update_object(_scene : PTScene, object : PTObject):
+func update_object(_scene : PTScene, object : PTObject) -> void:
 	"""Updates an individual object in the buffer"""
 	
 	# Find right wd based on _scene
@@ -637,7 +643,7 @@ func update_object(_scene : PTScene, object : PTObject):
 			)
 
 ## NOTE: Optimizations can probably be made, i just remake buffers for simplicity
-func remove_object(_scene : PTScene, object : PTObject):
+func remove_object(_scene : PTScene, object : PTObject) -> void:
 	# Find right wd based on _scene
 	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
 	
@@ -663,11 +669,9 @@ func remove_object(_scene : PTScene, object : PTObject):
 	
 	# NOTE: A bit overkill, but dont care
 	scene_wd.bind_sets()
-	
-	
 
 
-func copy_camera(from : Camera3D, to : Camera3D):
+func copy_camera(from : Camera3D, to : Camera3D) -> void:
 	to.translate(to.position - from.position)
 	
 	to.transform = from.transform
@@ -677,7 +681,7 @@ func copy_camera(from : Camera3D, to : Camera3D):
 		to.set_viewport_size()
 
 
-func re_create_buffers(_scene : PTScene):
+func re_create_buffers(_scene : PTScene) -> void:
 	var _wd = wds[scene_to_scene_index[_scene]]
 	var buffers : Array[PTObject.ObjectType] = []
 	print()

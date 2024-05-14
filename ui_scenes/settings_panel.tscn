@@ -74,6 +74,26 @@ offset_bottom = 34.0
 mouse_filter = 2
 color = Color(160, 0, 0, 0.4)
 
+[node name="ScreenshotButton" type="Button" parent="MarginContainer/AllSettings"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+toggle_mode = true
+text = "Take screenshot"
+script = ExtResource("2_aye2j")
+
+[node name="_ColorRect_20802" type="ColorRect" parent="MarginContainer/AllSettings/ScreenshotButton"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 369.0
+offset_bottom = 34.0
+mouse_filter = 2
+color = Color(160, 0, 0, 0.4)
+
 [node name="BVHContainer" type="VBoxContainer" parent="MarginContainer/AllSettings"]
 layout_mode = 2
 
@@ -346,6 +366,7 @@ color = Color(160, 0, 0, 0.4)
 
 [connection signal="toggled" from="MarginContainer/AllSettings/DisableRenderButton" to="MarginContainer/ButtonController" method="_on_disable_render_button_toggled"]
 [connection signal="toggled" from="MarginContainer/AllSettings/LinkCameraButton" to="MarginContainer/ButtonController" method="_on_link_camera_button_toggled"]
+[connection signal="pressed" from="MarginContainer/AllSettings/ScreenshotButton" to="MarginContainer/ButtonController" method="_on_screenshot_button_pressed"]
 [connection signal="toggled" from="MarginContainer/AllSettings/BVHContainer/BVHOptions/UseBVHButton" to="MarginContainer/ButtonController" method="_on_use_bvh_button_toggled"]
 [connection signal="toggled" from="MarginContainer/AllSettings/BVHContainer/BVHOptions/ShowBVHDepthButton" to="MarginContainer/ButtonController" method="_on_show_bvh_depth_button_toggled"]
 [connection signal="pressed" from="MarginContainer/AllSettings/BVHContainer/CreateBVHButton" to="MarginContainer/ButtonController" method="_on_create_bvh_button_pressed"]

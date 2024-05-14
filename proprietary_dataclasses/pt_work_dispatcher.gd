@@ -28,8 +28,8 @@ var uniform_sets = [
 	{}, # For BVH
 	{}, # Empty
 ]
-var RIDs_to_free = [] # array of RIDs that need to be freed when done with them.
-var set_RIDs = []
+# Array of RIDs that need to be freed when done with them.
+var RIDs_to_free : Array[RID] = [] 
 
 var rd : RenderingDevice
 var shader : RID
