@@ -2,7 +2,7 @@
 class_name PTRenderWindow
 extends Control
 
-"""Class for showing gui and passing render flags for a portion of 
+"""Class for showing gui and passing render flags for a portion of
 the render window"""
 
 enum RenderFlagsBits {
@@ -17,7 +17,7 @@ enum RenderFlagsBits {
 # GPU render flags as an int
 var flags : int = 0
 
-# Whether a bvh tree should be used or 
+# Whether a bvh tree should be used or
 #  if every object should be checked for ray hit
 var use_bvh := true:
 	set(value):
@@ -59,7 +59,7 @@ var scene_changed = false:
 # If rendering should stop when frame is larger than max_samples
 var stop_rendering_on_max_samples := true
 
-# Whether any flags that control *what* is rendered i.e. show_bvh_depth 
+# Whether any flags that control *what* is rendered i.e. show_bvh_depth
 var render_mode_changed := false
 
 # An override for various render modes that cannot utilize multisampling
@@ -79,7 +79,7 @@ var frame : int = 0:
 			%FrameCounter.text = "Frame: " + str(value)
 		frame = value
 
-# The seconds passed since frame 0 was rendered, 
+# The seconds passed since frame 0 was rendered,
 #  stopping when frame max_samples have been rendered
 #  Updated by PTRenderer
 var frame_times : float:
@@ -113,22 +113,22 @@ var renderer : PTRenderer
 
 func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 0):
 	_set_flags()
-	
+
 	custom_minimum_size = Vector2(work_group_width_pixels, work_group_height_pixels)
-	
+
 	work_group_width = group_x
 	work_group_height = group_y
 	work_group_depth = group_z
-	
-	var new_size = Vector2(group_x * work_group_width_pixels, 
+
+	var new_size = Vector2(group_x * work_group_width_pixels,
 						   group_y * work_group_height_pixels)
 	set_size(new_size)
-	
+
 	x_offset = offset_x
 	y_offset = offset_y
-	
+
 	set_position(Vector2(x_offset, y_offset))
-	
+
 
 func flags_to_byte_array():
 	var flag_array = PackedInt32Array([flags])

@@ -29,7 +29,7 @@ var uniform_sets = [
 	{}, # Empty
 ]
 # Array of RIDs that need to be freed when done with them.
-var RIDs_to_free : Array[RID] = [] 
+var RIDs_to_free : Array[RID] = []
 
 var rd : RenderingDevice
 var shader : RID
@@ -78,36 +78,36 @@ var is_local_renderer
 
 # References to renderer and scene that will render
 var _renderer : PTRenderer
-var _scene : PTScene 
+var _scene : PTScene
 
 
 func _init(renderer : PTRenderer, is_local = false):
 	_renderer = renderer
-	
+
 	is_local_renderer = is_local
-	
+
 	if is_local_renderer:
 		rd = RenderingServer.create_local_rendering_device()
 	else:
-		# Holy merge clutch https://github.com/godotengine/godot/pull/79288 
+		# Holy merge clutch https://github.com/godotengine/godot/pull/79288
 		# RenderingDevice for realtime rendering
 		rd = RenderingServer.get_rendering_device()
 
 
 func create_buffers():
 	"""Creates and binds buffers to RenderDevice"""
-	
+
 	print("Starting to setup buffers")
 	var prev_time = Time.get_ticks_usec()
-	
+
 	# Trying to set up buffers without a scene makes no sense
 	if not _scene:
 		push_warning("Set a scene to the Renderer before trying to create gpu buffers.")
 		return
-	
+
 	# The image buffer used in compute and fragment shader
 	image_buffer = _create_image_buffer()
-	
+
 	# TODO Add statistics buffer which the gpu can write to
 	create_lod_buffer()
 	create_material_buffer()
@@ -115,16 +115,16 @@ func create_buffers():
 	create_plane_buffer()
 	create_triangle_buffer()
 	create_bvh_buffer()
-	
+
 	bind_sets()
-	
+
 	# Get texture RID for Canvas
 	var material = _renderer.canvas.get_mesh().surface_get_material(0)
-	
+
 	texture = material.get_shader_parameter("image_buffer")
-	
+
 	print("Setting up buffers took %s ms" % ((Time.get_ticks_usec() - prev_time) / 1000.))
-	
+
 
 func create_lod_buffer():
 	LOD_buffer = _create_uniform(
@@ -179,7 +179,7 @@ func load_shader(shader_ : RDShaderSource):
 	var shader_spirv: RDShaderSPIRV = rd.shader_compile_spirv_from_source(shader_)
 	shader = rd.shader_create_from_spirv(shader_spirv)
 	RIDs_to_free.append(shader)
-	
+
 	# Create a compute pipeline
 	pipeline = rd.compute_pipeline_create(shader)
 
@@ -191,7 +191,7 @@ func free_RIDs():
 	# Frees buffers and shader RIDS
 	for rid in RIDs_to_free:
 		rd.free_rid(rid)
-		
+
 	RIDs_to_free = []
 
 
@@ -206,60 +206,60 @@ func free_rid(rid):
 
 
 func create_compute_list(window : PTRenderWindow = null):
-	""" Creates the compute list required for every compute call 
-	
+	""" Creates the compute list required for every compute call
+
 	Requires workgroup coordinates to be given in an array or vector
 	"""
-	
+
 	# By default, will dispatch groups to fill whole render size
 	if window == null:
 		window = PTRenderWindow.new()
-		
+
 		@warning_ignore("integer_division")
-		window.work_group_width = ceili(_renderer.render_width / 
+		window.work_group_width = ceili(_renderer.render_width /
 										_renderer.compute_invocation_width)
 		@warning_ignore("integer_division")
-		window.work_group_height = ceili(_renderer.render_height / 
+		window.work_group_height = ceili(_renderer.render_height /
 										_renderer.compute_invocation_height)
 		window.work_group_depth = 1
-	
+
 	var x = window.work_group_width
 	var y = window.work_group_height
 	var z = window.work_group_depth
-	
+
 	var push_bytes = _push_constant_byte_array(window)
-	
+
 	var compute_list = rd.compute_list_begin()
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
-	
+
 	# Bind uniform sets
 	rd.compute_list_bind_uniform_set(compute_list, image_set, image_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, camera_set, camera_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, object_set, object_set_index)
 	rd.compute_list_bind_uniform_set(compute_list, BVH_set, BVH_set_index)
 	rd.compute_list_set_push_constant(compute_list, push_bytes, push_bytes.size())
-	
+
 	rd.capture_timestamp(window.render_name)
 	rd.compute_list_dispatch(compute_list, x, y, z)
-	
+
 	rd.compute_list_end()
-	
+
 	# Sync is not required when using main RenderingDevice
 	if is_local_renderer:
 		rd.submit()
 		rd.sync()
-	
+
 
 func set_scene(scene : PTScene):
 	"""set this this PTWorkDispatcher to use specified scene data"""
 	_scene = scene
-	
+
 
 # TODO Find a way for the cpu to wait for buffer access
 
 ## Will expand a given object buffer by its respective step constant times given steps.
 ##  NOT_AN_OBJECT is assumed to be material buffer.
-## Setting steps to -1 skips creating a set. By defualt will create buffer to 
+## Setting steps to -1 skips creating a set. By defualt will create buffer to
 ##  fit objects in scene. If objects already fit, do nothing.
 func expand_object_buffer(object_type : PTObject.ObjectType, steps : int = 0):
 	match object_type:
@@ -307,7 +307,7 @@ func expand_object_buffer(object_type : PTObject.ObjectType, steps : int = 0):
 				triangle_buffer_size = triangle_buffer_size + TRIANGLE_COUNT_STEP * steps
 			free_rid(plane_buffer)
 			create_plane_buffer()
-	
+
 	if steps != -1:
 		var uniforms = uniform_sets[object_set_index].values()
 		object_set = rd.uniform_set_create(uniforms, shader, object_set_index)
@@ -316,60 +316,60 @@ func expand_object_buffer(object_type : PTObject.ObjectType, steps : int = 0):
 func expand_object_buffers(object_types : Array[PTObject.ObjectType]):
 	for object_type in object_types:
 		expand_object_buffer(object_type, -1)
-	
+
 	var uniforms = uniform_sets[object_set_index].values()
 	object_set = rd.uniform_set_create(uniforms, shader, object_set_index)
 
 
 func _create_uniform(bytes : PackedByteArray, _set : int, binding : int) -> RID:
 	"""Create and bind uniform to a shader from bytes.
-	
+
 	returns the uniform and buffer created in an array"""
-	
+
 	var buffer : RID = rd.storage_buffer_create(bytes.size(), bytes)
 	RIDs_to_free.append(buffer)
 	var uniform = RDUniform.new()
-	
+
 	uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	uniform.binding = binding
 	uniform.add_id(buffer)
-	
+
 	uniform_sets[_set][binding] = uniform
-	
+
 	return buffer
 
 
 func _create_image_buffer():
 	"""Creates and binds render result texture buffer aka. image_buffer"""
 	var usage_bits = (
-		RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT + 
+		RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT +
 		RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT +
 		RenderingDevice.TEXTURE_USAGE_STORAGE_BIT +
-		RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT 
+		RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT
 		# Remove bit for increased performance, have to add writeonly to shader buffer
 		+ RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
 	)
-	
+
 	#if is_local_renderer:
-		#usage_bits += RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT 
-	
+		#usage_bits += RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
+
 	# TODO Explore multi-layered texture for multisampling
 	var new_image_buffer = _create_texture_buffer(
 		RenderingDevice.TEXTURE_TYPE_2D,
-		_renderer.render_width, 
+		_renderer.render_width,
 		_renderer.render_height,
 		[],
 		1,
 		usage_bits
 	)
-	
+
 	var uniform := RDUniform.new()
 	uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
 	uniform.binding = image_buffer_bind
 	uniform.add_id(new_image_buffer)
-	
+
 	uniform_sets[image_set_index][image_buffer_bind] = uniform
-	
+
 	return new_image_buffer
 
 
@@ -381,7 +381,7 @@ func _create_texture_buffer(
 	array_layers : int,
 	usage_bits : int):
 	"""Creates an unbound texture buffer"""
-	
+
 	# Create image buffer for compute and fragment shader
 	var tf : RDTextureFormat = RDTextureFormat.new()
 	tf.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT
@@ -392,19 +392,19 @@ func _create_texture_buffer(
 	tf.array_layers = array_layers
 	tf.mipmaps = 1
 	tf.usage_bits = usage_bits
-	
+
 	var new_texture_buffer = rd.texture_create(tf, RDTextureView.new(), data)
 	RIDs_to_free.append(new_texture_buffer)
-	
+
 	return new_texture_buffer
 
 
 func _create_lod_byte_array() -> PackedByteArray:
 	var lod_array = [
-		_renderer.render_width, 
-		_renderer.render_height, 
-		_renderer.samples_per_pixel, 
-		_renderer.max_default_depth, 
+		_renderer.render_width,
+		_renderer.render_height,
+		_renderer.samples_per_pixel,
+		_renderer.max_default_depth,
 		_renderer.max_refraction_bounces
 	]
 	return PackedInt32Array(lod_array).to_byte_array()
@@ -415,15 +415,15 @@ func _create_materials_byte_array() -> PackedByteArray:
 	var size : int = _scene.materials.size()
 	for material in _scene.materials:
 		bytes += material.to_byte_array()
-	
+
 	# Fill rest of bytes with empty
 	if material_buffer_size == 0:
 		@warning_ignore("integer_division")
 		material_buffer_size = (size / MATERIAL_COUNT_STEP + 1) * MATERIAL_COUNT_STEP
-	
+
 	for i in range(material_buffer_size - size):
 		bytes += PTMaterial.new().to_byte_array()
-		
+
 	return bytes
 
 
@@ -432,51 +432,51 @@ func _create_spheres_byte_array() -> PackedByteArray:
 	var size : int = _scene.spheres.size()
 	for sphere in _scene.objects[PTObject.ObjectType.SPHERE]:
 		bytes += sphere.to_byte_array()
-	
+
 	# Fill rest of bytes with empty
 	if sphere_buffer_size == 0:
 		@warning_ignore("integer_division")
 		sphere_buffer_size = (size / SPHERE_COUNT_STEP + 1) * SPHERE_COUNT_STEP
-	
+
 	for i in range(sphere_buffer_size - size):
 		bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
-	
+
 	return bytes
-	
+
 
 func _create_planes_byte_array() -> PackedByteArray:
 	var bytes = PackedByteArray()
 	var size : int = _scene.planes.size()
 	for plane in _scene.objects[PTObject.ObjectType.PLANE]:
 		bytes += plane.to_byte_array()
-	
+
 	# Fill rest of bytes with empty
 	if plane_buffer_size == 0:
 		@warning_ignore("integer_division")
 		plane_buffer_size = (size / PLANE_COUNT_STEP + 1) * PLANE_COUNT_STEP
-	
+
 	for i in range(plane_buffer_size - size):
 		bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
-	
+
 	return bytes
-	
+
 
 func _create_triangles_byte_array() -> PackedByteArray:
 	var bytes = PackedByteArray()
 	var size : int = _scene.triangles.size()
 	for triangle in _scene.objects[PTObject.ObjectType.TRIANGLE]:
 		bytes += triangle.to_byte_array()
-	
+
 	# Fill rest of bytes with empty
 	if triangle_buffer_size == 0:
 		@warning_ignore("integer_division")
 		triangle_buffer_size = (size / PLANE_COUNT_STEP + 1) * PLANE_COUNT_STEP
-	
+
 	for i in range(triangle_buffer_size - size):
 		bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
-	
+
 	return bytes
-	
+
 
 
 func _create_bvh_byte_array() -> PackedByteArray:
@@ -488,7 +488,7 @@ func _create_bvh_byte_array() -> PackedByteArray:
 
 func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 	var bytes = PackedByteArray()
-	
+
 	if Engine.is_editor_hint():
 		bytes += PTRendererAuto._pt_editor_camera.to_byte_array()
 	else:
@@ -498,11 +498,11 @@ func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 	var divisor = 100_000.0
 	var repeat = 10.0 # in seconds
 	var time = fmod(Time.get_ticks_msec() / divisor, (repeat * 1000) / divisor)
-	
+
 	bytes += PackedFloat32Array([time]).to_byte_array()
 	bytes += window.flags_to_byte_array()
 	bytes += PackedInt32Array([window.x_offset, window.y_offset]).to_byte_array()
 	bytes += PackedFloat32Array([window.frame, 0, 0, 0]).to_byte_array()
-	
+
 	return bytes
-	
+

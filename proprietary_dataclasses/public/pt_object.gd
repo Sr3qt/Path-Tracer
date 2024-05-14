@@ -22,7 +22,7 @@ var texture_id : int
 # The scene this object is part of
 var _scene : PTScene
 
-var transform_before 
+var transform_before
 
 func _enter_tree():
 	# Find scene when entering tree if scene is not set
@@ -32,7 +32,7 @@ func _enter_tree():
 		if parent is PTScene:
 			_scene = parent
 			parent.add_object(self)
-	
+
 	transform_before = Transform3D(transform)
 	set_notify_transform(true)
 
@@ -72,9 +72,9 @@ func _get_property_list():
 		"hint": PROPERTY_HINT_RESOURCE_TYPE,
 		"hint_string": "Don't change the mesh"
 	})
-	
+
 	return properties
-	
+
 
 static func vector_to_array(vector : Vector3) -> Array[float]:
 	return [vector.x, vector.y, vector.z]
@@ -82,7 +82,7 @@ static func vector_to_array(vector : Vector3) -> Array[float]:
 
 static func aabb_to_byte_array(aabb : AABB) -> PackedByteArray:
 	var new_aabb := aabb.abs()
-	var arr = (vector_to_array(new_aabb.position) + [0.0] + 
+	var arr = (vector_to_array(new_aabb.position) + [0.0] +
 			vector_to_array(new_aabb.end) + [0.0])
 	return PackedFloat32Array(arr).to_byte_array()
 
