@@ -28,7 +28,6 @@ extends Resource
 		refraction_depth = value
 		material_changed.emit(self)
 
-# TODO Add texture variable to material or object
 # TODO Add chance to reflect for transparent objects
 # TODO Calculate current IOR of camera and pass it to gpu
 

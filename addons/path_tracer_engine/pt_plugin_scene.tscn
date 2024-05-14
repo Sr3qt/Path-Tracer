@@ -12,13 +12,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 focus_mode = 1
-mouse_filter = 1
 script = ExtResource("1_2v5h1")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 2
 offset_right = 1080.0
-offset_bottom = 755.0
+offset_bottom = 720.0
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="VBoxContainer"]
 custom_minimum_size = Vector2(40, 40)
@@ -34,13 +33,3 @@ render_target_update_mode = 4
 transform = Transform3D(0.22486, -0.144453, 0.963624, 0, 0.98895, 0.14825, -0.974391, -0.0333354, 0.222375, 13, 2, 3)
 fov = 20.0
 script = ExtResource("4_57u0y")
-
-[node name="MenuButton" type="MenuButton" parent="VBoxContainer"]
-layout_mode = 2
-text = "Mneu bitton"
-item_count = 2
-popup/item_0/text = "text here"
-popup/item_0/checkable = 1
-popup/item_0/id = 0
-popup/item_1/text = "othewr"
-popup/item_1/id = 1

@@ -1,0 +1,355 @@
+[gd_scene load_steps=6 format=3 uid="uid://rcg5va5io0m6"]
+
+[ext_resource type="Script" path="res://ui_scenes/render_window_gui/gui_button_controller.gd" id="1_sce6n"]
+[ext_resource type="Script" path="res://ui_scenes/render_window_gui/custom_buttons/pt_button.gd" id="2_aye2j"]
+[ext_resource type="Script" path="res://ui_scenes/render_window_gui/custom_buttons/pt_checkbox.gd" id="3_g0amw"]
+[ext_resource type="Script" path="res://ui_scenes/render_window_gui/custom_buttons/pt_option_button.gd" id="4_6yw8e"]
+[ext_resource type="Script" path="res://ui_scenes/render_window_gui/custom_buttons/pt_spin_box.gd" id="5_v8pkx"]
+
+[node name="SettingsPanel" type="ScrollContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="ButtonController" type="Node" parent="MarginContainer"]
+unique_name_in_owner = true
+script = ExtResource("1_sce6n")
+
+[node name="AllSettings" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="DisableRenderButton" type="Button" parent="MarginContainer/AllSettings"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_stretch_ratio = 5.3
+toggle_mode = true
+text = "Toggle rendering
+"
+script = ExtResource("2_aye2j")
+
+[node name="_ColorRect_20801" type="ColorRect" parent="MarginContainer/AllSettings/DisableRenderButton"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 369.0
+offset_bottom = 34.0
+mouse_filter = 2
+color = Color(160, 0, 0, 0.4)
+
+[node name="LinkCameraButton" type="Button" parent="MarginContainer/AllSettings"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+toggle_mode = true
+text = "Link camera to editor"
+script = ExtResource("2_aye2j")
+
+[node name="_ColorRect_20802" type="ColorRect" parent="MarginContainer/AllSettings/LinkCameraButton"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 369.0
+offset_bottom = 34.0
+mouse_filter = 2
+color = Color(160, 0, 0, 0.4)
+
+[node name="BVHContainer" type="VBoxContainer" parent="MarginContainer/AllSettings"]
+layout_mode = 2
+
+[node name="BVHLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer"]
+layout_mode = 2
+text = "BVH settings
+"
+
+[node name="BVHOptions" type="GridContainer" parent="MarginContainer/AllSettings/BVHContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 2
+
+[node name="UseBVHLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "    Use BVH tree"
+
+[node name="UseBVHButton" type="CheckBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+button_pressed = true
+text = "
+"
+script = ExtResource("3_g0amw")
+
+[node name="_ColorRect_20803" type="ColorRect" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions/UseBVHButton"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 4.0
+offset_top = -8.5
+offset_right = 20.0
+offset_bottom = 7.5
+mouse_filter = 2
+color = Color(160, 0, 0, 0.4)
+
+[node name="ShowBVHDepthLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+layout_mode = 2
+text = "    Show BVH depth map"
+
+[node name="ShowBVHDepthButton" type="CheckBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "
+"
+script = ExtResource("3_g0amw")
+
+[node name="_ColorRect_20804" type="ColorRect" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions/ShowBVHDepthButton"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 4.0
+offset_top = -8.5
+offset_right = 20.0
+offset_bottom = 7.5
+mouse_filter = 2
+color = Color(160, 0, 0, 0.4)
+
+[node name="BVHTypeLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+layout_mode = 2
+text = "    BVH algorithm"
+
+[node name="BVHType" type="OptionButton" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+script = ExtResource("4_6yw8e")
+
+[node name="_ColorRect_20805" type="ColorRect" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions/BVHType"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 135.0
+offset_bottom = 31.0
+mouse_filter = 2
+color = Color(160, 0, 0, 0.4)
+
+[node name="@ColorRect@22329" type="ColorRect" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions/BVHType"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 135.0
+offset_bottom = 31.0
+mouse_filter = 2
+color = Color(220, 165, 0, 0.6)
+
+[node name="Label" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+layout_mode = 2
+text = "    BVH tree order"
+
+[node name="BVHTreeOrder" type="SpinBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 2.0
+max_value = 64.0
+value = 2.0
+script = ExtResource("5_v8pkx")
+
+[node name="_ColorRect_20806" type="ColorRect" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions/BVHTreeOrder"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 135.0
+offset_bottom = 34.0
+mouse_filter = 2
+color = Color(160, 0, 0, 0.4)
+
+[node name="@ColorRect@22332" type="ColorRect" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions/BVHTreeOrder"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 135.0
+offset_bottom = 34.0
+mouse_filter = 2
+color = Color(220, 165, 0, 0.6)
+
+[node name="CreateBVHButton" type="Button" parent="MarginContainer/AllSettings/BVHContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Create BVH
+"
+script = ExtResource("2_aye2j")
+
+[node name="_ColorRect_20807" type="ColorRect" parent="MarginContainer/AllSettings/BVHContainer/CreateBVHButton"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 369.0
+offset_bottom = 34.0
+mouse_filter = 2
+color = Color(160, 0, 0, 0.4)
+
+[node name="Container" type="BoxContainer" parent="MarginContainer/AllSettings/BVHContainer"]
+layout_mode = 2
+alignment = 1
+vertical = true
+
+[node name="SamplingContainer" type="VBoxContainer" parent="MarginContainer/AllSettings"]
+layout_mode = 2
+
+[node name="SamplingLabel" type="Label" parent="MarginContainer/AllSettings/SamplingContainer"]
+layout_mode = 2
+text = "Sampling
+"
+
+[node name="SamplingOptions" type="GridContainer" parent="MarginContainer/AllSettings/SamplingContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+columns = 2
+
+[node name="EnableMultisampleLabel" type="Label" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "    Enable multisampling"
+
+[node name="EnableMultisampleButton" type="CheckBox" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("3_g0amw")
+
+[node name="_ColorRect_20808" type="ColorRect" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions/EnableMultisampleButton"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 4.0
+offset_top = -8.5
+offset_right = 20.0
+offset_bottom = 7.5
+mouse_filter = 2
+color = Color(160, 0, 0, 0.4)
+
+[node name="MaxSamplePauseLabel" type="RichTextLabel" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions"]
+layout_mode = 2
+text = "    Max sample pause "
+fit_content = true
+scroll_active = false
+
+[node name="MaxSamplePauseButton" type="CheckBox" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("3_g0amw")
+
+[node name="_ColorRect_20809" type="ColorRect" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions/MaxSamplePauseButton"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 4.0
+offset_top = -8.5
+offset_right = 20.0
+offset_bottom = 7.5
+mouse_filter = 2
+color = Color(160, 0, 0, 0.4)
+
+[node name="MaxSamplesLabel" type="Label" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions"]
+layout_mode = 2
+text = "    Max samples"
+
+[node name="MaxSamplesButton" type="SpinBox" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 1.0
+max_value = 2048.0
+value = 1.0
+script = ExtResource("5_v8pkx")
+
+[node name="_ColorRect_20810" type="ColorRect" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions/MaxSamplesButton"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 85.0625
+offset_bottom = 34.0
+mouse_filter = 2
+color = Color(160, 0, 0, 0.4)
+
+[node name="@ColorRect@22336" type="ColorRect" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions/MaxSamplesButton"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 85.0625
+offset_bottom = 34.0
+mouse_filter = 2
+color = Color(220, 165, 0, 0.6)
+
+[node name="ClearSamples" type="Button" parent="MarginContainer/AllSettings/SamplingContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Clear Samples"
+script = ExtResource("2_aye2j")
+
+[node name="_ColorRect_20811" type="ColorRect" parent="MarginContainer/AllSettings/SamplingContainer/ClearSamples"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 369.0
+offset_bottom = 34.0
+mouse_filter = 2
+color = Color(160, 0, 0, 0.4)
+
+[connection signal="toggled" from="MarginContainer/AllSettings/DisableRenderButton" to="MarginContainer/ButtonController" method="_on_disable_render_button_toggled"]
+[connection signal="toggled" from="MarginContainer/AllSettings/LinkCameraButton" to="MarginContainer/ButtonController" method="_on_link_camera_button_toggled"]
+[connection signal="toggled" from="MarginContainer/AllSettings/BVHContainer/BVHOptions/UseBVHButton" to="MarginContainer/ButtonController" method="_on_use_bvh_button_toggled"]
+[connection signal="toggled" from="MarginContainer/AllSettings/BVHContainer/BVHOptions/ShowBVHDepthButton" to="MarginContainer/ButtonController" method="_on_show_bvh_depth_button_toggled"]
+[connection signal="pressed" from="MarginContainer/AllSettings/BVHContainer/CreateBVHButton" to="MarginContainer/ButtonController" method="_on_create_bvh_button_pressed"]
+[connection signal="toggled" from="MarginContainer/AllSettings/SamplingContainer/SamplingOptions/EnableMultisampleButton" to="MarginContainer/ButtonController" method="_on_enable_multisample_button_toggled"]
+[connection signal="toggled" from="MarginContainer/AllSettings/SamplingContainer/SamplingOptions/MaxSamplePauseButton" to="MarginContainer/ButtonController" method="_on_max_sample_pause_button_toggled"]
+[connection signal="focus_exited" from="MarginContainer/AllSettings/SamplingContainer/SamplingOptions/MaxSamplesButton" to="MarginContainer/ButtonController" method="_on_max_samples_button_focus_exited"]
+[connection signal="pressed" from="MarginContainer/AllSettings/SamplingContainer/ClearSamples" to="MarginContainer/ButtonController" method="_on_clear_samples_pressed"]
