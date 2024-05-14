@@ -60,6 +60,7 @@ var leaf_count : int # Counts nodes with no child nodes
 var inner_count : int # Counts nodes with child nodes, including root node
 var object_count : int # Counts the number of objects stored in leaf nodes
 
+var type : BVHType
 var creation_time : int # In usecs
 var SAH_cost : float
 
@@ -91,18 +92,21 @@ static func create_bvh_with_function_name(
 static func x_axis_sorted(scene : PTScene, _max_children : int) -> PTBVHTree:
 	var temp = PTBVHTree.new(_max_children)
 	temp.create_BVH(scene)
+	temp.type = BVHType.X_SORTED
 	return temp
 
 
 static func y_axis_sorted(scene : PTScene, _max_children : int) -> PTBVHTree:
 	var temp = PTBVHTree.new(_max_children)
 	temp.create_BVH(scene, "y")
+	temp.type = BVHType.Y_SORTED
 	return temp
 
 
 static func z_axis_sorted(scene : PTScene, _max_children : int) -> PTBVHTree:
 	var temp = PTBVHTree.new(_max_children)
 	temp.create_BVH(scene, "z")
+	temp.type = BVHType.Z_SORTED
 	return temp
 
 
@@ -157,12 +161,23 @@ func update_aabb(object : PTObject):
 	node.update_aabb()
 
 
-# TODO Implement later
-func add_object():
-	pass
+func add_object(object : PTObject):
+	# TODO Implement actual algorithm later, for now just remake
+	PTRendererAuto.create_bvh(max_children, enum_to_dict[type])
 
-func remove_object():
-	pass
+
+func remove_object(object : PTObject):
+	if object_to_leaf.has(object):
+		var leaf : BVHNode = object_to_leaf[object]
+		object_to_leaf.erase(object)
+		
+		var index : int = leaf.objects.find(object)
+		if index != -1:
+			leaf.objects.remove_at(index)
+			leaf.update_aabb()
+			return
+	
+	push_warning("Object: %s already removed from bvh tree" % object)
 
 
 func size():

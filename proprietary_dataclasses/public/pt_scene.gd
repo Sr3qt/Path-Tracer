@@ -77,6 +77,10 @@ var added_types = {
 	ObjectType.TRIANGLE : false,
 }
 
+# Mainly for editor tree. Nodes need to be kept for a little longer after exit_tree
+#  to verify if they were deleted or just the scenes were swapped.
+var objects_to_remove : Array[PTObject] 
+
 
 func _ready():
 	if not Engine.is_editor_hint():
@@ -119,8 +123,6 @@ func update_object(object : PTObject):
 	scene_changed = true
 
 
-# TODO add method to remove object
-# TODO Add and remove objects from bvh
 func add_object(object : PTObject):
 	"""Adds an object to """
 	var type = object.get_type()
@@ -130,9 +132,6 @@ func add_object(object : PTObject):
 	if not object.get_parent():
 		print("Added child")
 		add_child(object)
-		
-		# TEMP seems dangerous to keep
-		#object.owner = self
 	
 	# Increment counters
 	object_count += 1
@@ -160,26 +159,67 @@ func add_object(object : PTObject):
 		object.material_index = material_index
 	
 	# Add object texture to textures if applicable
-	if not object.texture:
-		object.texture_id = 0
-		return
-	
-	# Check for object reference in array
-	var texture_index = textures.find(object.texture)
-	if texture_index == -1:
-		# Add to list if not already in it
-		texture_index = textures.size()
-		textures.append(object.texture)
-		
-		object.texture_id = object.texture.get_texture_id(texture_index)
-		
-		texture_to_texture_id[object.texture] = object.texture_id
-		# TODO add texture updatiung buffer/ shader
-		#object.material.connect("material_changed", update_material)
-		#
-		#added_types[PTObject.ObjectType.NOT_OBJECT] = true
+	if object.texture:
+		# Check for object reference in array
+		var texture_index = textures.find(object.texture)
+		if texture_index == -1:
+			# Add to list if not already in it
+			texture_index = textures.size()
+			textures.append(object.texture)
+			
+			object.texture_id = object.texture.get_texture_id(texture_index)
+			
+			texture_to_texture_id[object.texture] = object.texture_id
+			# TODO add texture updatiung buffer/ shader
+			#object.material.connect("material_changed", update_material)
+			#
+			#added_types[PTObject.ObjectType.NOT_OBJECT] = true
+		else:
+			object.texture_id = object.texture.get_texture_id(texture_index)
 	else:
-		object.texture_id = object.texture.get_texture_id(texture_index)
+		object.texture_id = 0
+	
+	# Add object to bvh
+	if bvh:
+		bvh.add_object(object)
+	
+	# If object is added after scene ready, update buffer
+	if is_node_ready():
+		update_object(object)
+
+
+func queue_remove_object(object : PTObject):
+	if not object in objects_to_remove:
+		objects_to_remove.append(object)
+	PTRendererAuto.add_scene_to_remove_objects(self)
+
+
+## Removes an object from the scene. The object is not deleted.
+func remove_object(object : PTObject):
+	var type = object.get_type()
+	objects[type].remove_at(object.object_index)
+	
+	if object.is_inside_tree():
+		remove_child(object)
+	object._scene = null
+	
+	# TODO Remove from texture and material list if object was their last user
+	
+	if bvh:
+		bvh.remove_object(object)
+	
+	# Send request to update buffer
+	PTRendererAuto.remove_object(self, object)
+	
+	scene_changed = true
+	object_count -= 1
+
+
+## Removes objects that are queued for removal
+func remove_objects():
+	for object in objects_to_remove:
+		remove_object(object)
+	objects_to_remove.clear()
 
 
 static func array2vec(a):

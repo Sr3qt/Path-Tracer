@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://c8qptlvl2wmde"]
+[gd_scene load_steps=20 format=3 uid="uid://c8qptlvl2wmde"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_4n3re"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_1oi20"]
@@ -57,6 +57,19 @@ size = Vector2(1000, 1000)
 
 [sub_resource type="Resource" id="Resource_3vnnv"]
 script = ExtResource("6_677ub")
+albedo = Color(1, 0.321569, 0.329412, 1)
+roughness = 0.0
+metallic = 0.0
+opacity = 1.0
+IOR = 1.0
+refraction_depth = 0
+
+[sub_resource type="SphereMesh" id="SphereMesh_rjrq8"]
+radius = 1.0
+height = 2.0
+
+[sub_resource type="Resource" id="Resource_bvoeq"]
+script = ExtResource("6_677ub")
 albedo = Color(1, 1, 1, 1)
 roughness = 0.0
 metallic = 0.0
@@ -111,3 +124,9 @@ mesh = SubResource("PlaneMesh_rdukm")
 script = ExtResource("7_8kqfv")
 material = SubResource("Resource_3vnnv")
 mesh = SubResource("PlaneMesh_rdukm")
+
+[node name="PTSphere3" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_rjrq8")
+script = ExtResource("3_8wdme")
+material = SubResource("Resource_bvoeq")
+mesh = SubResource("SphereMesh_rjrq8")

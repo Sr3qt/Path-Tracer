@@ -43,12 +43,6 @@ func _set_canvas_visibility():
 		mat.set_shader_parameter("is_rendering", is_rendering)
 		canvas.visible = is_rendering
 
-# Since the scene will become a subtree in the plugin, 
-#  root_node is a convenient pointer to the relative root node, Only used by plugin
-# DEPRECATED
-#var root_node 
-
-
 var wd : PTWorkDispatcher # Current PTWorkDispatcher for the current scene
 var wds : Array[PTWorkDispatcher] # An array of WorkDispatchers for each scene
 
@@ -56,8 +50,6 @@ var scene : PTScene # The scene currently in use
 var scenes : Array[PTScene] # An array of scenes. Primarily used by plugin
 var scene_index : int # Index to current scene in scenes. 
 					  #  The same index is used for wds array.
-
-# An indexing dictionary translating editing-scene root nodes to scene_index 
 
 # A dicitionary that keeps track of multiple PTScenes within one Godot scene.
 # Only use by plugin, for runtime scene tracker see
@@ -69,8 +61,8 @@ var root_node_to_scene = {
 	# }
 }
 
+# PTScene as key and scene_index pointing to the same scene in scenes
 var scene_to_scene_index = {}
-
 
 # Array of sub-windows
 var windows : Array[PTRenderWindow] = []
@@ -90,18 +82,9 @@ var is_camera_linked = true:
 			editor_camera.set_cull_mask_value(20, value)
 		is_camera_linked = value
 
+# TODO remove and replace with ptscene variable
 # Controls the degree of the bvh tree passed to the gpu. 
 var bvh_max_children : int = 8
-
-# GLSL files in shaders/procedural_textures folder
-var procedural_textures = ["checker_board.comp"]
-
-var proc_textures = {
-	# The key is the name used in scene file, the first value is the shader name
-	#  and the last value is the index used in the shader
-	&"checker_board" : ["checker_board.comp", 1]
-	
-	}
 
 # TODO Make render settings node similar to WorldEnvironment
 var render_width := 1920
@@ -115,6 +98,11 @@ var samples_per_pixel = 1 # Deprecated
 var was_rendered := false
 
 var startup_time = 0
+
+# Array of scenes that wants one or more of their objects to be removed from buffers.
+# NOTE: Scenes add themselves.
+var scenes_to_remove_objects : Array[PTScene]
+
 
 func _init():
 	print("Renderer init time: ", (Time.get_ticks_usec()) / 1000., "ms ")
@@ -176,6 +164,8 @@ func _process(_delta):
 		startup_time = 0
 	was_rendered = false
 	
+	_object_queue_remove()
+	
 	# If editor camera moved, copy the data to scene.camera
 	if Engine.is_editor_hint() and editor_camera and is_camera_linked:
 		if (not (editor_camera.position == _pt_editor_camera.position and 
@@ -222,7 +212,6 @@ func _process(_delta):
 		for _scene in scenes:
 			if _scene.added_object:
 				re_create_buffers(_scene)
-	
 	
 	# Reset frame values
 	if scene:
@@ -437,6 +426,7 @@ func add_scene(new_ptscene : PTScene):
 	if Engine.is_editor_hint():
 		var scene_owner = new_ptscene.owner if new_ptscene.owner else new_ptscene
 		
+		# If root_node already has a ptscene associated with it
 		if root_node_to_scene.has(scene_owner):
 			print(new_ptscene.owner)
 			push_warning(new_ptscene.owner)
@@ -522,6 +512,28 @@ func change_scene(new_scene : PTScene):
 			scene.camera.add_child(canvas)
 			
 	# TODO Update GUI values
+
+
+func add_scene_to_remove_objects(ptscene : PTScene):
+	if ptscene in scenes_to_remove_objects:
+		return
+	scenes_to_remove_objects.append(ptscene)
+
+
+## Removes objects from any queue in scenes
+func _object_queue_remove():
+	for _scene in scenes_to_remove_objects:
+		if not _scene: # If scene is null; idk can prob remove
+			push_warning("Help; Scene is no longer valid for deletion.")
+			continue
+		if _scene.is_inside_tree():
+			print("PT: Removing object(s) that was deleted by the user.")
+			_scene.remove_objects()
+		else:
+			_scene.objects_to_remove.clear()
+			#print("PT: Scene was changed, so no object removal will occur.")
+		
+	scenes_to_remove_objects.clear()
 
 
 func create_canvas():
@@ -623,6 +635,37 @@ func update_object(_scene : PTScene, object : PTObject):
 					bvh_bytes.size(), 
 					bvh_bytes
 			)
+
+## NOTE: Optimizations can probably be made, i just remake buffers for simplicity
+func remove_object(_scene : PTScene, object : PTObject):
+	# Find right wd based on _scene
+	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
+	
+	# Update object buffer
+	match object.get_type():
+		PTObject.ObjectType.SPHERE:
+			scene_wd.create_sphere_buffer()
+		PTObject.ObjectType.PLANE:
+			scene_wd.create_plane_buffer()
+		PTObject.ObjectType.TRIANGLE:
+			scene_wd.create_triangle_buffer()
+	
+	# Update bvh if possible
+	if _scene.bvh:
+		for node in _scene.bvh.updated_nodes:
+			var bvh_bytes : PackedByteArray = node.to_byte_array()
+			scene_wd.rd.buffer_update(
+					scene_wd.BVH_buffer, 
+					node.index * bvh_bytes.size(), 
+					bvh_bytes.size(), 
+					bvh_bytes
+			)
+	
+	# NOTE: A bit overkill, but dont care
+	scene_wd.bind_sets()
+	
+	
+
 
 func copy_camera(from : Camera3D, to : Camera3D):
 	to.translate(to.position - from.position)
