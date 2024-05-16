@@ -15,7 +15,7 @@ const ObjectType = PTObject.ObjectType
 # Semi-Temp
 enum CameraSetting {none, top_down, corner, book_ex, center, left, right, middle}
 
-var camera_settings_values = {
+var camera_settings_values := {
 	CameraSetting.top_down : [Vector3(0, 8, -15), Vector3(0,0,-6), 106.],
 	CameraSetting.corner : [Vector3(-11, 3, -11), Vector3(0,0,0), 106.],
 	CameraSetting.book_ex : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.],
@@ -41,8 +41,8 @@ var spheres : Array[PTSphere]
 var planes : Array[PTPlane]
 var triangles : Array[PTTriangle]
 
-# Simple dict to choose the right list
-var objects = {
+# Simple dict to choose the right list. get_object_array is preferred
+var objects := {
 	ObjectType.SPHERE : spheres,
 	ObjectType.PLANE : planes,
 	ObjectType.TRIANGLE : triangles,
@@ -50,11 +50,11 @@ var objects = {
 
 var materials : Array[PTMaterial]
 # Inverse of materials
-var material_to_index = {}
+var material_to_index := {}
 
 var textures : Array[PTTexture] = [null]
 # Convert a texture into an id used by shader
-var texture_to_texture_id = {}
+var texture_to_texture_id := {}
 
 # Current BVH that would be used by the Renderer
 var bvh : PTBVHTree
@@ -70,26 +70,35 @@ var camera : PTCamera
 var object_count : int = 0
 
 var added_object := false # Whether an object (or material) was added this frame
-var added_types = {
-	ObjectType.NOT_OBJECT : false, # Interpreted as a material
-	ObjectType.SPHERE : false,
-	ObjectType.PLANE : false,
-	ObjectType.TRIANGLE : false,
-}
+#var added_types := {
+	#ObjectType.NOT_OBJECT : false, # Interpreted as a material
+	#ObjectType.SPHERE : false,
+	#ObjectType.PLANE : false,
+	#ObjectType.TRIANGLE : false,
+#}
+
+# added_types is indexed by ObjectType. NOT_OBJECT is interpreted as material and
+#  MAX is interpreted as texture.
+var added_types : Array[bool]
+
 
 # Mainly for editor tree. Nodes need to be kept for a little longer after exit_tree
 #  to verify if they were deleted or just the scenes were swapped.
 var objects_to_remove : Array[PTObject]
 
 
-func _ready():
+func _init() -> void:
+	added_types.resize(ObjectType.MAX + 1)
+
+
+func _ready() -> void:
 	if not Engine.is_editor_hint():
 		get_size()
 
 		if camera == null:
 			for child in get_children():
 				if child is PTCamera:
-					camera = child
+					camera = child as PTCamera
 					break
 
 		if starting_camera != CameraSetting.none:
@@ -98,20 +107,31 @@ func _ready():
 	# Scene will probably trigger this when objects add themselves to the scene
 	#  Set to false to skip trigger
 	added_object = false
-	for key in added_types.keys():
-		added_types[key] = false
+	added_types.fill(false)
 
 	PTRendererAuto.add_scene(self)
 
 
+func get_object_array(type : ObjectType) -> Array:
+	match type:
+		ObjectType.SPHERE:
+			return spheres
+		ObjectType.PLANE:
+			return planes
+		ObjectType.TRIANGLE:
+			return triangles
+
+	return []
+
+
 # TODO Update material when its removed and a new one is added
-func update_material(material):
+func update_material(material : PTMaterial)  -> void:
 	PTRendererAuto.update_material(self, material)
 
 	scene_changed = true
 
 
-func update_object(object : PTObject):
+func update_object(object : PTObject) -> void:
 	## Called by an object when its properties changed
 	# Send request to update bvh if object is in it
 	if bvh and PTBVHTree.objects_to_include.has(object.get_type()):
@@ -123,11 +143,12 @@ func update_object(object : PTObject):
 	scene_changed = true
 
 
-func add_object(object : PTObject):
+func add_object(object : PTObject) -> void:
 	"""Adds an object to """
-	var type = object.get_type()
-	object.object_index = objects[type].size()
-	objects[type].append(object)
+	var type := object.get_type()
+	var object_array : Array = get_object_array(type)
+	object.object_index = object_array.size()
+	object_array.append(object)
 
 	if not object.get_parent():
 		print("Added child")
@@ -146,11 +167,11 @@ func add_object(object : PTObject):
 		object.material = PTMaterial.new()
 
 	# Check for object reference in array
-	var material_index = materials.find(object.material)
+	var material_index : int = materials.find(object.material)
 	if material_index == -1:
 		# Add to list if not alreadt in it
 		object.material_index = materials.size()
-		material_to_index[object.material] = materials.size()
+		material_to_index[object.material] = materials.size() # UNSTATIC
 		materials.append(object.material)
 		object.material.connect("material_changed", update_material)
 
@@ -161,7 +182,7 @@ func add_object(object : PTObject):
 	# Add object texture to textures if applicable
 	if object.texture:
 		# Check for object reference in array
-		var texture_index = textures.find(object.texture)
+		var texture_index : int = textures.find(object.texture)
 		if texture_index == -1:
 			# Add to list if not already in it
 			texture_index = textures.size()
@@ -169,7 +190,7 @@ func add_object(object : PTObject):
 
 			object.texture_id = object.texture.get_texture_id(texture_index)
 
-			texture_to_texture_id[object.texture] = object.texture_id
+			texture_to_texture_id[object.texture] = object.texture_id # UNSTATIC
 			# TODO add texture updatiung buffer/ shader
 			#object.material.connect("material_changed", update_material)
 			#
@@ -188,16 +209,17 @@ func add_object(object : PTObject):
 		update_object(object)
 
 
-func queue_remove_object(object : PTObject):
+func queue_remove_object(object : PTObject) -> void:
 	if not object in objects_to_remove:
 		objects_to_remove.append(object)
 	PTRendererAuto.add_scene_to_remove_objects(self)
 
 
 ## Removes an object from the scene. The object is not deleted.
-func remove_object(object : PTObject):
-	var type = object.get_type()
-	objects[type].remove_at(object.object_index)
+func remove_object(object : PTObject) -> void:
+	var type := object.get_type()
+	var object_array : Array = get_object_array(type)
+	object_array.remove_at(object.object_index)
 
 	if object.is_inside_tree():
 		remove_child(object)
@@ -216,27 +238,27 @@ func remove_object(object : PTObject):
 
 
 ## Removes objects that are queued for removal
-func remove_objects():
+func remove_objects() -> void:
 	for object in objects_to_remove:
 		remove_object(object)
 	objects_to_remove.clear()
 
 
-static func array2vec(a):
+static func array2vec(a : Array[float]) -> Vector3:
 	return Vector3(a[0], a[1], a[2])
 
 
-func get_size():
+func get_size() -> int:
 	"""Calculates the number of primitives stored in the scene"""
 	object_count = 0
 
-	for _objects in objects.values():
+	for _objects : Array in objects.values(): # UNSTATIC
 		object_count += _objects.size()
 
 	return object_count
 
 
-func create_BVH(max_children : int, function_name : String):
+func create_BVH(max_children : int, function_name : String) -> void:
 	# TODO add check to reuse BVH if it is in cached_bvhs
 
 	if bvh:
@@ -245,60 +267,62 @@ func create_BVH(max_children : int, function_name : String):
 	bvh = PTBVHTree.create_bvh_with_function_name(self, max_children, function_name)
 
 
-func set_camera_setting(cam : CameraSetting):
+func set_camera_setting(cam : CameraSetting) -> void:
 	if camera:
-		var temp = camera_settings_values[cam]
+		var pos : Vector3 = camera_settings_values[cam][0] # UNSTATIC
+		var look : Vector3 = camera_settings_values[cam][1] # UNSTATIC
+		var fov : float = camera_settings_values[cam][2] # UNSTATIC
 
-		camera.position = temp[0]
+		camera.position = pos
 
-		camera.look_at(temp[1])
+		camera.look_at(look)
 
-		camera.fov = temp[2] / camera.aspect_ratio
+		camera.fov = fov / camera.aspect_ratio
 		camera.set_viewport_size()
 	else:
 		push_warning("PT: Cannot set camera settings when no camera has been attached \
 to the scene")
 
 
-func create_random_scene(_seed):
-	var rng = RandomNumberGenerator.new()
+func create_random_scene(_seed : int) -> void:
+	var rng := RandomNumberGenerator.new()
 	rng.seed = _seed
 
 	# Ground
-	var ground_mat = PTMaterial.new()
+	var ground_mat := PTMaterial.new()
 	ground_mat.albedo = Color(0.5, 0.5, 0.5)
 
 	add_object(PTPlane.new(Vector3(0, 1, 0), -1., ground_mat, 0))
 	#add_object(PTSphere.new(Vector3(0, -1000, 0), 1000, ground_mat, 0))
 
 	# Glass
-	var mat1 = PTMaterial.new()
+	var mat1 := PTMaterial.new()
 	mat1.IOR = 1.5
 	mat1.opacity = 0.
 	add_object(PTSphere.new(Vector3(0, 1, 0), 1, mat1, 0))
 
 	# Diffuse
-	var mat2 = PTMaterial.new()
+	var mat2 := PTMaterial.new()
 	mat2.albedo = Color(0.4, 0.2, 0.1)
 	add_object(PTSphere.new(Vector3(-4, 1, 0), 1, mat2, 0))
 
 	# Metallic
-	var mat3 = PTMaterial.new()
+	var mat3 := PTMaterial.new()
 	mat3.albedo = Color(0.7, 0.6, 0.5)
 	mat3.metallic = 1.
 	add_object(PTSphere.new(Vector3(4, 1, 0), 1, mat3, 0))
 
 	for i in range(22):
 		for j in range(22):
-			var center = Vector3((i - 11) + 0.9 * rng.randf(),
+			var center := Vector3((i - 11) + 0.9 * rng.randf(),
 								 0.2,
 								 (j - 11) + 0.9 * rng.randf())
-			var radius = 0.2
+			var radius := 0.2
 
-			var choose_material = rng.randf()
-			var material = PTMaterial.new()
+			var choose_material := rng.randf()
+			var material := PTMaterial.new()
 
-			var color = Color(rng.randf(), rng.randf(), rng.randf())
+			var color := Color(rng.randf(), rng.randf(), rng.randf())
 
 			if choose_material < 0.8:
 				pass
@@ -317,12 +341,8 @@ func create_random_scene(_seed):
 				material.IOR = 1.6
 
 			material.albedo = color
-			var new_sphere = PTSphere.new(center, radius, material, 0)
+			var new_sphere := PTSphere.new(center, radius, material, 0)
 			add_object(new_sphere)
-
-
-
-
 
 
 

@@ -20,14 +20,8 @@ var triangle_buffer_size : int = 0
 
 var material_buffer_size : int = 0
 
-# Holds the uniforms that will be bound to a set
-var uniform_sets = [
-	{}, # For image
-	{}, # For camera
-	{}, # For objects
-	{}, # For BVH
-	{}, # Empty
-]
+var uniforms : UniformStorage
+
 # Array of RIDs that need to be freed when done with them.
 var RIDs_to_free : Array[RID] = []
 
@@ -38,21 +32,25 @@ var pipeline : RID
 var texture : Texture2DRD
 
 # Set / binding indices
-const image_set_index : int = 0
-const image_buffer_bind : int = 0
-const image_size_bind : int = 1
+const IMAGE_SET_INDEX : int = 0
+const IMAGE_BUFFER_BIND : int = 0
+const IMAGE_SIZE_BIND : int = 1 # DEPRECATED
+const IMAGE_SET_MAX : int = 1
 
-const camera_set_index : int = 1
-const LOD_bind : int = 0 # For sample per pixel, bounce depth etc.
+const CAMERA_SET_INDEX : int = 1
+const LOD_BIND : int = 0 # For sample per pixel, bounce depth etc.
+const CAMERA_SET_MAX : int = 1
 
-const object_set_index : int = 2
-const materials_bind : int = 0
-const spheres_bind : int = 1
-const planes_bind : int = 2
-const triangle_bind : int =  3
+const OBJECT_SET_INDEX : int = 2
+const MATERIALS_BIND : int = 0
+const SPHERES_BIND : int = 1
+const PLANES_BIND : int = 2
+const TRIANGLES_BIND : int = 3
+const OBJECT_SET_MAX : int = 4
 
-const BVH_set_index : int = 3
-const BVH_bind : int = 0
+const BVH_SET_INDEX : int = 3
+const BVH_BIND : int = 0
+const BVH_SET_MAX : int = 1
 
 # Set RIDs
 var image_set : RID
@@ -74,14 +72,17 @@ var triangle_buffer : RID
 var BVH_buffer : RID
 
 # Whether this instance is using a local RenderDevice
-var is_local_renderer
+var is_local_renderer := false
 
 # References to renderer and scene that will render
 var _renderer : PTRenderer
 var _scene : PTScene
 
 
-func _init(renderer : PTRenderer, is_local = false):
+
+func _init(renderer : PTRenderer, is_local := false) -> void:
+	uniforms = UniformStorage.new()
+
 	_renderer = renderer
 
 	is_local_renderer = is_local
@@ -94,11 +95,11 @@ func _init(renderer : PTRenderer, is_local = false):
 		rd = RenderingServer.get_rendering_device()
 
 
-func create_buffers():
+func create_buffers() -> void:
 	"""Creates and binds buffers to RenderDevice"""
 
 	print("Starting to setup buffers")
-	var prev_time = Time.get_ticks_usec()
+	var prev_time := Time.get_ticks_usec()
 
 	# Trying to set up buffers without a scene makes no sense
 	if not _scene:
@@ -119,60 +120,60 @@ func create_buffers():
 	bind_sets()
 
 	# Get texture RID for Canvas
-	var material = _renderer.canvas.get_mesh().surface_get_material(0)
-
-	texture = material.get_shader_parameter("image_buffer")
+	var material := _renderer.canvas.get_mesh().surface_get_material(0) as ShaderMaterial
+	# NOTE: get_shader_parameter literally returns variant; get fgucked. UNSTATIC
+	texture = material.get_shader_parameter("image_buffer") as Texture2DRD
 
 	print("Setting up buffers took %s ms" % ((Time.get_ticks_usec() - prev_time) / 1000.))
 
 
-func create_lod_buffer():
+func create_lod_buffer() -> void:
 	LOD_buffer = _create_uniform(
-			_create_lod_byte_array(), camera_set_index, LOD_bind
+			_create_lod_byte_array(), CAMERA_SET_INDEX, LOD_BIND
 	)
 
-func create_sphere_buffer():
+func create_sphere_buffer() -> void:
 	sphere_buffer = _create_uniform(
-			_create_spheres_byte_array(), object_set_index, spheres_bind
+			_create_spheres_byte_array(), OBJECT_SET_INDEX, SPHERES_BIND
 	)
 
-func create_plane_buffer():
+func create_plane_buffer() -> void:
 	plane_buffer = _create_uniform(
-			_create_planes_byte_array(), object_set_index, planes_bind
+			_create_planes_byte_array(), OBJECT_SET_INDEX, PLANES_BIND
 	)
 
-func create_triangle_buffer():
+func create_triangle_buffer() -> void:
 	triangle_buffer = _create_uniform(
-			_create_triangles_byte_array(), object_set_index, triangle_bind
+			_create_triangles_byte_array(), OBJECT_SET_INDEX, TRIANGLES_BIND
 	)
 
-func create_material_buffer():
+func create_material_buffer() -> void:
 	material_buffer = _create_uniform(
-			_create_materials_byte_array(), object_set_index, materials_bind
+			_create_materials_byte_array(), OBJECT_SET_INDEX, MATERIALS_BIND
 	)
 
-func create_bvh_buffer():
+func create_bvh_buffer() -> void:
 	# Contains the BVH tree in the form of a list
 	BVH_buffer = _create_uniform(
-			_create_bvh_byte_array(), BVH_set_index, BVH_bind
+			_create_bvh_byte_array(), BVH_SET_INDEX, BVH_BIND
 	)
 
-func bind_sets():
+func bind_sets() -> void:
 	# Bind uniforms and sets
 	# Get uniforms
-	var image_uniforms = uniform_sets[image_set_index].values()
-	var camera_uniform = uniform_sets[camera_set_index].values()
-	var object_uniforms = uniform_sets[object_set_index].values()
-	var BVH_uniforms = uniform_sets[BVH_set_index].values()
+	var image_uniforms := uniforms.get_set_uniforms(IMAGE_SET_INDEX)
+	var camera_uniform := uniforms.get_set_uniforms(CAMERA_SET_INDEX)
+	var object_uniforms := uniforms.get_set_uniforms(OBJECT_SET_INDEX)
+	var BVH_uniforms := uniforms.get_set_uniforms(BVH_SET_INDEX)
 
 	# Bind uniforms to sets
-	image_set = rd.uniform_set_create(image_uniforms, shader, image_set_index)
-	camera_set = rd.uniform_set_create(camera_uniform, shader, camera_set_index)
-	object_set = rd.uniform_set_create(object_uniforms, shader, object_set_index)
-	BVH_set = rd.uniform_set_create(BVH_uniforms, shader, BVH_set_index)
+	image_set = rd.uniform_set_create(image_uniforms, shader, IMAGE_SET_INDEX)
+	camera_set = rd.uniform_set_create(camera_uniform, shader, CAMERA_SET_INDEX)
+	object_set = rd.uniform_set_create(object_uniforms, shader, OBJECT_SET_INDEX)
+	BVH_set = rd.uniform_set_create(BVH_uniforms, shader, BVH_SET_INDEX)
 
 
-func load_shader(shader_ : RDShaderSource):
+func load_shader(shader_ : RDShaderSource) -> void:
 	# Load GLSL shader
 	# Was very annoying to find since this function is not mentioned anywhere
 	#	in RDShaderSource documentation wrrr
@@ -184,7 +185,7 @@ func load_shader(shader_ : RDShaderSource):
 	pipeline = rd.compute_pipeline_create(shader)
 
 
-func free_RIDs():
+func free_RIDs() -> void:
 	if texture:
 		texture.texture_rd_rid = RID()
 
@@ -195,9 +196,9 @@ func free_RIDs():
 	RIDs_to_free = []
 
 
-func free_rid(rid):
+func free_rid(rid : RID) -> void:
 	"""Free a single rid"""
-	var index = RIDs_to_free.find(rid)
+	var index : int= RIDs_to_free.find(rid)
 	if index != -1:
 		RIDs_to_free.remove_at(index)
 		rd.free_rid(rid)
@@ -205,7 +206,7 @@ func free_rid(rid):
 		push_warning("PT: RID " + str(rid) + " is not meant to be freed.")
 
 
-func create_compute_list(window : PTRenderWindow = null):
+func create_compute_list(window : PTRenderWindow = null) -> void:
 	""" Creates the compute list required for every compute call
 
 	Requires workgroup coordinates to be given in an array or vector
@@ -223,20 +224,20 @@ func create_compute_list(window : PTRenderWindow = null):
 										_renderer.compute_invocation_height)
 		window.work_group_depth = 1
 
-	var x = window.work_group_width
-	var y = window.work_group_height
-	var z = window.work_group_depth
+	var x := window.work_group_width
+	var y := window.work_group_height
+	var z := window.work_group_depth
 
-	var push_bytes = _push_constant_byte_array(window)
+	var push_bytes := _push_constant_byte_array(window)
 
-	var compute_list = rd.compute_list_begin()
+	var compute_list := rd.compute_list_begin()
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline)
 
 	# Bind uniform sets
-	rd.compute_list_bind_uniform_set(compute_list, image_set, image_set_index)
-	rd.compute_list_bind_uniform_set(compute_list, camera_set, camera_set_index)
-	rd.compute_list_bind_uniform_set(compute_list, object_set, object_set_index)
-	rd.compute_list_bind_uniform_set(compute_list, BVH_set, BVH_set_index)
+	rd.compute_list_bind_uniform_set(compute_list, image_set, IMAGE_SET_INDEX)
+	rd.compute_list_bind_uniform_set(compute_list, camera_set, CAMERA_SET_INDEX)
+	rd.compute_list_bind_uniform_set(compute_list, object_set, OBJECT_SET_INDEX)
+	rd.compute_list_bind_uniform_set(compute_list, BVH_set, BVH_SET_INDEX)
 	rd.compute_list_set_push_constant(compute_list, push_bytes, push_bytes.size())
 
 	rd.capture_timestamp(window.render_name)
@@ -250,7 +251,7 @@ func create_compute_list(window : PTRenderWindow = null):
 		rd.sync()
 
 
-func set_scene(scene : PTScene):
+func set_scene(scene : PTScene) -> void:
 	"""set this this PTWorkDispatcher to use specified scene data"""
 	_scene = scene
 
@@ -261,7 +262,7 @@ func set_scene(scene : PTScene):
 ##  NOT_AN_OBJECT is assumed to be material buffer.
 ## Setting steps to -1 skips creating a set. By defualt will create buffer to
 ##  fit objects in scene. If objects already fit, do nothing.
-func expand_object_buffer(object_type : PTObject.ObjectType, steps : int = 0):
+func expand_object_buffer(object_type : PTObject.ObjectType, steps : int = 0) -> void:
 	match object_type:
 		PTObject.ObjectType.NOT_OBJECT:
 			if material_buffer_size >= _scene.materials.size():
@@ -309,16 +310,16 @@ func expand_object_buffer(object_type : PTObject.ObjectType, steps : int = 0):
 			create_plane_buffer()
 
 	if steps != -1:
-		var uniforms = uniform_sets[object_set_index].values()
-		object_set = rd.uniform_set_create(uniforms, shader, object_set_index)
+		var object_uniforms := uniforms.get_set_uniforms(OBJECT_SET_INDEX)
+		object_set = rd.uniform_set_create(object_uniforms, shader, OBJECT_SET_INDEX)
 
 
-func expand_object_buffers(object_types : Array[PTObject.ObjectType]):
+func expand_object_buffers(object_types : Array[PTObject.ObjectType]) -> void:
 	for object_type in object_types:
 		expand_object_buffer(object_type, -1)
 
-	var uniforms = uniform_sets[object_set_index].values()
-	object_set = rd.uniform_set_create(uniforms, shader, object_set_index)
+	var object_uniforms := uniforms.get_set_uniforms(OBJECT_SET_INDEX)
+	object_set = rd.uniform_set_create(object_uniforms, shader, OBJECT_SET_INDEX)
 
 
 func _create_uniform(bytes : PackedByteArray, _set : int, binding : int) -> RID:
@@ -328,20 +329,20 @@ func _create_uniform(bytes : PackedByteArray, _set : int, binding : int) -> RID:
 
 	var buffer : RID = rd.storage_buffer_create(bytes.size(), bytes)
 	RIDs_to_free.append(buffer)
-	var uniform = RDUniform.new()
+	var uniform := RDUniform.new()
 
 	uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
 	uniform.binding = binding
 	uniform.add_id(buffer)
 
-	uniform_sets[_set][binding] = uniform
+	uniforms.set_uniform(_set, binding, uniform)
 
 	return buffer
 
 
-func _create_image_buffer():
+func _create_image_buffer() -> RID:
 	"""Creates and binds render result texture buffer aka. image_buffer"""
-	var usage_bits = (
+	var usage_bits : int = (
 		RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT +
 		RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT +
 		RenderingDevice.TEXTURE_USAGE_STORAGE_BIT +
@@ -354,7 +355,7 @@ func _create_image_buffer():
 		#usage_bits += RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
 
 	# TODO Explore multi-layered texture for multisampling
-	var new_image_buffer = _create_texture_buffer(
+	var new_image_buffer := _create_texture_buffer(
 		RenderingDevice.TEXTURE_TYPE_2D,
 		_renderer.render_width,
 		_renderer.render_height,
@@ -365,21 +366,22 @@ func _create_image_buffer():
 
 	var uniform := RDUniform.new()
 	uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
-	uniform.binding = image_buffer_bind
+	uniform.binding = IMAGE_BUFFER_BIND
 	uniform.add_id(new_image_buffer)
 
-	uniform_sets[image_set_index][image_buffer_bind] = uniform
+	uniforms.set_uniform(IMAGE_SET_INDEX, IMAGE_BUFFER_BIND, uniform)
 
 	return new_image_buffer
 
 
 func _create_texture_buffer(
-	texture_type,
+	texture_type : RenderingDevice.TextureType,
 	width : int,
 	height : int,
 	data : PackedByteArray,
 	array_layers : int,
-	usage_bits : int):
+	usage_bits : int
+	) -> RID:
 	"""Creates an unbound texture buffer"""
 
 	# Create image buffer for compute and fragment shader
@@ -393,14 +395,14 @@ func _create_texture_buffer(
 	tf.mipmaps = 1
 	tf.usage_bits = usage_bits
 
-	var new_texture_buffer = rd.texture_create(tf, RDTextureView.new(), data)
+	var new_texture_buffer := rd.texture_create(tf, RDTextureView.new(), data)
 	RIDs_to_free.append(new_texture_buffer)
 
 	return new_texture_buffer
 
 
 func _create_lod_byte_array() -> PackedByteArray:
-	var lod_array = [
+	var lod_array : Array[int] = [
 		_renderer.render_width,
 		_renderer.render_height,
 		_renderer.samples_per_pixel,
@@ -430,7 +432,7 @@ func _create_materials_byte_array() -> PackedByteArray:
 func _create_spheres_byte_array() -> PackedByteArray:
 	var bytes := PackedByteArray()
 	var size : int = _scene.spheres.size()
-	for sphere in _scene.objects[PTObject.ObjectType.SPHERE]:
+	for sphere in _scene.spheres:
 		bytes += sphere.to_byte_array()
 
 	# Fill rest of bytes with empty
@@ -445,9 +447,9 @@ func _create_spheres_byte_array() -> PackedByteArray:
 
 
 func _create_planes_byte_array() -> PackedByteArray:
-	var bytes = PackedByteArray()
+	var bytes := PackedByteArray()
 	var size : int = _scene.planes.size()
-	for plane in _scene.objects[PTObject.ObjectType.PLANE]:
+	for plane in _scene.planes:
 		bytes += plane.to_byte_array()
 
 	# Fill rest of bytes with empty
@@ -462,9 +464,9 @@ func _create_planes_byte_array() -> PackedByteArray:
 
 
 func _create_triangles_byte_array() -> PackedByteArray:
-	var bytes = PackedByteArray()
+	var bytes := PackedByteArray()
 	var size : int = _scene.triangles.size()
-	for triangle in _scene.objects[PTObject.ObjectType.TRIANGLE]:
+	for triangle in _scene.triangles:
 		bytes += triangle.to_byte_array()
 
 	# Fill rest of bytes with empty
@@ -478,7 +480,6 @@ func _create_triangles_byte_array() -> PackedByteArray:
 	return bytes
 
 
-
 func _create_bvh_byte_array() -> PackedByteArray:
 	if _scene.bvh:
 		return _scene.bvh.to_byte_array()
@@ -487,7 +488,7 @@ func _create_bvh_byte_array() -> PackedByteArray:
 
 
 func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
-	var bytes = PackedByteArray()
+	var bytes := PackedByteArray()
 
 	if Engine.is_editor_hint():
 		bytes += PTRendererAuto._pt_editor_camera.to_byte_array()
@@ -495,9 +496,9 @@ func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 		bytes += _scene.camera.to_byte_array()
 	# A higher divisor seems to give a more volatile local noise
 	#  If set to low, refractive materials might not multisample correctly
-	var divisor = 100_000.0
-	var repeat = 10.0 # in seconds
-	var time = fmod(Time.get_ticks_msec() / divisor, (repeat * 1000) / divisor)
+	var divisor := 100_000.0
+	var repeat := 10.0 # in seconds
+	var time : float = fmod(Time.get_ticks_msec() / divisor, (repeat * 1000) / divisor)
 
 	bytes += PackedFloat32Array([time]).to_byte_array()
 	bytes += window.flags_to_byte_array()
@@ -505,4 +506,40 @@ func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 	bytes += PackedFloat32Array([window.frame, 0, 0, 0]).to_byte_array()
 
 	return bytes
+
+
+class UniformStorage:
+	var image_set : Array[RDUniform]
+	var camera_set : Array[RDUniform]
+	var object_set : Array[RDUniform]
+	var bvh_set : Array[RDUniform]
+
+
+	func _init() -> void:
+		# Arrays need to be initialized with the same size as number of binds in a set
+		image_set.resize(IMAGE_SET_MAX)
+		camera_set.resize(CAMERA_SET_MAX)
+		object_set.resize(OBJECT_SET_MAX)
+		bvh_set.resize(BVH_SET_MAX)
+
+
+	func get_set_uniforms(index : int) -> Array[RDUniform]:
+		match index:
+			IMAGE_SET_INDEX:
+				return image_set
+			CAMERA_SET_INDEX:
+				return camera_set
+			OBJECT_SET_INDEX:
+				return object_set
+			BVH_SET_INDEX:
+				return bvh_set
+
+		push_error("Uniform index '%S' is invalid." % index)
+		return []
+
+
+	func set_uniform(set_index : int, bind_index : int, uniform : RDUniform) -> void:
+		var uniform_set := get_set_uniforms(set_index)
+		uniform_set[bind_index] = uniform
+
 

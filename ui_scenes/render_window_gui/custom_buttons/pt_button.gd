@@ -11,7 +11,7 @@ var disabled_mask : ColorRect
 var size_margin := Vector2(4, 5)
 
 
-func _ready():
+func _ready() -> void:
 	# Create disabled mask
 	disabled_mask = ColorRect.new()
 
@@ -31,12 +31,12 @@ func _ready():
 	custom_minimum_size.x = BUTTON_MINIMUM_WIDTH
 
 
-func set_disable(_is_disabled : bool):
+func set_disable(_is_disabled : bool) -> void:
 	disabled = _is_disabled
 	if disabled_mask:
 		disabled_mask.visible = _is_disabled
 
 
-func _on_resized():
+func _on_resized() -> void:
 	disabled_mask.size = size + size_margin
 

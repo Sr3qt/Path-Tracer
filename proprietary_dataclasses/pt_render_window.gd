@@ -51,7 +51,7 @@ var enable_multisampling := true:
 		enable_multisampling = value
 
 # Updated whenever the camera or an object is moved
-var scene_changed = false:
+var scene_changed := false:
 	set(value):
 		_multisample = not value and enable_multisampling and not _disable_multisample
 		scene_changed = value
@@ -71,12 +71,16 @@ var was_rendered := false
 ## SAMPLE VALUES
 var max_samples : int = 16
 
+@onready var frame_counter : Label = %FrameCounter
+@onready var frame_time : Label = %FrameTimes
+
+
 # The numbered sample that will be rendered this frame
 #  possible values: frame -> [0, max_samples)
 var frame : int = 0:
 	set(value):
-		if %FrameCounter:
-			%FrameCounter.text = "Frame: " + str(value)
+		if frame_counter:
+			frame_counter.text = "Frame: " + str(value)
 		frame = value
 
 # The seconds passed since frame 0 was rendered,
@@ -84,8 +88,8 @@ var frame : int = 0:
 #  Updated by PTRenderer
 var frame_times : float:
 	set(value):
-		if %FrameTimes:
-			%FrameTimes.text = "Time: %.2fs" % value
+		if frame_time:
+			frame_time.text = "Time: %.2fs" % value
 		frame_times = value
 
 var max_sample_start_time : float # Point in time when rendering started
@@ -95,9 +99,9 @@ var max_sample_start_time : float # Point in time when rendering started
 var render_name := "unnamed_window"
 
 # How many pixels are in a work group dimension
-var work_group_width_pixels = PTRenderer.compute_invocation_width
-var work_group_height_pixels = PTRenderer.compute_invocation_height
-var work_group_depth_pixels = PTRenderer.compute_invocation_depth
+var work_group_width_pixels := PTRenderer.compute_invocation_width
+var work_group_height_pixels := PTRenderer.compute_invocation_height
+var work_group_depth_pixels := PTRenderer.compute_invocation_depth
 
 # work_group_height and width are used for size calculations.
 #  depth is passed to work dispatcher, but no support for depth > 1 exist yet
@@ -108,10 +112,9 @@ var work_group_depth := 1
 var x_offset := 0
 var y_offset := 0
 
-var renderer : PTRenderer
 
 
-func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 0):
+func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 0) -> void:
 	_set_flags()
 
 	custom_minimum_size = Vector2(work_group_width_pixels, work_group_height_pixels)
@@ -120,7 +123,7 @@ func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 
 	work_group_height = group_y
 	work_group_depth = group_z
 
-	var new_size = Vector2(group_x * work_group_width_pixels,
+	var new_size := Vector2(group_x * work_group_width_pixels,
 						   group_y * work_group_height_pixels)
 	set_size(new_size)
 
@@ -130,12 +133,11 @@ func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 
 	set_position(Vector2(x_offset, y_offset))
 
 
-func flags_to_byte_array():
-	var flag_array = PackedInt32Array([flags])
-	return flag_array.to_byte_array()
+func flags_to_byte_array() -> PackedByteArray:
+	return PackedInt32Array([flags]).to_byte_array()
 
 
-func _set_flags():
+func _set_flags() -> void:
 	"""Used once for init"""
 	flags = (
 		RenderFlagsBits.USE_BVH * int(use_bvh) +
@@ -143,7 +145,7 @@ func _set_flags():
 		RenderFlagsBits.MULTISAMPLE * int(_multisample)
 	)
 
-func _set_flag_bit(bit, boolean : bool):
+func _set_flag_bit(bit : int, boolean : bool) -> void:
 	# Shamlessly stolen from:
 	# https://stackoverflow.com/questions/47981/how-to-set-clear-and-toggle-a-single-bit
 	flags = (flags & ~bit) | (bit * int(boolean))

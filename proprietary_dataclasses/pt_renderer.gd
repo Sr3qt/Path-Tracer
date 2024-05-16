@@ -9,7 +9,7 @@ to swap scenes.
 
 """
 
-const WindowGui = preload("res://ui_scenes/render_window_gui/render_window_gui.tscn")
+const WindowGui := preload("res://ui_scenes/render_window_gui/render_window_gui.tscn")
 
 # NOTE: CPU control over gpu invocations has not been added.
 #	These are merely for reference
@@ -35,7 +35,7 @@ var no_camera_is_active := true:
 		no_camera_is_active = value
 		_set_canvas_visibility()
 
-func _set_canvas_visibility():
+func _set_canvas_visibility() -> void:
 	if canvas:
 		var is_rendering := (not is_rendering_disabled and not no_scene_is_active
 				and not no_camera_is_active)
@@ -53,7 +53,7 @@ var scene_index : int # Index to current scene in scenes.
 
 # A dicitionary that keeps track of multiple PTScenes within one Godot scene.
 # Only use by plugin, for runtime scene tracker see
-var root_node_to_scene = {
+var root_node_to_scene := {
 	## Example:
 	# root_node : {
 	#	"last_index" : 1 # This is an index to this sublist, ptscene1
@@ -62,7 +62,7 @@ var root_node_to_scene = {
 }
 
 # PTScene as key and scene_index pointing to the same scene in scenes
-var scene_to_scene_index = {}
+var scene_to_scene_index := {}
 
 # Array of sub-windows
 var windows : Array[PTRenderWindow] = []
@@ -90,14 +90,14 @@ var bvh_max_children : int = 8
 var render_width := 1920
 var render_height := 1080
 
-var samples_per_pixel = 1 # Deprecated
+var samples_per_pixel : int = 1 # DEPRECATED REMOVE
 @export var max_default_depth : int = 8
 @export var max_refraction_bounces : int = 8
 
 # Whether anything was rendered in the last render_window call. Only used by plugin
 var was_rendered := false
 
-var startup_time = 0
+var startup_time : int = 0
 
 # Array of scenes that wants one or more of their objects to be removed from buffers.
 # NOTE: Scenes add themselves.
@@ -143,7 +143,7 @@ func _ready() -> void:
 		var x := ceili(1920. / 8.)
 		var y := ceili(1080. / 8.)
 
-		var better_window : PTRenderWindow = WindowGui.instantiate()
+		var better_window := WindowGui.instantiate() as PTRenderWindow
 		better_window.max_samples = 300
 		better_window.stop_rendering_on_max_samples = false
 
@@ -153,7 +153,7 @@ func _ready() -> void:
 		add_window(better_window)
 
 
-func _process(_delta) -> void:
+func _process(_delta : float) -> void:
 	if startup_time:
 		print()
 		print("Total startup time")
@@ -172,10 +172,10 @@ func _process(_delta) -> void:
 
 	## Decides if any rendering will be done at all
 	# Runtime and plugin requires different checks for window focus
-	var runtime = (get_window().has_focus() and not Engine.is_editor_hint())
-	var plugin = (Engine.is_editor_hint())
+	var runtime := (get_window().has_focus() and not Engine.is_editor_hint())
+	var plugin := (Engine.is_editor_hint())
 
-	var common = (not is_rendering_disabled and not no_scene_is_active and
+	var common := (not is_rendering_disabled and not no_scene_is_active and
 			not no_camera_is_active)
 
 	if (runtime or plugin) and common:
@@ -202,7 +202,7 @@ func _process(_delta) -> void:
 
 			# NOTE: For some reason this is neccessary for smooth performance in editor
 			if Engine.is_editor_hint() and was_rendered:
-				var mat : ShaderMaterial = canvas.mesh.surface_get_material(0)
+				var mat := canvas.mesh.surface_get_material(0) as ShaderMaterial
 				mat.set_shader_parameter("is_rendering", true)
 
 	# Re-create buffers if asked for
@@ -222,10 +222,12 @@ func _process(_delta) -> void:
 
 
 # TODO Remove input event?
-func _input(event) -> void:
+func _input(event : InputEvent) -> void:
 	if not Engine.is_editor_hint():
 		if event is InputEventKey:
-			if event.pressed and event.keycode == KEY_X and not event.is_echo():
+			if ((event as InputEventKey).pressed and
+				(event as InputEventKey).keycode == KEY_X and
+				not event.is_echo()):
 				take_screenshot()
 
 	# TODO MAke able to take images with long render time with loading bar
@@ -276,9 +278,10 @@ func load_shader(ptscene : PTScene) -> RDShaderSource:
 	var i : int = 1
 	var function_definitons := ""
 	var function_calls := ""
-	for texture in ptscene.textures:
-		if not texture is PTProceduralTexture:
+	for _texture in ptscene.textures:
+		if not _texture is PTProceduralTexture:
 			continue
+		var texture := _texture as PTProceduralTexture
 		var path : String = texture.texture_path
 		var tex_file := FileAccess.open(path, FileAccess.READ_WRITE)
 		if not tex_file:
@@ -318,7 +321,6 @@ func load_shader(ptscene : PTScene) -> RDShaderSource:
 ## Although PTRenderer can store multiple PTRenderWindows, there is currently
 ##  no plan to support multiple windows simultaniously.
 func add_window(window : PTRenderWindow) -> void:
-	window.renderer = self
 	windows.append(window)
 
 	if not Engine.is_editor_hint():
@@ -329,18 +331,18 @@ func render_window(window : PTRenderWindow) -> void:
 	"""Might render window according to flags if flags allow it"""
 
 	# If camera moved or scene changed
-	var camera_moved = ((scene and scene.camera and scene.camera.camera_changed) or
+	var camera_moved := ((scene and scene.camera and scene.camera.camera_changed) or
 			(Engine.is_editor_hint() and _pt_editor_camera.camera_changed))
 
-	var movement = camera_moved or scene.scene_changed
+	var movement := camera_moved or scene.scene_changed
 
 	# If rendering should stop when reached max samples
-	var stop_multisampling = (
+	var stop_multisampling := (
 			window.stop_rendering_on_max_samples and
 			(window.frame >= window.max_samples)
 	)
 
-	var multisample = (window.enable_multisampling and not stop_multisampling and
+	var multisample := (window.enable_multisampling and not stop_multisampling and
 			not window._disable_multisample)
 
 	# Adds the time of the last frame rendered
@@ -398,7 +400,7 @@ func take_screenshot() -> void:
 	var image : PackedByteArray = wd.rd.texture_get_data(wd.image_buffer, 0)
 	# Changing the renderer render size should always create a new buffer, so
 	#  this code should always yield a correct result
-	var new_image = Image.create_from_data(
+	var new_image := Image.create_from_data(
 		render_width,
 		render_height,
 		false,
@@ -431,21 +433,22 @@ func add_scene(new_ptscene : PTScene) -> void:
 
 	# If in editor, add translation layer from ptscenes owner to ptscene
 	if Engine.is_editor_hint():
-		var scene_owner = new_ptscene.owner if new_ptscene.owner else new_ptscene
+		var scene_owner : Node = new_ptscene.owner if new_ptscene.owner else new_ptscene
 
 		# If root_node already has a ptscene associated with it
 		if root_node_to_scene.has(scene_owner):
 			print(new_ptscene.owner)
 			push_warning(new_ptscene.owner)
 
-			root_node_to_scene[scene_owner]["scenes"].append(new_ptscene)
+			@warning_ignore("unsafe_method_access")
+			root_node_to_scene[scene_owner]["scenes"].append(new_ptscene) # UNSTATIC
 		else:
-			root_node_to_scene[scene_owner] = {
+			root_node_to_scene[scene_owner] = { # UNSTATIC
 					"last_index" : 0,
 					"scenes" : [new_ptscene]
 			}
 
-	scene_to_scene_index[new_ptscene] = scenes.size()
+	scene_to_scene_index[new_ptscene] = scenes.size() # UNSTATIC
 	scenes.append(new_ptscene)
 
 	print()
@@ -455,14 +458,14 @@ func add_scene(new_ptscene : PTScene) -> void:
 	print()
 
 	if new_ptscene.object_count > 0:
-		var function_name = PTBVHTree.enum_to_dict[new_ptscene.default_bvh]
+		var function_name : String = PTBVHTree.enum_to_dict[new_ptscene.default_bvh] # UNSTATIC
 		new_ptscene.create_BVH(bvh_max_children, function_name)
 
 	if not canvas:
 		canvas = create_canvas()
 
 	# Create new WD
-	var new_wd = PTWorkDispatcher.new(self)
+	var new_wd := PTWorkDispatcher.new(self)
 	new_wd.set_scene(new_ptscene)
 	new_wd.load_shader(load_shader(new_ptscene))
 	new_wd.create_buffers()
@@ -475,7 +478,7 @@ func add_scene(new_ptscene : PTScene) -> void:
 
 
 ## Wrapper function for the plugin to change scenes
-func _plugin_change_scene(scene_root) -> void:
+func _plugin_change_scene(scene_root : Node) -> void:
 	if scene_root == null or not root_node_to_scene.has(scene_root):
 		# scene_root is a new empty node or a root without a PTScene in the scene
 		scene = null
@@ -483,9 +486,9 @@ func _plugin_change_scene(scene_root) -> void:
 		no_scene_is_active = true
 		return
 
-	var temp_dict = root_node_to_scene[scene_root]
+	var temp_dict : Dictionary = root_node_to_scene[scene_root]  # UNSTATIC
 
-	var scene_to_change : PTScene = temp_dict["scenes"][temp_dict["last_index"]]
+	var scene_to_change : PTScene = temp_dict["scenes"][temp_dict["last_index"]]  # UNSTATIC
 
 	change_scene(scene_to_change)
 
@@ -497,7 +500,7 @@ func change_scene(new_scene : PTScene) -> void:
 		if scene and scene.camera:
 			scene.camera.remove_child(canvas)
 
-	scene_index = scene_to_scene_index[new_scene]
+	scene_index = scene_to_scene_index[new_scene]  # UNSTATIC
 	scene = scenes[scene_index]
 	wd = wds[scene_index]
 	# Change buffer displayed on canvas
@@ -579,9 +582,9 @@ func create_bvh(_max_children : int, function_name : String) -> void:
 
 	wd.create_bvh_buffer()
 
-	var BVH_uniforms : Array[RDUniform] = wd.uniform_sets[wd.BVH_set_index].values()
+	var BVH_uniforms : Array[RDUniform] = wd.uniforms.get_set_uniforms(wd.BVH_SET_INDEX)
 	wd.BVH_set = wd.rd.uniform_set_create(BVH_uniforms, wd.shader,
-			wd.BVH_set_index)
+			wd.BVH_SET_INDEX)
 
 	#print((Time.get_ticks_usec() - _start) / 1000.)
 
@@ -592,9 +595,10 @@ func update_material(_scene : PTScene, material : PTMaterial) -> void:
 	var buffer : RID = scene_wd.material_buffer
 
 	var bytes : PackedByteArray = material.to_byte_array()
+	var offset : int = _scene.material_to_index[material] * bytes.size() # UNSTATIC
 	scene_wd.rd.buffer_update(
 			buffer,
-			_scene.material_to_index[material] * bytes.size(),
+			offset,
 			bytes.size(),
 			bytes
 	)
@@ -678,19 +682,19 @@ func copy_camera(from : Camera3D, to : Camera3D) -> void:
 	to.fov = from.fov
 
 	if to is PTCamera:
-		to.set_viewport_size()
+		(to as PTCamera).set_viewport_size()
 
 
 func re_create_buffers(_scene : PTScene) -> void:
-	var _wd = wds[scene_to_scene_index[_scene]]
+	var _wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
 	var buffers : Array[PTObject.ObjectType] = []
 	print()
-	print("Expanding object buffers for ", _scene)
-	print(_scene.added_types)
-	for key in _scene.added_types.keys():
-		if _scene.added_types[key]:
-			_scene.added_types[key] = false
-			buffers.append(key)
+	print("Expanding object buffers for ", _scene, ":")
+	@warning_ignore("untyped_declaration")
+	for type : int in PTObject.ObjectType.values():
+		if _scene.added_types[type]:
+			_scene.added_types[type] = false
+			buffers.append(type)
 	wd.expand_object_buffers(buffers)
 
 	_scene.added_object = false

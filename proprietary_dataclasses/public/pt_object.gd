@@ -9,7 +9,14 @@ extends MeshInstance3D
 # TODO Add instancing
 
 # Tied to object_type enum in shader
-enum ObjectType {NOT_OBJECT = 0, SPHERE = 1, PLANE = 2, TRIANGLE = 3, MESH = 4}
+enum ObjectType {
+	NOT_OBJECT = 0,
+	SPHERE = 1,
+	PLANE = 2,
+	TRIANGLE = 3,
+	MESH = 4,
+	MAX = 5
+}
 
 @export var material : PTMaterial = null
 @export var texture : PTTexture
@@ -22,22 +29,22 @@ var texture_id : int
 # The scene this object is part of
 var _scene : PTScene
 
-var transform_before
+var transform_before : Transform3D
 
-func _enter_tree():
+func _enter_tree() -> void:
 	# Find scene when entering tree if scene is not set
 	if not _scene:
 		# TODO Add recursive search maybe
-		var parent = get_parent()
+		var parent : Node = get_parent()
 		if parent is PTScene:
-			_scene = parent
-			parent.add_object(self)
+			_scene = parent as PTScene
+			_scene.add_object(self)
 
 	transform_before = Transform3D(transform)
 	set_notify_transform(true)
 
 
-func _exit_tree():
+func _exit_tree() -> void:
 	# NOTE: This is only for the user deleting objects in the editor scene tree.
 	#  Otherwise, an object should explicitly be removed with a function call.
 	if Engine.is_editor_hint():
@@ -54,7 +61,7 @@ func _exit_tree():
 		#_scene.queue_remove_object(self)
 
 
-func _notification(what):
+func _notification(what : int) -> void:
 	match what:
 		NOTIFICATION_TRANSFORM_CHANGED:
 			if _scene and transform != transform_before:
@@ -62,9 +69,9 @@ func _notification(what):
 				transform_before = Transform3D(transform)
 
 
-func _get_property_list():
+func _get_property_list() -> Array:
 	# TODO Overriding previous classes export might be possible in godot 4.3
-	var properties = []
+	var properties := []
 	properties.append({
 		"name": "mesh",
 		"type": TYPE_RID,
@@ -82,7 +89,7 @@ static func vector_to_array(vector : Vector3) -> Array[float]:
 
 static func aabb_to_byte_array(aabb : AABB) -> PackedByteArray:
 	var new_aabb := aabb.abs()
-	var arr = (vector_to_array(new_aabb.position) + [0.0] +
+	var arr := (vector_to_array(new_aabb.position) + [0.0] +
 			vector_to_array(new_aabb.end) + [0.0])
 	return PackedFloat32Array(arr).to_byte_array()
 

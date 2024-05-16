@@ -9,9 +9,9 @@ enum TextureType {IS_SAMPLE = 1, IS_SPATIAL = 2}
 @export var is_spatial := true
 var procedural_texture : String
 
-var texture_2d
+#var texture_2d
 
-var texture_3d # IDK maybe this makes sense later
+#var texture_3d # IDK maybe this makes sense later
 
 # TODO ADD texture updated signal
 

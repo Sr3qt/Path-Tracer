@@ -1,4 +1,5 @@
 @tool
+class_name _PTPluginControlRoot
 extends Control
 
 var viewport : SubViewport
@@ -8,19 +9,22 @@ var _is_plugin_hint := false
 # TODO Add button to adjust render size and aspect ratio based on editor viewport
 func _enter_tree():
 	if _is_plugin_hint:
-		viewport = %SubViewport
+		viewport = %SubViewport as SubViewport
 
-		var camera : PTCamera = viewport.get_child(0)
+		var camera := viewport.get_child(0) as PTCamera
 
 		PTRendererAuto._set_plugin_camera(camera)
 
 		var x := ceili(1920. / 8.)
 		var y := ceili(1080. / 8.)
 
-		var better_window : PTRenderWindow = PTRendererAuto.WindowGui.instantiate()
+		var better_window := PTRendererAuto.WindowGui.instantiate() as PTRenderWindow
 
-		better_window.get_node("SettingsManager")._is_plugin_instance = true
-		better_window.get_node("SettingsManager")._plugin_panel_node = get_child(0)
+		var settings_manager := (
+			better_window.get_node("SettingsManager") as _PTSettingsManager)
+
+		settings_manager._is_plugin_instance = true
+		settings_manager._plugin_panel_node = get_child(0)
 
 		better_window.work_group_width = x
 		better_window.work_group_height = y
@@ -43,4 +47,4 @@ func _on_resized():
 		# Fallback ratio if no camera exists
 		viewport.size.y = size.x / (16.0 / 9.0)
 
-	$VBoxContainer.size = size
+	($VBoxContainer as VBoxContainer).size = size

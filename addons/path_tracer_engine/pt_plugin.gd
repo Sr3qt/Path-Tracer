@@ -1,17 +1,17 @@
 @tool
 extends EditorPlugin
 
-const MainPanel = preload("res://addons/path_tracer_engine/pt_plugin_scene.tscn")
+const MainPanel := preload("res://addons/path_tracer_engine/pt_plugin_scene.tscn")
 const AUTOLOAD_NAME = "PTRendererAuto"
 
-var main_panel_instance
+var main_panel_instance : _PTPluginControlRoot
 
 var is_docked := true
 var is_main := !is_docked
 
 
 func _enter_tree():
-	main_panel_instance = MainPanel.instantiate()
+	main_panel_instance = MainPanel.instantiate() as _PTPluginControlRoot
 	main_panel_instance._is_plugin_hint = true
 
 	add_autoload_singleton(AUTOLOAD_NAME, "res://proprietary_dataclasses/pt_renderer.gd")
@@ -41,7 +41,7 @@ func _has_main_screen():
 	return is_main
 
 
-func _make_visible(visible):
+func _make_visible(visible : bool):
 	if main_panel_instance:
 		main_panel_instance.visible = visible
 
