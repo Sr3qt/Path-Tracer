@@ -44,15 +44,15 @@ func _set_canvas_visibility() -> void:
 		canvas.visible = is_rendering
 
 var wd : PTWorkDispatcher # Current PTWorkDispatcher for the current scene
+## Uses same indexing as scenes
 var wds : Array[PTWorkDispatcher] # An array of WorkDispatchers for each scene
 
 var scene : PTScene # The scene currently in use
+## Uses same indexing as wds
 var scenes : Array[PTScene] # An array of scenes. Primarily used by plugin
-var scene_index : int # Index to current scene in scenes.
-					  #  The same index is used for wds array.
 
 # A dicitionary that keeps track of multiple PTScenes within one Godot scene.
-# Only use by plugin, for runtime scene tracker see
+# Only used by plugin, for runtime scene tracker see scene_to_scene_index
 var root_node_to_scene := {
 	## Example:
 	# root_node : {
@@ -431,7 +431,6 @@ func take_screenshot() -> void:
 	print("PT: Picture taken :)")
 
 
-# TODO Remove scene when it's closed
 func add_scene(new_ptscene : PTScene) -> void:
 	"""Adds a scene to renderer"""
 
@@ -442,17 +441,33 @@ func add_scene(new_ptscene : PTScene) -> void:
 
 	# If in editor, add translation layer from ptscenes owner to ptscene
 	if Engine.is_editor_hint():
-		var scene_owner : Node = new_ptscene.owner if new_ptscene.owner else new_ptscene
+		if not new_ptscene.owner:
+			var max_count : int = 100
+			var counter : int = 0
+			var current_node : Node = new_ptscene.get_parent()
+			while counter < max_count and current_node and not root_node_to_scene.has(current_node):
+				current_node = current_node.get_parent()
+				counter += 1
 
+			if counter < max_count and current_node:
+				# current_node is new_ptscene.owner
+				print("owner found! ", current_node)
+				@warning_ignore("unsafe_method_access")
+				new_ptscene.owner = current_node
+				root_node_to_scene[current_node]["scenes"].append(new_ptscene) # UNSTATIC
+			else:
+				# new_ptscene is the root node of an unseen scene
+				root_node_to_scene[new_ptscene] = { # UNSTATIC
+						"last_index" : 0,
+						"scenes" : [new_ptscene]
+				}
 		# If root_node already has a ptscene associated with it
-		if root_node_to_scene.has(scene_owner):
-			print(new_ptscene.owner)
-			push_warning(new_ptscene.owner)
-
-			@warning_ignore("unsafe_method_access")
-			root_node_to_scene[scene_owner]["scenes"].append(new_ptscene) # UNSTATIC
+		elif root_node_to_scene.has(new_ptscene.owner):
+				@warning_ignore("unsafe_method_access")
+				root_node_to_scene[new_ptscene.owner]["scenes"].append(new_ptscene) # UNSTATIC
 		else:
-			root_node_to_scene[scene_owner] = { # UNSTATIC
+			# new_ptscene is a child of an unseen scene
+			root_node_to_scene[new_ptscene.owner] = { # UNSTATIC
 					"last_index" : 0,
 					"scenes" : [new_ptscene]
 			}
@@ -486,6 +501,52 @@ func add_scene(new_ptscene : PTScene) -> void:
 		change_scene(new_ptscene)
 
 
+func _plugin_scene_closed(scene_path : String) -> void:
+	for node : Node in root_node_to_scene.keys():
+		if node.scene_file_path == scene_path:
+			for _scene : PTScene in root_node_to_scene[node]["scenes"].duplicate():
+				print("Closing scene: ")
+				printraw(_scene)
+				remove_scene(_scene)
+
+
+func remove_scene(ptscene : PTScene) -> void:
+	# Remove all references to ptscene
+	var index := scenes.find(ptscene)
+	if index != -1:
+		var _scene_wd := wds[index] # Remove var eventually
+		scenes.remove_at(index)
+		wds.remove_at(index)
+		_scene_wd.queue_free()
+
+	# if running in editor, try to cleanup root_node_to_scene
+	print(root_node_to_scene)
+	if Engine.is_editor_hint() and not root_node_to_scene.erase(ptscene):
+		# TODO Remove scene from root_node_to_scene when scene is deleted
+		# If ptscene is a reference under any other root nodes
+		for key : Node in root_node_to_scene.keys():
+			var value = root_node_to_scene[key]
+			var _index : int = value["scenes"].find(ptscene)
+			if _index == -1:
+				continue
+
+			value["scenes"].remove_at(_index)
+
+			if value["scenes"].is_empty():
+				root_node_to_scene.erase(key)
+			elif value["last_index"] == _index:
+				root_node_to_scene[key]["last_index"] = 0
+	print(root_node_to_scene)
+
+	scene_to_scene_index.erase(ptscene)
+	scenes_to_remove_objects.erase(ptscene)
+
+	if ptscene == scene:
+		scene = null
+		wd = null
+		no_scene_is_active = true
+
+
 ## Wrapper function for the plugin to change scenes
 func _plugin_change_scene(scene_root : Node) -> void:
 	if scene_root == null or not root_node_to_scene.has(scene_root):
@@ -509,7 +570,7 @@ func change_scene(new_scene : PTScene) -> void:
 		if scene and scene.camera:
 			scene.camera.remove_child(canvas)
 
-	scene_index = scene_to_scene_index[new_scene]  # UNSTATIC
+	var scene_index : int = scene_to_scene_index[new_scene]  # UNSTATIC
 	scene = scenes[scene_index]
 	wd = wds[scene_index]
 	# Change buffer displayed on canvas

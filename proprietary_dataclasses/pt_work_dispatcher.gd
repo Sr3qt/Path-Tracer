@@ -193,8 +193,6 @@ func free_RIDs() -> void:
 	for rid in RIDs_to_free:
 		rd.free_rid(rid)
 
-	RIDs_to_free = []
-
 
 func free_rid(rid : RID) -> void:
 	"""Free a single rid"""

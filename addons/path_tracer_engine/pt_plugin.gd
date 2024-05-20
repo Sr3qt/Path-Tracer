@@ -23,6 +23,7 @@ func _enter_tree():
 		add_control_to_dock(EditorPlugin.DOCK_SLOT_RIGHT_UL, main_panel_instance)
 
 	connect("scene_changed", _scene_swapped)
+	connect("scene_closed", _scene_closed)
 	_make_visible(false)
 
 
@@ -54,6 +55,10 @@ func _get_plugin_icon():
 	return get_editor_interface().get_base_control().get_theme_icon("Node", "EditorIcons")
 
 
-func _scene_swapped(scene_root):
+func _scene_swapped(scene_root : Node) -> void:
 	PTRendererAuto._plugin_change_scene(scene_root)
+
+
+func _scene_closed(file_path : String) -> void:
+	PTRendererAuto._plugin_scene_closed(file_path)
 

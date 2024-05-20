@@ -1,9 +1,10 @@
-[gd_scene load_steps=14 format=3 uid="uid://d3dfmywq1wbly"]
+[gd_scene load_steps=15 format=3 uid="uid://d3dfmywq1wbly"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="2_s1nmc"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="3_r6xni"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_sphere.gd" id="5_ims40"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_material.gd" id="6_8f7np"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_camera.gd" id="6_cd4v8"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_plane.gd" id="7_o0jqa"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_tuk0m"]
@@ -103,3 +104,9 @@ mesh = SubResource("PlaneMesh_irx0f")
 script = ExtResource("7_o0jqa")
 material = SubResource("Resource_yo4sf")
 mesh = SubResource("PlaneMesh_irx0f")
+
+[node name="PTScene2" type="Node" parent="."]
+script = ExtResource("2_s1nmc")
+
+[node name="PTCamera" type="Camera3D" parent="PTScene2"]
+script = ExtResource("6_cd4v8")
