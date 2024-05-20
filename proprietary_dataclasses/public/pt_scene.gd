@@ -81,6 +81,8 @@ var added_object := false # Whether an object (or material) was added this frame
 #  MAX is interpreted as texture.
 var added_types : Array[bool]
 
+var procedural_texture_added := false
+
 
 # Mainly for editor tree. Nodes need to be kept for a little longer after exit_tree
 #  to verify if they were deleted or just the scenes were swapped.
@@ -88,6 +90,7 @@ var objects_to_remove : Array[PTObject]
 
 
 func _init() -> void:
+	# plus one is for sampled textures
 	added_types.resize(ObjectType.MAX + 1)
 
 
@@ -193,8 +196,13 @@ func add_object(object : PTObject) -> void:
 			texture_to_texture_id[object.texture] = object.texture_id # UNSTATIC
 			# TODO add texture updatiung buffer/ shader
 			#object.material.connect("material_changed", update_material)
-			#
-			#added_types[PTObject.ObjectType.NOT_OBJECT] = true
+
+			if object.texture is PTProceduralTexture:
+				procedural_texture_added = true
+			else:
+				# Sampled texture
+				#added_types[PTObject.ObjectType.MAX] = true
+				pass
 		else:
 			object.texture_id = object.texture.get_texture_id(texture_index)
 	else:
@@ -236,8 +244,13 @@ func remove_object(object : PTObject) -> void:
 	var object_array : Array = get_object_array(type)
 	object_array.remove_at(object.object_index)
 
-	# Only remove from tree at runtime, or maybe not at all
-	if not Engine.is_editor_hint() and object.is_inside_tree():
+	# Update object_index of every object
+	for i in range(object_array.size()):
+		object_array[i].object_index = i # UNSTATIC
+
+	# Only remove from tree if not in editor. Else it can potentially prevent
+	#  an object from being saved to scene on editor quit.
+	if object.is_inside_tree() and not Engine.is_editor_hint():
 		remove_child(object)
 	object._scene = null
 

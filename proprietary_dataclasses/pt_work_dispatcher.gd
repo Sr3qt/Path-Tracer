@@ -308,6 +308,7 @@ func expand_object_buffer(object_type : PTObject.ObjectType, steps : int = 0) ->
 				triangle_buffer_size = triangle_buffer_size + TRIANGLE_COUNT_STEP * steps
 			free_rid(plane_buffer)
 			create_plane_buffer()
+		# TODO Update texture buffer here when implemented
 
 	if steps != -1:
 		var object_uniforms := uniforms.get_set_uniforms(OBJECT_SET_INDEX)

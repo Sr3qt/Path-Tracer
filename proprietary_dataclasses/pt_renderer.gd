@@ -154,6 +154,7 @@ func _ready() -> void:
 
 
 func _process(_delta : float) -> void:
+	# TODO Fix stutter issue
 	if startup_time:
 		print()
 		print("Total startup time")
@@ -206,10 +207,17 @@ func _process(_delta : float) -> void:
 				mat.set_shader_parameter("is_rendering", true)
 
 	# Re-create buffers if asked for
-	if wd:
-		for _scene in scenes:
-			if _scene.added_object:
-				re_create_buffers(_scene)
+	for _scene in scenes:
+		if _scene and _scene.added_object:
+			remake_buffers(_scene)
+
+			if _scene.procedural_texture_added:
+				var _scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
+				_scene_wd.load_shader(load_shader(_scene))
+				print("Reloaded shader")
+				_scene.procedural_texture_added = false
+
+			_scene.added_object = false
 
 	# Reset frame values
 	if scene:
@@ -423,6 +431,7 @@ func take_screenshot() -> void:
 	print("PT: Picture taken :)")
 
 
+# TODO Remove scene when it's closed
 func add_scene(new_ptscene : PTScene) -> void:
 	"""Adds a scene to renderer"""
 
@@ -685,7 +694,7 @@ func copy_camera(from : Camera3D, to : Camera3D) -> void:
 		(to as PTCamera).set_viewport_size()
 
 
-func re_create_buffers(_scene : PTScene) -> void:
+func remake_buffers(_scene : PTScene) -> void:
 	var _wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
 	var buffers : Array[PTObject.ObjectType] = []
 	print()
@@ -696,6 +705,9 @@ func re_create_buffers(_scene : PTScene) -> void:
 			_scene.added_types[type] = false
 			buffers.append(type)
 	wd.expand_object_buffers(buffers)
+
+	# Check for proceduaral texture updates
+	#if _scene.added_types[PTObject.ObjectType.MAX + 1]:
 
 	_scene.added_object = false
 
