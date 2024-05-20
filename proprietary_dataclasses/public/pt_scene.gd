@@ -215,13 +215,29 @@ func queue_remove_object(object : PTObject) -> void:
 	PTRendererAuto.add_scene_to_remove_objects(self)
 
 
-## Removes an object from the scene. The object is not deleted.
+## Checks if any objects queued for removal are invalid. Returns false if
+##  no objects are valid, else true.
+func check_objects_for_removal() -> bool:
+	# Don't remove nodes that are still in the editor tree from buffers
+	if Engine.is_editor_hint():
+		var i : int = 0
+		for object in objects_to_remove:
+			if object.is_inside_tree():
+				objects_to_remove.remove_at(i)
+				i -= 1
+			i += 1
+
+	return not objects_to_remove.is_empty()
+
+
+## Removes an object from the scene and tree. The object is not deleted.
 func remove_object(object : PTObject) -> void:
 	var type := object.get_type()
 	var object_array : Array = get_object_array(type)
 	object_array.remove_at(object.object_index)
 
-	if object.is_inside_tree():
+	# Only remove from tree at runtime, or maybe not at all
+	if not Engine.is_editor_hint() and object.is_inside_tree():
 		remove_child(object)
 	object._scene = null
 

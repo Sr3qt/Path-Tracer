@@ -517,9 +517,8 @@ func change_scene(new_scene : PTScene) -> void:
 
 
 func add_scene_to_remove_objects(ptscene : PTScene) -> void:
-	if ptscene in scenes_to_remove_objects:
-		return
-	scenes_to_remove_objects.append(ptscene)
+	if not ptscene in scenes_to_remove_objects:
+		scenes_to_remove_objects.append(ptscene)
 
 
 ## Removes objects from any queue in scenes
@@ -528,12 +527,13 @@ func _object_queue_remove() -> void:
 		if not _scene: # If scene is null; idk can prob remove
 			push_warning("Help; Scene is no longer valid for deletion.")
 			continue
-		if _scene.is_inside_tree():
+		if _scene.is_inside_tree() and _scene.check_objects_for_removal():
 			print("PT: Removing object(s) that was deleted by the user.")
 			_scene.remove_objects()
 		else:
 			_scene.objects_to_remove.clear()
-			#print("PT: Scene was changed, so no object removal will occur.")
+			print("PT: Scene was changed, or the editor just started," +
+					"so no object removal will occur.")
 
 	scenes_to_remove_objects.clear()
 
