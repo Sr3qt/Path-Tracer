@@ -13,7 +13,7 @@ changes to them or the BVH. The camera is self sufficient.
 const ObjectType = PTObject.ObjectType
 
 # Semi-Temp
-enum CameraSetting {none, top_down, corner, book_ex, center, left, right, middle}
+enum CameraSetting {none, top_down, corner, book_ex, center, left, right, middle, cornell}
 
 var camera_settings_values := {
 	CameraSetting.top_down : [Vector3(0, 8, -15), Vector3(0,0,-6), 106.],
@@ -22,7 +22,8 @@ var camera_settings_values := {
 	CameraSetting.center : [Vector3(0, 0, 1), Vector3(0,0,0), 106.],
 	CameraSetting.left : [Vector3(0, 0, 1), Vector3(-1,0,1), 106.],
 	CameraSetting.right : [Vector3(0, 0, 1), Vector3(1,0,1), 106.],
-	CameraSetting.middle : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.]
+	CameraSetting.middle : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.],
+	CameraSetting.cornell : [Vector3(-1, 0.5, 0.5), Vector3(1,0.5,0.5), 106.0],
 }
 
 ## Overrides starting camera values with predefined sets of values

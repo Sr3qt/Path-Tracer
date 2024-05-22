@@ -18,6 +18,7 @@
 
 [node name="FakeCornellBox" type="Node"]
 script = ExtResource("1_us1jt")
+starting_camera = 8
 
 [node name="PTCameraFPS" type="Camera3D" parent="."]
 script = ExtResource("2_5psgi")

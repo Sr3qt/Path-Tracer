@@ -284,8 +284,6 @@ struct Plane {
     vec3 normal;
     float d;
     int mtl_index;
-    // TODO Turn texture type into a 2-bit flag stored in texture_id
-    //  or make it obsolete
     int texture_id;
     int filler0;
     int filler1;
@@ -748,7 +746,6 @@ bool hit_triangle_MT(Ray ray, int object_id, Range t_range, inout RayHit rayhit)
     vec3 N = cross(E1,E2);
     float det = -dot(ray.direction, N);
     // TODO Add global backface cull flag and object flag
-    // TODO Flip normals if backface cull off 
 
 
     // If ray is parallel to triangle plane
@@ -822,7 +819,7 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         Triangle triangle = triangles.data[object_index];
         rayhit.mtl_index = triangle.mtl_index;
         rayhit.texture_id = triangle.texture_id;
-        rayhit.normal = triangle.normal;
+        rayhit.normal = dot(triangle.normal, ray_in.direction) > 0 ? -triangle.normal : triangle.normal;
     }
 
     rayhit.color = vec4(materials.data[rayhit.mtl_index].albedo, 1);
