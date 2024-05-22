@@ -16,7 +16,6 @@ func _init(
 			p_center := Vector3.ZERO,
 			p_radius : float = 1.0,
 			p_material : PTMaterial = null,
-			mtl_i : int = 1
 	) -> void:
 
 	if Engine.is_editor_hint():
@@ -32,12 +31,8 @@ func _init(
 	if p_radius != 1.0:
 		radius = p_radius
 
-	if not p_material:
-		material = PTMaterial.new()
-	else:
+	if p_material:
 		material = p_material
-	material_index = mtl_i
-
 
 
 func _set(property : StringName, _value : Variant) -> bool:
@@ -52,5 +47,5 @@ func _set(property : StringName, _value : Variant) -> bool:
 
 func to_byte_array() -> PackedByteArray:
 	return (PackedFloat32Array(PTObject.vector_to_array(position) + [radius]).to_byte_array() +
-	PackedInt32Array([material_index, texture_id, 0, 0]).to_byte_array())
+	_get_property_byte_array())
 

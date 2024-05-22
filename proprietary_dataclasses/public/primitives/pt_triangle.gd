@@ -31,9 +31,7 @@ func _init(
 	vertex2 = p_vertex2
 	vertex3 = p_vertex3
 
-	if not p_material:
-		material = PTMaterial.new()
-	else:
+	if p_material:
 		material = p_material
 
 
@@ -66,6 +64,6 @@ func to_byte_array() -> PackedByteArray:
 		PTObject.vector_to_array(transform * vertex3) + [0] +
 		PTObject.vector_to_array((vertex2 - vertex1).cross(vertex3 -  vertex1).normalized()) + [0]
 	).to_byte_array()
-	bytes += PackedInt32Array([material_index, texture_id, 0, 0]).to_byte_array()
+	bytes += _get_property_byte_array()
 
 	return bytes

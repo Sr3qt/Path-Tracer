@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://c8crt011feqxy"]
+[gd_scene load_steps=24 format=3 uid="uid://c8crt011feqxy"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_imjou"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_3d2ma"]
@@ -8,11 +8,11 @@
 [ext_resource type="Resource" uid="uid://btdf5em7vpob6" path="res://scenes/materials/glass.tres" id="6_l00f7"]
 [ext_resource type="Resource" uid="uid://cuflma2dqwvqp" path="res://scenes/materials/right.tres" id="7_4ko10"]
 
-[sub_resource type="SphereMesh" id="SphereMesh_xgq7w"]
+[sub_resource type="SphereMesh" id="SphereMesh_0d4mr"]
 radius = 100.0
 height = 200.0
 
-[sub_resource type="SphereMesh" id="SphereMesh_aoiil"]
+[sub_resource type="SphereMesh" id="SphereMesh_g3vh3"]
 
 [sub_resource type="Resource" id="Resource_jw4pa"]
 script = ExtResource("4_w7rf0")
@@ -23,9 +23,11 @@ opacity = 1.0
 IOR = 1.0
 refraction_depth = 0
 
-[sub_resource type="SphereMesh" id="SphereMesh_mp17d"]
+[sub_resource type="SphereMesh" id="SphereMesh_dej1u"]
 
-[sub_resource type="SphereMesh" id="SphereMesh_rivvo"]
+[sub_resource type="SphereMesh" id="SphereMesh_rbt3m"]
+radius = 0.4
+height = 0.8
 
 [sub_resource type="Resource" id="Resource_4ll4u"]
 script = ExtResource("4_w7rf0")
@@ -36,9 +38,45 @@ opacity = 0.0
 IOR = 1.0
 refraction_depth = 0
 
-[sub_resource type="SphereMesh" id="SphereMesh_wj668"]
+[sub_resource type="SphereMesh" id="SphereMesh_k0bio"]
 
-[sub_resource type="SphereMesh" id="SphereMesh_k1wa4"]
+[sub_resource type="SphereMesh" id="SphereMesh_kku26"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_uki0b"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_2yee7"]
+radius = 0.4
+height = 0.8
+
+[sub_resource type="SphereMesh" id="SphereMesh_tkfdi"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_wrkmf"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_avsgf"]
+radius = 1.0
+height = 2.0
+
+[sub_resource type="Resource" id="Resource_wc8i6"]
+script = ExtResource("4_w7rf0")
+albedo = Color(0.0941176, 1, 1, 1)
+roughness = 0.0
+metallic = 0.0
+opacity = 1.0
+IOR = 1.0
+refraction_depth = 0
+
+[sub_resource type="SphereMesh" id="SphereMesh_2402s"]
+radius = 1.0
+height = 2.0
+
+[sub_resource type="Resource" id="Resource_p8ma1"]
+script = ExtResource("4_w7rf0")
+albedo = Color(1, 1, 0.2, 1)
+roughness = 0.0
+metallic = 0.0
+opacity = 1.0
+IOR = 1.0
+refraction_depth = 0
 
 [node name="PTScene" type="Node"]
 script = ExtResource("1_imjou")
@@ -48,80 +86,93 @@ script = ExtResource("2_3d2ma")
 
 [node name="Ground" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -100.5, -1)
-mesh = SubResource("SphereMesh_xgq7w")
+mesh = SubResource("SphereMesh_0d4mr")
 script = ExtResource("3_khgji")
 radius = 100.0
 material = ExtResource("4_u3avn")
-mesh = SubResource("SphereMesh_xgq7w")
+mesh = SubResource("SphereMesh_0d4mr")
 
 [node name="PTSphere" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1)
-mesh = SubResource("SphereMesh_aoiil")
+mesh = SubResource("SphereMesh_g3vh3")
 script = ExtResource("3_khgji")
 radius = 0.5
 material = SubResource("Resource_jw4pa")
-mesh = SubResource("SphereMesh_aoiil")
+mesh = SubResource("SphereMesh_g3vh3")
 
 [node name="PTSphere2" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -1)
-mesh = SubResource("SphereMesh_mp17d")
+mesh = SubResource("SphereMesh_dej1u")
 script = ExtResource("3_khgji")
 radius = 0.5
 material = ExtResource("6_l00f7")
-mesh = SubResource("SphereMesh_mp17d")
+mesh = SubResource("SphereMesh_dej1u")
 
 [node name="Empty" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -1)
-mesh = SubResource("SphereMesh_rivvo")
+mesh = SubResource("SphereMesh_rbt3m")
 script = ExtResource("3_khgji")
 radius = 0.4
 material = SubResource("Resource_4ll4u")
-mesh = SubResource("SphereMesh_rivvo")
+mesh = SubResource("SphereMesh_rbt3m")
 
 [node name="PTSphere3" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -1)
-mesh = SubResource("SphereMesh_wj668")
+mesh = SubResource("SphereMesh_k0bio")
 script = ExtResource("3_khgji")
 radius = 0.5
 material = ExtResource("7_4ko10")
-mesh = SubResource("SphereMesh_wj668")
+mesh = SubResource("SphereMesh_k0bio")
 
 [node name="PTSphere4" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 1)
-mesh = SubResource("SphereMesh_k1wa4")
+mesh = SubResource("SphereMesh_kku26")
 script = ExtResource("3_khgji")
 radius = 0.5
 material = ExtResource("6_l00f7")
-mesh = SubResource("SphereMesh_k1wa4")
+mesh = SubResource("SphereMesh_kku26")
 
 [node name="PTSphere5" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 1.7)
-mesh = SubResource("SphereMesh_k1wa4")
+mesh = SubResource("SphereMesh_uki0b")
 script = ExtResource("3_khgji")
 radius = 0.5
 material = ExtResource("6_l00f7")
-mesh = SubResource("SphereMesh_k1wa4")
+mesh = SubResource("SphereMesh_uki0b")
 
 [node name="PTSphere6" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1)
-mesh = SubResource("SphereMesh_k1wa4")
+mesh = SubResource("SphereMesh_2yee7")
 script = ExtResource("3_khgji")
 radius = 0.4
 material = ExtResource("6_l00f7")
-mesh = SubResource("SphereMesh_k1wa4")
+mesh = SubResource("SphereMesh_2yee7")
 
 [node name="PTSphere7" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1)
-mesh = SubResource("SphereMesh_k1wa4")
+mesh = SubResource("SphereMesh_tkfdi")
 script = ExtResource("3_khgji")
 radius = 0.5
 material = ExtResource("6_l00f7")
-mesh = SubResource("SphereMesh_k1wa4")
+mesh = SubResource("SphereMesh_tkfdi")
 
 [node name="Empty2" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.5)
-mesh = SubResource("SphereMesh_rivvo")
+mesh = SubResource("SphereMesh_wrkmf")
 script = ExtResource("3_khgji")
 radius = 0.5
 material = SubResource("Resource_4ll4u")
-mesh = SubResource("SphereMesh_rivvo")
+mesh = SubResource("SphereMesh_wrkmf")
+
+[node name="PTSphere8" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.33714)
+mesh = SubResource("SphereMesh_avsgf")
+script = ExtResource("3_khgji")
+material = SubResource("Resource_wc8i6")
+mesh = SubResource("SphereMesh_avsgf")
+
+[node name="PTSphere9" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_2402s")
+script = ExtResource("3_khgji")
+material = SubResource("Resource_p8ma1")
+mesh = SubResource("SphereMesh_2402s")

@@ -22,7 +22,6 @@ func _init(
 			p_normal := Vector3.UP,
 			p_distance : float = 0.0,
 			p_material : PTMaterial = null,
-			mtl_i : int = 0
 	) -> void:
 
 	if Engine.is_editor_hint():
@@ -34,12 +33,8 @@ func _init(
 	if p_distance != 0.0:
 		distance = p_distance
 
-	if not p_material:
-		material = PTMaterial.new()
-	else:
+	if p_material:
 		material = p_material
-
-	material_index = mtl_i
 
 
 func rotate_to_new_normal(new_normal : Vector3) -> void:
@@ -60,4 +55,4 @@ func translate_with_new_d(new_d : float) -> void:
 
 func to_byte_array() -> PackedByteArray:
 	return (PackedFloat32Array(PTObject.vector_to_array(normal) + [distance]).to_byte_array() +
-	PackedInt32Array([material_index, texture_id, 0, 0]).to_byte_array())
+	_get_property_byte_array())

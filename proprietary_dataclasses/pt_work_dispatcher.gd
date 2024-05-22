@@ -257,65 +257,97 @@ func set_scene(scene : PTScene) -> void:
 # TODO Find a way for the cpu to wait for buffer access
 
 ## Will expand a given object buffer by its respective step constant times given steps.
-##  NOT_AN_OBJECT is assumed to be material buffer.
-## Setting steps to -1 skips creating a set. By defualt will create buffer to
-##  fit objects in scene. If objects already fit, do nothing.
-func expand_object_buffer(object_type : PTObject.ObjectType, steps : int = 0) -> void:
+## Will return true if buffer was expanded.
+## Setting create_set to false skips creating a set. By defualt will expand buffer to
+##  fit objects in scene. If objects already fit, do nothing, return false.
+func expand_object_buffer(
+			object_type : PTObject.ObjectType,
+			steps : int = 0,
+			create_set := true
+	) -> bool:
+
 	match object_type:
 		PTObject.ObjectType.NOT_OBJECT:
-			if material_buffer_size >= _scene.materials.size():
-				print("Material buffer already fits. No buffer expansion")
-				return
-			if steps < 1:
-				@warning_ignore("integer_division")
-				material_buffer_size = _scene.materials.size() / MATERIAL_COUNT_STEP + 1
-			else:
-				material_buffer_size = material_buffer_size + MATERIAL_COUNT_STEP * steps
-			free_rid(material_buffer)
-			create_material_buffer()
+			return false
 		PTObject.ObjectType.SPHERE:
-			if sphere_buffer_size >= _scene.spheres.size():
+			if sphere_buffer_size >= _scene.spheres.size() and steps < 1:
 				print("Sphere buffer already fits. No buffer expansion")
-				return
+				return false
 			if steps < 1:
 				@warning_ignore("integer_division")
-				sphere_buffer_size = _scene.spheres.size() / SPHERE_COUNT_STEP + 1
+				var new_size : int = _scene.spheres.size() / SPHERE_COUNT_STEP + 1
+				if new_size <= sphere_buffer_size:
+					return false
+				sphere_buffer_size = new_size
 			else:
 				sphere_buffer_size = sphere_buffer_size + SPHERE_COUNT_STEP * steps
 			free_rid(sphere_buffer)
 			create_sphere_buffer()
 		PTObject.ObjectType.PLANE:
-			if plane_buffer_size >= _scene.planes.size():
+			if plane_buffer_size >= _scene.planes.size() and steps < 1:
 				print("Plane buffer already fits. No buffer expansion")
-				return
+				return false
 			if steps < 1:
 				@warning_ignore("integer_division")
-				plane_buffer_size = _scene.planes.size() / PLANE_COUNT_STEP + 1
+				var new_size : int = _scene.planes.size() / PLANE_COUNT_STEP + 1
+				if new_size <= plane_buffer_size:
+					return false
+				plane_buffer_size = new_size
 			else:
 				plane_buffer_size = plane_buffer_size + PLANE_COUNT_STEP * steps
 			free_rid(plane_buffer)
 			create_plane_buffer()
 		PTObject.ObjectType.TRIANGLE:
-			if triangle_buffer_size >= _scene.triangles.size():
+			if triangle_buffer_size >= _scene.triangles.size() and steps < 1:
 				print("Plane buffer already fits. No buffer expansion")
-				return
+				return false
 			if steps < 1:
 				@warning_ignore("integer_division")
-				triangle_buffer_size = _scene.triangles.size() / TRIANGLE_COUNT_STEP + 1
+				var new_size : int = _scene.triangles.size() / TRIANGLE_COUNT_STEP + 1
+				if new_size <= triangle_buffer_size:
+					return false
+				triangle_buffer_size = new_size
 			else:
 				triangle_buffer_size = triangle_buffer_size + TRIANGLE_COUNT_STEP * steps
 			free_rid(plane_buffer)
 			create_plane_buffer()
-		# TODO Update texture buffer here when implemented
 
-	if steps != -1:
+	if create_set:
 		var object_uniforms := uniforms.get_set_uniforms(OBJECT_SET_INDEX)
 		object_set = rd.uniform_set_create(object_uniforms, shader, OBJECT_SET_INDEX)
 
+	return true
+
+## Will expand the material buffer by its step constant times given steps.
+## Will return true if buffer was expanded.
+## Setting create_set to false skips creating a set. By defualt will create buffer
+##  to fit objects in scene. If objects already fit, do nothing, return false.
+func expand_material_buffer(steps : int = 0, create_set := true) -> bool:
+	if material_buffer_size >= _scene.materials.size() and steps < 1:
+		print("Material buffer already fits. No buffer expansion")
+		return false
+	if steps < 1:
+		@warning_ignore("integer_division")
+		var new_size : int = _scene.materials.size() / MATERIAL_COUNT_STEP + 1
+		if new_size <= material_buffer_size:
+			return false
+		material_buffer_size = new_size
+	else:
+		material_buffer_size = material_buffer_size + MATERIAL_COUNT_STEP * steps
+	free_rid(material_buffer)
+	create_material_buffer()
+
+	if create_set:
+		var object_uniforms := uniforms.get_set_uniforms(OBJECT_SET_INDEX)
+		object_set = rd.uniform_set_create(object_uniforms, shader, OBJECT_SET_INDEX)
+
+	return true
+
+# TODO Create function to expand texture buffer here
 
 func expand_object_buffers(object_types : Array[PTObject.ObjectType]) -> void:
 	for object_type in object_types:
-		expand_object_buffer(object_type, -1)
+		expand_object_buffer(object_type, 0, false)
 
 	var object_uniforms := uniforms.get_set_uniforms(OBJECT_SET_INDEX)
 	object_set = rd.uniform_set_create(object_uniforms, shader, OBJECT_SET_INDEX)
@@ -415,7 +447,10 @@ func _create_materials_byte_array() -> PackedByteArray:
 	var bytes := PackedByteArray()
 	var size : int = _scene.materials.size()
 	for material in _scene.materials:
-		bytes += material.to_byte_array()
+		if not material:
+			bytes += PTMaterial.new().to_byte_array()
+		else:
+			bytes += material.to_byte_array()
 
 	# Fill rest of bytes with empty
 	if material_buffer_size == 0:

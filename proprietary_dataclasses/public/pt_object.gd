@@ -18,27 +18,56 @@ enum ObjectType {
 	MAX = 5
 }
 
-@export var material : PTMaterial = null
-@export var texture : PTTexture
+signal material_changed(
+	object : PTObject,
+	prev_material : PTMaterial,
+	new_material : PTMaterial
+)
+
+signal texture_changed(
+	object : PTObject,
+	prev_texture : PTTexture,
+	new_texture : PTTexture
+)
+
+@export var material : PTMaterial = null:
+	set(value):
+		# NOTE: If material is cleared (not reset) it returns <Object#null> instead
+		#  of null, breaking the system. This will make sure it is just null.
+		if not is_instance_valid(value):
+			value = null
+
+		var prev_value := material
+		material = value
+		emit_signal("material_changed", self, prev_value, material)
+@export var texture : PTTexture:
+	set(value):
+		print("texture swapped")
+		emit_signal("texture_changed", self, texture, value)
+		texture = value
 
 # Indices relevant to _scene
 var object_index : int
-var material_index : int
-var texture_id : int
 
 # The scene this object is part of
 var _scene : PTScene
 
 var transform_before : Transform3D
 
+
 func _enter_tree() -> void:
 	# Find scene when entering tree if scene is not set
 	if not _scene:
-		# TODO Add recursive search maybe
-		var parent : Node = get_parent()
-		if parent is PTScene:
-			_scene = parent as PTScene
-			_scene.add_object(self)
+		var max_depth : int = 20
+		var counter : int = 0
+		var current_node : Node = get_parent()
+		while counter < max_depth and current_node:
+			if current_node is PTScene:
+				_scene = current_node as PTScene
+				_scene.add_object(self)
+				break
+			counter += 1
+			current_node = current_node.get_parent()
 
 	transform_before = Transform3D(transform)
 	set_notify_transform(true)
@@ -94,15 +123,6 @@ static func aabb_to_byte_array(aabb : AABB) -> PackedByteArray:
 	return PackedFloat32Array(arr).to_byte_array()
 
 
-func get_material() -> PTMaterial:
-	"""Returns the material of the object if it has one"""
-	if material:
-		return material
-	if _scene:
-		return _scene.materials[material_index]
-	return null
-
-
 func get_type() -> ObjectType:
 	"""Returns the PTObject sub type"""
 	if self is PTSphere:
@@ -118,6 +138,17 @@ func get_type() -> ObjectType:
 func get_global_aabb() -> AABB:
 	"""Returns the objects aabb in world coordinates"""
 	return global_transform * get_aabb()
+
+
+func _get_property_byte_array() -> PackedByteArray:
+	var floats : Array[int] = [
+		_scene.material_to_index[material],
+		_scene.texture_to_texture_id[texture],
+		0,
+		0
+	]
+
+	return PackedInt32Array(floats).to_byte_array()
 
 
 func to_byte_array() -> PackedByteArray:

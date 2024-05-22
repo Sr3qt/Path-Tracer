@@ -206,27 +206,7 @@ func _process(_delta : float) -> void:
 				var mat := canvas.mesh.surface_get_material(0) as ShaderMaterial
 				mat.set_shader_parameter("is_rendering", true)
 
-	# Re-create buffers if asked for
-	for _scene in scenes:
-		if _scene and _scene.added_object:
-			remake_buffers(_scene)
-
-			if _scene.procedural_texture_added:
-				var _scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
-				_scene_wd.load_shader(load_shader(_scene))
-				print("Reloaded shader")
-				_scene.procedural_texture_added = false
-
-			_scene.added_object = false
-
-	# Reset frame values
-	if scene:
-		scene.scene_changed = false
-		if scene.camera:
-			scene.camera.camera_changed = false
-
-	if Engine.is_editor_hint():
-		_pt_editor_camera.camera_changed = false
+	_update_scenes()
 
 
 # TODO Remove input event?
@@ -602,7 +582,7 @@ func _object_queue_remove() -> void:
 			_scene.remove_objects()
 		else:
 			_scene.objects_to_remove.clear()
-			print("PT: Scene was changed, or the editor just started," +
+			print("PT: Scene was changed, or the editor just started, " +
 					"so no object removal will occur.")
 
 	scenes_to_remove_objects.clear()
@@ -659,11 +639,46 @@ func create_bvh(_max_children : int, function_name : String) -> void:
 	#print((Time.get_ticks_usec() - _start) / 1000.)
 
 
+## Updates all scenes that have changed. Called at the end of _process
+func _update_scenes() -> void:
+	# Re-create buffers if asked for
+	for _scene in scenes:
+		if not is_instance_valid(_scene):
+			push_warning("PT: Bad garbage collection. Scene: ", _scene,
+					" is still in PRenderer.scenes and is invalid.")
+			return
+
+		if _scene.added_object or _scene.material_added:
+			remake_buffers(_scene)
+
+			_scene.added_object = false
+			_scene.material_added = false
+
+		if _scene.procedural_texture_added:
+			var _scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
+			_scene_wd.load_shader(load_shader(_scene))
+			print("Reloaded shader")
+			_scene.procedural_texture_added = false
+
+		_scene.material_removed = false
+		_scene.scene_changed = false
+
+		if _scene.camera:
+			_scene.camera.camera_changed = false
+
+	if Engine.is_editor_hint():
+		_pt_editor_camera.camera_changed = false
+
+
+## Will not update materials with index bigger than the scenes material buffer size
 func update_material(_scene : PTScene, material : PTMaterial) -> void:
 	# Find right wd based on _scene
 	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
-	var buffer : RID = scene_wd.material_buffer
+	if scene_wd.material_buffer_size < _scene.materials.size():
+		# If material is out of index do nothing
+		return
 
+	var buffer : RID = scene_wd.material_buffer
 	var bytes : PackedByteArray = material.to_byte_array()
 	var offset : int = _scene.material_to_index[material] * bytes.size() # UNSTATIC
 	scene_wd.rd.buffer_update(
@@ -745,6 +760,7 @@ func remove_object(_scene : PTScene, object : PTObject) -> void:
 	scene_wd.bind_sets()
 
 
+# TODO Move to PTCamera
 func copy_camera(from : Camera3D, to : Camera3D) -> void:
 	to.translate(to.position - from.position)
 
@@ -765,12 +781,14 @@ func remake_buffers(_scene : PTScene) -> void:
 		if _scene.added_types[type]:
 			_scene.added_types[type] = false
 			buffers.append(type)
+
+	if _scene.material_added:
+		wd.expand_material_buffer(0, false)
+
 	wd.expand_object_buffers(buffers)
 
 	# Check for proceduaral texture updates
 	#if _scene.added_types[PTObject.ObjectType.MAX + 1]:
-
-	_scene.added_object = false
 
 
 

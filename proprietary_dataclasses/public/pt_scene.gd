@@ -48,13 +48,19 @@ var objects := {
 	ObjectType.TRIANGLE : triangles,
 }
 
-var materials : Array[PTMaterial]
+var materials : Array[PTMaterial] = [null]
 # Inverse of materials
-var material_to_index := {}
+var material_to_index := {null : 0}
+var material_ref_count := {null : 0}
+
+## Whenever a material is removed, to not require massive buffer updates, a hole
+##  is created. New materials will prioritize filling these holes.
+var materials_holes : Array[int]
 
 var textures : Array[PTTexture] = [null]
 # Convert a texture into an id used by shader
-var texture_to_texture_id := {}
+var texture_to_texture_id := {null : 0}
+var texture_ref_count := {null : 0}
 
 # Current BVH that would be used by the Renderer
 var bvh : PTBVHTree
@@ -69,20 +75,19 @@ var camera : PTCamera
 
 var object_count : int = 0
 
-var added_object := false # Whether an object (or material) was added this frame
-#var added_types := {
-	#ObjectType.NOT_OBJECT : false, # Interpreted as a material
-	#ObjectType.SPHERE : false,
-	#ObjectType.PLANE : false,
-	#ObjectType.TRIANGLE : false,
-#}
 
-# added_types is indexed by ObjectType. NOT_OBJECT is interpreted as material and
-#  MAX is interpreted as texture.
+# Flags for update buffering
+var added_object := false # Whether an object (or material) was added this frame
+
+# added_types is indexed by ObjectType. NOT_OBJECT is ignored. Specifies what
+#  objects was added if added_object is true
 var added_types : Array[bool]
 
+# Flags for update buffering
+var material_added := false
+var material_removed := false
 var procedural_texture_added := false
-
+var procedural_texture_removed := false
 
 # Mainly for editor tree. Nodes need to be kept for a little longer after exit_tree
 #  to verify if they were deleted or just the scenes were swapped.
@@ -111,6 +116,8 @@ func _ready() -> void:
 	#  Set to false to skip trigger
 	added_object = false
 	added_types.fill(false)
+	material_added = false
+	procedural_texture_added = false
 
 	PTRendererAuto.add_scene(self)
 
@@ -127,11 +134,126 @@ func get_object_array(type : ObjectType) -> Array:
 	return []
 
 
-# TODO Update material when its removed and a new one is added
+## Returns material index of added material. used_by_object refers to whether or
+## not the function should increment the materials ref count
+func _add_material(material : PTMaterial, used_by_object := false) -> int:
+	# Check for object reference in array
+	var material_index : int = materials.find(material)
+	if material_index == -1:
+		if materials_holes:
+			material_index = materials_holes.pop_back() # UNSTATIC
+			materials[material_index] = material
+		else:
+			# Add to list if not alreadt in it
+			material_index = materials.size()
+			materials.append(material)
+		material_to_index[material] = material_index # UNSTATIC
+		material.connect("material_changed", update_material)
+
+		material_added = true
+
+	if used_by_object:
+		if material_ref_count.has(material):
+			material_ref_count[material] += 1 # UNSTATIC
+		else:
+			material_ref_count[material] = 1 # UNSTATIC
+
+	return material_index
+
+
+## NOTE: Removing a material might mean having to update every objects material index.
+##  Currently though, it doesn't immediately remove the material from materials,
+##  only allows them to be replaced later on.
+func _remove_material(material : PTMaterial) -> void:
+	if material:
+		var material_index : int = materials.find(material)
+		if material_index == -1:
+			push_warning("Tried to remove material that was already removed from materials")
+			return
+		if material_ref_count[material] >= 1:
+			push_warning("Material: ", material, " is used by one or more objects")
+
+		materials[material_index] = null
+		materials_holes.append(material_index)
+		material_to_index.erase(material)
+		material.disconnect("material_changed", update_material)
+
+		material_removed = true
+
+
+func _material_changed(
+		object : PTObject,
+		prev_material : PTMaterial,
+		new_material : PTMaterial
+	) -> void:
+
+	print("materila canhjfn")
+	# If material is swapped there is no need to update whole materials buffer
+	var prev_material_added := material_added
+	var prev_material_removed := material_removed
+
+	var prev_material_index : int = material_to_index[prev_material] # UNSTATIC
+
+	if prev_material == new_material:
+		push_warning("PT: Changed material to the same material. Unexpected event.")
+
+	material_ref_count[prev_material] -= 1 # UNSTATIC
+	if material_ref_count[prev_material] <= 0: # UNSTATIC
+		_remove_material(prev_material)
+
+	# If material index changed the object has to be updated
+	if _add_material(new_material, true) != prev_material_index:
+		PTRendererAuto.update_object(self, object)
+	else:
+		material_added = prev_material_added
+		material_removed = prev_material_removed
+
+	# We can buffer update new_material in the same spot as prev_material
+	if new_material:
+		PTRendererAuto.update_material(self, new_material)
+
+	scene_changed = true
+
+
 func update_material(material : PTMaterial)  -> void:
 	PTRendererAuto.update_material(self, material)
 
 	scene_changed = true
+
+
+## Returns the texture id
+func _add_texture(texture : PTTexture) -> int:
+	# Add object texture to textures if applicable
+	# Check for object reference in array
+	var texture_index : int = textures.find(texture)
+	if texture_index == -1:
+		# Add to list if not already in it
+		texture_index = textures.size()
+		textures.append(texture)
+
+		texture_to_texture_id[texture] = texture.get_texture_id(texture_index) # UNSTATIC
+		# TODO add texture updatiung buffer/ shader
+		#object.material.connect("material_changed", update_material)
+
+		if texture is PTProceduralTexture:
+			procedural_texture_added = true
+		else:
+			# Sampled texture
+			#added_types[PTObject.ObjectType.MAX] = true
+			pass
+	return texture.get_texture_id(texture_index) if texture else 0
+
+
+func _texture_changed(
+		object : PTObject,
+		prev_texture : PTTexture,
+		new_texture : PTTexture
+	) -> void:
+
+	if prev_texture == new_texture:
+		push_warning("Changed material to the same material. Unexpected event.")
+
+	#PTRendererAuto.remove_material()
 
 
 func update_object(object : PTObject) -> void:
@@ -165,48 +287,11 @@ func add_object(object : PTObject) -> void:
 
 	scene_changed = true
 
-	# Add object material to materials if applicable
-	if not object.material and not Engine.is_editor_hint():
-		object.material = PTMaterial.new()
+	_add_material(object.material, true)
+	_add_texture(object.texture)
 
-	# Check for object reference in array
-	var material_index : int = materials.find(object.material)
-	if material_index == -1:
-		# Add to list if not alreadt in it
-		object.material_index = materials.size()
-		material_to_index[object.material] = materials.size() # UNSTATIC
-		materials.append(object.material)
-		object.material.connect("material_changed", update_material)
-
-		added_types[PTObject.ObjectType.NOT_OBJECT] = true
-	else:
-		object.material_index = material_index
-
-	# Add object texture to textures if applicable
-	if object.texture:
-		# Check for object reference in array
-		var texture_index : int = textures.find(object.texture)
-		if texture_index == -1:
-			# Add to list if not already in it
-			texture_index = textures.size()
-			textures.append(object.texture)
-
-			object.texture_id = object.texture.get_texture_id(texture_index)
-
-			texture_to_texture_id[object.texture] = object.texture_id # UNSTATIC
-			# TODO add texture updatiung buffer/ shader
-			#object.material.connect("material_changed", update_material)
-
-			if object.texture is PTProceduralTexture:
-				procedural_texture_added = true
-			else:
-				# Sampled texture
-				#added_types[PTObject.ObjectType.MAX] = true
-				pass
-		else:
-			object.texture_id = object.texture.get_texture_id(texture_index)
-	else:
-		object.texture_id = 0
+	object.connect("material_changed", _material_changed)
+	object.connect("texture_changed", _texture_changed)
 
 	# Add object to bvh
 	if bvh:
@@ -254,7 +339,7 @@ func remove_object(object : PTObject) -> void:
 		remove_child(object)
 	object._scene = null
 
-	# TODO Remove from texture and material list if object was their last user
+	# TODO Remove from texture list if object was their last user
 
 	if bvh:
 		bvh.remove_object(object)
@@ -321,25 +406,25 @@ func create_random_scene(_seed : int) -> void:
 	var ground_mat := PTMaterial.new()
 	ground_mat.albedo = Color(0.5, 0.5, 0.5)
 
-	add_object(PTPlane.new(Vector3(0, 1, 0), -1., ground_mat, 0))
-	#add_object(PTSphere.new(Vector3(0, -1000, 0), 1000, ground_mat, 0))
+	add_object(PTPlane.new(Vector3(0, 1, 0), -1., ground_mat))
+	#add_object(PTSphere.new(Vector3(0, -1000, 0), 1000, ground_mat))
 
 	# Glass
 	var mat1 := PTMaterial.new()
 	mat1.IOR = 1.5
 	mat1.opacity = 0.
-	add_object(PTSphere.new(Vector3(0, 1, 0), 1, mat1, 0))
+	add_object(PTSphere.new(Vector3(0, 1, 0), 1, mat1))
 
 	# Diffuse
 	var mat2 := PTMaterial.new()
 	mat2.albedo = Color(0.4, 0.2, 0.1)
-	add_object(PTSphere.new(Vector3(-4, 1, 0), 1, mat2, 0))
+	add_object(PTSphere.new(Vector3(-4, 1, 0), 1, mat2))
 
 	# Metallic
 	var mat3 := PTMaterial.new()
 	mat3.albedo = Color(0.7, 0.6, 0.5)
 	mat3.metallic = 1.
-	add_object(PTSphere.new(Vector3(4, 1, 0), 1, mat3, 0))
+	add_object(PTSphere.new(Vector3(4, 1, 0), 1, mat3))
 
 	for i in range(22):
 		for j in range(22):
@@ -370,7 +455,7 @@ func create_random_scene(_seed : int) -> void:
 				material.IOR = 1.6
 
 			material.albedo = color
-			var new_sphere := PTSphere.new(center, radius, material, 0)
+			var new_sphere := PTSphere.new(center, radius, material)
 			add_object(new_sphere)
 
 
