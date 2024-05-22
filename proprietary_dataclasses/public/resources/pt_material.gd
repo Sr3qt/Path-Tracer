@@ -27,6 +27,10 @@ extends Resource
 	set(value):
 		refraction_depth = value
 		material_changed.emit(self)
+@export var is_emissive := false:
+	set(value):
+		is_emissive = value
+		material_changed.emit(self)
 
 # TODO Add chance to reflect for transparent objects
 # TODO Calculate current IOR of camera and pass it to gpu
@@ -70,6 +74,6 @@ func to_byte_array() -> PackedByteArray:
 	]
 
 	var bytes := (PackedFloat32Array(floats_array).to_byte_array() +
-	PackedInt32Array([refraction_depth]).to_byte_array())
+	PackedInt32Array([refraction_depth, is_emissive, 0, 0, 0, 0, 0, 0, 0]).to_byte_array())
 
 	return bytes

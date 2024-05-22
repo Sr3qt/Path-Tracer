@@ -1,0 +1,20 @@
+Performance on random_scene with book_ex camera settings
+
+Added emission is 54 fps, with newly added emission 49 fps
+
+added object_id as perf gain is 56-57 fps
+
+Added triangles commit struggles with performance
+	-37 fps on random scene 0 book ex camera
+	- This is because adding triangles to shader added overhead
+
+added bvh buffer is 41 fps
+
+added buffer updating is 41 fps
+
+Singleton commit is 42 fps
+
+added refraction tracking commit is 44 fps
+
+For line counting
+tokei . -e /archive

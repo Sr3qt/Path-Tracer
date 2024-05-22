@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://c8crt011feqxy"]
+[gd_scene load_steps=26 format=3 uid="uid://c8crt011feqxy"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_imjou"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_3d2ma"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_material.gd" id="4_w7rf0"]
 [ext_resource type="Resource" uid="uid://btdf5em7vpob6" path="res://scenes/materials/glass.tres" id="6_l00f7"]
 [ext_resource type="Resource" uid="uid://cuflma2dqwvqp" path="res://scenes/materials/right.tres" id="7_4ko10"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_plane.gd" id="8_lowjh"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_0d4mr"]
 radius = 100.0
@@ -22,6 +23,7 @@ metallic = 0.0
 opacity = 1.0
 IOR = 1.0
 refraction_depth = 0
+is_emissive = false
 
 [sub_resource type="SphereMesh" id="SphereMesh_dej1u"]
 
@@ -37,6 +39,7 @@ metallic = 0.0
 opacity = 0.0
 IOR = 1.0
 refraction_depth = 0
+is_emissive = false
 
 [sub_resource type="SphereMesh" id="SphereMesh_k0bio"]
 
@@ -64,6 +67,7 @@ metallic = 0.0
 opacity = 1.0
 IOR = 1.0
 refraction_depth = 0
+is_emissive = false
 
 [sub_resource type="SphereMesh" id="SphereMesh_2402s"]
 radius = 1.0
@@ -71,12 +75,16 @@ height = 2.0
 
 [sub_resource type="Resource" id="Resource_p8ma1"]
 script = ExtResource("4_w7rf0")
-albedo = Color(1, 1, 0.2, 1)
+albedo = Color(2, 2, 1.183, 1)
 roughness = 0.0
 metallic = 0.0
 opacity = 1.0
 IOR = 1.0
 refraction_depth = 0
+is_emissive = true
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_gi2ci"]
+size = Vector2(1000, 1000)
 
 [node name="PTScene" type="Node"]
 script = ExtResource("1_imjou")
@@ -172,7 +180,15 @@ material = SubResource("Resource_wc8i6")
 mesh = SubResource("SphereMesh_avsgf")
 
 [node name="PTSphere9" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.06899, 0)
 mesh = SubResource("SphereMesh_2402s")
 script = ExtResource("3_khgji")
 material = SubResource("Resource_p8ma1")
 mesh = SubResource("SphereMesh_2402s")
+
+[node name="PTPlane" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+mesh = SubResource("PlaneMesh_gi2ci")
+script = ExtResource("8_lowjh")
+distance = -0.5
+mesh = SubResource("PlaneMesh_gi2ci")

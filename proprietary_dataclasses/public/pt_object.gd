@@ -8,6 +8,9 @@ extends MeshInstance3D
 # TODO Add meshes
 # TODO Add instancing
 
+const EPSILON = 1e-6
+const AABB_PADDING := Vector3(EPSILON, EPSILON, EPSILON)
+
 # Tied to object_type enum in shader
 enum ObjectType {
 	NOT_OBJECT = 0,
@@ -118,8 +121,8 @@ static func vector_to_array(vector : Vector3) -> Array[float]:
 
 static func aabb_to_byte_array(aabb : AABB) -> PackedByteArray:
 	var new_aabb := aabb.abs()
-	var arr := (vector_to_array(new_aabb.position) + [0.0] +
-			vector_to_array(new_aabb.end) + [0.0])
+	var arr := (vector_to_array(new_aabb.position - AABB_PADDING) + [0.0] +
+			vector_to_array(new_aabb.end + AABB_PADDING) + [0.0])
 	return PackedFloat32Array(arr).to_byte_array()
 
 

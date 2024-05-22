@@ -19,6 +19,7 @@ metallic = 0.0
 opacity = 1.0
 IOR = 1.0
 refraction_depth = 0
+is_emissive = false
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_jeorl"]
 size = Vector2(1000, 1000)
@@ -31,6 +32,7 @@ metallic = 0.0
 opacity = 1.0
 IOR = 1.0
 refraction_depth = 0
+is_emissive = false
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_g7pth"]
 
@@ -48,6 +50,7 @@ metallic = 0.0
 opacity = 1.0
 IOR = 1.0
 refraction_depth = 0
+is_emissive = false
 
 [node name="NewNode3D" type="Node3D"]
 

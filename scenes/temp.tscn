@@ -22,6 +22,7 @@ metallic = 0.0
 opacity = 1.0
 IOR = 1.0
 refraction_depth = 0
+is_emissive = false
 
 [sub_resource type="ImmediateMesh" id="ImmediateMesh_ytlbb"]
 
@@ -33,6 +34,7 @@ metallic = 0.0
 opacity = 1.0
 IOR = 1.0
 refraction_depth = 0
+is_emissive = false
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_25ywl"]
 emission = Color(0.34902, 0.34902, 0.34902, 1)
@@ -51,6 +53,7 @@ metallic = 0.9
 opacity = 1.0
 IOR = 1.0
 refraction_depth = 0
+is_emissive = false
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_rdukm"]
 size = Vector2(1000, 1000)
@@ -63,6 +66,7 @@ metallic = 0.0
 opacity = 1.0
 IOR = 1.0
 refraction_depth = 0
+is_emissive = false
 
 [sub_resource type="SphereMesh" id="SphereMesh_rjrq8"]
 radius = 1.0
@@ -76,6 +80,7 @@ metallic = 0.0
 opacity = 1.0
 IOR = 1.0
 refraction_depth = 0
+is_emissive = false
 
 [node name="PTScene" type="Node"]
 script = ExtResource("1_4n3re")

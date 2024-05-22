@@ -299,7 +299,7 @@ func expand_object_buffer(
 			create_plane_buffer()
 		PTObject.ObjectType.TRIANGLE:
 			if triangle_buffer_size >= _scene.triangles.size() and steps < 1:
-				print("Plane buffer already fits. No buffer expansion")
+				print("Triangle buffer already fits. No buffer expansion")
 				return false
 			if steps < 1:
 				@warning_ignore("integer_division")
@@ -309,8 +309,8 @@ func expand_object_buffer(
 				triangle_buffer_size = new_size
 			else:
 				triangle_buffer_size = triangle_buffer_size + TRIANGLE_COUNT_STEP * steps
-			free_rid(plane_buffer)
-			create_plane_buffer()
+			free_rid(triangle_buffer)
+			create_triangle_buffer()
 
 	if create_set:
 		var object_uniforms := uniforms.get_set_uniforms(OBJECT_SET_INDEX)

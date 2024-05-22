@@ -1,0 +1,125 @@
+[gd_scene load_steps=12 format=3 uid="uid://dfou66qmglsjm"]
+
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_us1jt"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_5psgi"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_triangle.gd" id="3_jyhl8"]
+[ext_resource type="Resource" uid="uid://54t65j56uco1" path="res://scenes/materials/green.tres" id="4_x3jgo"]
+[ext_resource type="Resource" uid="uid://bedtl7iwyyw21" path="res://scenes/materials/red.tres" id="5_envkv"]
+[ext_resource type="Resource" uid="uid://dd2ovt817c074" path="res://scenes/materials/white.tres" id="6_c82il"]
+[ext_resource type="Resource" uid="uid://ctjrnqdrhre4q" path="res://scenes/materials/light.tres" id="7_6hq74"]
+
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_a1wot"]
+
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_rtman"]
+
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_35lft"]
+
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_wube6"]
+
+[node name="FakeCornellBox" type="Node"]
+script = ExtResource("1_us1jt")
+
+[node name="PTCameraFPS" type="Camera3D" parent="."]
+script = ExtResource("2_5psgi")
+
+[node name="Green1" type="MeshInstance3D" parent="."]
+mesh = SubResource("ImmediateMesh_a1wot")
+script = ExtResource("3_jyhl8")
+vertex1 = Vector3(1, 0, 0)
+vertex2 = Vector3(1, 1, 0)
+vertex3 = Vector3(0, 1, 0)
+material = ExtResource("4_x3jgo")
+mesh = SubResource("ImmediateMesh_a1wot")
+
+[node name="Green2" type="MeshInstance3D" parent="."]
+mesh = SubResource("ImmediateMesh_a1wot")
+script = ExtResource("3_jyhl8")
+vertex1 = Vector3(1, 0, 0)
+vertex2 = Vector3(0, 1, 0)
+material = ExtResource("4_x3jgo")
+mesh = SubResource("ImmediateMesh_a1wot")
+
+[node name="Red1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+mesh = SubResource("ImmediateMesh_a1wot")
+script = ExtResource("3_jyhl8")
+vertex1 = Vector3(1, 0, 0)
+vertex2 = Vector3(1, 1, 0)
+vertex3 = Vector3(0, 1, 0)
+material = ExtResource("5_envkv")
+mesh = SubResource("ImmediateMesh_a1wot")
+
+[node name="Red2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+mesh = SubResource("ImmediateMesh_a1wot")
+script = ExtResource("3_jyhl8")
+vertex1 = Vector3(1, 0, 0)
+vertex2 = Vector3(0, 1, 0)
+material = ExtResource("5_envkv")
+mesh = SubResource("ImmediateMesh_a1wot")
+
+[node name="Bot1" type="MeshInstance3D" parent="."]
+mesh = SubResource("ImmediateMesh_rtman")
+script = ExtResource("3_jyhl8")
+vertex1 = Vector3(1, 0, 0)
+vertex2 = Vector3(0, 0, 1)
+material = ExtResource("6_c82il")
+mesh = SubResource("ImmediateMesh_rtman")
+
+[node name="Bot2" type="MeshInstance3D" parent="."]
+mesh = SubResource("ImmediateMesh_35lft")
+script = ExtResource("3_jyhl8")
+vertex1 = Vector3(1, 0, 0)
+vertex2 = Vector3(1, 0, 1)
+vertex3 = Vector3(0, 0, 1)
+material = ExtResource("6_c82il")
+mesh = SubResource("ImmediateMesh_35lft")
+
+[node name="Top1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("ImmediateMesh_35lft")
+script = ExtResource("3_jyhl8")
+vertex1 = Vector3(1, 0, 0)
+vertex2 = Vector3(1, 0, 1)
+vertex3 = Vector3(0, 0, 1)
+material = ExtResource("6_c82il")
+mesh = SubResource("ImmediateMesh_35lft")
+
+[node name="Top2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("ImmediateMesh_rtman")
+script = ExtResource("3_jyhl8")
+vertex1 = Vector3(1, 0, 0)
+vertex2 = Vector3(0, 0, 1)
+material = ExtResource("6_c82il")
+mesh = SubResource("ImmediateMesh_rtman")
+
+[node name="Back1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("ImmediateMesh_35lft")
+script = ExtResource("3_jyhl8")
+vertex1 = Vector3(1, 0, 0)
+vertex2 = Vector3(1, -1, 1)
+vertex3 = Vector3(1, 0, 1)
+material = ExtResource("6_c82il")
+mesh = SubResource("ImmediateMesh_35lft")
+
+[node name="Back2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("ImmediateMesh_35lft")
+script = ExtResource("3_jyhl8")
+vertex1 = Vector3(1, 0, 0)
+vertex2 = Vector3(1, -1, 0)
+vertex3 = Vector3(1, -1, 1)
+material = ExtResource("6_c82il")
+mesh = SubResource("ImmediateMesh_35lft")
+
+[node name="Light" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0.997, 0.285)
+mesh = SubResource("ImmediateMesh_wube6")
+script = ExtResource("3_jyhl8")
+vertex1 = Vector3(0.6, 0, 0)
+vertex2 = Vector3(0.04, 0, 0.06)
+vertex3 = Vector3(0, 0, 0.4)
+material = ExtResource("7_6hq74")
+mesh = SubResource("ImmediateMesh_wube6")

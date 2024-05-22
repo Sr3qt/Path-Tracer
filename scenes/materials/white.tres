@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PTMaterial" load_steps=2 format=3 uid="uid://dd2ovt817c074"]
+
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_material.gd" id="1_xani0"]
+
+[resource]
+script = ExtResource("1_xani0")
+albedo = Color(0.75, 0.75, 0.75, 1)
+roughness = 0.0
+metallic = 0.0
+opacity = 1.0
+IOR = 1.0
+refraction_depth = 0
+is_emissive = false

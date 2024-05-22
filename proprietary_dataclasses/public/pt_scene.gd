@@ -341,6 +341,10 @@ func remove_object(object : PTObject) -> void:
 
 	# TODO Remove from texture list if object was their last user
 
+
+	object.disconnect("material_changed", _material_changed)
+	object.disconnect("texture_changed", _texture_changed)
+
 	if bvh:
 		bvh.remove_object(object)
 

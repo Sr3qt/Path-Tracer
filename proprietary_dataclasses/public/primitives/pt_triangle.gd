@@ -4,9 +4,21 @@ extends PTPrimitive3D
 
 # The triangles vertices relative to itself, not in local coordinates
 # Used for defining the shape of the triangle
-@export var vertex1 := Vector3.LEFT
-@export var vertex2 := Vector3.FORWARD
-@export var vertex3 := Vector3.ZERO
+@export var vertex1 := Vector3.LEFT:
+	set(value):
+		vertex1 = value
+		if _scene and is_node_ready():
+			_scene.update_object(self)
+@export var vertex2 := Vector3.FORWARD:
+	set(value):
+		vertex2 = value
+		if _scene and is_node_ready():
+			_scene.update_object(self)
+@export var vertex3 := Vector3.ZERO:
+	set(value):
+		vertex3 = value
+		if _scene and is_node_ready():
+			_scene.update_object(self)
 
 # TODO Add godot mesh updating for vertex*
 

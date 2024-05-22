@@ -79,7 +79,7 @@ LONG TERM GOALS
 
     - Subfurface scattering
 
-    - Add lighting
+    - Add lighting -- BASIC --
 
     - Make a real time ray tracer with triangle geometry (will be scuffed) -- ALMOST --
 
@@ -124,6 +124,9 @@ although at a higher ray depth cost (It might not get out if max_default_depth i
 Enabling refraction tracking has a small performance impact
 */
 #define use_refraction_tracking 1
+
+// Emissive materials
+# define USE_EMISSION 1
 
 
 // CONSTANTS
@@ -192,7 +195,13 @@ InsideOf inside_of[max_refraction_depth] = InsideOf[](
 // TODO: Add support for cpu to send InsideOf buffer based on camera position
 
 
+#if !USE_EMISSION
 const vec4 default_color = vec4(0.7, 0.7, 0.9, 1);
+#endif
+
+#if USE_EMISSION
+const vec4 default_color = vec4(0);
+#endif
 const int max_depth = 64 * 8; // Length of rayhits to visit stack in BVH 
 
 int refraction_bounces = 0; // Counts the number of times a ray has refracted
@@ -260,6 +269,14 @@ struct Material {
     //  objects, the refraction_depth will determine which object's material will take precedence 
     //  in the intersection
     int refraction_depth;
+    bool is_emissive;
+    int temp2;
+    int temp3;
+    int temp4;
+    int temp11;
+    int temp21;
+    int temp31;
+    int temp41;
 };
 
 // The materials stored in objects are indices to a global material array
@@ -270,7 +287,7 @@ struct Plane {
     // TODO Turn texture type into a 2-bit flag stored in texture_id
     //  or make it obsolete
     int texture_id;
-    int texture_type;
+    int filler0;
     int filler1;
 };
 
@@ -279,7 +296,7 @@ struct Sphere {
     float radius;
     int mtl_index;
     int texture_id;
-    int texture_type;
+    int filler0;
     int filler1;
 };
 
@@ -296,13 +313,14 @@ struct Triangle {
 
     int mtl_index;
     int texture_id;
-    int texture_type;
+    int filler0;
     int filler5;
 };
 
 struct RayHit {
     // TODO Optimize rayhit memory consumption
     bool hit; // Whether the ray actually hit something
+    bool is_emissive;
 
     // Stored on-hit
     float t; // Paramater value for ray
@@ -311,7 +329,6 @@ struct RayHit {
     // Retrieved later
     int mtl_index; // Material of the object hit
     int texture_id;
-    int texture_type;
     vec2 uv;
 
     vec3 point; // Intersection point between sphere and ray
@@ -391,7 +408,7 @@ Ray empty_ray() {
 }
 
 RayHit empty_rayhit() {
-    return RayHit(false, infinity, 0, 0, 0, 0, vec2(0), vec3(0), vec3(0), vec4(0));
+    return RayHit(false, false, infinity, 0, 0, 0, vec2(0), vec3(0), vec3(0), vec4(0));
 }
 
 float atan2(float y, float x) {
@@ -731,6 +748,7 @@ bool hit_triangle_MT(Ray ray, int object_id, Range t_range, inout RayHit rayhit)
     vec3 N = cross(E1,E2);
     float det = -dot(ray.direction, N);
     // TODO Add global backface cull flag and object flag
+    // TODO Flip normals if backface cull off 
 
 
     // If ray is parallel to triangle plane
@@ -789,7 +807,6 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         Sphere sphere = spheres.data[object_index];
         rayhit.mtl_index = sphere.mtl_index;
         rayhit.texture_id = sphere.texture_id;
-        rayhit.texture_type = sphere.texture_type;
         rayhit.normal = (rayhit.point - sphere.center) / sphere.radius;
         rayhit.uv = sphere_get_uv(rayhit.point);
 
@@ -798,7 +815,6 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         Plane plane = planes.data[object_index];
         rayhit.mtl_index = plane.mtl_index;
         rayhit.texture_id = plane.texture_id;
-        rayhit.texture_type = plane.texture_type;
         rayhit.normal = plane.normal;
     
     // Procedure for hitting triangle
@@ -806,11 +822,11 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         Triangle triangle = triangles.data[object_index];
         rayhit.mtl_index = triangle.mtl_index;
         rayhit.texture_id = triangle.texture_id;
-        rayhit.texture_type = triangle.texture_type;
         rayhit.normal = triangle.normal;
     }
 
     rayhit.color = vec4(materials.data[rayhit.mtl_index].albedo, 1);
+    rayhit.is_emissive = materials.data[rayhit.mtl_index].is_emissive;
     return rayhit;
 }
 
@@ -1240,6 +1256,13 @@ vec4 cast_ray(Ray ray, Range range) {
         }
 
         determine_rayhit(new_ray, rayhit);
+
+        #if USE_EMISSION
+        if (rayhit.is_emissive) {
+            new_color *= rayhit.color;
+            break;
+        }
+        #endif
 
         // Get texture color
         tex_col = get_texture(rayhit);
