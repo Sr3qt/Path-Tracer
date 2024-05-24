@@ -85,6 +85,8 @@ LONG TERM GOALS
 
     - Implement meshlets for more dynamic materials and better culling (for traingles)
 
+    - Simulate glass of beer
+
 */
 
 
@@ -126,7 +128,7 @@ Enabling refraction tracking has a small performance impact
 #define use_refraction_tracking 1
 
 // Emissive materials
-# define USE_EMISSION 0
+# define USE_EMISSION !0
 
 
 // CONSTANTS
@@ -266,7 +268,8 @@ struct Material {
     // Value between 0 and 1 where 0 is fully opaque and 1 is fully transparent.
     // Values inbetween determine the energy loss per unit length. 
     // Non-opaque materials can refract.
-    float opacity; 
+    float opacity;
+    float reflectivity;
     // Index of refraction
     float IOR;
     // In cases where a translusent object intersects other objects or contains other translusent 
@@ -280,7 +283,6 @@ struct Material {
     int temp11;
     int temp21;
     int temp31;
-    int temp41;
 };
 
 // The materials stored in objects are indices to a global material array
@@ -419,6 +421,13 @@ float atan2(float y, float x) {
 
     bool s = (abs(x) > abs(y));
     return mix(pi / 2.0 - atan(x,y), atan(y,x), s); // Should perform as well as ternary
+}
+
+float reflectance(float eta, float cos_theta) {
+    // Schlick's approximation for reflectivety
+    float r0 = (1. - eta) / (1. + eta);
+    r0 = r0 * r0;
+    return r0 + (1. - r0) * pow(1. - cos_theta, 5.);
 }
 
 // Random functions
@@ -1065,6 +1074,9 @@ void remove_object_from_inside_of(int material_index) {
 Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     // Returns a refracted or reflected ray based on ray_in and rayhit
     // TODO: Add support for cpu to send InsideOf buffer based on camera position
+    // TODO: Add tiny random direction change coupled with color shift, prism, diffraction
+    // TODO: Implement Beer's law:
+    // https://www.flipcode.com/archives/Raytracing_Topics_Techniques-Part_3_Refractions_and_Beers_Law.shtml 
     
     vec3 new_origin = rayhit.point;
 
@@ -1075,7 +1087,6 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     float eta_in = current_IOR;
 
     Material material = materials.data[rayhit.mtl_index];
-
 
     #if use_refraction_tracking==0
     float eta_out = (is_inside) ? IOR_air : material.IOR;
@@ -1123,7 +1134,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     bool cannot_refract = eta * sin_theta > 1.;
 
     // Check for internal reflection
-    if (cannot_refract) {
+    if (cannot_refract || (reflectance(eta, cos_theta) * (material.reflectivity) > noise(random))) {
         #if self_intersect_method==0
         return Ray(offset_ray(new_origin, normal), reflect(normalized_direction, normal));
         #endif
@@ -1132,22 +1143,6 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
         return Ray(new_origin, reflect(normalized_direction, normal));
         #endif
     } 
-
-    // Schlick's approximation for reflectivety
-    float r0 = (1. - eta) / (1. + eta);
-    r0 = r0 * r0;
-    float reflect_chance = r0 + (1. - r0) * pow(1. - cos_theta, 5.);
-    
-    // Check for external reflection, TODO can add reflexivety for translucent materials
-    if (reflect_chance > rand2(vec2(cos_theta, normal.x))) {
-        #if self_intersect_method==0
-        return Ray(offset_ray(new_origin, normal), reflect(normalized_direction, normal));
-        #endif
-        
-        #if self_intersect_method==1
-        return Ray(new_origin, reflect(normalized_direction, normal));
-        #endif
-    }
 
     current_IOR = eta_out;
 

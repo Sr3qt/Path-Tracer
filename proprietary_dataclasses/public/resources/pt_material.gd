@@ -19,6 +19,10 @@ extends Resource
 	set(value):
 		opacity = value
 		material_changed.emit(self)
+@export_range(0.0, 2.0) var reflectivity := 1.0:
+	set(value):
+		reflectivity = value
+		material_changed.emit(self)
 @export var IOR := 1.0:
 	set(value):
 		IOR = value
@@ -68,14 +72,31 @@ func is_equal(other : PTMaterial) -> bool:
 
 
 func to_byte_array() -> PackedByteArray:
-	var floats_array : Array = [albedo.r, albedo.g, albedo.b] + [
+	var floats_array : Array[float] = [
+		albedo.r,
+		albedo.g,
+		albedo.b,
 		roughness,
 		metallic,
 		opacity,
-		IOR
+		reflectivity,
+		IOR,
 	]
 
-	var bytes := (PackedFloat32Array(floats_array).to_byte_array() +
-	PackedInt32Array([refraction_depth, is_emissive, 0, 0, 0, 0, 0, 0, 0]).to_byte_array())
+	var ints_array : Array[int] = [
+		refraction_depth,
+		is_emissive,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+	]
+
+	var bytes := (
+		PackedFloat32Array(floats_array).to_byte_array() +
+		PackedInt32Array(ints_array).to_byte_array()
+	)
 
 	return bytes

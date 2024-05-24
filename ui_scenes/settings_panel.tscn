@@ -319,7 +319,7 @@ text = "    Max samples"
 unique_name_in_owner = true
 layout_mode = 2
 min_value = 1.0
-max_value = 2048.0
+max_value = 65536.0
 value = 1.0
 script = ExtResource("5_v8pkx")
 
