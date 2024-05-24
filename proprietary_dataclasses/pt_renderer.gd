@@ -154,7 +154,8 @@ func _ready() -> void:
 
 
 func _process(_delta : float) -> void:
-	# TODO Fix stutter issue
+	# NOTE: Stutter issue was caused by having a timer on screen on separate
+	#  monitor with different resolution on windows. lol
 	if startup_time:
 		print()
 		print("Total startup time")

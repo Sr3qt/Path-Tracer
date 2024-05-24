@@ -1,5 +1,7 @@
 Performance on random_scene with book_ex camera settings
 
+Refraction Tracking perf gain is 57 fps, with emission 54 fps
+
 Added emission is 54 fps, with newly added emission 49 fps
 
 added object_id as perf gain is 56-57 fps

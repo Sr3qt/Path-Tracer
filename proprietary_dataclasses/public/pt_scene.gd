@@ -22,7 +22,7 @@ var camera_settings_values := {
 	CameraSetting.center : [Vector3(0, 0, 1), Vector3(0,0,0), 106.],
 	CameraSetting.left : [Vector3(0, 0, 1), Vector3(-1,0,1), 106.],
 	CameraSetting.right : [Vector3(0, 0, 1), Vector3(1,0,1), 106.],
-	CameraSetting.middle : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.],
+	CameraSetting.middle : [Vector3(7, 2, -3), Vector3(0,0,0), 30 * 16 / 9.],
 	CameraSetting.cornell : [Vector3(-1, 0.5, 0.5), Vector3(1,0.5,0.5), 106.0],
 }
 
@@ -49,6 +49,8 @@ var objects := {
 	ObjectType.TRIANGLE : triangles,
 }
 
+## NOTE: Because of refraction tracking in the shader, a material index is reserved
+## for the IOR of air. Currently index 0 is reserved.
 var materials : Array[PTMaterial] = [null]
 # Inverse of materials
 var material_to_index := {null : 0}

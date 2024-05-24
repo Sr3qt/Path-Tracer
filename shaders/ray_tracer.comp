@@ -126,7 +126,7 @@ Enabling refraction tracking has a small performance impact
 #define use_refraction_tracking 1
 
 // Emissive materials
-# define USE_EMISSION 1
+# define USE_EMISSION 0
 
 
 // CONSTANTS
@@ -165,9 +165,8 @@ const int is_no_texture = 4;
 //  JUST USE MATERIAL INDEX AS IDENTIFIER 
 // Keeps values of inside_of neatly organized
 struct InsideOf {
-    int object_id;
+    int material_index;
     int refraction_depth;
-    float IOR;
 };
 
 // IORs
@@ -181,16 +180,21 @@ const int max_refraction_depth = 8;
 
 // Keeps track of first vacant index in stack
 int inside_of_count = 0;
+
+InsideOf empty_inside() {
+    return InsideOf(0, int_limit - 1);
+}
+
 // Holds the object_id, obejct_type and refraction_depth of and object
 InsideOf inside_of[max_refraction_depth] = InsideOf[](
-    InsideOf(0, int_limit, IOR_air),
-    InsideOf(0, int_limit, IOR_air),
-    InsideOf(0, int_limit, IOR_air),
-    InsideOf(0, int_limit, IOR_air),
-    InsideOf(0, int_limit, IOR_air),
-    InsideOf(0, int_limit, IOR_air),
-    InsideOf(0, int_limit, IOR_air),
-    InsideOf(0, int_limit, IOR_air)
+    empty_inside(),
+    empty_inside(),
+    empty_inside(),
+    empty_inside(),
+    empty_inside(),
+    empty_inside(),
+    empty_inside(),
+    empty_inside()
 );
 // TODO: Add support for cpu to send InsideOf buffer based on camera position
 
@@ -1025,30 +1029,32 @@ Ray reflect_ray(Ray ray_in, RayHit rayhit) {
     return Ray(new_origin, ray_dir);
 }
 
-#define same_object (object_id == index.object_id)
-float get_IOR(int object_id, int depth, float IOR) {
-    int lowest_depth = depth;
-    float IOR_out = IOR;
-    // Loop over objects that we have entered and not left, 
-    //  pick the one with the lowest refraction_depth, ignore default values
+int get_material(int material_index, int lowest_depth, bool ignore_self) {
+    // Loop over materials that we have entered and not left, 
+    //  pick the one with the lowest refraction_depth, ignore default values if specified
+    int current_index = material_index;
     for (int i = 0; i < max_refraction_depth; i++) {
         InsideOf index = inside_of[i];
-        if (index.object_id != is_not_obj && index.refraction_depth < lowest_depth &&
-                !same_object) 
-        {
-            lowest_depth = index.refraction_depth;
-            IOR_out = index.IOR;
+        if (index.refraction_depth < lowest_depth) {
+            if (!(material_index == index.material_index) || !ignore_self) {
+                lowest_depth = index.refraction_depth;
+                current_index = index.material_index;
+            } else {
+                // same material is true, we ignore the same material one time
+                ignore_self = false;
+            }
         }
     }
 
-    return IOR_out;
+    return current_index;
 }
 
-void remove_object_from_inside_of(int object_id) {
+void remove_object_from_inside_of(int material_index) {
     int shift = 0;
-    for (int i = 0; i < inside_of_count - 1; i++) {
+    // NOTE: inside_of_count - 1 tested to be faster than looping over entire array
+    for (int i = 0; i < inside_of_count; i++) {
         InsideOf index = inside_of[i];
-        if (object_id == index.object_id) {
+        if (material_index == index.material_index) {
             shift = 1;
         }
         inside_of[i] = inside_of[i + shift];
@@ -1064,48 +1070,35 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
 
     // Whether object is inside the current object
     bool is_inside = bool(dot(rayhit.normal, ray_in.direction) > 0.);
+    vec3 normal = (is_inside) ? -rayhit.normal : rayhit.normal;
+
     float eta_in = current_IOR;
 
     Material material = materials.data[rayhit.mtl_index];
 
-    float eta_out = (is_inside) ? IOR_air : material.IOR;
 
-    #if use_refraction_tracking == 0
+    #if use_refraction_tracking==0
+    float eta_out = (is_inside) ? IOR_air : material.IOR;
     float eta = eta_in / eta_out;
-    
-    vec3 normal = (is_inside) ? -rayhit.normal : rayhit.normal;
     #endif
 
-    #if use_refraction_tracking == 1
-    if (inside_of_count == 0) {
-        // We are not inside any object, we might be going into this object
-        eta_out = material.IOR;
-    } else if (inside_of_count == 1 && is_inside) {
-        eta_out = IOR_air;
-    } else {
-        if (is_inside) {
-            // We are inside the current object and disregard its own material as a possible eta_out
-            eta_out = get_IOR(rayhit.object_id, int_limit, IOR_air);
-        } else {
-            // We are outside the current object and its material can be a possible eta_out
-            eta_out = get_IOR(rayhit.object_id,  material.refraction_depth, material.IOR);
-        }
-    }
+    #if use_refraction_tracking==1
+    // If ray is inside object ignore rayhti.mtl_index as having a possible eta_out, else
+    //  rayhit.mtl_index is default material if no other materials are in inside_of.
+    int depth = is_inside ? int_limit : material.refraction_depth;
+    int current_material = get_material(rayhit.mtl_index, depth, is_inside);
 
+    float eta_out = materials.data[current_material].IOR;
     float eta = eta_in / eta_out;
-    
-    vec3 normal = (is_inside) ? -rayhit.normal : rayhit.normal;
 
     // If ratio is one the ray will travel in a straight line
     if (is_close(eta, 1.0)) {
         // If ray was inside and went out, remove from inside_of list
         if (is_inside) {
-            remove_object_from_inside_of(rayhit.object_id);
+            remove_object_from_inside_of(rayhit.mtl_index);
         } else {
             // If ray was outside and refracted, add to inside_of list
-            inside_of[inside_of_count++] = InsideOf(
-                rayhit.object_id, material.refraction_depth, material.IOR
-            );
+            inside_of[inside_of_count++] = InsideOf(rayhit.mtl_index, material.refraction_depth);
         }
     
         #if self_intersect_method==0
@@ -1158,16 +1151,16 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
 
     current_IOR = eta_out;
 
+    #if use_refraction_tracking==1
     // If ray was inside and went out, remove from inside_of list
     if (is_inside) {
-        remove_object_from_inside_of(rayhit.object_id);
+        remove_object_from_inside_of(rayhit.mtl_index);
     } else {
         // If ray was outside and refracted, add to inside_of list
-        inside_of[inside_of_count++] = InsideOf(
-            rayhit.object_id, material.refraction_depth, material.IOR
-        );
+        inside_of[inside_of_count++] = InsideOf(rayhit.mtl_index, material.refraction_depth);
     }
-    
+    #endif
+
     #if self_intersect_method==0
     new_origin = offset_ray(new_origin, -normal);
     #endif

@@ -88,6 +88,7 @@ size = Vector2(1000, 1000)
 
 [node name="PTScene" type="Node"]
 script = ExtResource("1_imjou")
+starting_camera = 7
 
 [node name="PTCameraFPS" type="Camera3D" parent="."]
 script = ExtResource("2_3d2ma")

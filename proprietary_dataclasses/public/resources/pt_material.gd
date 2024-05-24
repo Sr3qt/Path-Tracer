@@ -23,7 +23,9 @@ extends Resource
 	set(value):
 		IOR = value
 		material_changed.emit(self)
-@export var refraction_depth : int = 0:
+# NOTE: Because of how the shader is written, int_limit and int_limit -1 are not
+#  available
+@export_range(-2147483646, 2147483645) var refraction_depth : int = 0:
 	set(value):
 		refraction_depth = value
 		material_changed.emit(self)
