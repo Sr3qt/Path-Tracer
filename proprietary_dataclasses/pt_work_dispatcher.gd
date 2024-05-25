@@ -537,7 +537,7 @@ func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 	bytes += PackedFloat32Array([time]).to_byte_array()
 	bytes += window.flags_to_byte_array()
 	bytes += PackedInt32Array([window.x_offset, window.y_offset]).to_byte_array()
-	bytes += PackedFloat32Array([window.frame, 0, 0, 0]).to_byte_array()
+	bytes += PackedFloat32Array([window.frame, window.max_samples, 0, 0]).to_byte_array()
 
 	return bytes
 

@@ -200,7 +200,6 @@ InsideOf inside_of[max_refraction_depth] = InsideOf[](
 );
 // TODO: Add support for cpu to send InsideOf buffer based on camera position
 
-
 #if !USE_EMISSION
 const vec4 default_color = vec4(0.7, 0.7, 0.9, 1);
 #endif
@@ -402,6 +401,7 @@ layout(push_constant, std430) restrict readonly uniform constants {
     int flags;
     ivec2 image_offset; // How many pixels offset should the viewport origin be
     float frame;
+    float max_samples;
 } push;
 
 // UTILITY FUNCTIONS
@@ -1322,9 +1322,14 @@ void main() {
     // Apply gamma correction
     new_color.rgb = pow(new_color.rgb, vec3(push.camera.gamma));
 
+    // TODO use max_samples to divide
     if (multisample) {
         vec4 prev_col = imageLoad(output_image, UVi.xy);
         new_color = mix(prev_col, new_color, 1.0 / max(1.0, push.frame));
+        // new_color = prev_col + new_color / push.max_samples;
+        // if (push.frame == 0) {
+        //     new_color = vec4(0);
+        // }
     }
 
     imageStore(output_image, UVi.xy, new_color);
