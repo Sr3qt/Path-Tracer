@@ -14,6 +14,11 @@ Free to use book: [Raytracing gems](https://link.springer.com/book/10.1007/978-1
 A cool website I did not see until recently is [Scratchapixel.com](https://www.scratchapixel.com/index.html). It seems to have a lot of beginner friendly learning resources on both traditional rasterizing and ray-tracing/path-tracing.
 
 
+## General CG Math
+
+When I looked at the way [_Ray Tracing The Next Week_](https://raytracing.github.io/books/RayTracingTheNextWeek.html#instances) implements Instancing, I realized I wanted in addition to have scaling as an option, specifically non-uniform scaling. I also wanted it to be in matrix form for its simplicity and speed, you can learn more [here](https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/matrices.html). As for the scaling problem, [this](https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/transforming-normals.html) Scratchapixel article explains why normals need special care when transformed using a matrix and how you can transform it correctly. And finally a wiki page on [how to apply matrix transformations](https://en.wikibooks.org/wiki/GLSL_Programming/Applying_Matrix_Transformations) in glsl.
+
+
 ## GPU precision considerations
 
 Much smarter people than me, mention edge cases were simple functions are prone to errors due to floating point imprecision. Because of this some nice people on stack overflow have written those simple functions accounting for edge cases, so we can just copy-paste.

@@ -2,12 +2,16 @@
 class_name PTSphere
 extends PTObject
 
+const USE_INSTANCING = !!true
+
 @export var radius : float = 1.0:
 	set(value):
 		if mesh is SphereMesh:
 			(mesh as SphereMesh).radius = value
 			(mesh as SphereMesh).height = value * 2
 		radius = value
+		if USE_INSTANCING:
+			scale = Vector3(radius, radius, radius)
 		if _scene and is_node_ready():
 			_scene.update_object(self)
 
@@ -45,7 +49,45 @@ func _set(property : StringName, _value : Variant) -> bool:
 	return false
 
 
+func _get_aabb() -> AABB:
+	return AABB(-Vector3.ONE, Vector3.ONE * 2)
+
+
+
+func get_global_aabb() -> AABB:
+	"""Returns the objects aabb in world coordinates"""
+	if USE_INSTANCING:
+		return global_transform * _get_aabb()
+
+	return global_transform * get_aabb()
+
 func to_byte_array() -> PackedByteArray:
-	return (PackedFloat32Array(PTObject.vector_to_array(position) + [radius]).to_byte_array() +
-	_get_property_byte_array())
+	var bytes : PackedByteArray
+	if not USE_INSTANCING:
+		bytes = (PackedFloat32Array(PTObject.vector_to_array(position) + [radius]).to_byte_array() +
+		_get_property_byte_array()
+		+ PackedInt32Array([0,0,0,0,0,0,0,0]).to_byte_array()
+		)
+
+	else:
+		# TODO NOTE When adding meshes change to transform
+		var ttransform := global_transform.affine_inverse()
+
+		bytes = (
+			PackedFloat32Array(PTObject.vector_to_array(ttransform.basis.x)).to_byte_array() +
+			PackedInt32Array([_scene.material_to_index[material]]).to_byte_array() +
+			PackedFloat32Array(PTObject.vector_to_array(ttransform.basis.y)).to_byte_array() +
+			PackedInt32Array([_scene.texture_to_texture_id[texture]]).to_byte_array() +
+			PackedFloat32Array(PTObject.vector_to_array(ttransform.basis.z)).to_byte_array() +
+			PackedInt32Array([0]).to_byte_array() +
+			PackedFloat32Array(PTObject.vector_to_array(ttransform.origin)).to_byte_array() +
+			PackedInt32Array([0]).to_byte_array()
+			)
+
+
+	return bytes
+
+
+
+
 

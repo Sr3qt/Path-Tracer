@@ -128,7 +128,10 @@ Enabling refraction tracking has a small performance impact
 #define use_refraction_tracking 1
 
 // Emissive materials
-# define USE_EMISSION !0
+#define USE_EMISSION 0
+
+
+#define USE_INSTANCING !!!0
 
 
 // CONSTANTS
@@ -250,6 +253,7 @@ struct Camera {
     float gamma;
 };
 
+// TODO Make into vec4
 struct Ray {
     vec3 origin;
     vec3 direction;
@@ -294,6 +298,7 @@ struct Plane {
     int filler1;
 };
 
+#if !USE_INSTANCING
 struct Sphere {
     vec3 center;
     float radius;
@@ -301,7 +306,44 @@ struct Sphere {
     int texture_id;
     int filler0;
     int filler1;
+    
+    int filler2;
+    int filler3;
+    int filler4;
+    int filler5;
+    int filler11;
+    int filler12;
+    int filler13;
+    int filler14;
 };
+#endif
+
+#if USE_INSTANCING
+struct Sphere {
+    vec3 col0;
+    int mtl_index;
+    vec3 col1;
+    int texture_id;
+    vec3 col2;
+    int filler0;
+    vec3 col3;
+
+    int filler1;
+};
+#endif
+// #if USE_INSTANCING
+// struct Sphere {
+//     vec3 col0;
+//     vec3 col1;
+//     vec3 col2;
+//     vec3 col3;
+
+//     int mtl_index;
+//     int texture_id;
+//     int filler0;
+//     int filler1;
+// };
+// #endif
 
 struct Triangle {
     // TODO SO MUCH SPACE OPTIMIZATION
@@ -337,6 +379,10 @@ struct RayHit {
     vec3 point; // Intersection point between sphere and ray
     vec3 normal;
     vec4 color; // Whatever color the rayhit is determined to be 
+
+    // Temp
+    // vec3 new_direction;
+    // vec3 new_origin;
 };
 
 struct Range {
@@ -503,6 +549,15 @@ vec3 offset_ray(const vec3 point, const vec3 normal) {
     );
 }
 
+
+mat4 construct_matrix(vec4 col0, vec4 col1, vec4 col2) {
+    return mat4(col0, col1, col2, vec4(0, 0, 0, 1));
+}
+
+mat4 construct_matrix(vec3 col0, vec3 col1, vec3 col2, vec3 col3) {
+    return mat4(vec4(col0, 0), vec4(col1, 0), vec4(col2, 0), vec4(col3, 1));
+}
+
 bool in_range(float value, Range range) {
     // In range inclusively start and stop values
     return (range.start <= value && range.end >= value);
@@ -635,6 +690,7 @@ bool hit_AABB(Ray ray, AABB bbox, Range range, vec3 inv_dir, bvec3 is_dir_neg) {
     return true;
 }
 
+#if !USE_INSTANCING 
 RayHit hit_sphere(Ray ray, int object_id, Range t_range, inout RayHit rayhit) {
 
     Sphere sphere = spheres.data[get_object_index(object_id)];
@@ -664,12 +720,67 @@ RayHit hit_sphere(Ray ray, int object_id, Range t_range, inout RayHit rayhit) {
 
     // Set rayhit variables
     set_rayhit(rayhit, root, object_id);
+    
+    rayhit.normal = (ray_at(ray, root) - sphere.center) / sphere.radius;
+    // rayhit.normal = normalize((ray_at(ray, root) - sphere.center) / sphere.radius * 2);
 
     return rayhit;
 }
+#endif
+
+#if USE_INSTANCING
+RayHit hit_sphere(Ray ray, int object_id, Range t_range, inout RayHit rayhit) {
+
+    Sphere sphere = spheres.data[get_object_index(object_id)];
+
+    // DO MATREIX CALC
+    mat4 matrix = construct_matrix(sphere.col0, sphere.col1, sphere.col2, sphere.col3);
+
+    // vec4 temp_point = matrix * vec4(ray.origin, 1);
+    // temp_point = temp_point / temp_point.w;
+
+    Ray temp_ray = Ray(vec3(matrix * vec4(ray.origin, 1)), vec3(matrix * vec4(ray.direction, 0)));
+
+    // Calculate the determinant of quadratic formula
+    vec3 oc = temp_ray.origin;
+    float a = dot(temp_ray.direction, temp_ray.direction);
+    float half_b = dot(oc, temp_ray.direction);
+    float c = dot(oc, oc) - 1.0;
+
+    float discriminant = half_b * half_b - a*c;
+
+    // Early return if ray does not hit
+    if (discriminant < 0.) {
+        return rayhit;
+    } 
+
+    float sqrtd = sqrt(discriminant);
+    float root = (-half_b - sqrtd) / a;
+
+    // If root is within a valid t range and less than previous rayhit
+    if (!in_range(root, t_range) || root > rayhit.t) {
+        root = (-half_b + sqrtd) / a;
+        if (!in_range(root, t_range)  || root > rayhit.t) {
+            return rayhit;
+        }
+    }
+
+    // Set rayhit variables
+    set_rayhit(rayhit, root, object_id);
+    
+
+    // vec4 temp_point1 = inverse(matrix) * vec4(root * temp_ray.direction, 1);
+    // temp_point1 = temp_point1 / temp_point1.w;
+    // rayhit.point = vec3(temp_point1);
+    // rayhit.normal = root * temp_ray.direction +  temp_ray.origin; //+ vec3(1,0,0);
+    rayhit.normal = normalize(vec3(vec4(ray_at(temp_ray, root), 0) * matrix) );
+
+    return rayhit;
+}
+#endif
 
 RayHit hit_spheres(Ray ray, Range t_range, inout RayHit rayhit) {
-    if (near_zero(vec3(spheres.data[0].radius))) {return rayhit;} // Early return if no spheres in scene
+    // if (near_zero(vec3(spheres.data[0].radius))) {return rayhit;} // Early return if no spheres in scene
     // Uses global scope sphere array to bypass function parameter limitations
     for (int i = 0; i < spheres.data.length(); ++i) {
         hit_sphere(ray, i + (is_sphere << 24), t_range, rayhit);
@@ -817,11 +928,19 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         Sphere sphere = spheres.data[object_index];
         rayhit.mtl_index = sphere.mtl_index;
         rayhit.texture_id = sphere.texture_id;
-        rayhit.normal = (rayhit.point - sphere.center) / sphere.radius;
+        // #if !USE_INSTANCING
+        // rayhit.normal = (rayhit.point - sphere.center) / sphere.radius;
+        // #endif
+
+        // #if USE_INSTANCING
+        // rayhit.normal = (rayhit.point - sphere.center) / sphere.radius;
+        // #endif
+
         rayhit.uv = sphere_get_uv(rayhit.point);
 
     // Procedure for hitting plane
     } else if (object_type == is_plane) {
+        rayhit.point = ray_at(ray_in, rayhit.t);
         Plane plane = planes.data[object_index];
         rayhit.mtl_index = plane.mtl_index;
         rayhit.texture_id = plane.texture_id;
@@ -829,6 +948,7 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
     
     // Procedure for hitting triangle
     } else if (object_type == is_triangle) {
+        rayhit.point = ray_at(ray_in, rayhit.t);
         Triangle triangle = triangles.data[object_index];
         rayhit.mtl_index = triangle.mtl_index;
         rayhit.texture_id = triangle.texture_id;

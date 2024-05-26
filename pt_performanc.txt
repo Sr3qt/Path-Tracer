@@ -1,5 +1,7 @@
 Performance on random_scene with book_ex camera settings
 
+Added instancing for spheres is 57, with instancing 50
+
 Refraction Tracking perf gain is 57 fps, with emission 54 fps
 
 Added emission is 54 fps, with newly added emission 49 fps
