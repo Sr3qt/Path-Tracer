@@ -131,7 +131,7 @@ Enabling refraction tracking has a small performance impact
 #define USE_EMISSION 0
 
 
-#define USE_INSTANCING !!!0
+#define USE_INSTANCING 1
 
 
 // CONSTANTS
@@ -331,19 +331,6 @@ struct Sphere {
     int filler1;
 };
 #endif
-// #if USE_INSTANCING
-// struct Sphere {
-//     vec3 col0;
-//     vec3 col1;
-//     vec3 col2;
-//     vec3 col3;
-
-//     int mtl_index;
-//     int texture_id;
-//     int filler0;
-//     int filler1;
-// };
-// #endif
 
 struct Triangle {
     // TODO SO MUCH SPACE OPTIMIZATION
@@ -555,7 +542,7 @@ mat4 construct_matrix(vec4 col0, vec4 col1, vec4 col2) {
 }
 
 mat4 construct_matrix(vec3 col0, vec3 col1, vec3 col2, vec3 col3) {
-    return mat4(vec4(col0, 0), vec4(col1, 0), vec4(col2, 0), vec4(col3, 1));
+    return mat4(col0, 0, col1, 0, col2, 0, col3, 1);
 }
 
 bool in_range(float value, Range range) {
@@ -723,6 +710,7 @@ RayHit hit_sphere(Ray ray, int object_id, Range t_range, inout RayHit rayhit) {
     
     rayhit.normal = (ray_at(ray, root) - sphere.center) / sphere.radius;
     // rayhit.normal = normalize((ray_at(ray, root) - sphere.center) / sphere.radius * 2);
+    // rayhit.normal = normalize(vec3(vec4(ray_at(temp_ray, root), 0) * matrix) );
 
     return rayhit;
 }
@@ -768,12 +756,10 @@ RayHit hit_sphere(Ray ray, int object_id, Range t_range, inout RayHit rayhit) {
     // Set rayhit variables
     set_rayhit(rayhit, root, object_id);
     
-
-    // vec4 temp_point1 = inverse(matrix) * vec4(root * temp_ray.direction, 1);
-    // temp_point1 = temp_point1 / temp_point1.w;
-    // rayhit.point = vec3(temp_point1);
-    // rayhit.normal = root * temp_ray.direction +  temp_ray.origin; //+ vec3(1,0,0);
+    // NOTE: We don't have to set point here because t values will work both before and after transform
+    // rayhit.normal = normalize(vec3(vec4(rayhit.point, 0) * matrix) );
     rayhit.normal = normalize(vec3(vec4(ray_at(temp_ray, root), 0) * matrix) );
+
 
     return rayhit;
 }
@@ -928,15 +914,13 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         Sphere sphere = spheres.data[object_index];
         rayhit.mtl_index = sphere.mtl_index;
         rayhit.texture_id = sphere.texture_id;
+        rayhit.uv = sphere_get_uv(rayhit.point);
+        
         // #if !USE_INSTANCING
         // rayhit.normal = (rayhit.point - sphere.center) / sphere.radius;
         // #endif
 
-        // #if USE_INSTANCING
-        // rayhit.normal = (rayhit.point - sphere.center) / sphere.radius;
-        // #endif
 
-        rayhit.uv = sphere_get_uv(rayhit.point);
 
     // Procedure for hitting plane
     } else if (object_type == is_plane) {

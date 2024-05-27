@@ -98,7 +98,7 @@ starting_camera = 7
 script = ExtResource("2_3d2ma")
 
 [node name="Ground" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -100.5, -1)
+transform = Transform3D(100, 0, 0, 0, 100, 0, 0, 0, 100, 0, -100.5, -1)
 mesh = SubResource("SphereMesh_0d4mr")
 script = ExtResource("3_khgji")
 radius = 100.0
@@ -106,7 +106,7 @@ material = ExtResource("4_u3avn")
 mesh = SubResource("SphereMesh_0d4mr")
 
 [node name="PTSphere" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1)
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, -1)
 mesh = SubResource("SphereMesh_g3vh3")
 script = ExtResource("3_khgji")
 radius = 0.5
@@ -114,7 +114,7 @@ material = SubResource("Resource_jw4pa")
 mesh = SubResource("SphereMesh_g3vh3")
 
 [node name="PTSphere2" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -1)
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, -1, 0, -1)
 mesh = SubResource("SphereMesh_dej1u")
 script = ExtResource("3_khgji")
 radius = 0.5
@@ -122,7 +122,7 @@ material = ExtResource("6_l00f7")
 mesh = SubResource("SphereMesh_dej1u")
 
 [node name="Empty" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -1)
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, -1, 0, -1)
 mesh = SubResource("SphereMesh_rbt3m")
 script = ExtResource("3_khgji")
 radius = 0.4
@@ -130,7 +130,7 @@ material = SubResource("Resource_4ll4u")
 mesh = SubResource("SphereMesh_rbt3m")
 
 [node name="PTSphere3" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -1)
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 1, 0, -1)
 mesh = SubResource("SphereMesh_k0bio")
 script = ExtResource("3_khgji")
 radius = 0.5
@@ -138,7 +138,7 @@ material = ExtResource("7_4ko10")
 mesh = SubResource("SphereMesh_k0bio")
 
 [node name="PTSphere4" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 1)
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, -1, 0, 1)
 mesh = SubResource("SphereMesh_kku26")
 script = ExtResource("3_khgji")
 radius = 0.5
@@ -146,7 +146,7 @@ material = ExtResource("6_l00f7")
 mesh = SubResource("SphereMesh_kku26")
 
 [node name="PTSphere5" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 1.7)
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, -1, 0, 1.7)
 mesh = SubResource("SphereMesh_uki0b")
 script = ExtResource("3_khgji")
 radius = 0.5
@@ -154,7 +154,7 @@ material = ExtResource("6_l00f7")
 mesh = SubResource("SphereMesh_uki0b")
 
 [node name="PTSphere6" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1)
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 1, 0, 1)
 mesh = SubResource("SphereMesh_2yee7")
 script = ExtResource("3_khgji")
 radius = 0.4
@@ -162,7 +162,7 @@ material = ExtResource("6_l00f7")
 mesh = SubResource("SphereMesh_2yee7")
 
 [node name="PTSphere7" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1)
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 1, 0, 1)
 mesh = SubResource("SphereMesh_tkfdi")
 script = ExtResource("3_khgji")
 radius = 0.5
@@ -170,7 +170,7 @@ material = ExtResource("6_l00f7")
 mesh = SubResource("SphereMesh_tkfdi")
 
 [node name="Empty2" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.5)
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, -0.5)
 mesh = SubResource("SphereMesh_wrkmf")
 script = ExtResource("3_khgji")
 radius = 0.5

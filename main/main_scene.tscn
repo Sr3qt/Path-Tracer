@@ -66,7 +66,7 @@ fov = 20.0
 script = ExtResource("3_r6xni")
 
 [node name="PTSphere" type="MeshInstance3D" parent="PTScene"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.33345, 5.02253, -8.74285)
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, -5.33345, 5.02253, -8.74285)
 mesh = SubResource("SphereMesh_tuk0m")
 script = ExtResource("5_ims40")
 radius = 2.0
@@ -74,7 +74,7 @@ material = SubResource("Resource_3pihx")
 mesh = SubResource("SphereMesh_tuk0m")
 
 [node name="PTSphere2" type="MeshInstance3D" parent="PTScene"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.33345, 5.02253, 1.89297)
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, -5.33345, 5.02253, 1.89297)
 mesh = SubResource("SphereMesh_tuk0m")
 script = ExtResource("5_ims40")
 radius = 2.0
@@ -82,7 +82,7 @@ material = SubResource("Resource_3pihx")
 mesh = SubResource("SphereMesh_tuk0m")
 
 [node name="PTSphere3" type="MeshInstance3D" parent="PTScene"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.74208, 5.21853, -2.78733)
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 1.74208, 5.21853, -2.78733)
 mesh = SubResource("SphereMesh_tuk0m")
 script = ExtResource("5_ims40")
 radius = 2.0

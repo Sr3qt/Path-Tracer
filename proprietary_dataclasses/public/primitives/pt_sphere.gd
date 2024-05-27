@@ -2,7 +2,7 @@
 class_name PTSphere
 extends PTObject
 
-const USE_INSTANCING = !!true
+const USE_INSTANCING = true
 
 @export var radius : float = 1.0:
 	set(value):
@@ -12,6 +12,8 @@ const USE_INSTANCING = !!true
 		radius = value
 		if USE_INSTANCING:
 			scale = Vector3(radius, radius, radius)
+		else:
+			scale = Vector3.ONE
 		if _scene and is_node_ready():
 			_scene.update_object(self)
 
