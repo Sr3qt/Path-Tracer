@@ -19,6 +19,8 @@ List of features:
 
         -planes
     
+    - instancing of objects (spheres so far)
+
     - Material types:
         -diffuse
         -metallic
@@ -130,7 +132,22 @@ Enabling refraction tracking has a small performance impact
 // Emissive materials
 #define USE_EMISSION 0
 
+/*
+This is what will happen. also i think mesh = scene
+1. I will make a mesh class inherited from PTScene ( or just use PTScene).
+2. I will add support for nested scene like objects. BVHs will be able to be glued together in 
+a way that all objects still will be drawn.
 
+3. These meshes will have their own transforms. Meshes store transform_index'es to transforms 
+in an array. Meshes will probably need to send their own rayhits, then copy over relevant
+information when the ray caster goes up the bvh tree; Points and normals need to be transformed
+back.
+
+Spheres which need to be stretched or rotated are meshes with one object with default values. 
+
+Spheres will use the old structure.
+
+*/
 #define USE_INSTANCING 1
 
 

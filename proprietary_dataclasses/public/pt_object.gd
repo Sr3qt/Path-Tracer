@@ -6,7 +6,7 @@ extends MeshInstance3D
 
 # TODO Add support for lines and add abilitiy to visualize traced rays
 # TODO Add meshes
-# TODO Add instancing
+# TODO Add instancing only to meshes?
 
 const EPSILON = 1e-6
 const AABB_PADDING := Vector3(EPSILON, EPSILON, EPSILON)
