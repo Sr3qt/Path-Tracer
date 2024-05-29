@@ -182,9 +182,6 @@ const int is_procedural_spatial = 2; // For point hit procedural function
 const int is_sampled_texture = 1; // For uv sampling from texture buffer
 const int is_no_texture = 4;
 
-// TODO Maybe object_id can removed and the shader just removes the first
-//  matching ior and refraction_depth
-//  JUST USE MATERIAL INDEX AS IDENTIFIER 
 // Keeps values of inside_of neatly organized
 struct InsideOf {
     int material_index;
@@ -227,8 +224,8 @@ const vec4 default_color = vec4(0.7, 0.7, 0.9, 1);
 #if USE_EMISSION
 const vec4 default_color = vec4(0);
 #endif
-const int max_depth = 64 * 8; // Length of rayhits to visit stack in BVH 
 
+const int max_depth = 64 * 8; // Length of rayhits to visit stack in BVH 
 int refraction_bounces = 0; // Counts the number of times a ray has refracted
 
 int last_bvhnode = 0;
@@ -270,7 +267,7 @@ struct Camera {
     float gamma;
 };
 
-// TODO Make into vec4
+// TODO Pack range in Ray
 struct Ray {
     vec3 origin;
     vec3 direction;
@@ -383,10 +380,6 @@ struct RayHit {
     vec3 point; // Intersection point between sphere and ray
     vec3 normal;
     vec4 color; // Whatever color the rayhit is determined to be 
-
-    // Temp
-    // vec3 new_direction;
-    // vec3 new_origin;
 };
 
 struct Range {
@@ -418,7 +411,7 @@ layout(rgba32f, set = 0, binding = 0) uniform restrict image2D output_image;
 layout(set = 1, binding = 0, std430) restrict readonly buffer LODBuffer {
     int width;
     int height;
-    int samples_per_pixel; // How many rays are sent per pixel
+    int samples_per_pixel; // How many rays are sent per pixel, DEPRECATED
     int max_default_depth; // How many bounces is sampled, for normal rays
     int max_refraction_bounces; // How many total extra bounces can occur on refraction
 } LOD;
@@ -456,10 +449,6 @@ layout(push_constant, std430) restrict readonly uniform constants {
 
 // UTILITY FUNCTIONS
 // =================
-
-Ray empty_ray() {
-    return Ray(vec3(0), vec3(0));
-}
 
 RayHit empty_rayhit() {
     return RayHit(false, false, infinity, 0, 0, 0, vec2(0), vec3(0), vec3(0), vec4(0));
@@ -551,15 +540,6 @@ vec3 offset_ray(const vec3 point, const vec3 normal) {
         abs(point.y) < origin ? point.y + float_scale * normal.y : point_offset.y,
         abs(point.z) < origin ? point.z + float_scale * normal.z : point_offset.z
     );
-}
-
-
-mat4 construct_matrix(vec4 col0, vec4 col1, vec4 col2) {
-    return mat4(col0, col1, col2, vec4(0, 0, 0, 1));
-}
-
-mat4 construct_matrix(vec3 col0, vec3 col1, vec3 col2, vec3 col3) {
-    return mat4(col0, 0, col1, 0, col2, 0, col3, 1);
 }
 
 bool in_range(float value, Range range) {
@@ -726,8 +706,6 @@ RayHit hit_sphere(Ray ray, int object_id, Range t_range, inout RayHit rayhit) {
     set_rayhit(rayhit, root, object_id);
     
     rayhit.normal = (ray_at(ray, root) - sphere.center) / sphere.radius;
-    // rayhit.normal = normalize((ray_at(ray, root) - sphere.center) / sphere.radius * 2);
-    // rayhit.normal = normalize(vec3(vec4(ray_at(temp_ray, root), 0) * matrix) );
 
     return rayhit;
 }
@@ -739,10 +717,7 @@ RayHit hit_sphere(Ray ray, int object_id, Range t_range, inout RayHit rayhit) {
     Sphere sphere = spheres.data[get_object_index(object_id)];
 
     // DO MATREIX CALC
-    mat4 matrix = construct_matrix(sphere.col0, sphere.col1, sphere.col2, sphere.col3);
-
-    // vec4 temp_point = matrix * vec4(ray.origin, 1);
-    // temp_point = temp_point / temp_point.w;
+    mat4 matrix = mat4(sphere.col0, 0, sphere.col1, 0, sphere.col2, 0, sphere.col3, 1);
 
     Ray temp_ray = Ray(vec3(matrix * vec4(ray.origin, 1)), vec3(matrix * vec4(ray.direction, 0)));
 
@@ -774,16 +749,13 @@ RayHit hit_sphere(Ray ray, int object_id, Range t_range, inout RayHit rayhit) {
     set_rayhit(rayhit, root, object_id);
     
     // NOTE: We don't have to set point here because t values will work both before and after transform
-    // rayhit.normal = normalize(vec3(vec4(rayhit.point, 0) * matrix) );
     rayhit.normal = normalize(vec3(vec4(ray_at(temp_ray, root), 0) * matrix) );
-
 
     return rayhit;
 }
 #endif
 
 RayHit hit_spheres(Ray ray, Range t_range, inout RayHit rayhit) {
-    // if (near_zero(vec3(spheres.data[0].radius))) {return rayhit;} // Early return if no spheres in scene
     // Uses global scope sphere array to bypass function parameter limitations
     for (int i = 0; i < spheres.data.length(); ++i) {
         hit_sphere(ray, i + (is_sphere << 24), t_range, rayhit);
@@ -815,7 +787,6 @@ RayHit hit_plane(Ray ray, int object_id, Range t_range, inout RayHit rayhit) {
 }
 
 RayHit hit_planes(Ray ray, Range t_range, inout RayHit rayhit) {
-    if (near_zero(planes.data[0].normal)) {return rayhit;} // Early return if no planes in scene
     // Uses global scope planes array to bypass function parameter limitations
     for (int i = 0; i < planes.data.length(); ++i) {
         hit_plane(ray, i + (is_plane << 24), t_range, rayhit);
@@ -824,10 +795,10 @@ RayHit hit_planes(Ray ray, Range t_range, inout RayHit rayhit) {
 }
 
 
-
 // RAY-TRIANGLE INTERSECTION FUNCTIONS
 // ===================================
 
+// TODO Compare branched vs branchless when support for importing meshes 
 bool hit_triangle_MT_branchless(Ray ray, int object_id, Range t_range, inout RayHit rayhit) {
     // Implementation of the Moller-Trumbore algorithm made by BrunoLevy, fitted to project
     // https://stackoverflow.com/a/42752998
@@ -848,7 +819,6 @@ bool hit_triangle_MT_branchless(Ray ray, int object_id, Range t_range, inout Ray
     float u =  dot(E2,DAO) * invdet;
     float v = -dot(E1,DAO) * invdet;
     float t =  dot(AO,N)  * invdet;
-
 
     if ((det >= 1e-6 && in_range(t, t_range) && t < rayhit.t && u >= 0.0 && v >= 0.0 && (u+v) <= 1.0)) {
         set_rayhit(rayhit, t, object_id);
@@ -874,7 +844,6 @@ bool hit_triangle_MT(Ray ray, int object_id, Range t_range, inout RayHit rayhit)
     float det = -dot(ray.direction, N);
     // TODO Add global backface cull flag and object flag
 
-
     // If ray is parallel to triangle plane
     if (near_zero(det)) {
         return false;
@@ -884,7 +853,7 @@ bool hit_triangle_MT(Ray ray, int object_id, Range t_range, inout RayHit rayhit)
     vec3 AO = ray.origin - A;
     float t = dot(AO,N) * invdet;
 
-    
+    // If t is out of range
     if (!in_range(t, t_range) || t > rayhit.t) {
         return false;
     }
@@ -900,7 +869,6 @@ bool hit_triangle_MT(Ray ray, int object_id, Range t_range, inout RayHit rayhit)
 
     return false;
 }
-
 
 RayHit hit_object(Ray ray, Range range, inout RayHit rayhit, int object_id) {
     // Chooses the appropriate hit_ function for given object_type
@@ -918,7 +886,6 @@ RayHit hit_object(Ray ray, Range range, inout RayHit rayhit, int object_id) {
 // OTHER RAY FUNCTIONS
 // ===================
 
-
 RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
     // Resolves intersextion point, normal and other information from rayhit 
     rayhit.point = ray_at(ray_in, rayhit.t);
@@ -932,16 +899,9 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         rayhit.mtl_index = sphere.mtl_index;
         rayhit.texture_id = sphere.texture_id;
         rayhit.uv = sphere_get_uv(rayhit.point);
-        
-        // #if !USE_INSTANCING
-        // rayhit.normal = (rayhit.point - sphere.center) / sphere.radius;
-        // #endif
-
-
 
     // Procedure for hitting plane
     } else if (object_type == is_plane) {
-        rayhit.point = ray_at(ray_in, rayhit.t);
         Plane plane = planes.data[object_index];
         rayhit.mtl_index = plane.mtl_index;
         rayhit.texture_id = plane.texture_id;
@@ -949,7 +909,6 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
     
     // Procedure for hitting triangle
     } else if (object_type == is_triangle) {
-        rayhit.point = ray_at(ray_in, rayhit.t);
         Triangle triangle = triangles.data[object_index];
         rayhit.mtl_index = triangle.mtl_index;
         rayhit.texture_id = triangle.texture_id;
@@ -969,7 +928,6 @@ RayHit check_ray_hit(Ray ray, Range range) {
     
     hit_planes(ray, range, rayhit);
 
-    // TODO ADD intersection with skybox, would still count as not hit
     if (!rayhit.hit) {
         rayhit.color = default_color;
     }
@@ -1002,6 +960,9 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
     vec3 inv_direction = vec3(1. / ray.direction.x, 1. / ray.direction.y, 1. / ray.direction.z);
     bvec3 dir_is_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
 
+    // TODO Read on how to make improvements traversing bvh tree,
+    //  potentially make it less memory intensive
+    // TODO Give BVHNodes a is_overlapping flag for earlier returns
     int hit_check_count = 0;
     while (true) {
         if (current_index >= max_depth) {
@@ -1014,7 +975,6 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
         // If ray already hit something, ignore aabbs which are not in the same octant as the 
         //  ray origin relative to the intersection point
         if (rayhit.hit) {
-            // TODO Consider calculating point on-hit so we can skip these calculations
             new_point = ray.origin + ray.direction * rayhit.t;
             vec4 new_min = node.bbox.minimum;
             vec4 new_max = node.bbox.maximum;
@@ -1032,29 +992,29 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
             }
         }
 
-        if (!small_break) {
-            if (hit_AABB(ray, node.bbox, range, inv_direction, dir_is_negative)) {
-                // Loop over child indices to add them to stack or do hit check
-                for (int i = 0; i < max_children; i++) {
-                    int tochild = node.children[i];
+        if (!small_break && hit_AABB(ray, node.bbox, range, inv_direction, dir_is_negative)) {
+            // Loop over child indices to add them to stack or do hit check
+            for (int i = 0; i < max_children; i++) {
+                int tochild = node.children[i];
 
-                    // If child is invalid, skip
-                    if (tochild == 0) {continue;}
+                // If child is invalid, skip
+                if (tochild == 0) {continue;}
 
-                    if (get_object_type(tochild) == is_not_obj) {
-                        // If children[i] points to inner node, add it to to_visit
-                        to_visit[to_visit_i++] = tochild;
-                    } 
-                    else {
-                        // children[i] points to object_index, do a hit test
-                        // float t_before = rayhit.t;
-                        // bool hit_before = rayhit.hit;
-                        hit_object(ray, range, rayhit, tochild);
-                        hit_check_count++;
-                        
-                        // if (!hit_before && rayhit.hit) {last_bvhnode = node.self;}
-                        // if (hit_before && t_before > rayhit.t) {last_bvhnode = node.self;}
-                    }
+                if (get_object_type(tochild) == is_not_obj) {
+                    // If children[i] points to inner node, add it to to_visit
+                    to_visit[to_visit_i++] = tochild;
+                } 
+                else {
+                    // children[i] points to object_index, do a hit test
+                    
+                    // PART OF BVH TEST, SEE COMMENT BELOW
+                    // float t_before = rayhit.t;
+                    // bool hit_before = rayhit.hit;
+                    hit_object(ray, range, rayhit, tochild);
+                    hit_check_count++;
+                    
+                    // if (!hit_before && rayhit.hit) {last_bvhnode = node.self;}
+                    // if (hit_before && t_before > rayhit.t) {last_bvhnode = node.self;}
                 }
             }
         }
@@ -1067,7 +1027,6 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
         // ===================================================================
         // This attempt wasn't very succsessfull, performance was worse, but that might be because of
         // inoptimal bvh tree
-
 
         // // We can early break if all siblings have been checked and a hit is found
         // if (rayhit.hit && to_visit_i == 0) {
@@ -1118,7 +1077,6 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
     
     hit_planes(ray, range, rayhit);
 
-    // TODO ADD intersection with skybox, would still count as not hit
     if (!rayhit.hit) {
         rayhit.color = hit_skybox(ray, rayhit);
     }
@@ -1181,7 +1139,7 @@ int get_material(int material_index, int lowest_depth, bool ignore_self) {
 
 void remove_object_from_inside_of(int material_index) {
     int shift = 0;
-    // NOTE: inside_of_count - 1 tested to be faster than looping over entire array
+    // NOTE: inside_of_count tested to be faster than looping over entire array
     for (int i = 0; i < inside_of_count; i++) {
         InsideOf index = inside_of[i];
         if (material_index == index.material_index) {
@@ -1255,7 +1213,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     bool cannot_refract = eta * sin_theta > 1.;
 
     // Check for internal reflection
-    if (cannot_refract || (reflectance(eta, cos_theta) * (material.reflectivity) > noise(random))) {
+    if ((reflectance(eta, cos_theta) * (material.reflectivity) > noise(random)) || cannot_refract) {
         #if self_intersect_method==0
         return Ray(offset_ray(new_origin, normal), reflect(normalized_direction, normal));
         #endif
@@ -1331,8 +1289,6 @@ vec4 cast_ray(Ray ray, Range range) {
     // Casts a ray with bounces and returns the color of the ray
 
     // Turns out computing colors in the same loop was faster, TODO maybe reconsider
-    // Rayhit's color should determined in reverse order, so we to store them for later
-    // RayHit rayhits[64];
 
     // Calculate rayhits
     Ray new_ray = ray;
@@ -1354,6 +1310,7 @@ vec4 cast_ray(Ray ray, Range range) {
             rayhit = check_ray_hit(new_ray, range);
         }
         
+        // TODO Try using continues instead
         // Early break if no hit
         if (!rayhit.hit) {
             // Adds sky color as the last rayhit when miss
@@ -1393,16 +1350,13 @@ void main() {
     // VARIABLE DEFINITIONS
     // ====================
 
-    const float width = float(LOD.width);
-    const float height = float(LOD.height);
-
     // Calculate the vectors across the horizontal and down the vertical viewport edges.
     const vec3 viewport_u = push.camera.right * push.camera.viewport_width;
     const vec3 viewport_v = -push.camera.up * push.camera.viewport_height;
 
     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
-    const vec3 pixel_delta_u = viewport_u / width;
-    const vec3 pixel_delta_v = viewport_v / height;
+    const vec3 pixel_delta_u = viewport_u / LOD.width;
+    const vec3 pixel_delta_v = viewport_v / LOD.height;
 
     // Calculate the location of the upper left pixel.
     const vec3 viewport_upper_left = push.camera.pos - push.camera.forward * push.camera.focal_length -
@@ -1415,9 +1369,9 @@ void main() {
     const ivec3 UVi = ivec3(gl_GlobalInvocationID) + ivec3(push.image_offset, 0);
     const vec3 UV = vec3(UVi);
 
-    vec3 pixel_center = pixel00_loc + (UV.x * pixel_delta_u) + (UV.y * pixel_delta_v);
+    const vec3 pixel_center = pixel00_loc + (UV.x * pixel_delta_u) + (UV.y * pixel_delta_v);
 
-    random.seed  = hash(vec3(UV.xy, push.time));
+    random.seed = hash(vec3(UV.xy, push.time));
 
     // Initialize render flags
     parse_flags();
@@ -1455,5 +1409,3 @@ void main() {
 
     imageStore(output_image, UVi.xy, new_color);
 }
-
-
