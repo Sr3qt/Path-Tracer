@@ -9,6 +9,7 @@ extends Node
 ## Also really good overview
 ## https://meistdan.github.io/publications/bvh_star/paper.pdf
 
+# TODO Implement transforms for bvhnodes
 
 """ Base class for BVH trees. Inherit this object to make a specific
 algorithmic implemention.
@@ -211,6 +212,12 @@ func depth() -> int:
 # TODO Implement sah_cost fucntion
 func tree_sah_cost() -> void:
 	"Calculates the SAH cost for the whole tree"
+
+
+func merge_with(bvh_tree : PTBVHTree) -> void:
+	# TODO Implement later
+	pass
+
 
 
 func to_byte_array() -> PackedByteArray:

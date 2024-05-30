@@ -21,6 +21,8 @@ enum ObjectType {
 	MAX = 5
 }
 
+signal object_changed(object : PTObject)
+
 signal material_changed(
 	object : PTObject,
 	prev_material : PTMaterial,
@@ -33,6 +35,9 @@ signal texture_changed(
 	new_texture : PTTexture
 )
 
+signal deleted(object : PTObject)
+
+
 @export var material : PTMaterial = null:
 	set(value):
 		# NOTE: If material is cleared (not reset) it returns <Object#null> instead
@@ -42,11 +47,11 @@ signal texture_changed(
 
 		var prev_value := material
 		material = value
-		emit_signal("material_changed", self, prev_value, material)
+		material_changed.emit(self, prev_value, material)
 @export var texture : PTTexture:
 	set(value):
 		print("texture swapped")
-		emit_signal("texture_changed", self, texture, value)
+		texture_changed.emit(self, texture, value)
 		texture = value
 
 # The scene this object is part of
@@ -73,7 +78,7 @@ func _exit_tree() -> void:
 		var selection := EditorInterface.get_selection()
 		# This narrows down which objects are actually deleted vs. scene changed
 		if self in selection.get_selected_nodes():
-			_scene.queue_remove_object(self)
+			deleted.emit(self)
 	#else:
 		# I'm not sure if this is how runtime should be handled. Objects that the
 		#  user wants removed should be explicitly told so. If the whole scene is
@@ -87,7 +92,7 @@ func _notification(what : int) -> void:
 	match what:
 		NOTIFICATION_TRANSFORM_CHANGED:
 			if _scene and transform != transform_before:
-				_scene.update_object(self)
+				object_changed.emit(self)
 				transform_before = Transform3D(transform)
 
 

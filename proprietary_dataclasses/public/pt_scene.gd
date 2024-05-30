@@ -16,8 +16,19 @@ extends Node
 ## Removing an object from a child scene will also call to remove the object from
 ## the root_scene as well.
 ##
+## When a child PTScene c is added to a root_scene r, their BVHs will be merged,
+## meaning the root node of cs BVHTree will be added as a child node of an inner
+## node in rs BVHTree.
+##
 ## TODO Make a mesh be able to only exist in one place in memory when multiple
 ##  sub_scenes are using it
+##
+##
+## WE ARE PIVOTING AWAY FROM SUB SCENES AND TO ACTUAL MESH OBJECTS
+##
+## Nested meshes use their ancestors tranform to calculate their own global transform
+##
+## Changing type of scene to mesh should be easy and vice versa
 
 # Enum for different custom 3D object types
 const ObjectType = PTObject.ObjectType
@@ -173,9 +184,10 @@ func _ready() -> void:
 	material_added = false
 	procedural_texture_added = false
 
-	if not is_instance_valid(root_scene):
+	if is_root_scene:
 		PTRendererAuto.add_scene(self)
 	else:
+		root_scene.add_sub_scene(self)
 		print("not adding self to PTRenderer, self: ", self, " ancestor", root_scene)
 
 
@@ -192,9 +204,14 @@ func find_scene_ancestor() -> PTScene:
 	return null
 
 
+## Called by sub_scenes
 func add_sub_scene(scene : PTScene) -> void:
-	pass
+	if not scene in sub_scenes:
+		sub_scenes.append(scene)
 
+	# NOTE: Not currently implemented, will come later
+	if scene.bvh and bvh:
+		bvh.merge(scene.bvh)
 
 
 func get_object_array(type : ObjectType) -> Array:
@@ -221,7 +238,6 @@ func get_material_index(material : PTMaterial) -> int:
 		return _material_to_index[material] # UNSTATIC
 
 	return root_scene._material_to_index[material]  # UNSTATIC
-
 
 
 func get_texture_id(texture : PTTexture) -> int:
@@ -284,7 +300,6 @@ func _material_changed(
 		new_material : PTMaterial
 	) -> void:
 
-	print("materila canhjfn")
 	# If material is swapped there is no need to update whole materials buffer
 	var prev_material_added := material_added
 	var prev_material_removed := material_removed
@@ -300,20 +315,22 @@ func _material_changed(
 
 	# If material index changed the object has to be updated
 	if _add_material(new_material, true) != prev_material_index:
-		PTRendererAuto.update_object(self, object)
+		if is_root_scene:
+			PTRendererAuto.update_object(self, object)
 	else:
 		material_added = prev_material_added
 		material_removed = prev_material_removed
 
 	# We can buffer update new_material in the same spot as prev_material
-	if new_material:
+	if new_material and is_root_scene:
 		PTRendererAuto.update_material(self, new_material)
 
 	scene_changed = true
 
 
 func update_material(material : PTMaterial)  -> void:
-	PTRendererAuto.update_material(self, material)
+	if is_root_scene:
+		PTRendererAuto.update_material(self, material)
 
 	scene_changed = true
 
@@ -360,49 +377,65 @@ func update_object(object : PTObject) -> void:
 		bvh.update_aabb(object)
 
 	# Send request to update buffer
-	PTRendererAuto.update_object(self, object)
+	if is_root_scene:
+		PTRendererAuto.update_object(self, object)
 
 	scene_changed = true
 
 
+## NOTE: Don't know if i should allow user to add object via code and not by adding
+##  object to tree.
 func add_object(object : PTObject) -> void:
-	"""Adds an object to """
+	# IDK if this should be here or just return warning
+	if not object.get_parent():
+		print("Added child")
+		object._scene = self # Setting _scene first is important
+		add_child(object)
+
+	var is_parent := object._scene == self
+
+	if not is_root_scene:
+		print("sending node up" )
+		print(root_scene.is_root_scene)
+		root_scene.add_object(object)
+
 	var type := object.get_type()
 	var object_array : Array = get_object_array(type)
 	_object_to_object_index[object] = object_array.size()
 	object_array.append(object)
 
-	if not object.get_parent():
-		print("Added child")
-		add_child(object)
-
-	# Increment counters
 	object_count += 1
-
 	added_object = true
 	added_types[type] = true
 
 	scene_changed = true
 
+	# Connect signals
 	_add_material(object.material, true)
 	_add_texture(object.texture)
 
+	object.connect("object_changed", update_object)
 	object.connect("material_changed", _material_changed)
 	object.connect("texture_changed", _texture_changed)
+	object.connect("deleted", queue_remove_object)
 
 	# Add object to bvh
-	if bvh:
+	if bvh and is_parent:
 		bvh.add_object(object)
 
 	# If object is added after scene ready, update buffer
-	if is_node_ready():
+	if is_node_ready() and is_root_scene:
 		update_object(object)
 
 
 func queue_remove_object(object : PTObject) -> void:
 	if not object in objects_to_remove:
 		objects_to_remove.append(object)
-	PTRendererAuto.add_scene_to_remove_objects(self)
+
+	if is_root_scene:
+		PTRendererAuto.add_scene_to_remove_objects(self)
+	# TODO Find a way for PTRA to tell this non root_scene that its
+	#  object can be removed from the array
 
 
 ## Checks if any objects queued for removal are invalid. Returns false if
@@ -446,13 +479,15 @@ func remove_object(object : PTObject) -> void:
 		bvh.remove_object(object)
 
 	# Send request to update buffer
-	PTRendererAuto.remove_object(self, object)
+	if is_root_scene:
+		PTRendererAuto.remove_object(self, object)
 
 	scene_changed = true
 	object_count -= 1
 
 
 ## Removes objects that are queued for removal
+# TODO FIX support for removing multiple objects at the same time
 func remove_objects() -> void:
 	for object in objects_to_remove:
 		remove_object(object)

@@ -24,3 +24,9 @@ added refraction tracking commit is 44 fps
 
 For line counting
 tokei . -e /archive
+
+or 
+
+cloc . --exclude-dir=archive --exclude-ext=tscn,tres 
+
+

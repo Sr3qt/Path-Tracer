@@ -530,6 +530,7 @@ func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 		bytes += _scene.camera.to_byte_array()
 	# A higher divisor seems to give a more volatile local noise
 	#  If set to low, refractive materials might not multisample correctly
+	# TODO Make frame 1 always produce the same result, to eliminate pixelsd changing
 	var divisor := 100_000.0
 	var repeat := 10.0 # in seconds
 	var time : float = fmod(Time.get_ticks_msec() / divisor, (repeat * 1000) / divisor)
