@@ -681,7 +681,7 @@ func update_material(_scene : PTScene, material : PTMaterial) -> void:
 
 	var buffer : RID = scene_wd.material_buffer
 	var bytes : PackedByteArray = material.to_byte_array()
-	var offset : int = _scene.material_to_index[material] * bytes.size() # UNSTATIC
+	var offset : int = _scene.get_material_index(material) * bytes.size()
 	scene_wd.rd.buffer_update(
 			buffer,
 			offset,
@@ -712,7 +712,7 @@ func update_object(_scene : PTScene, object : PTObject) -> void:
 	var obj_bytes : PackedByteArray = object.to_byte_array()
 	scene_wd.rd.buffer_update(
 			buffer,
-			object.object_index * obj_bytes.size(),
+			_scene.get_object_index(object) * obj_bytes.size(),
 			obj_bytes.size(),
 			obj_bytes
 	)

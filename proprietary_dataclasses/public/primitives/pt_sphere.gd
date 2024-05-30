@@ -77,9 +77,9 @@ func to_byte_array() -> PackedByteArray:
 
 		bytes = (
 			PackedFloat32Array(PTObject.vector_to_array(ttransform.basis.x)).to_byte_array() +
-			PackedInt32Array([_scene.material_to_index[material]]).to_byte_array() +
+			PackedInt32Array([_scene.get_material_index(material)]).to_byte_array() +
 			PackedFloat32Array(PTObject.vector_to_array(ttransform.basis.y)).to_byte_array() +
-			PackedInt32Array([_scene.texture_to_texture_id[texture]]).to_byte_array() +
+			PackedInt32Array([_scene.get_texture_id(texture)]).to_byte_array() +
 			PackedFloat32Array(PTObject.vector_to_array(ttransform.basis.z)).to_byte_array() +
 			PackedInt32Array([0]).to_byte_array() +
 			PackedFloat32Array(PTObject.vector_to_array(ttransform.origin)).to_byte_array() +

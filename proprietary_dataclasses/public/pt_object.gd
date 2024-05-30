@@ -49,9 +49,6 @@ signal texture_changed(
 		emit_signal("texture_changed", self, texture, value)
 		texture = value
 
-# Indices relevant to _scene
-var object_index : int
-
 # The scene this object is part of
 var _scene : PTScene
 
@@ -60,17 +57,10 @@ var transform_before : Transform3D
 
 func _enter_tree() -> void:
 	# Find scene when entering tree if scene is not set
-	if not _scene:
-		var max_depth : int = 20
-		var counter : int = 0
-		var current_node : Node = get_parent()
-		while counter < max_depth and current_node:
-			if current_node is PTScene:
-				_scene = current_node as PTScene
-				_scene.add_object(self)
-				break
-			counter += 1
-			current_node = current_node.get_parent()
+	if not is_instance_valid(_scene):
+		_scene = find_scene_ancestor()
+		if _scene:
+			_scene.add_object(self)
 
 	transform_before = Transform3D(transform)
 	set_notify_transform(true)
@@ -126,6 +116,19 @@ static func aabb_to_byte_array(aabb : AABB) -> PackedByteArray:
 	return PackedFloat32Array(arr).to_byte_array()
 
 
+func find_scene_ancestor() -> PTScene:
+	var max_depth : int = 20
+	var counter : int = 0
+	var current_node : Node = get_parent()
+	while counter < max_depth and current_node:
+		if current_node is PTScene:
+			return (current_node as PTScene)
+		counter += 1
+		current_node = current_node.get_parent()
+
+	return null
+
+
 func get_type() -> ObjectType:
 	"""Returns the PTObject sub type"""
 	if self is PTSphere:
@@ -145,8 +148,8 @@ func get_global_aabb() -> AABB:
 
 func _get_property_byte_array() -> PackedByteArray:
 	var floats : Array[int] = [
-		_scene.material_to_index[material],
-		_scene.texture_to_texture_id[texture],
+		_scene.get_material_index(material),
+		_scene.get_texture_id(texture),
 		0,
 		0
 	]

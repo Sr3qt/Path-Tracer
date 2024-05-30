@@ -48,6 +48,8 @@ const objects_to_include : Array[PTObject.ObjectType] = [
 	PTObject.ObjectType.TRIANGLE,
 ]
 
+var scene : PTScene
+
 var root_node : BVHNode
 
 var object_to_leaf := {}
@@ -77,7 +79,7 @@ func _init(_max_children := 2) -> void:
 
 
 static func create_bvh_with_function_name(
-		scene : PTScene,
+		f_scene : PTScene,
 		_max_children : int,
 		_name : String,
 	) -> PTBVHTree:
@@ -87,33 +89,33 @@ static func create_bvh_with_function_name(
 		return
 	@warning_ignore("unsafe_cast")
 	var tempt := bvh_functions[_name] as Callable # UNSTATIC
-	return tempt.call(scene, _max_children) # UNSTATIC
+	return tempt.call(f_scene, _max_children) # UNSTATIC
 
 
-static func x_axis_sorted(scene : PTScene, _max_children : int) -> PTBVHTree:
+static func x_axis_sorted(f_scene : PTScene, _max_children : int) -> PTBVHTree:
 	var temp := PTBVHTree.new(_max_children)
-	temp.create_BVH(scene)
+	temp.create_BVH(f_scene)
 	temp.type = BVHType.X_SORTED
 	return temp
 
 
-static func y_axis_sorted(scene : PTScene, _max_children : int) -> PTBVHTree:
+static func y_axis_sorted(f_scene : PTScene, _max_children : int) -> PTBVHTree:
 	var temp := PTBVHTree.new(_max_children)
-	temp.create_BVH(scene, "y")
+	temp.create_BVH(f_scene, "y")
 	temp.type = BVHType.Y_SORTED
 	return temp
 
 
-static func z_axis_sorted(scene : PTScene, _max_children : int) -> PTBVHTree:
+static func z_axis_sorted(f_scene : PTScene, _max_children : int) -> PTBVHTree:
 	var temp := PTBVHTree.new(_max_children)
-	temp.create_BVH(scene, "z")
+	temp.create_BVH(f_scene, "z")
 	temp.type = BVHType.Z_SORTED
 	return temp
 
 
 # TODO Give a better name, and make a naming scheme to bvh classes with multiple
 #  algorithms
-func create_BVH(scene : PTScene, axis := "x") -> void:
+func create_BVH(f_scene : PTScene, axis := "x") -> void:
 	""" Takes in a PTScene and creates a BVH tree
 
 	The result of this function will be stored in a BVH_list.
@@ -125,9 +127,12 @@ func create_BVH(scene : PTScene, axis := "x") -> void:
 
 	"""
 
+	scene = f_scene
+
 	print("Starting to create %s-axis sorted BVH tree with %s primitives" %
 			[axis, scene.object_count])
 	var start_time := Time.get_ticks_usec()
+
 
 	var flat_object_list : Array[PTObject] = []
 
@@ -254,7 +259,7 @@ func _set_leaf(node : BVHNode, objects : Array[PTObject]) -> BVHNode:
 	# Transfer object indices from objects to nodes
 	for object in objects:
 		object_to_leaf[object] = node # UNSTATIC
-		node.object_indices.append(object.object_index)
+		node.object_indices.append(scene.get_object_index(object))
 
 	node.set_aabb()
 	leaf_count += 1

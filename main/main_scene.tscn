@@ -116,3 +116,9 @@ script = ExtResource("2_s1nmc")
 
 [node name="PTCamera" type="Camera3D" parent="PTScene2"]
 script = ExtResource("6_cd4v8")
+
+[node name="PTScene" type="Node" parent="PTScene2"]
+script = ExtResource("2_s1nmc")
+
+[node name="PTScene" type="Node" parent="PTScene2/PTScene"]
+script = ExtResource("2_s1nmc")

@@ -2,12 +2,22 @@
 class_name PTScene
 extends Node
 
-"""This class is to hold PTObjects, PTMaterials, PTCamera and PTBVH for a scene.
-
-It's responsibility is to keep track of objects and materials, as well as any
-changes to them or the BVH. The camera is self sufficient.
-
-"""
+## This class is to hold PTObjects, PTMaterials, PTCamera and PTBVH for a scene.
+##
+## It's responsibility is to keep track of objects and materials, as well as any
+## changes to them or the BVH. The camera is self sufficient.
+##
+## If a PTScene is a child node under a different PTScene node, then instead of
+## acting as scene, it will act more like a mesh. It will share buffers with the
+## ancestor node and PTCameras will not be registered.
+##
+## A root_scene is a PTScene with no other PTScenes as anscestors. A root_scene
+## copies all references of child PTScenes and sends puts them in its buffer.
+## Removing an object from a child scene will also call to remove the object from
+## the root_scene as well.
+##
+## TODO Make a mesh be able to only exist in one place in memory when multiple
+##  sub_scenes are using it
 
 # Enum for different custom 3D object types
 const ObjectType = PTObject.ObjectType
@@ -37,6 +47,12 @@ var camera_settings_values := {
 		#create_random_scene(0)
 		#print("Created random scene")
 
+## Any PTScene created lower in the tree will have this scene as their ancestor.
+##  They are sored in this array and can be thought of a list of meshes.
+##  Their objects are incorporated into this scenes object buffers as well as the
+##  BVHTree and BVHBuffer.
+var sub_scenes : Array[PTScene]
+
 # Object lists
 var spheres : Array[PTSphere]
 var planes : Array[PTPlane]
@@ -49,11 +65,13 @@ var objects := {
 	ObjectType.TRIANGLE : triangles,
 }
 
+var _object_to_object_index := {}
+
 ## NOTE: Because of refraction tracking in the shader, a material index is reserved
 ## for the IOR of air. Currently index 0 is reserved.
 var materials : Array[PTMaterial] = [null]
 # Inverse of materials
-var material_to_index := {null : 0}
+var _material_to_index := {null : 0}
 var material_ref_count := {null : 0}
 
 ## Whenever a material is removed, to not require massive buffer updates, a hole
@@ -62,7 +80,7 @@ var materials_holes : Array[int]
 
 var textures : Array[PTTexture] = [null]
 # Convert a texture into an id used by shader
-var texture_to_texture_id := {null : 0}
+var _texture_to_texture_id := {null : 0}
 var texture_ref_count := {null : 0}
 
 # Current BVH that would be used by the Renderer
@@ -72,12 +90,17 @@ var cached_bvhs : Array[PTBVHTree]
 
 # Whether any objects either moved, got added or removed.
 #  Camera is controlled seperately
-var scene_changed := false
+var scene_changed := false:
+	set(value):
+		if value and is_root_scene:
+			# Send signal to root_scene
+			pass
+		scene_changed = value
 
+## Current active camera. Not relevant if scene is mesh
 var camera : PTCamera
 
 var object_count : int = 0
-
 
 # Flags for update buffering
 var added_object := false # Whether an object (or material) was added this frame
@@ -96,17 +119,45 @@ var procedural_texture_removed := false
 #  to verify if they were deleted or just the scenes were swapped.
 var objects_to_remove : Array[PTObject]
 
+## Reference to the highest ancestor PTScene, if not null then this scene acts
+##  as a mesh and all PTRenderer actions will go through that root_scene. This scene
+##  will not have its own buffers.
+## If root_scene is null that means this scene is a top level PTScene and that it
+##  can interact with PTRenderer directly.
+var root_scene : PTScene
+
+## Whether this scene is a top level scene or is considered a mesh
+var is_root_scene : bool:
+	get:
+		return not is_instance_valid(root_scene)
+
 
 func _init() -> void:
 	# plus one is for sampled textures
 	added_types.resize(ObjectType.MAX + 1)
 
 
+func _enter_tree() -> void:
+	# Try to find the highest ancestor PTScene
+	if not is_instance_valid(root_scene):
+		var temp := find_scene_ancestor()
+		var counter : int = 0
+		var max_count : int = 20
+		while is_instance_valid(temp):
+			root_scene = temp
+			temp = temp.find_scene_ancestor()
+			counter += 1
+			if counter > max_count:
+				print("Max search depth reached on PTScene: ", self)
+				break
+
+
 func _ready() -> void:
 	if not Engine.is_editor_hint():
 		get_size()
 
-		if camera == null:
+		if not camera and is_root_scene:
+			# TODO Make camera find scene instead of the other way around
 			for child in get_children():
 				if child is PTCamera:
 					camera = child as PTCamera
@@ -122,7 +173,28 @@ func _ready() -> void:
 	material_added = false
 	procedural_texture_added = false
 
-	PTRendererAuto.add_scene(self)
+	if not is_instance_valid(root_scene):
+		PTRendererAuto.add_scene(self)
+	else:
+		print("not adding self to PTRenderer, self: ", self, " ancestor", root_scene)
+
+
+func find_scene_ancestor() -> PTScene:
+	var max_depth : int = 20
+	var counter : int = 0
+	var current_node : Node = get_parent()
+	while counter < max_depth and current_node:
+		if current_node is PTScene:
+			return (current_node as PTScene)
+		counter += 1
+		current_node = current_node.get_parent()
+
+	return null
+
+
+func add_sub_scene(scene : PTScene) -> void:
+	pass
+
 
 
 func get_object_array(type : ObjectType) -> Array:
@@ -135,6 +207,28 @@ func get_object_array(type : ObjectType) -> Array:
 			return triangles
 
 	return []
+
+
+func get_object_index(object : PTObject) -> int:
+	if is_root_scene:
+		return _object_to_object_index[object] # UNSTATIC
+
+	return root_scene._object_to_object_index[object] # UNSTATIC
+
+
+func get_material_index(material : PTMaterial) -> int:
+	if is_root_scene:
+		return _material_to_index[material] # UNSTATIC
+
+	return root_scene._material_to_index[material]  # UNSTATIC
+
+
+
+func get_texture_id(texture : PTTexture) -> int:
+	if is_root_scene:
+		return _texture_to_texture_id[texture] # UNSTATIC
+
+	return root_scene._texture_to_texture_id[texture] # UNSTATIC
 
 
 ## Returns material index of added material. used_by_object refers to whether or
@@ -150,7 +244,7 @@ func _add_material(material : PTMaterial, used_by_object := false) -> int:
 			# Add to list if not alreadt in it
 			material_index = materials.size()
 			materials.append(material)
-		material_to_index[material] = material_index # UNSTATIC
+		_material_to_index[material] = material_index # UNSTATIC
 		material.connect("material_changed", update_material)
 
 		material_added = true
@@ -178,7 +272,7 @@ func _remove_material(material : PTMaterial) -> void:
 
 		materials[material_index] = null
 		materials_holes.append(material_index)
-		material_to_index.erase(material)
+		_material_to_index.erase(material)
 		material.disconnect("material_changed", update_material)
 
 		material_removed = true
@@ -195,7 +289,7 @@ func _material_changed(
 	var prev_material_added := material_added
 	var prev_material_removed := material_removed
 
-	var prev_material_index : int = material_to_index[prev_material] # UNSTATIC
+	var prev_material_index : int = _material_to_index[prev_material] # UNSTATIC
 
 	if prev_material == new_material:
 		push_warning("PT: Changed material to the same material. Unexpected event.")
@@ -234,7 +328,7 @@ func _add_texture(texture : PTTexture) -> int:
 		texture_index = textures.size()
 		textures.append(texture)
 
-		texture_to_texture_id[texture] = texture.get_texture_id(texture_index) # UNSTATIC
+		_texture_to_texture_id[texture] = texture.get_texture_id(texture_index) # UNSTATIC
 		# TODO add texture updatiung buffer/ shader
 		#object.material.connect("material_changed", update_material)
 
@@ -275,7 +369,7 @@ func add_object(object : PTObject) -> void:
 	"""Adds an object to """
 	var type := object.get_type()
 	var object_array : Array = get_object_array(type)
-	object.object_index = object_array.size()
+	_object_to_object_index[object] = object_array.size()
 	object_array.append(object)
 
 	if not object.get_parent():
@@ -330,11 +424,11 @@ func check_objects_for_removal() -> bool:
 func remove_object(object : PTObject) -> void:
 	var type := object.get_type()
 	var object_array : Array = get_object_array(type)
-	object_array.remove_at(object.object_index)
+	object_array.remove_at(_object_to_object_index[object] as int)
 
 	# Update object_index of every object
 	for i in range(object_array.size()):
-		object_array[i].object_index = i # UNSTATIC
+		_object_to_object_index[object_array[i]] = i # UNSTATIC
 
 	# Only remove from tree if not in editor. Else it can potentially prevent
 	#  an object from being saved to scene on editor quit.
