@@ -127,6 +127,28 @@ func create_buffers() -> void:
 	print("Setting up buffers took %s ms" % ((Time.get_ticks_usec() - prev_time) / 1000.))
 
 
+func get_object_buffer(type : PTObject.ObjectType) -> RID:
+	match type:
+		PTObject.ObjectType.SPHERE:
+			return sphere_buffer
+		PTObject.ObjectType.PLANE:
+			return plane_buffer
+		PTObject.ObjectType.TRIANGLE:
+			return triangle_buffer
+	return RID()
+
+
+## Will create the object buffer corresponding to the given type
+func create_object_buffer(type : PTObject.ObjectType) -> void:
+	match type:
+		PTObject.ObjectType.SPHERE:
+			create_sphere_buffer()
+		PTObject.ObjectType.PLANE:
+			create_plane_buffer()
+		PTObject.ObjectType.TRIANGLE:
+			create_triangle_buffer()
+
+
 func create_lod_buffer() -> void:
 	LOD_buffer = _create_uniform(
 			_create_lod_byte_array(), CAMERA_SET_INDEX, LOD_BIND
@@ -270,12 +292,12 @@ func expand_object_buffer(
 		PTObject.ObjectType.NOT_OBJECT:
 			return false
 		PTObject.ObjectType.SPHERE:
-			if sphere_buffer_size >= _scene.spheres.size() and steps < 1:
+			if sphere_buffer_size >= _scene.objects.spheres.size() and steps < 1:
 				print("Sphere buffer already fits. No buffer expansion")
 				return false
 			if steps < 1:
 				@warning_ignore("integer_division")
-				var new_size : int = _scene.spheres.size() / SPHERE_COUNT_STEP + 1
+				var new_size : int = _scene.objects.spheres.size() / SPHERE_COUNT_STEP + 1
 				if new_size <= sphere_buffer_size:
 					return false
 				sphere_buffer_size = new_size
@@ -284,12 +306,12 @@ func expand_object_buffer(
 			free_rid(sphere_buffer)
 			create_sphere_buffer()
 		PTObject.ObjectType.PLANE:
-			if plane_buffer_size >= _scene.planes.size() and steps < 1:
+			if plane_buffer_size >= _scene.objects.planes.size() and steps < 1:
 				print("Plane buffer already fits. No buffer expansion")
 				return false
 			if steps < 1:
 				@warning_ignore("integer_division")
-				var new_size : int = _scene.planes.size() / PLANE_COUNT_STEP + 1
+				var new_size : int = _scene.objects.planes.size() / PLANE_COUNT_STEP + 1
 				if new_size <= plane_buffer_size:
 					return false
 				plane_buffer_size = new_size
@@ -298,12 +320,12 @@ func expand_object_buffer(
 			free_rid(plane_buffer)
 			create_plane_buffer()
 		PTObject.ObjectType.TRIANGLE:
-			if triangle_buffer_size >= _scene.triangles.size() and steps < 1:
+			if triangle_buffer_size >= _scene.objects.triangles.size() and steps < 1:
 				print("Triangle buffer already fits. No buffer expansion")
 				return false
 			if steps < 1:
 				@warning_ignore("integer_division")
-				var new_size : int = _scene.triangles.size() / TRIANGLE_COUNT_STEP + 1
+				var new_size : int = _scene.objects.triangles.size() / TRIANGLE_COUNT_STEP + 1
 				if new_size <= triangle_buffer_size:
 					return false
 				triangle_buffer_size = new_size
@@ -465,8 +487,8 @@ func _create_materials_byte_array() -> PackedByteArray:
 
 func _create_spheres_byte_array() -> PackedByteArray:
 	var bytes := PackedByteArray()
-	var size : int = _scene.spheres.size()
-	for sphere in _scene.spheres:
+	var size : int = _scene.objects.spheres.size()
+	for sphere in _scene.objects.spheres:
 		bytes += sphere.to_byte_array()
 
 	# Fill rest of bytes with empty
@@ -482,8 +504,8 @@ func _create_spheres_byte_array() -> PackedByteArray:
 
 func _create_planes_byte_array() -> PackedByteArray:
 	var bytes := PackedByteArray()
-	var size : int = _scene.planes.size()
-	for plane in _scene.planes:
+	var size : int = _scene.objects.planes.size()
+	for plane in _scene.objects.planes:
 		bytes += plane.to_byte_array()
 
 	# Fill rest of bytes with empty
@@ -499,14 +521,14 @@ func _create_planes_byte_array() -> PackedByteArray:
 
 func _create_triangles_byte_array() -> PackedByteArray:
 	var bytes := PackedByteArray()
-	var size : int = _scene.triangles.size()
-	for triangle in _scene.triangles:
+	var size : int = _scene.objects.triangles.size()
+	for triangle in _scene.objects.triangles:
 		bytes += triangle.to_byte_array()
 
 	# Fill rest of bytes with empty
 	if triangle_buffer_size == 0:
 		@warning_ignore("integer_division")
-		triangle_buffer_size = (size / PLANE_COUNT_STEP + 1) * PLANE_COUNT_STEP
+		triangle_buffer_size = (size / TRIANGLE_COUNT_STEP + 1) * TRIANGLE_COUNT_STEP
 
 	for i in range(triangle_buffer_size - size):
 		bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()

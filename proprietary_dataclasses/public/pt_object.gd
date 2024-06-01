@@ -5,23 +5,30 @@ extends MeshInstance3D
 """Base class for all visual objects"""
 
 # TODO Add support for lines and add abilitiy to visualize traced rays
-# TODO Add meshes
 # TODO Add instancing only to meshes?
 
 const EPSILON = 1e-6
 const AABB_PADDING := Vector3(EPSILON, EPSILON, EPSILON)
 
+# NOTE: This is helpful list of places to update when you add a new object type
+#	- This enum obviously
+#	- Remember to update get_type or add a get_type function to the new object
+#	- PTObjectContainer, variables and methods
+#	- PTWorkDispatcher, create_buffers needs a create_[object]_buffer also
+#		expand_object_buffer needs an entry
+#	- PTBVHTree needs the object_type in its objects_to_include list
 # Tied to object_type enum in shader
 enum ObjectType {
 	NOT_OBJECT = 0,
 	SPHERE = 1,
 	PLANE = 2,
 	TRIANGLE = 3,
-	MESH = 4,
-	MAX = 5
+	MAX = 4
 }
 
 signal object_changed(object : PTObject)
+
+signal deleted(object : PTObject)
 
 signal material_changed(
 	object : PTObject,
@@ -34,9 +41,6 @@ signal texture_changed(
 	prev_texture : PTTexture,
 	new_texture : PTTexture
 )
-
-signal deleted(object : PTObject)
-
 
 @export var material : PTMaterial = null:
 	set(value):
@@ -54,8 +58,15 @@ signal deleted(object : PTObject)
 		texture_changed.emit(self, texture, value)
 		texture = value
 
-# The scene this object is part of
+# The scene this object is part of.
 var _scene : PTScene
+## NOTE: If object has _mesh, then _mesh owns object, else _scene owns obejct
+var _mesh : PTMesh
+
+## Whether this object is a part of a mesh
+var is_meshlet : bool:
+	get:
+		return is_instance_valid(_mesh)
 
 var transform_before : Transform3D
 
@@ -63,9 +74,13 @@ var transform_before : Transform3D
 func _enter_tree() -> void:
 	# Find scene when entering tree if scene is not set
 	if not is_instance_valid(_scene):
-		_scene = find_scene_ancestor()
+		var temp := PTObject.find_scene_or_mesh_ancestor(self)
+		_scene = temp[0] as PTScene # UNSTATIC
+		_mesh = temp[1] as PTMesh # UNSTATIC
 		if _scene:
 			_scene.add_object(self)
+		if _mesh:
+			_mesh.add_object(self)
 
 	transform_before = Transform3D(transform)
 	set_notify_transform(true)
@@ -134,6 +149,25 @@ func find_scene_ancestor() -> PTScene:
 	return null
 
 
+## Returns mesh or scene ancestor, whichever is found first.
+## The first item of the returned array is PTScene or null, and
+## the second is PTMesh or null. Can return both as null.
+static func find_scene_or_mesh_ancestor(start_node : Node) -> Array:
+	var max_depth : int = 20
+	var counter : int = 0
+	var current_node : Node = start_node.get_parent()
+	while counter < max_depth and current_node:
+		if current_node is PTScene:
+			return [(current_node as PTScene), null]
+		if current_node is PTMesh:
+			return [null, (current_node as PTMesh)]
+		counter += 1
+		current_node = current_node.get_parent()
+
+	return [null, null]
+
+
+# TODO Make function in every object with their type
 func get_type() -> ObjectType:
 	"""Returns the PTObject sub type"""
 	if self is PTSphere:

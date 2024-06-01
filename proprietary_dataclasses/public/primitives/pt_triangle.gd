@@ -8,17 +8,17 @@ extends PTPrimitive3D
 	set(value):
 		vertex1 = value
 		if _scene and is_node_ready():
-			_scene.update_object(self)
+			object_changed.emit(self)
 @export var vertex2 := Vector3.FORWARD:
 	set(value):
 		vertex2 = value
 		if _scene and is_node_ready():
-			_scene.update_object(self)
+			object_changed.emit(self)
 @export var vertex3 := Vector3.ZERO:
 	set(value):
 		vertex3 = value
 		if _scene and is_node_ready():
-			_scene.update_object(self)
+			object_changed.emit(self)
 
 # TODO Add godot mesh updating for vertex*
 

@@ -15,7 +15,7 @@ const USE_INSTANCING = true
 		else:
 			scale = Vector3.ONE
 		if _scene and is_node_ready():
-			_scene.update_object(self)
+			object_changed.emit(self)
 
 
 func _init(
@@ -46,7 +46,7 @@ func _set(property : StringName, _value : Variant) -> bool:
 		# NOTE: Set position is for transform property in the editor,
 		#  while transform notification is for moving objects in 3D
 		if property == "position":
-			_scene.update_object(self)
+			object_changed.emit(self)
 
 	return false
 
@@ -55,13 +55,13 @@ func _get_aabb() -> AABB:
 	return AABB(-Vector3.ONE, Vector3.ONE * 2)
 
 
-
 func get_global_aabb() -> AABB:
 	"""Returns the objects aabb in world coordinates"""
 	if USE_INSTANCING:
 		return global_transform * _get_aabb()
 
 	return global_transform * get_aabb()
+
 
 func to_byte_array() -> PackedByteArray:
 	var bytes : PackedByteArray
@@ -74,7 +74,6 @@ func to_byte_array() -> PackedByteArray:
 	else:
 		# TODO NOTE When adding meshes change to transform
 		var ttransform := global_transform.affine_inverse()
-
 		bytes = (
 			PackedFloat32Array(PTObject.vector_to_array(ttransform.basis.x)).to_byte_array() +
 			PackedInt32Array([_scene.get_material_index(material)]).to_byte_array() +
@@ -85,7 +84,6 @@ func to_byte_array() -> PackedByteArray:
 			PackedFloat32Array(PTObject.vector_to_array(ttransform.origin)).to_byte_array() +
 			PackedInt32Array([0]).to_byte_array()
 			)
-
 
 	return bytes
 

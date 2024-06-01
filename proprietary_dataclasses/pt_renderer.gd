@@ -50,6 +50,7 @@ var wds : Array[PTWorkDispatcher] # An array of WorkDispatchers for each scene
 var scene : PTScene # The scene currently in use
 ## Uses same indexing as wds
 var scenes : Array[PTScene] # An array of scenes. Primarily used by plugin
+var scenes_to_remove : Array[PTScene]
 
 # A dicitionary that keeps track of multiple PTScenes within one Godot scene.
 # Only used by plugin, for runtime scene tracker see scene_to_scene_index
@@ -84,7 +85,7 @@ var is_camera_linked := true:
 
 # TODO remove and replace with ptscene variable
 # Controls the degree of the bvh tree passed to the gpu.
-var bvh_max_children : int = 8
+var bvh_order : int = 8
 
 # TODO Make render settings node similar to WorldEnvironment
 var render_width := 1920
@@ -210,7 +211,7 @@ func _process(_delta : float) -> void:
 	_update_scenes()
 
 
-# TODO Remove input event?
+# TODO Remove input event? Move to PTCameraFPS
 func _input(event : InputEvent) -> void:
 	if not Engine.is_editor_hint():
 		if event is InputEventKey:
@@ -257,8 +258,8 @@ func load_shader(ptscene : PTScene) -> RDShaderSource:
 
 	# Do changes
 	# Change BVH tree degree
-	res = res.replace("const int max_children = 2;",
-	"const int max_children = %s;" % bvh_max_children)
+	res = res.replace("const int order = 2;",
+	"const int order = %s;" % bvh_order)
 
 	# Insert procedural texture functions
 	const DEFUALT_FUNCTION_NAME = "procedural_texture"
@@ -423,6 +424,7 @@ func add_scene(new_ptscene : PTScene) -> void:
 	# If in editor, add translation layer from ptscenes owner to ptscene
 	if Engine.is_editor_hint():
 		if not new_ptscene.owner:
+			# Find root node of PTScene
 			var max_count : int = 100
 			var counter : int = 0
 			var current_node : Node = new_ptscene.get_parent()
@@ -462,9 +464,9 @@ func add_scene(new_ptscene : PTScene) -> void:
 	print(new_ptscene, " PTScene node")
 	print()
 
-	if new_ptscene.object_count > 0:
+	if new_ptscene.get_size() > 0:
 		var function_name : String = PTBVHTree.enum_to_dict[new_ptscene.default_bvh] # UNSTATIC
-		new_ptscene.create_BVH(bvh_max_children, function_name)
+		new_ptscene.create_BVH(bvh_order, function_name)
 
 	if not canvas:
 		canvas = create_canvas()
@@ -480,6 +482,8 @@ func add_scene(new_ptscene : PTScene) -> void:
 	# Set new_ptscene to scene if no scene was previously active and is in runtime
 	if not Engine.is_editor_hint() and no_scene_is_active:
 		change_scene(new_ptscene)
+
+	print((Time.get_ticks_usec()) / 1000., "ms ")
 
 
 func _plugin_scene_closed(scene_path : String) -> void:
@@ -506,7 +510,7 @@ func remove_scene(ptscene : PTScene) -> void:
 		# TODO Remove scene from root_node_to_scene when scene is deleted
 		# If ptscene is a reference under any other root nodes
 		for key : Node in root_node_to_scene.keys():
-			var value = root_node_to_scene[key]
+			var value : Dictionary = root_node_to_scene[key]
 			var _index : int = value["scenes"].find(ptscene)
 			if _index == -1:
 				continue
@@ -612,20 +616,21 @@ func create_canvas() -> MeshInstance3D:
 	return canvas
 
 
-func create_bvh(_max_children : int, function_name : String) -> void:
+# TODO Make more independent of "scene"
+func create_bvh(_order : int, function_name : String) -> void:
 	# TODO Rework shader to work with different bvh orders without reloading
 	#var _start = Time.get_ticks_usec()
 
 	# TODO Add support so that all objects in scene can be rendered by bvh
 	#  THis is a bug because the shader has a fixed stack size and cannot always
 	#  accommodate for every object count and bvh order
-	var prev_max : int = bvh_max_children
-	bvh_max_children = _max_children
+	var prev_max : int = bvh_order
+	bvh_order = _order
 
-	scene.create_BVH(bvh_max_children, function_name)
+	scene.create_BVH(bvh_order, function_name)
 	scene.scene_changed = true
 
-	if prev_max != bvh_max_children:
+	if prev_max != bvh_order:
 		load_shader(scene)
 
 	# NOTE: Removing and adding buffer seem to be as fast as trying to update it
@@ -642,11 +647,29 @@ func create_bvh(_max_children : int, function_name : String) -> void:
 
 ## Updates all scenes that have changed. Called at the end of _process
 func _update_scenes() -> void:
+	if scenes_to_remove and not scenes_to_remove.is_empty():
+		for _scene in scenes_to_remove:
+			var index : int = scene_to_scene_index[_scene]
+			var temp_wd : PTWorkDispatcher = wds.pop_at(index)
+			temp_wd.free_RIDs()
+			scenes.remove_at(index)
+
+			if scene == _scene:
+				scene = null
+			if wd == temp_wd:
+				wd = null
+
+
 	# Re-create buffers if asked for
 	for _scene in scenes:
 		if not is_instance_valid(_scene):
+			# TODO Print line of warning
 			push_warning("PT: Bad garbage collection. Scene: ", _scene,
 					" is still in PRenderer.scenes and is invalid.")
+			#print("hi")
+			#print(scene_to_scene_index[_scene])
+
+			scenes_to_remove.append(_scene)
 			return
 
 		if _scene.added_object or _scene.material_added:
@@ -698,16 +721,7 @@ func update_object(_scene : PTScene, object : PTObject) -> void:
 	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
 
 	# Update object buffer
-	var buffer : RID
-	match object.get_type():
-		PTObject.ObjectType.SPHERE:
-			buffer = scene_wd.sphere_buffer
-
-		PTObject.ObjectType.PLANE:
-			buffer = scene_wd.plane_buffer
-
-		PTObject.ObjectType.TRIANGLE:
-			buffer = scene_wd.triangle_buffer
+	var buffer : RID = scene_wd.get_object_buffer(object.get_type())
 
 	var obj_bytes : PackedByteArray = object.to_byte_array()
 	scene_wd.rd.buffer_update(
@@ -727,7 +741,7 @@ func update_object(_scene : PTScene, object : PTObject) -> void:
 			var bvh_bytes : PackedByteArray = node.to_byte_array()
 			scene_wd.rd.buffer_update(
 					scene_wd.BVH_buffer,
-					node.index * bvh_bytes.size(),
+					_scene.bvh.get_node_index(node) * bvh_bytes.size(),
 					bvh_bytes.size(),
 					bvh_bytes
 			)
@@ -738,13 +752,7 @@ func remove_object(_scene : PTScene, object : PTObject) -> void:
 	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
 
 	# Update object buffer
-	match object.get_type():
-		PTObject.ObjectType.SPHERE:
-			scene_wd.create_sphere_buffer()
-		PTObject.ObjectType.PLANE:
-			scene_wd.create_plane_buffer()
-		PTObject.ObjectType.TRIANGLE:
-			scene_wd.create_triangle_buffer()
+	scene_wd.create_object_buffer(object.get_type())
 
 	# Update bvh if possible
 	if _scene.bvh:
@@ -752,7 +760,7 @@ func remove_object(_scene : PTScene, object : PTObject) -> void:
 			var bvh_bytes : PackedByteArray = node.to_byte_array()
 			scene_wd.rd.buffer_update(
 					scene_wd.BVH_buffer,
-					node.index * bvh_bytes.size(),
+					_scene.bvh.get_node_index(node)  * bvh_bytes.size(),
 					bvh_bytes.size(),
 					bvh_bytes
 			)

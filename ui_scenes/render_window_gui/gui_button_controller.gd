@@ -58,8 +58,8 @@ func _ready() -> void:
 	show_bvh_depth.button_pressed = pt_window.show_bvh_depth
 
 	# TODO use scene values
-	bvh_order.value = PTRendererAuto.bvh_max_children
-	bvh_order.previous_value = PTRendererAuto.bvh_max_children
+	bvh_order.value = PTRendererAuto.bvh_order
+	bvh_order.previous_value = PTRendererAuto.bvh_order
 
 	# Set default values for option button
 	#  NOTE: Indexes should work as long as BVHType enums are positive

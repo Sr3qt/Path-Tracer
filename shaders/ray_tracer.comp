@@ -231,9 +231,9 @@ int refraction_bounces = 0; // Counts the number of times a ray has refracted
 int last_bvhnode = 0;
 
 // Maximum number of children a BVHNode can have
-const int max_children = 2; // Replaced by script preprocessor, do NOT touch this line
+const int order = 2; // Replaced by script preprocessor, do NOT touch this line
 // NOTE: For some weird reason adding unneseccary padding gives a small performance boost
-const int filler_const = -1 * int(mod(max_children, 4) - 4.); 
+const int filler_const = -1 * int(mod(order, 4) - 4.); 
 
 // Flags
 const int flag_size = 31;
@@ -398,7 +398,7 @@ struct AABB {
 struct BVHNode {
     // A BVHNode is an node in a n-ary tree. They are stored in a global BVH buffer. 
     // Every node points to either child nodes or to objects with object_ids.
-    int children[max_children];
+    int children[order];
     int temp_fill[filler_const];
     AABB bbox; 
 };
@@ -994,7 +994,7 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
 
         if (!small_break && hit_AABB(ray, node.bbox, range, inv_direction, dir_is_negative)) {
             // Loop over child indices to add them to stack or do hit check
-            for (int i = 0; i < max_children; i++) {
+            for (int i = 0; i < order; i++) {
                 int tochild = node.children[i];
 
                 // If child is invalid, skip

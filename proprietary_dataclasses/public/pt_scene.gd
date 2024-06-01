@@ -29,6 +29,10 @@ extends Node
 ## Nested meshes use their ancestors tranform to calculate their own global transform
 ##
 ## Changing type of scene to mesh should be easy and vice versa
+##
+## NOTE: Identify packedScrne Mesh instances by using scene_file_path. from docs:
+## "The original scene's file path, if the node has been instantiated from a PackedScene file.
+## Only scene root nodes contains this."
 
 # Enum for different custom 3D object types
 const ObjectType = PTObject.ObjectType
@@ -51,6 +55,8 @@ var camera_settings_values := {
 @export var starting_camera := CameraSetting.none
 
 @export var default_bvh := PTBVHTree.BVHType.X_SORTED
+# NOTE: Support for changing bvh_order will be added later
+#@export var bvh_order := 8
 
 @export var create_random_scene_ := false:
 	set(value):
@@ -58,25 +64,12 @@ var camera_settings_values := {
 		#create_random_scene(0)
 		#print("Created random scene")
 
-## Any PTScene created lower in the tree will have this scene as their ancestor.
-##  They are sored in this array and can be thought of a list of meshes.
-##  Their objects are incorporated into this scenes object buffers as well as the
-##  BVHTree and BVHBuffer.
-var sub_scenes : Array[PTScene]
+# Objects owned by the scene
+var scene_objects : PTObjectContainer
+# Objects owned by the scene and objects owned by meshes
+var objects : PTObjectContainer
 
-# Object lists
-var spheres : Array[PTSphere]
-var planes : Array[PTPlane]
-var triangles : Array[PTTriangle]
-
-# Simple dict to choose the right list. get_object_array is preferred
-var objects := {
-	ObjectType.SPHERE : spheres,
-	ObjectType.PLANE : planes,
-	ObjectType.TRIANGLE : triangles,
-}
-
-var _object_to_object_index := {}
+var meshes : Array[PTMesh]
 
 ## NOTE: Because of refraction tracking in the shader, a material index is reserved
 ## for the IOR of air. Currently index 0 is reserved.
@@ -103,15 +96,10 @@ var cached_bvhs : Array[PTBVHTree]
 #  Camera is controlled seperately
 var scene_changed := false:
 	set(value):
-		if value and is_root_scene:
-			# Send signal to root_scene
-			pass
 		scene_changed = value
 
 ## Current active camera. Not relevant if scene is mesh
 var camera : PTCamera
-
-var object_count : int = 0
 
 # Flags for update buffering
 var added_object := false # Whether an object (or material) was added this frame
@@ -129,45 +117,21 @@ var procedural_texture_removed := false
 # Mainly for editor tree. Nodes need to be kept for a little longer after exit_tree
 #  to verify if they were deleted or just the scenes were swapped.
 var objects_to_remove : Array[PTObject]
-
-## Reference to the highest ancestor PTScene, if not null then this scene acts
-##  as a mesh and all PTRenderer actions will go through that root_scene. This scene
-##  will not have its own buffers.
-## If root_scene is null that means this scene is a top level PTScene and that it
-##  can interact with PTRenderer directly.
-var root_scene : PTScene
-
-## Whether this scene is a top level scene or is considered a mesh
-var is_root_scene : bool:
-	get:
-		return not is_instance_valid(root_scene)
+var meshes_to_remove : Array[PTMesh]
 
 
 func _init() -> void:
 	# plus one is for sampled textures
+	# TODO Change added_types to only handle objects
 	added_types.resize(ObjectType.MAX + 1)
-
-
-func _enter_tree() -> void:
-	# Try to find the highest ancestor PTScene
-	if not is_instance_valid(root_scene):
-		var temp := find_scene_ancestor()
-		var counter : int = 0
-		var max_count : int = 20
-		while is_instance_valid(temp):
-			root_scene = temp
-			temp = temp.find_scene_ancestor()
-			counter += 1
-			if counter > max_count:
-				print("Max search depth reached on PTScene: ", self)
-				break
+	objects = PTObjectContainer.new()
 
 
 func _ready() -> void:
 	if not Engine.is_editor_hint():
 		get_size()
 
-		if not camera and is_root_scene:
+		if not camera:
 			# TODO Make camera find scene instead of the other way around
 			for child in get_children():
 				if child is PTCamera:
@@ -184,67 +148,67 @@ func _ready() -> void:
 	material_added = false
 	procedural_texture_added = false
 
-	if is_root_scene:
-		PTRendererAuto.add_scene(self)
-	else:
-		root_scene.add_sub_scene(self)
-		print("not adding self to PTRenderer, self: ", self, " ancestor", root_scene)
-
-
-func find_scene_ancestor() -> PTScene:
-	var max_depth : int = 20
-	var counter : int = 0
-	var current_node : Node = get_parent()
-	while counter < max_depth and current_node:
-		if current_node is PTScene:
-			return (current_node as PTScene)
-		counter += 1
-		current_node = current_node.get_parent()
-
-	return null
-
-
-## Called by sub_scenes
-func add_sub_scene(scene : PTScene) -> void:
-	if not scene in sub_scenes:
-		sub_scenes.append(scene)
-
-	# NOTE: Not currently implemented, will come later
-	if scene.bvh and bvh:
-		bvh.merge(scene.bvh)
-
-
-func get_object_array(type : ObjectType) -> Array:
-	match type:
-		ObjectType.SPHERE:
-			return spheres
-		ObjectType.PLANE:
-			return planes
-		ObjectType.TRIANGLE:
-			return triangles
-
-	return []
+	PTRendererAuto.add_scene(self)
 
 
 func get_object_index(object : PTObject) -> int:
-	if is_root_scene:
-		return _object_to_object_index[object] # UNSTATIC
-
-	return root_scene._object_to_object_index[object] # UNSTATIC
+	return objects._object_to_object_index[object] # UNSTATIC
 
 
 func get_material_index(material : PTMaterial) -> int:
-	if is_root_scene:
-		return _material_to_index[material] # UNSTATIC
-
-	return root_scene._material_to_index[material]  # UNSTATIC
+	return _material_to_index[material] # UNSTATIC
 
 
 func get_texture_id(texture : PTTexture) -> int:
-	if is_root_scene:
-		return _texture_to_texture_id[texture] # UNSTATIC
+	return _texture_to_texture_id[texture] # UNSTATIC
 
-	return root_scene._texture_to_texture_id[texture] # UNSTATIC
+
+func add_mesh(mesh : PTMesh) -> void:
+	#Add objects
+	meshes.append(mesh)
+	objects.merge(mesh.objects)
+
+	# TODO Bind new objects signals
+
+	# Bind signals
+	mesh.transform_changed.connect(_update_mesh)
+	mesh.deleted.connect(remove_mesh)
+
+	# TODO Update bvh, add mesh bvh to this bvh tree
+	if bvh:
+		if bvh.order < mesh.bvh.order:
+			push_error("PT: BVH order ", bvh.order, " of scene does not ",
+			"allow for BVH order ", mesh.bvh.order, " of mesh.")
+			return
+		elif bvh.order > mesh.bvh.order:
+			push_warning("PT: BVH order of mesh is ", mesh.bvh.order, ", ",
+			"while BVH order of scene is ", bvh.order, ".\n Mesh BVH order ",
+			"will be changed to ", bvh.order, ".")
+			mesh.bvh.order = bvh.order
+
+		bvh.merge_with(mesh.bvh)
+
+
+@warning_ignore("unused_parameter")
+func _update_mesh(mesh : PTMesh) -> void:
+	# TODO Update mesh and sub-meshes transform in buffer, update bvh aabbs
+	pass
+
+
+func remove_mesh(mesh : PTMesh) -> void:
+	print("removing mesh")
+	# TODO Remove mesh and objects from scene and bvh, as well as buffers
+	meshes.erase(mesh)
+
+	for _objects in mesh.objects.get_object_lists():
+		for object : PTObject in _objects:
+			remove_object(object)
+
+	mesh.transform_changed.disconnect(_update_mesh)
+	mesh.deleted.disconnect(remove_mesh)
+
+	if bvh:
+		bvh.remove_subtree(mesh.bvh.root_node)
 
 
 ## Returns material index of added material. used_by_object refers to whether or
@@ -253,7 +217,7 @@ func _add_material(material : PTMaterial, used_by_object := false) -> int:
 	# Check for object reference in array
 	var material_index : int = materials.find(material)
 	if material_index == -1:
-		if materials_holes:
+		if not materials_holes.is_empty():
 			material_index = materials_holes.pop_back() # UNSTATIC
 			materials[material_index] = material
 		else:
@@ -315,22 +279,20 @@ func _material_changed(
 
 	# If material index changed the object has to be updated
 	if _add_material(new_material, true) != prev_material_index:
-		if is_root_scene:
-			PTRendererAuto.update_object(self, object)
+		PTRendererAuto.update_object(self, object)
 	else:
 		material_added = prev_material_added
 		material_removed = prev_material_removed
 
 	# We can buffer update new_material in the same spot as prev_material
-	if new_material and is_root_scene:
+	if new_material:
 		PTRendererAuto.update_material(self, new_material)
 
 	scene_changed = true
 
 
 func update_material(material : PTMaterial)  -> void:
-	if is_root_scene:
-		PTRendererAuto.update_material(self, material)
+	PTRendererAuto.update_material(self, material)
 
 	scene_changed = true
 
@@ -358,6 +320,7 @@ func _add_texture(texture : PTTexture) -> int:
 	return texture.get_texture_id(texture_index) if texture else 0
 
 
+@warning_ignore("unused_parameter")
 func _texture_changed(
 		object : PTObject,
 		prev_texture : PTTexture,
@@ -377,8 +340,7 @@ func update_object(object : PTObject) -> void:
 		bvh.update_aabb(object)
 
 	# Send request to update buffer
-	if is_root_scene:
-		PTRendererAuto.update_object(self, object)
+	PTRendererAuto.update_object(self, object)
 
 	scene_changed = true
 
@@ -392,19 +354,10 @@ func add_object(object : PTObject) -> void:
 		object._scene = self # Setting _scene first is important
 		add_child(object)
 
-	var is_parent := object._scene == self
-
-	if not is_root_scene:
-		print("sending node up" )
-		print(root_scene.is_root_scene)
-		root_scene.add_object(object)
-
 	var type := object.get_type()
-	var object_array : Array = get_object_array(type)
-	_object_to_object_index[object] = object_array.size()
-	object_array.append(object)
+	objects.add_object(object)
 
-	object_count += 1
+	# For making sure buffer fits
 	added_object = true
 	added_types[type] = true
 
@@ -415,16 +368,16 @@ func add_object(object : PTObject) -> void:
 	_add_texture(object.texture)
 
 	object.connect("object_changed", update_object)
+	object.connect("deleted", queue_remove_object)
 	object.connect("material_changed", _material_changed)
 	object.connect("texture_changed", _texture_changed)
-	object.connect("deleted", queue_remove_object)
 
 	# Add object to bvh
-	if bvh and is_parent:
+	if bvh and not object.is_meshlet:
 		bvh.add_object(object)
 
 	# If object is added after scene ready, update buffer
-	if is_node_ready() and is_root_scene:
+	if is_node_ready():
 		update_object(object)
 
 
@@ -432,46 +385,44 @@ func queue_remove_object(object : PTObject) -> void:
 	if not object in objects_to_remove:
 		objects_to_remove.append(object)
 
-	if is_root_scene:
-		PTRendererAuto.add_scene_to_remove_objects(self)
-	# TODO Find a way for PTRA to tell this non root_scene that its
-	#  object can be removed from the array
+	PTRendererAuto.add_scene_to_remove_objects(self)
 
 
 ## Checks if any objects queued for removal are invalid. Returns false if
-##  no objects are valid, else true.
+##  no objects are valid, else true. Also checks meshes
 func check_objects_for_removal() -> bool:
 	# Don't remove nodes that are still in the editor tree from buffers
 	if Engine.is_editor_hint():
-		var i : int = 0
-		for object in objects_to_remove:
-			if object.is_inside_tree():
-				objects_to_remove.remove_at(i)
-				i -= 1
-			i += 1
+		var offset : int = 0
+		for i in range(objects_to_remove.size()):
+			if objects_to_remove[i].is_inside_tree():
+				objects_to_remove.remove_at(i + offset)
+				offset -= 1
+		offset = 0
+		for i in range(meshes_to_remove.size()):
+			if meshes_to_remove[i].is_inside_tree():
+				meshes_to_remove.remove_at(i + offset)
+				offset -= 1
 
-	return not objects_to_remove.is_empty()
+	return not objects_to_remove.is_empty() or not meshes_to_remove.is_empty()
 
 
 ## Removes an object from the scene and tree. The object is not deleted.
 func remove_object(object : PTObject) -> void:
-	var type := object.get_type()
-	var object_array : Array = get_object_array(type)
-	object_array.remove_at(_object_to_object_index[object] as int)
+	objects.remove_object(object)
 
-	# Update object_index of every object
-	for i in range(object_array.size()):
-		_object_to_object_index[object_array[i]] = i # UNSTATIC
-
+	# NOTE: Might be unneccessary
 	# Only remove from tree if not in editor. Else it can potentially prevent
 	#  an object from being saved to scene on editor quit.
 	if object.is_inside_tree() and not Engine.is_editor_hint():
 		remove_child(object)
+
 	object._scene = null
 
 	# TODO Remove from texture list if object was their last user
 
-
+	object.disconnect("object_changed", update_object)
+	object.disconnect("deleted", queue_remove_object)
 	object.disconnect("material_changed", _material_changed)
 	object.disconnect("texture_changed", _texture_changed)
 
@@ -479,42 +430,37 @@ func remove_object(object : PTObject) -> void:
 		bvh.remove_object(object)
 
 	# Send request to update buffer
-	if is_root_scene:
-		PTRendererAuto.remove_object(self, object)
+	PTRendererAuto.remove_object(self, object)
+
+	if object.is_meshlet:
+		object._mesh.remove_object(object)
 
 	scene_changed = true
-	object_count -= 1
 
 
 ## Removes objects that are queued for removal
 # TODO FIX support for removing multiple objects at the same time
 func remove_objects() -> void:
+	for mesh in meshes_to_remove:
+		remove_mesh(mesh)
+	meshes_to_remove.clear()
 	for object in objects_to_remove:
 		remove_object(object)
 	objects_to_remove.clear()
 
 
-static func array2vec(a : Array[float]) -> Vector3:
-	return Vector3(a[0], a[1], a[2])
-
-
 func get_size() -> int:
 	"""Calculates the number of primitives stored in the scene"""
-	object_count = 0
-
-	for _objects : Array in objects.values(): # UNSTATIC
-		object_count += _objects.size()
-
-	return object_count
+	return objects.object_count
 
 
-func create_BVH(max_children : int, function_name : String) -> void:
+func create_BVH(order : int, function_name : String) -> void:
 	# TODO add check to reuse BVH if it is in cached_bvhs
 
 	if bvh:
 		cached_bvhs.append(bvh)
 
-	bvh = PTBVHTree.create_bvh_with_function_name(self, max_children, function_name)
+	bvh = PTBVHTree.create_bvh_with_function_name(objects, order, function_name)
 
 
 func set_camera_setting(cam : CameraSetting) -> void:

@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3 uid="uid://yy1pqk3nwqvd"]
+
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_mesh.gd" id="1_g5lwj"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_sphere.gd" id="2_use3l"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_wfme2"]
+radius = 1.0
+height = 2.0
+
+[node name="PTMesh" type="Node3D"]
+script = ExtResource("1_g5lwj")
+
+[node name="PTSphere" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_wfme2")
+script = ExtResource("2_use3l")
+mesh = SubResource("SphereMesh_wfme2")
