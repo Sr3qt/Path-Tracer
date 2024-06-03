@@ -6,24 +6,21 @@ extends Node
 # TODO Turn my BVH Algorithm into a seperate file
 # TODO If i turn BVHNodes into actual nodes i can save and load BVHTrees
 
+## Base class for BVH trees.
+##
+##
 ## Nice reading summary:
 ## https://hackmd.io/@zOZhMrk6TWqOaocQT3Oa0A/HJUqrveG5
-
+##
 ## Also really good overview
 ## https://meistdan.github.io/publications/bvh_star/paper.pdf
+##
+## The user can add their own algorithmic implementation of the creation code.
+## After all BVHNodes point to their respective child nodes and objects, index_tree
+## should be called to assure it will work properly with the rest of the Engine.
 
-""" Base class for BVH trees. Inherit this object to make a specific
-algorithmic implemention.
-
-Such implementations should have a create_BVH function which creates the actual
-tree. Creation time and SAH score should also be recorded after creation.
-"""
-
-# NOTE: Should only be used for exports. Also should not designate type but function
 ## Enum of different possible BVH algorithms, should be updated as more algortithms
 ##  are added. Only positive numbers (and zero) are allowed as values.
-## The user can add their of own bvh functions to bvh_functions. The only
-##  non-optional arguments needs to a PTScene object followed by a maximum child count.
 enum BVHType {
 	X_SORTED,
 	Y_SORTED,
@@ -37,12 +34,16 @@ const enum_to_dict := {
 }
 
 static var built_in_bvh_functions := {
-	"X-Axis Sorted" : PTBVHTree.x_axis_sorted,
-	"Y-Axis Sorted" : PTBVHTree.y_axis_sorted,
-	"Z-Axis Sorted" : PTBVHTree.z_axis_sorted,
+	"X-Axis Sorted" : PTBVHAxisSort.x_axis_sorted,
+	"Y-Axis Sorted" : PTBVHAxisSort.y_axis_sorted,
+	"Z-Axis Sorted" : PTBVHAxisSort.z_axis_sorted,
 }
 
-# TODO Add setter function for ease of use
+# TODO Should add config file where the user can specify functions and names
+#  And they will be added to enum/dict either here or from a Autoload
+## The user can add their of own bvh functions to the bvh_functions dict. The only
+##  non-optional arguments needs to be a PTObjectContainer followed by a maximum child count.
+##  Of course it also needs to return a PTBVHTree or subtype.
 static var bvh_functions := built_in_bvh_functions
 
 # TODO add support for meshes
@@ -77,7 +78,6 @@ var type : BVHType
 var creation_time : int # In usecs
 var SAH_cost : float
 
-var _index := 0 # Used to keep track of index when creating bvh_list
 var updated_nodes : Array[BVHNode] = [] # Nodes that need to update their buffer
 
 
@@ -100,81 +100,10 @@ static func create_bvh_with_function_name(
 		return
 	@warning_ignore("unsafe_cast")
 	var tempt := bvh_functions[_name] as Callable # UNSTATIC
-	return tempt.call(objects, _order) # UNSTATIC
-
-
-static func x_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHTree:
-	var temp := PTBVHTree.new(_order)
-	temp.create_BVH(objects)
-	temp.type = BVHType.X_SORTED
-	return temp
-
-
-static func y_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHTree:
-	var temp := PTBVHTree.new(_order)
-	temp.create_BVH(objects, "y")
-	temp.type = BVHType.Y_SORTED
-	return temp
-
-
-static func z_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHTree:
-	var temp := PTBVHTree.new(_order)
-	temp.create_BVH(objects, "z")
-	temp.type = BVHType.Z_SORTED
-	return temp
-
-
-# TODO Give a better name, and make a naming scheme to bvh classes with multiple
-#  algorithms
-func create_BVH(objects : PTObjectContainer, axis := "x") -> void:
-	""" Takes in an PTObjectContainer and creates a BVH tree
-
-	The result of this function will be stored in a bvh_list.
-	The nodes in bvh_list will contain indices to scene's objects and
-	object pointers.
-
-
-	The bytes created can directly be passed to the GPU.
-
-	"""
-
-	object_container = objects
-
-	print("Starting to create %s-axis sorted BVH tree with %s primitives" %
-			[axis, objects.object_count])
-	var start_time := Time.get_ticks_usec()
-
-
-	var flat_object_list : Array[PTObject] = []
-
-	for _type in objects_to_include:
-		flat_object_list.append_array(objects.get_object_array(_type))
-
-	object_count = flat_object_list.size()
-
-	# Sort according to given axis
-	var _axis : int = 0
-	match axis:
-		"y":
-			_axis = 1
-		"z":
-			_axis = 2
-	var axis_sort := func(a : PTObject, b : PTObject) -> bool:
-		return a.get_global_aabb().position[_axis] > b.get_global_aabb().end[_axis]
-
-	flat_object_list.sort_custom(axis_sort)
-
-	# Creates tree recursively
-	root_node.add_children(_recursive_split(flat_object_list, root_node))
-
-	# Indexes tree recursively
-	bvh_list.resize(size())
-	_index_node(root_node)
-
-	creation_time = Time.get_ticks_usec() - start_time
-
-	print("Finished creating %s-axis sorted BVH tree with %s inner nodes and \
-%s leaf nodes in %s ms." % [axis, inner_count, leaf_count, creation_time / 1000.])
+	var start_time : int = Time.get_ticks_usec()
+	var bvh : PTBVHTree = tempt.call(objects, _order) # UNSTATIC
+	bvh.creation_time = (Time.get_ticks_usec() - start_time)
+	return bvh
 
 
 func update_aabb(object : PTObject) -> void:
@@ -215,6 +144,36 @@ func remove_object(object : PTObject) -> void:
 
 func get_node_index(node : BVHNode) -> int:
 	return node_to_index[node]
+
+
+## Sets the required indexes required for the BVHTree to work with the engine
+func index_tree() -> void:
+	bvh_list = []
+	object_to_leaf = {}
+	node_to_index = {}
+	inner_count = 0
+	leaf_count = 0
+	object_count = 0
+
+	_index_node(root_node)
+
+
+func _index_node(node : BVHNode) -> void:
+	node_to_index[node] = bvh_list.size() # UNSTATIC
+	bvh_list.append(node)
+	inner_count += 1
+
+	for child in node.children:
+		if child.is_leaf:
+			node_to_index[child] = bvh_list.size()  # UNSTATIC
+			bvh_list.append(child)
+			leaf_count += 1
+			object_count += child.object_list.size()
+			for object in child.object_list:
+				object_to_leaf[object] = child # UNSTATIC
+			continue
+
+		_index_node(child)
 
 
 func size() -> int:
@@ -319,63 +278,6 @@ func to_byte_array() -> PackedByteArray:
 	for node in bvh_list:
 		bytes += node.to_byte_array()
 	return bytes
-
-
-func _recursive_split(object_list : Array[PTObject], parent : BVHNode) -> Array[BVHNode]:
-	# Will distriute objects evenly with first indices having slightly more
-	@warning_ignore("integer_division")
-	var even_division : int = object_list.size() / order
-	var leftover : int = object_list.size() % order
-
-	var new_children : Array[BVHNode] = []
-	var start : int = 0
-	var end : int = 0
-	for i in range(order):
-		start = end
-		end += even_division + int(i < leftover)
-		if not (start - end):
-			break # Break if no nodes are left
-		var new_node := BVHNode.new(parent, self)
-		# NOTE: slice returns a new Array and loses the previous arrays type
-		var split_objects := object_list.slice(start, end)
-
-		# If all objects can fit in a single node, do it
-		if split_objects.size() <= order:
-			new_children.append(_set_leaf(new_node, split_objects))
-			continue
-
-		new_node.add_children(_recursive_split(split_objects, new_node))
-		inner_count += 1
-		new_children.append(new_node)
-
-	return new_children
-
-
-func _set_leaf(node : BVHNode, object_list : Array[PTObject]) -> BVHNode:
-	node.is_leaf = true
-	node.object_list = object_list
-
-	for object in object_list:
-		object_to_leaf[object] = node # UNSTATIC
-
-	node.set_aabb()
-	leaf_count += 1
-	return node
-
-
-func _index_node(parent : BVHNode) -> void:
-	bvh_list[_index] = parent
-	node_to_index[parent] = _index # UNSTATIC
-
-	_index += 1
-	for child in parent.children:
-		if child.is_leaf:
-			bvh_list[_index] = child
-			node_to_index[child] = _index # UNSTATIC
-			_index += 1
-			continue
-
-		_index_node(child)
 
 
 class BVHNode:
