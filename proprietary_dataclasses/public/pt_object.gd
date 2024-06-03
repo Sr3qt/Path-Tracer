@@ -2,10 +2,11 @@
 class_name PTObject
 extends MeshInstance3D
 
-"""Base class for all visual objects"""
+## Base class for all visual objects
 
 # TODO Add support for lines and add abilitiy to visualize traced rays
 # TODO Add instancing only to meshes?
+# NOTE: Exporting can exclude meshes
 
 const EPSILON = 1e-6
 const AABB_PADDING := Vector3(EPSILON, EPSILON, EPSILON)

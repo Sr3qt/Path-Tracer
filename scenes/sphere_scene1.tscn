@@ -8,7 +8,6 @@
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_material.gd" id="6_4b34r"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_plane.gd" id="7_1p3o1"]
 
-
 [sub_resource type="SphereMesh" id="SphereMesh_mxcbc"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_kj4xv"]
@@ -35,8 +34,10 @@ albedo = Color(0.98, 0.98, 0.9, 1)
 roughness = 0.0
 metallic = 0.0
 opacity = 0.0
+reflectivity = 1.0
 IOR = 1.6
 refraction_depth = 0
+is_emissive = false
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_opjoc"]
 size = Vector2(1000, 1000)
@@ -47,8 +48,10 @@ albedo = Color(1, 1, 1, 1)
 roughness = 0.0
 metallic = 0.0
 opacity = 1.0
+reflectivity = 1.0
 IOR = 1.0
 refraction_depth = 0
+is_emissive = false
 
 [node name="PTScene" type="Node"]
 script = ExtResource("1_62w38")
@@ -59,7 +62,7 @@ fov = 20.0
 script = ExtResource("2_yae3g")
 
 [node name="PTSphere" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.5, -2)
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0.5, 0.5, -2)
 mesh = SubResource("SphereMesh_mxcbc")
 script = ExtResource("3_gqr7y")
 radius = 0.5
@@ -67,7 +70,7 @@ material = ExtResource("4_8mqj1")
 mesh = SubResource("SphereMesh_mxcbc")
 
 [node name="PTSphere2" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -1)
+transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, -0.5, 0, -1)
 mesh = SubResource("SphereMesh_kj4xv")
 script = ExtResource("3_gqr7y")
 radius = 0.7
@@ -75,7 +78,7 @@ material = ExtResource("5_opa7l")
 mesh = SubResource("SphereMesh_kj4xv")
 
 [node name="PTSphere3" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, -0.2, -0.8)
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, -0.5, -0.2, -0.8)
 mesh = SubResource("SphereMesh_f3exn")
 script = ExtResource("3_gqr7y")
 radius = 0.5
@@ -83,7 +86,7 @@ material = ExtResource("5_opa7l")
 mesh = SubResource("SphereMesh_f3exn")
 
 [node name="PTSphere4" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, -0.2, -0.8)
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0.5, -0.2, -0.8)
 mesh = SubResource("SphereMesh_dpbhi")
 script = ExtResource("3_gqr7y")
 radius = 0.4
@@ -91,7 +94,7 @@ material = ExtResource("4_8mqj1")
 mesh = SubResource("SphereMesh_dpbhi")
 
 [node name="PTSphere5" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.6, -0.8)
+transform = Transform3D(0.3, 0, 0, 0, 0.3, 0, 0, 0, 0.3, 0.5, 0.6, -0.8)
 mesh = SubResource("SphereMesh_k2t70")
 script = ExtResource("3_gqr7y")
 radius = 0.3
@@ -99,7 +102,7 @@ material = ExtResource("4_8mqj1")
 mesh = SubResource("SphereMesh_k2t70")
 
 [node name="PTSphere6" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.2, -1.4)
+transform = Transform3D(0.3, 0, 0, 0, 0.3, 0, 0, 0, 0.3, 1.5, 0.2, -1.4)
 mesh = SubResource("SphereMesh_fw3n0")
 script = ExtResource("3_gqr7y")
 radius = 0.3

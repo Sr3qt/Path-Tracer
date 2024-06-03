@@ -24,7 +24,7 @@ func _init(
 			p_material : PTMaterial = null,
 	) -> void:
 
-	if Engine.is_editor_hint():
+	if Engine.is_editor_hint() and not is_instance_valid(mesh):
 		mesh = SphereMesh.new()
 		(mesh as SphereMesh).radius = p_radius
 		(mesh as SphereMesh).height = p_radius * 2

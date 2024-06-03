@@ -30,7 +30,7 @@ func _init(
 		p_material : PTMaterial = null,
 	) -> void:
 
-	if Engine.is_editor_hint():
+	if Engine.is_editor_hint() and not is_instance_valid(mesh):
 		var temp := ImmediateMesh.new()
 		temp.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
 		temp.surface_add_vertex(Vector3.LEFT)

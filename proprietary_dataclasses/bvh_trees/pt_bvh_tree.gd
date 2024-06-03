@@ -3,7 +3,6 @@ class_name PTBVHTree
 extends Node
 # Can potentially be Refcounted
 
-# TODO Turn my BVH Algorithm into a seperate file
 # TODO If i turn BVHNodes into actual nodes i can save and load BVHTrees
 
 ## Base class for BVH trees.
@@ -294,7 +293,6 @@ class BVHNode:
 
 	# Leaf nodes in the tree have no children and have a list pointing to objects
 	#  The object list is no larger than tree.order
-	# TODO Change objects to object_list to remove confusion with PTOC
 	var object_list : Array[PTObject] = []
 	var is_leaf := false
 	var is_inner : bool:

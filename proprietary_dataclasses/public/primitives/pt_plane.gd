@@ -24,7 +24,7 @@ func _init(
 			p_material : PTMaterial = null,
 	) -> void:
 
-	if Engine.is_editor_hint():
+	if Engine.is_editor_hint() and not is_instance_valid(mesh):
 		mesh = PlaneMesh.new()
 		(mesh as PlaneMesh).size = Vector2(1000, 1000)
 

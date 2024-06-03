@@ -98,7 +98,10 @@ var samples_per_pixel : int = 1 # DEPRECATED REMOVE
 # Whether anything was rendered in the last render_window call. Only used by plugin
 var was_rendered := false
 
-var startup_time : int = 0
+var _startup_time : int = 0
+# Whether all scenes have been initiated. Only in Editor
+var _is_init := false
+var _opened_scenes : PackedStringArray
 
 # Array of scenes that wants one or more of their objects to be removed from buffers.
 # NOTE: Scenes add themselves.
@@ -106,13 +109,15 @@ var scenes_to_remove_objects : Array[PTScene]
 
 var screenshot_folder := "res://renders/temps/" + Time.get_date_string_from_system() + "/"
 
-
 func _init() -> void:
-	print("Renderer init time: ", (Time.get_ticks_usec()) / 1000., "ms ")
+	# NOTE: Only triggers when not Engine.is_editor_hint()
+	print("PTRenderer init time: ", (Time.get_ticks_usec()) / 1000., "ms ")
 
 
 func _ready() -> void:
-	startup_time = Time.get_ticks_usec()
+	print()
+	print("PTRenderer ready time: ", (Time.get_ticks_usec()) / 1000., "ms ")
+	_startup_time = Time.get_ticks_usec()
 
 	# REMOVE in final
 	if not Engine.is_editor_hint():
@@ -157,12 +162,6 @@ func _ready() -> void:
 func _process(_delta : float) -> void:
 	# NOTE: Stutter issue was caused by having a timer on screen on separate
 	#  monitor with different resolution on windows. lol
-	if startup_time:
-		print()
-		print("Total startup time")
-		print((Time.get_ticks_usec()) / 1000., "ms ")
-		#print((Time.get_ticks_usec() - startup_time) / 1000., "ms ")
-		startup_time = 0
 	was_rendered = false
 
 	_object_queue_remove()
@@ -459,10 +458,7 @@ func add_scene(new_ptscene : PTScene) -> void:
 	scenes.append(new_ptscene)
 
 	print()
-	print((Time.get_ticks_usec()) / 1000., "ms ")
-	print(new_ptscene.owner, " Root node")
-	print(new_ptscene, " PTScene node")
-	print()
+	print(new_ptscene.owner, " Root node, ", new_ptscene, " PTScene node")
 
 	if new_ptscene.get_size() > 0:
 		var function_name : String = PTBVHTree.enum_to_dict[new_ptscene.default_bvh] # UNSTATIC
@@ -483,7 +479,13 @@ func add_scene(new_ptscene : PTScene) -> void:
 	if not Engine.is_editor_hint() and no_scene_is_active:
 		change_scene(new_ptscene)
 
-	print((Time.get_ticks_usec()) / 1000., "ms ")
+
+	print("PTScene ready time: ",
+			(Time.get_ticks_usec() - new_ptscene._enter_tree_time) / 1000.0, " ms")
+	print("Total PTScene setup time: ",
+			(Time.get_ticks_usec() - new_ptscene._init_time) / 1000.0, " ms")
+	if not _is_init:
+		print((Time.get_ticks_usec()) / 1000., " ms")
 
 
 func _plugin_scene_closed(scene_path : String) -> void:
@@ -496,6 +498,7 @@ func _plugin_scene_closed(scene_path : String) -> void:
 
 
 func remove_scene(ptscene : PTScene) -> void:
+	# TODO Remember to reindex "scenes"
 	# Remove all references to ptscene
 	var index := scenes.find(ptscene)
 	if index != -1:
@@ -587,6 +590,14 @@ func _object_queue_remove() -> void:
 			_scene.remove_objects()
 		else:
 			_scene.objects_to_remove.clear()
+			if Engine.is_editor_hint() and not _is_init:
+				_is_init = true
+				print()
+				print("PT [Insert name here] total startup time: ",
+				(Time.get_ticks_usec() - _startup_time) / 1000., "ms ")
+				print((Time.get_ticks_usec()) / 1000., "ms ")
+			elif Engine.is_editor_hint():
+				pass
 			print("PT: Scene was changed, or the editor just started, " +
 					"so no object removal will occur.")
 

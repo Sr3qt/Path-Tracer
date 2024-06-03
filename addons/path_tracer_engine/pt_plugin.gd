@@ -3,6 +3,7 @@ extends EditorPlugin
 
 const MainPanel := preload("res://addons/path_tracer_engine/pt_plugin_scene.tscn")
 const AUTOLOAD_NAME = "PTRendererAuto"
+const PLUGIN_NAME = "Path Tracer"
 
 var main_panel_instance : _PTPluginControlRoot
 
@@ -38,6 +39,20 @@ func _exit_tree():
 	remove_autoload_singleton(AUTOLOAD_NAME)
 
 
+# NOTE: This is how you add plugin configs
+#func _get_window_layout(configuration):
+	#configuration.set_value(PLUGIN_NAME, "open_scenes", EditorInterface.get_open_scenes())
+
+
+func _set_window_layout(configuration):
+	#var temp = configuration.get_value(PLUGIN_NAME, "open_scenes", PackedStringArray([]))
+	print()
+	print("Loading PT plugin config (there has never been one)")
+	print("Total Editor Startup Time: ", (Time.get_ticks_usec()) / 1000., " ms")
+	print()
+	PTRendererAuto._is_init = true
+
+
 func _has_main_screen():
 	return is_main
 
@@ -48,7 +63,7 @@ func _make_visible(visible : bool):
 
 
 func _get_plugin_name():
-	return "Path Tracer"
+	return PLUGIN_NAME
 
 
 func _get_plugin_icon():

@@ -119,12 +119,20 @@ var procedural_texture_removed := false
 var objects_to_remove : Array[PTObject]
 var meshes_to_remove : Array[PTMesh]
 
+var _init_time : int
+var _enter_tree_time : int
+
 
 func _init() -> void:
+	_init_time = Time.get_ticks_usec()
 	# plus one is for sampled textures
 	# TODO Change added_types to only handle objects
 	added_types.resize(ObjectType.MAX + 1)
 	objects = PTObjectContainer.new()
+
+
+func _enter_tree() -> void:
+	_enter_tree_time = Time.get_ticks_usec()
 
 
 func _ready() -> void:

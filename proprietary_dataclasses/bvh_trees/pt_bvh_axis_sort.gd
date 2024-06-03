@@ -29,9 +29,6 @@ static func z_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxi
 
 
 func create_bvh(objects : PTObjectContainer, axis := "x") -> void:
-
-	print("Starting to create %s-axis sorted BVH tree with %s primitives" %
-			[axis, objects.object_count])
 	var start_time := Time.get_ticks_usec()
 
 	object_container = objects
@@ -63,8 +60,9 @@ func create_bvh(objects : PTObjectContainer, axis := "x") -> void:
 
 	creation_time = Time.get_ticks_usec() - start_time
 
-	print("Finished creating %s-axis sorted BVH tree with %s inner nodes and \
-%s leaf nodes in %s ms." % [axis, inner_count, leaf_count, creation_time / 1000.])
+	print(("Finished creating %s-axis sorted BVH tree with %s inner nodes, " +
+			"%s leaf nodes and %s objects in %s ms.") % [
+			axis, inner_count, leaf_count, object_count, creation_time / 1000.])
 
 
 func _recursive_split(object_list : Array[PTObject], parent : BVHNode) -> Array[BVHNode]:

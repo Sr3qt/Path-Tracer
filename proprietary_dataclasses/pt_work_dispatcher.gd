@@ -98,7 +98,6 @@ func _init(renderer : PTRenderer, is_local := false) -> void:
 func create_buffers() -> void:
 	"""Creates and binds buffers to RenderDevice"""
 
-	print("Starting to setup buffers")
 	var prev_time := Time.get_ticks_usec()
 
 	# Trying to set up buffers without a scene makes no sense
