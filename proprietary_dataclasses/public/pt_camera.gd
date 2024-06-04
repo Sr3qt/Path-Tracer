@@ -53,6 +53,15 @@ func _notification(what : int) -> void:
 			camera_changed = true
 
 
+func copy_camera(from : Camera3D) -> void:
+	translate(position - from.position)
+
+	transform = from.transform
+	fov = from.fov
+
+	set_viewport_size()
+
+
 func set_viewport_size() -> void:
 	var theta := deg_to_rad(fov)
 	viewport_height = 2 * tan(theta / 2.) * focal_length

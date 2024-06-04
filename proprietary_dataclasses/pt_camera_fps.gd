@@ -27,6 +27,15 @@ func _process(delta : float) -> void:
 
 
 func _input(event : InputEvent) -> void:
+	if not Engine.is_editor_hint():
+		if event is InputEventKey:
+			if (
+					(event as InputEventKey).pressed and
+					(event as InputEventKey).keycode == KEY_X and
+					not event.is_echo()
+				):
+				PTRendererAuto.take_screenshot()
+
 	if event is InputEventMouseMotion:
 		if (event as InputEventMouseMotion).button_mask & 1:
 			# modify accumulated mouse rotation

@@ -2,12 +2,10 @@
 class_name PTRenderer
 extends Node
 
-"""This node is a Singleton with the responsibility of rendering the current scene.
-
-PTScenes will add themselves to this Singleton. The user can ask PTRenderer
-to swap scenes.
-
-"""
+## This node is a Singleton with the responsibility of rendering the current scene.
+##
+## PTScenes will add themselves to this Singleton. The user can ask PTRenderer
+## to swap scenes.
 
 const WindowGui := preload("res://ui_scenes/render_window_gui/render_window_gui.tscn")
 
@@ -109,6 +107,7 @@ var scenes_to_remove_objects : Array[PTScene]
 
 var screenshot_folder := "res://renders/temps/" + Time.get_date_string_from_system() + "/"
 
+
 func _init() -> void:
 	# NOTE: Only triggers when not Engine.is_editor_hint()
 	print("PTRenderer init time: ", (Time.get_ticks_usec()) / 1000., "ms ")
@@ -170,7 +169,7 @@ func _process(_delta : float) -> void:
 	if Engine.is_editor_hint() and editor_camera and is_camera_linked:
 		if (not (editor_camera.position == _pt_editor_camera.position and
 				editor_camera.transform == _pt_editor_camera.transform)):
-			copy_camera(editor_camera, _pt_editor_camera)
+			_pt_editor_camera.copy_camera(editor_camera)
 
 	## Decides if any rendering will be done at all
 	# Runtime and plugin requires different checks for window focus
@@ -208,19 +207,6 @@ func _process(_delta : float) -> void:
 				mat.set_shader_parameter("is_rendering", true)
 
 	_update_scenes()
-
-
-# TODO Remove input event? Move to PTCameraFPS
-func _input(event : InputEvent) -> void:
-	if not Engine.is_editor_hint():
-		if event is InputEventKey:
-			if ((event as InputEventKey).pressed and
-				(event as InputEventKey).keycode == KEY_X and
-				not event.is_echo()):
-				take_screenshot()
-
-	# TODO MAke able to take images with long render time with loading bar
-	#  Long term goal, maybe
 
 
 func _exit_tree() -> void:
@@ -479,7 +465,9 @@ func add_scene(new_ptscene : PTScene) -> void:
 	if not Engine.is_editor_hint() and no_scene_is_active:
 		change_scene(new_ptscene)
 
-
+	if new_ptscene.get_size() == 0:
+		print("Added empty scene")
+		return
 	print("PTScene ready time: ",
 			(Time.get_ticks_usec() - new_ptscene._enter_tree_time) / 1000.0, " ms")
 	print("Total PTScene setup time: ",
@@ -627,10 +615,12 @@ func create_canvas() -> MeshInstance3D:
 	return canvas
 
 
-# TODO Make more independent of "scene"
 func create_bvh(_order : int, function_name : String) -> void:
 	# TODO Rework shader to work with different bvh orders without reloading
 	#var _start = Time.get_ticks_usec()
+	if not is_instance_valid(scene):
+		push_warning("PT: Cannot create bvh as there is no set scene.")
+		return
 
 	# TODO Add support so that all objects in scene can be rendered by bvh
 	#  THis is a bug because the shader has a fixed stack size and cannot always
@@ -778,17 +768,6 @@ func remove_object(_scene : PTScene, object : PTObject) -> void:
 
 	# NOTE: A bit overkill, but dont care
 	scene_wd.bind_sets()
-
-
-# TODO Move to PTCamera
-func copy_camera(from : Camera3D, to : Camera3D) -> void:
-	to.translate(to.position - from.position)
-
-	to.transform = from.transform
-	to.fov = from.fov
-
-	if to is PTCamera:
-		(to as PTCamera).set_viewport_size()
 
 
 func remake_buffers(_scene : PTScene) -> void:

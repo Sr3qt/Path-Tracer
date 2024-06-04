@@ -7,20 +7,26 @@ extends PTPrimitive3D
 @export var vertex1 := Vector3.LEFT:
 	set(value):
 		vertex1 = value
+		mesh = create_triangle_mesh()
+		set_aabb()
 		if _scene and is_node_ready():
 			object_changed.emit(self)
 @export var vertex2 := Vector3.FORWARD:
 	set(value):
 		vertex2 = value
+		mesh = create_triangle_mesh()
+		set_aabb()
 		if _scene and is_node_ready():
 			object_changed.emit(self)
 @export var vertex3 := Vector3.ZERO:
 	set(value):
 		vertex3 = value
+		mesh = create_triangle_mesh()
+		set_aabb()
 		if _scene and is_node_ready():
 			object_changed.emit(self)
 
-# TODO Add godot mesh updating for vertex*
+var aabb : AABB
 
 
 func _init(
@@ -30,14 +36,8 @@ func _init(
 		p_material : PTMaterial = null,
 	) -> void:
 
-	if Engine.is_editor_hint() and not is_instance_valid(mesh):
-		var temp := ImmediateMesh.new()
-		temp.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
-		temp.surface_add_vertex(Vector3.LEFT)
-		temp.surface_add_vertex(Vector3.FORWARD)
-		temp.surface_add_vertex(Vector3.ZERO)
-		temp.surface_end()
-		mesh = temp
+	if Engine.is_editor_hint():
+		mesh = create_triangle_mesh()
 
 	vertex1 = p_vertex1
 	vertex2 = p_vertex2
@@ -47,20 +47,31 @@ func _init(
 		material = p_material
 
 
-func _get_aabb() -> AABB:
-	# This is constant for most use cases
-	# TODO Store result for further use
-	var maximum_x : float = max(vertex1.x, vertex2.x, vertex3.x)
-	var maximum_y : float = max(vertex1.y, vertex2.y, vertex3.y)
-	var maximum_z : float = max(vertex1.z, vertex2.z, vertex3.z)
-	var minimum_x : float = min(vertex1.x, vertex2.x, vertex3.x)
-	var minimum_y : float = min(vertex1.y, vertex2.y, vertex3.y)
-	var minimum_z : float = min(vertex1.z, vertex2.z, vertex3.z)
-	var minimum := Vector3(minimum_x, minimum_y, minimum_z)
-	var maximum := Vector3(maximum_x, maximum_y, maximum_z)
-	var diff := maximum - minimum
+func _ready() -> void:
+	set_aabb()
+	if Engine.is_editor_hint():
+		mesh = create_triangle_mesh()
 
-	return AABB((minimum), diff)
+
+func create_triangle_mesh() -> ImmediateMesh:
+	var temp := ImmediateMesh.new()
+	temp.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	temp.surface_add_vertex(vertex1)
+	temp.surface_add_vertex(vertex2)
+	temp.surface_add_vertex(vertex3)
+	temp.surface_end()
+	return temp
+
+
+func set_aabb() -> void:
+	var temp = AABB()
+	temp = temp.expand(vertex1)
+	temp = temp.expand(vertex2)
+	aabb = temp.expand(vertex3)
+
+
+func _get_aabb() -> AABB:
+	return aabb
 
 
 func get_global_aabb() -> AABB:
