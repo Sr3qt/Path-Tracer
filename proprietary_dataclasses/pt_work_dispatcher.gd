@@ -123,7 +123,8 @@ func create_buffers() -> void:
 	# NOTE: get_shader_parameter literally returns variant; get fgucked. UNSTATIC
 	texture = material.get_shader_parameter("image_buffer") as Texture2DRD
 
-	print("Setting up buffers took %s ms" % ((Time.get_ticks_usec() - prev_time) / 1000.))
+	if _scene.get_size() != 0:
+		print("Setting up buffers took %s ms" % ((Time.get_ticks_usec() - prev_time) / 1000.))
 
 
 func get_object_buffer(type : PTObject.ObjectType) -> RID:

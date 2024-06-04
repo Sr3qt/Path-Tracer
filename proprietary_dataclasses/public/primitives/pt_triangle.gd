@@ -7,24 +7,27 @@ extends PTPrimitive3D
 @export var vertex1 := Vector3.LEFT:
 	set(value):
 		vertex1 = value
-		mesh = create_triangle_mesh()
-		set_aabb()
-		if _scene and is_node_ready():
-			object_changed.emit(self)
+		if is_node_ready():
+			create_triangle_mesh()
+			set_aabb()
+			if _scene:
+				object_changed.emit(self)
 @export var vertex2 := Vector3.FORWARD:
 	set(value):
 		vertex2 = value
-		mesh = create_triangle_mesh()
-		set_aabb()
-		if _scene and is_node_ready():
-			object_changed.emit(self)
+		if is_node_ready():
+			create_triangle_mesh()
+			set_aabb()
+			if _scene:
+				object_changed.emit(self)
 @export var vertex3 := Vector3.ZERO:
 	set(value):
 		vertex3 = value
-		mesh = create_triangle_mesh()
-		set_aabb()
-		if _scene and is_node_ready():
-			object_changed.emit(self)
+		if is_node_ready():
+			create_triangle_mesh()
+			set_aabb()
+			if _scene:
+				object_changed.emit(self)
 
 var aabb : AABB
 
@@ -36,12 +39,12 @@ func _init(
 		p_material : PTMaterial = null,
 	) -> void:
 
-	if Engine.is_editor_hint():
-		mesh = create_triangle_mesh()
-
-	vertex1 = p_vertex1
-	vertex2 = p_vertex2
-	vertex3 = p_vertex3
+	if p_vertex1 != Vector3.LEFT:
+		vertex1 = p_vertex1
+	if p_vertex2 != Vector3.FORWARD:
+		vertex2 = p_vertex2
+	if p_vertex3 != Vector3.ZERO:
+		vertex3 = p_vertex3
 
 	if p_material:
 		material = p_material
@@ -50,17 +53,19 @@ func _init(
 func _ready() -> void:
 	set_aabb()
 	if Engine.is_editor_hint():
-		mesh = create_triangle_mesh()
+		create_triangle_mesh()
 
 
-func create_triangle_mesh() -> ImmediateMesh:
-	var temp := ImmediateMesh.new()
-	temp.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
-	temp.surface_add_vertex(vertex1)
-	temp.surface_add_vertex(vertex2)
-	temp.surface_add_vertex(vertex3)
-	temp.surface_end()
-	return temp
+func create_triangle_mesh() -> void:
+	if mesh:
+		mesh.clear_surfaces()
+	else:
+		mesh = ImmediateMesh.new()
+	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	mesh.surface_add_vertex(vertex1)
+	mesh.surface_add_vertex(vertex2)
+	mesh.surface_add_vertex(vertex3)
+	mesh.surface_end()
 
 
 func set_aabb() -> void:
