@@ -32,11 +32,11 @@ func _enter_tree() -> void:
 	# Find scene or mesh when entering tree if scene is not set
 	if not is_instance_valid(_scene) :
 		var temp := PTObject.find_scene_or_mesh_ancestor(self)
-		_mesh = temp[1] as PTMesh # UNSTATIC
+		_mesh = temp[1] # UNSTATIC
 		if is_instance_valid(_mesh):
 			_scene = _mesh._scene
 		else:
-			_scene = temp[0] as PTScene # UNSTATIC
+			_scene = temp[0] # UNSTATIC
 
 	transform_before = Transform3D(transform)
 	set_notify_transform(true)

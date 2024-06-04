@@ -28,7 +28,7 @@ var no_scene_is_active := true:
 		no_scene_is_active = value
 		_set_canvas_visibility()
 
-var no_camera_is_active := true:
+var no_camera_is_active := false:
 	set(value):
 		no_camera_is_active = value
 		_set_canvas_visibility()
@@ -37,7 +37,7 @@ func _set_canvas_visibility() -> void:
 	if canvas:
 		var is_rendering := (not is_rendering_disabled and not no_scene_is_active
 				and not no_camera_is_active)
-		var mat : ShaderMaterial = canvas.mesh.surface_get_material(0)
+		var mat : ShaderMaterial = canvas.mesh.surface_get_material(0) # UNSTATIC
 		mat.set_shader_parameter("is_rendering", is_rendering)
 		canvas.visible = is_rendering
 
@@ -99,7 +99,6 @@ var was_rendered := false
 var _startup_time : int = 0
 # Whether all scenes have been initiated. Only in Editor
 var _is_init := false
-var _opened_scenes : PackedStringArray
 
 # Array of scenes that wants one or more of their objects to be removed from buffers.
 # NOTE: Scenes add themselves.
@@ -179,15 +178,10 @@ func _process(_delta : float) -> void:
 	var common := (not is_rendering_disabled and not no_scene_is_active and
 			not no_camera_is_active)
 
+	#print(Engine.is_editor_hint())
 	if (runtime or plugin) and common:
-		## Double check everything with warnings
-		if not scene:
-			# TODO Add path to where warning came from ?
-			raise_error("No scene has been set.\n" +
-					"Rendering is therefore temporarily disabled.")
-			no_scene_is_active = true
-
-		elif not scene.camera and not Engine.is_editor_hint():
+		# Double check camera is there
+		if not is_instance_valid(scene.camera) and not Engine.is_editor_hint():
 			# TODO ADD Reporting node configuration warnings
 			# https://docs.godotengine.org/en/stable/tutorials/plugins/running_code_in_the_editor.html
 			raise_error("No camera has been set in current scene.\n" +
@@ -422,6 +416,7 @@ func add_scene(new_ptscene : PTScene) -> void:
 				print("owner found! ", current_node)
 				@warning_ignore("unsafe_method_access")
 				new_ptscene.owner = current_node
+				@warning_ignore("unsafe_method_access")
 				root_node_to_scene[current_node]["scenes"].append(new_ptscene) # UNSTATIC
 			else:
 				# new_ptscene is the root node of an unseen scene
@@ -468,6 +463,7 @@ func add_scene(new_ptscene : PTScene) -> void:
 	if new_ptscene.get_size() == 0:
 		print("Added empty scene")
 		return
+
 	print("PTScene ready time: ",
 			(Time.get_ticks_usec() - new_ptscene._enter_tree_time) / 1000.0, " ms")
 	print("Total PTScene setup time: ",
@@ -477,9 +473,10 @@ func add_scene(new_ptscene : PTScene) -> void:
 
 
 func _plugin_scene_closed(scene_path : String) -> void:
-	for node : Node in root_node_to_scene.keys():
+	for node : Node in root_node_to_scene.keys(): # UNSTATIC
 		if node.scene_file_path == scene_path:
-			for _scene : PTScene in root_node_to_scene[node]["scenes"].duplicate():
+			var temp_array : Array = root_node_to_scene[node]["scenes"] # UNSTATIC
+			for _scene : PTScene in temp_array.duplicate(): # UNSTATIC
 				print("Closing scene: ")
 				printraw(_scene)
 				remove_scene(_scene)
@@ -500,18 +497,19 @@ func remove_scene(ptscene : PTScene) -> void:
 	if Engine.is_editor_hint() and not root_node_to_scene.erase(ptscene):
 		# TODO Remove scene from root_node_to_scene when scene is deleted
 		# If ptscene is a reference under any other root nodes
-		for key : Node in root_node_to_scene.keys():
-			var value : Dictionary = root_node_to_scene[key]
-			var _index : int = value["scenes"].find(ptscene)
+		for key : Node in root_node_to_scene.keys(): # UNSTATIC
+			var value : Dictionary = root_node_to_scene[key] # UNSTATIC
+			var temp_array : Array = value["scenes"] # UNSTATIC
+			var _index : int = temp_array.find(ptscene)
 			if _index == -1:
 				continue
 
-			value["scenes"].remove_at(_index)
+			temp_array.remove_at(_index)
 
-			if value["scenes"].is_empty():
+			if temp_array.is_empty():
 				root_node_to_scene.erase(key)
-			elif value["last_index"] == _index:
-				root_node_to_scene[key]["last_index"] = 0
+			elif value["last_index"] == _index: # UNSTATIC
+				root_node_to_scene[key]["last_index"] = 0 # UNSTATIC
 	print(root_node_to_scene)
 
 	scene_to_scene_index.erase(ptscene)
@@ -775,8 +773,10 @@ func remake_buffers(_scene : PTScene) -> void:
 	var buffers : Array[PTObject.ObjectType] = []
 	print()
 	print("Expanding object buffers for ", _scene, ":")
-	@warning_ignore("untyped_declaration")
-	for type : int in PTObject.ObjectType.values():
+	for type : int in PTObject.ObjectType.values(): # UNSTATIC
+		if type == PTObject.ObjectType.NOT_OBJECT or type == PTObject.ObjectType.MAX:
+			continue
+
 		if _scene.added_types[type]:
 			_scene.added_types[type] = false
 			buffers.append(type)
@@ -785,9 +785,3 @@ func remake_buffers(_scene : PTScene) -> void:
 		wd.expand_material_buffer(0, false)
 
 	wd.expand_object_buffers(buffers)
-
-	# Check for proceduaral texture updates
-	#if _scene.added_types[PTObject.ObjectType.MAX + 1]:
-
-
-

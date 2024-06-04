@@ -2,6 +2,10 @@
 class_name PTTriangle
 extends PTPrimitive3D
 
+# TODO Ther's still a noise issue wioth triangles, can be seen in editor
+#  There is a visible line cutting through the triangle
+
+
 # The triangles vertices relative to itself, not in local coordinates
 # Used for defining the shape of the triangle
 @export var vertex1 := Vector3.LEFT:
@@ -58,18 +62,18 @@ func _ready() -> void:
 
 func create_triangle_mesh() -> void:
 	if mesh:
-		mesh.clear_surfaces()
+		(mesh as ImmediateMesh).clear_surfaces()
 	else:
 		mesh = ImmediateMesh.new()
-	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
-	mesh.surface_add_vertex(vertex1)
-	mesh.surface_add_vertex(vertex2)
-	mesh.surface_add_vertex(vertex3)
-	mesh.surface_end()
+	(mesh as ImmediateMesh).surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	(mesh as ImmediateMesh).surface_add_vertex(vertex1)
+	(mesh as ImmediateMesh).surface_add_vertex(vertex2)
+	(mesh as ImmediateMesh).surface_add_vertex(vertex3)
+	(mesh as ImmediateMesh).surface_end()
 
 
 func set_aabb() -> void:
-	var temp = AABB()
+	var temp := AABB()
 	temp = temp.expand(vertex1)
 	temp = temp.expand(vertex2)
 	aabb = temp.expand(vertex3)

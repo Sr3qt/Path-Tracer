@@ -72,7 +72,8 @@ func add_object(object : PTObject) -> void:
 func remove_object(object : PTObject) -> void:
 	var type := object.get_type()
 	var object_array : Array = get_object_array(type)
-	object_array.remove_at(_object_to_object_index[object] as int) # UNSTATIC
+	var index : int = _object_to_object_index[object] # UNSTATIC
+	object_array.remove_at(index)
 	_object_to_object_index.erase(object)
 
 	# TODO Moving last object to removed index might be fine

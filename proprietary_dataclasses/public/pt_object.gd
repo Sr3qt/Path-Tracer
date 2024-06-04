@@ -10,6 +10,8 @@ extends MeshInstance3D
 
 const EPSILON = 1e-6
 const AABB_PADDING := Vector3(EPSILON, EPSILON, EPSILON)
+## How many nodes will be checked when searching for an ancestor
+const MAX_SEARCH_DEPTH = 30
 
 # NOTE: This is helpful list of places to update when you add a new object type
 #	- This enum obviously
@@ -76,8 +78,8 @@ func _enter_tree() -> void:
 	# Find scene when entering tree if scene is not set
 	if not is_instance_valid(_scene):
 		var temp := PTObject.find_scene_or_mesh_ancestor(self)
-		_scene = temp[0] as PTScene # UNSTATIC
-		_mesh = temp[1] as PTMesh # UNSTATIC
+		_scene = temp[0] # UNSTATIC
+		_mesh = temp[1] # UNSTATIC
 		if _scene:
 			_scene.add_object(self)
 		if _mesh:
@@ -137,11 +139,10 @@ static func aabb_to_byte_array(aabb : AABB) -> PackedByteArray:
 	return PackedFloat32Array(arr).to_byte_array()
 
 
-func find_scene_ancestor() -> PTScene:
-	var max_depth : int = 20
+static func find_scene_ancestor(start_node : Node) -> PTScene:
 	var counter : int = 0
-	var current_node : Node = get_parent()
-	while counter < max_depth and current_node:
+	var current_node : Node = start_node.get_parent()
+	while counter < MAX_SEARCH_DEPTH and current_node:
 		if current_node is PTScene:
 			return (current_node as PTScene)
 		counter += 1
@@ -154,10 +155,9 @@ func find_scene_ancestor() -> PTScene:
 ## The first item of the returned array is PTScene or null, and
 ## the second is PTMesh or null. Can return both as null.
 static func find_scene_or_mesh_ancestor(start_node : Node) -> Array:
-	var max_depth : int = 20
 	var counter : int = 0
 	var current_node : Node = start_node.get_parent()
-	while counter < max_depth and current_node:
+	while counter < MAX_SEARCH_DEPTH and current_node:
 		if current_node is PTScene:
 			return [(current_node as PTScene), null]
 		if current_node is PTMesh:
@@ -168,7 +168,6 @@ static func find_scene_or_mesh_ancestor(start_node : Node) -> Array:
 	return [null, null]
 
 
-# TODO Make function in every object with their type
 func get_type() -> ObjectType:
 	"""Returns the PTObject sub type"""
 	if self is PTSphere:

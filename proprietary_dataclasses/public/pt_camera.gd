@@ -2,13 +2,9 @@
 class_name PTCamera
 extends Camera3D
 
-""" Controls rendering paramaters and position in 3D space
-
-Extends Camera3D for path traced rendering
-"""
-
-# Whether any camera settings has changed
-var camera_changed := false
+## Controls rendering paramaters and position in 3D space
+##
+## Extends Camera3D for path traced rendering
 
 # Render variables
 @export var aspect_ratio_x : int = 16
@@ -17,6 +13,26 @@ var aspect_ratio := float(aspect_ratio_x) / float(aspect_ratio_y)
 
 @export var focal_length := 1.0
 @export var gamma : float = 1.0 / 2.2
+
+# Holds actual value of is_active
+var _is_active := false
+
+## Similar to the built-in property "current". If is_active, the PTScene this
+## camera belongs to is using this camera.
+var is_active : bool:
+	get:
+		return _is_active
+	set(value):
+		if is_instance_valid(_scene):
+			if value and not _is_active:
+				_scene.set_active_camera(self)
+			elif not value and _is_active:
+				_scene._change_camera()
+		else:
+			push_warning("PT: No scene is set for Camera: ", self)
+
+# Whether any camera settings has changed
+var camera_changed := false
 
 # Viewport is the physical surface through which rays are initially cast
 var viewport_width : float
@@ -29,8 +45,16 @@ var up: Vector3:
 var forward: Vector3:
 	get: return transform.basis.z
 
+var _scene : PTScene
+
 
 func _ready() -> void:
+	# Find and add self to _scene
+	if not is_instance_valid(_scene):
+		_scene = PTObject.find_scene_ancestor(self)
+		if is_instance_valid(_scene):
+			_scene.add_camera(self)
+
 	aspect_ratio = float(aspect_ratio_x) / float(aspect_ratio_y)
 	set_viewport_size()
 
@@ -45,6 +69,7 @@ func _set(property : StringName, _value : Variant) -> bool:
 		camera_changed = true
 
 	return false
+
 
 ## NOTE: There might not be a difference between this and having a _set check
 func _notification(what : int) -> void:

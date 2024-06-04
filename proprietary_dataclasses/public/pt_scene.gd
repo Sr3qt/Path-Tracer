@@ -7,19 +7,6 @@ extends Node
 ## It's responsibility is to keep track of objects and materials, as well as any
 ## changes to them or the BVH. The camera is self sufficient.
 ##
-## If a PTScene is a child node under a different PTScene node, then instead of
-## acting as scene, it will act more like a mesh. It will share buffers with the
-## ancestor node and PTCameras will not be registered.
-##
-## A root_scene is a PTScene with no other PTScenes as anscestors. A root_scene
-## copies all references of child PTScenes and sends puts them in its buffer.
-## Removing an object from a child scene will also call to remove the object from
-## the root_scene as well.
-##
-## When a child PTScene c is added to a root_scene r, their BVHs will be merged,
-## meaning the root node of cs BVHTree will be added as a child node of an inner
-## node in rs BVHTree.
-##
 ## TODO Make a mesh be able to only exist in one place in memory when multiple
 ##  sub_scenes are using it
 ##
@@ -98,13 +85,21 @@ var scene_changed := false:
 	set(value):
 		scene_changed = value
 
-## Current active camera. Not relevant if scene is mesh
-var camera : PTCamera
+## Current active camera.
+var camera : PTCamera:
+	set(value):
+		if is_instance_valid(camera):
+			camera._is_active = false
+		if is_instance_valid(value):
+			value._is_active = true
+		camera = value
+## Cameras that the scene can switch between
+var cameras : Array[PTCamera]
 
 # Flags for update buffering
-var added_object := false # Whether an object (or material) was added this frame
+var added_object := false # Whether an object was added this frame
 
-# added_types is indexed by ObjectType. NOT_OBJECT is ignored. Specifies what
+# added_types is indexed by ObjectType. NOT_OBJECT and MAX is ignored. Specifies what
 #  objects was added if added_object is true
 var added_types : Array[bool]
 
@@ -125,9 +120,7 @@ var _enter_tree_time : int
 
 func _init() -> void:
 	_init_time = Time.get_ticks_usec()
-	# plus one is for sampled textures
-	# TODO Change added_types to only handle objects
-	added_types.resize(ObjectType.MAX + 1)
+	added_types.resize(ObjectType.MAX)
 	objects = PTObjectContainer.new()
 
 
@@ -138,13 +131,6 @@ func _enter_tree() -> void:
 func _ready() -> void:
 	if not Engine.is_editor_hint():
 		get_size()
-
-		if not camera:
-			# TODO Make camera find scene instead of the other way around
-			for child in get_children():
-				if child is PTCamera:
-					camera = child as PTCamera
-					break
 
 		if starting_camera != CameraSetting.none:
 			set_camera_setting(starting_camera)
@@ -169,6 +155,36 @@ func get_material_index(material : PTMaterial) -> int:
 
 func get_texture_id(texture : PTTexture) -> int:
 	return _texture_to_texture_id[texture] # UNSTATIC
+
+
+func add_camera(f_camera : PTCamera) -> void:
+	cameras.append(f_camera)
+	if cameras.size() == 1:
+		camera = f_camera
+
+
+func remove_camera(f_camera : PTCamera) -> void:
+	cameras.erase(f_camera)
+
+
+func set_active_camera(f_camera : PTCamera) -> void:
+	if cameras.has(f_camera):
+		camera = f_camera
+	else:
+		push_warning(
+			"PT: Camera has not been registered to scene. \n%s\n%s" % [f_camera, self]
+		)
+
+
+## Called when the current active camera wants to change
+func _change_camera() -> void:
+	if cameras.size() <= 1:
+		camera = null
+	else:
+		if cameras[0] == camera:
+			camera = cameras[1]
+		else:
+			camera = cameras[0]
 
 
 func add_mesh(mesh : PTMesh) -> void:
@@ -208,8 +224,8 @@ func remove_mesh(mesh : PTMesh) -> void:
 	# TODO Remove mesh and objects from scene and bvh, as well as buffers
 	meshes.erase(mesh)
 
-	for _objects in mesh.objects.get_object_lists():
-		for object : PTObject in _objects:
+	for _objects : Array in mesh.objects.get_object_lists(): # UNSTATIC
+		for object : PTObject in _objects: # UNSTATIC
 			remove_object(object)
 
 	mesh.transform_changed.disconnect(_update_mesh)
@@ -547,11 +563,3 @@ func create_random_scene(_seed : int) -> void:
 			material.albedo = color
 			var new_sphere := PTSphere.new(center, radius, material)
 			add_object(new_sphere)
-
-
-
-
-
-
-
-

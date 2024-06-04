@@ -38,7 +38,6 @@ extends Resource
 		is_emissive = value
 		material_changed.emit(self)
 
-# TODO Add chance to reflect for transparent objects
 # TODO Calculate current IOR of camera and pass it to gpu
 
 signal material_changed(material_instance : PTMaterial)
