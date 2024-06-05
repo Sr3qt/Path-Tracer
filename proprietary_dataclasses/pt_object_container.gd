@@ -93,7 +93,11 @@ func remove_mesh(mesh : PTMesh) -> void:
 
 
 ## Add other PTObjectContainers objects to this object
-func merge(other : PTObjectContainer) -> void:
+## Returns a bool array, indexed by ObjectType, of which objects were added.
+func merge(other : PTObjectContainer) -> Array[bool]:
+	var added_types : Array[bool] = []
+	added_types.resize(ObjectType.MAX)
+	added_types.fill(false)
 	for type : int in ObjectType.values(): # UNSTATIC
 		if (type == ObjectType.NOT_OBJECT or type == ObjectType.MAX):
 			continue
@@ -105,8 +109,11 @@ func merge(other : PTObjectContainer) -> void:
 		var new_object_array := other.get_object_array(type)
 		var last_index := object_array.size()
 		object_array.append_array(new_object_array)
+		added_types[type] = true
 
 		for i in range(new_object_array.size()):
 			_object_to_object_index[new_object_array[i]] = last_index + i # UNSTATIC
 
 		assert(get_object_array(type).size() == last_index + new_object_array.size())
+
+	return added_types

@@ -109,13 +109,13 @@ func _set_leaf(node : BVHNode, object_list : Array[PTObject]) -> BVHNode:
 
 func _index_node(parent : BVHNode) -> void:
 	bvh_list[_index] = parent
-	node_to_index[parent] = _index # UNSTATIC
+	_node_to_index[parent] = _index # UNSTATIC
 
 	_index += 1
 	for child in parent.children:
 		if child.is_leaf:
 			bvh_list[_index] = child
-			node_to_index[child] = _index # UNSTATIC
+			_node_to_index[child] = _index # UNSTATIC
 			_index += 1
 			continue
 

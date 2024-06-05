@@ -940,6 +940,13 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
     // Like check_ray_hit but it checks against a BVH tree instead of each object_list individually
     RayHit rayhit = empty_rayhit();
 
+    // TODO Using a depth first search can limit to_vist.size() to the maximum bvh depth * 2 
+    // You use one array for nodes and the other for times you have visited the node,
+    // then you index the last node in the array by the number of times you have visited it.
+    // THis is very good for high order trees
+    // Opposite migth be true for low order trees
+
+
     // Stack of indices of nodes yet to traverse
     // NOTE: might need to be bigger for larger scenes and/or with higher order trees
     int to_visit[max_depth];

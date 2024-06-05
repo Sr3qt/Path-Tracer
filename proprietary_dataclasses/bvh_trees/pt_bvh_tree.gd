@@ -4,6 +4,7 @@ extends Node
 # Can potentially be Refcounted
 
 # TODO If i turn BVHNodes into actual nodes i can save and load BVHTrees
+# TODO Alternatively look at inst_to_dict for serialization, or var_to_bytes
 
 ## Base class for BVH trees.
 ##
@@ -53,6 +54,7 @@ const objects_to_include : Array[PTObject.ObjectType] = [
 
 # TODO Implement transforms for bvhnodes
 
+# TODO Fix support for multi order trees
 var order : int
 
 # BVHTrees can merge, parent_tree is the BVH this tree was merged with
@@ -63,7 +65,7 @@ var root_node : BVHNode
 var object_container : PTObjectContainer
 var object_to_leaf := {}
 
-var node_to_index := {}
+var _node_to_index := {}
 
 # TODO Add bvh constructor with bvh_list as argument
 var bvh_list : Array[BVHNode] = []
@@ -118,12 +120,28 @@ func add_object(object : PTObject) -> void:
 	if has(object):
 		print("PT: Object is already in BVHTree.")
 		return
+
+	var added_object := false
+	# This algorithm only tries to fit in a new object wherever possible.
+	# TODO Implement algorithm that targets bvhnodes the new object can fit inside of.
+	for leaf_node : BVHNode in object_to_leaf.values():
+		if not leaf_node.is_full:
+			leaf_node.object_list.append(object)
+			added_object = true
+			break
+
+	if not added_object:
+		# TODO Implement split function on node
+
+		push_error("PT: Vacant leaf node not found. Object was not added to BVHTree")
+
 	# TODO Implement actual algorithm later, for now just remake
 	@warning_ignore("unsafe_cast")
-	PTRendererAuto.create_bvh(order, enum_to_dict[type] as String) # UNSTATIC
+	PTRendererAuto.create_bvh(PTRendererAuto.scene, order, enum_to_dict[type] as String) # UNSTATIC
 
 
 func remove_object(object : PTObject) -> void:
+	# TODO remove object from bvh_list and call back parent_tree
 	if has(object):
 		var leaf : BVHNode = object_to_leaf[object] # UNSTATIC
 		object_to_leaf.erase(object)
@@ -142,14 +160,14 @@ func remove_object(object : PTObject) -> void:
 
 
 func get_node_index(node : BVHNode) -> int:
-	return node_to_index[node]
+	return _node_to_index[node]
 
 
 ## Sets the required indexes required for the BVHTree to work with the engine
 func index_tree() -> void:
 	bvh_list = []
 	object_to_leaf = {}
-	node_to_index = {}
+	_node_to_index = {}
 	inner_count = 0
 	leaf_count = 0
 	object_count = 0
@@ -158,13 +176,13 @@ func index_tree() -> void:
 
 
 func _index_node(node : BVHNode) -> void:
-	node_to_index[node] = bvh_list.size() # UNSTATIC
+	_node_to_index[node] = bvh_list.size() # UNSTATIC
 	bvh_list.append(node)
 	inner_count += 1
 
 	for child in node.children:
 		if child.is_leaf:
-			node_to_index[child] = bvh_list.size()  # UNSTATIC
+			_node_to_index[child] = bvh_list.size()  # UNSTATIC
 			bvh_list.append(child)
 			leaf_count += 1
 			object_count += child.object_list.size()
@@ -231,23 +249,25 @@ func merge_with(other : PTBVHTree, root := root_node) -> void:
 	other.root_node.parent = inner_node
 
 	object_to_leaf.merge(other.object_to_leaf)
-	node_to_index.merge(other.node_to_index)
+	_node_to_index.merge(other._node_to_index)
 
 	# Reindexing
-	for node : BVHNode in other.node_to_index:
-		node_to_index[node] += index_offset
+	for node : BVHNode in other._node_to_index:
+		_node_to_index[node] += index_offset
 
 	object_count += other.object_count
 	leaf_count += other.leaf_count
 	inner_count += other.inner_count
 
+	other.parent_tree = self
+
 	# TODO Add print/assert to verify succesfull merge
-	# TODO Research assert use in editor
 
 
 func _remove_node(node : BVHNode) -> void:
+	# TODO Remember to reindex / or fill hole with last node + fix indices
 	bvh_list.remove_at(get_node_index(node))
-	node_to_index.erase(node)
+	_node_to_index.erase(node)
 	if node.is_inner:
 		for child in node.children:
 			_remove_node(child)
@@ -264,12 +284,12 @@ func remove_subtree(node : BVHNode) -> void:
 	# Remove from parent node
 	node.parent.children.erase(node)
 
-	var index : int = node_to_index[node] # UNSTATIC
+	var index : int = _node_to_index[node] # UNSTATIC
 	_remove_node(node)
 
 	# Reindex all nodes from index to end of bvh_list
 	for i in range(index, bvh_list.size()):
-		node_to_index[bvh_list[i]] = i # UNTSTATIC
+		_node_to_index[bvh_list[i]] = i # UNTSTATIC
 
 
 func to_byte_array() -> PackedByteArray:
@@ -280,11 +300,15 @@ func to_byte_array() -> PackedByteArray:
 
 
 class BVHNode:
-	""" This class represents a Node in a bvh tree.
-
-	Ideally all bvh trees would use the same Node class, since their only
-	intention is to hold information.
-	"""
+	## This class represents a Node in a bvh tree.
+	##
+	## Ideally all bvh trees would use the same Node class, since their only
+	## intention is to hold information.
+	##
+	## A BVHNode is either an inner node, where the children property point to
+	## other BVHNodes, or a leaf node, where its object_list property point to
+	## objects. Having a mixed node is technically supported, but is unadviced.
+	## Rather, wrap the objects in the mixed node into a new leaf node child.
 
 	var tree : PTBVHTree # Reference to the tree this node is a part of
 	var parent : BVHNode # Reference to parent BVHNode
@@ -301,6 +325,17 @@ class BVHNode:
 		set(value):
 			is_inner = value
 			is_leaf = not value
+
+	var is_full : bool:
+		get:
+			if is_inner:
+				assert(children.size() <= tree.order,
+						"BVHNode has more children than tree.order allows.")
+				return children.size() == tree.order
+
+			assert(object_list.size() <= tree.order,
+						"BVHNode has more children than tree.order allows.")
+			return object_list.size() == tree.order
 
 
 	func _init(p_parent : BVHNode, p_tree : PTBVHTree) -> void:
@@ -341,7 +376,7 @@ class BVHNode:
 			children += new_children
 			set_aabb() # Update aabb
 		else:
-			push_warning("Warning: Cannot fit child node")
+			push_warning("Warning: Cannot fit child BVHNode(s) to node: ", self)
 
 
 	func to_byte_array() -> PackedByteArray:

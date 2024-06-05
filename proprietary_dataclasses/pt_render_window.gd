@@ -41,6 +41,8 @@ var _multisample := true:
 		_set_flag_bit(RenderFlagsBits.MULTISAMPLE, int(value))
 		_multisample = value
 
+# TODO Add normal-view render mode
+
 ## OTHER RENDER FLAGS
 ## Flags that dont go to the gpu
 

@@ -591,7 +591,7 @@ class UniformStorage:
 			BVH_SET_INDEX:
 				return bvh_set
 
-		push_error("Uniform index '%S' is invalid." % index)
+		push_error("PT: Uniform index '%S' is invalid." % index)
 		return []
 
 
@@ -599,4 +599,7 @@ class UniformStorage:
 		var uniform_set := get_set_uniforms(set_index)
 		uniform_set[bind_index] = uniform
 
+
+	#func create_uniform_set(set_index : int) -> void:
+		#var uniform_set := get_set_uniforms(set_index)
 

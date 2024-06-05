@@ -91,12 +91,11 @@ func remove_mesh(mesh : PTMesh) -> void:
 
 
 func add_object(object : PTObject) -> void:
+	print("Adding object to mesh")
 	objects.add_object(object)
 	if _scene:
 		object._scene = _scene
 		_scene.add_object(object)
-	else:
-		push_warning("Mesh should have valid scene but hasnt")
 
 	if is_node_ready():
 		bvh.add_object(object)

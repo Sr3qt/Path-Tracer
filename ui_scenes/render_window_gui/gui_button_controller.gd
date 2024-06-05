@@ -115,7 +115,7 @@ func _on_create_bvh_button_pressed() -> void:
 	bvh_type.previous_value = bvh_type.selected
 	bvh_order.previous_value = bvh_order.value
 
-	PTRendererAuto.create_bvh(int(bvh_order.value),
+	PTRendererAuto.create_bvh(PTRendererAuto.scene, int(bvh_order.value),
 			bvh_function_names[bvh_type.selected])
 
 

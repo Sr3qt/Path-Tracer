@@ -10,6 +10,8 @@ extends Node
 ## TODO Make a mesh be able to only exist in one place in memory when multiple
 ##  sub_scenes are using it
 ##
+## TODO Make scenes and meshes able to convert to static. Their objects will only
+##  exist as buffers and cannot be updated. For performance optimization
 ##
 ## WE ARE PIVOTING AWAY FROM SUB SCENES AND TO ACTUAL MESH OBJECTS
 ##
@@ -81,9 +83,7 @@ var cached_bvhs : Array[PTBVHTree]
 
 # Whether any objects either moved, got added or removed.
 #  Camera is controlled seperately
-var scene_changed := false:
-	set(value):
-		scene_changed = value
+var scene_changed := false
 
 ## Current active camera.
 var camera : PTCamera:
@@ -190,21 +190,31 @@ func _change_camera() -> void:
 func add_mesh(mesh : PTMesh) -> void:
 	#Add objects
 	meshes.append(mesh)
-	objects.merge(mesh.objects)
+	var new_added_types := objects.merge(mesh.objects)
 
-	# TODO Bind new objects signals
+	# Update object update flags
+	for i in range(new_added_types.size()):
+		added_types[i] = added_types[i] or new_added_types[i]
+	if mesh.objects.object_count != 0:
+		added_object = true
 
 	# Bind signals
+	for _objects : Array in mesh.objects.get_object_lists(): # UNSTATIC
+		for object : PTObject in _objects: # UNSTATIC
+			bind_object_signals(object)
+
 	mesh.transform_changed.connect(_update_mesh)
 	mesh.deleted.connect(remove_mesh)
 
-	# TODO Update bvh, add mesh bvh to this bvh tree
+	scene_changed = true
+
 	if bvh:
 		if bvh.order < mesh.bvh.order:
 			push_error("PT: BVH order ", bvh.order, " of scene does not ",
 			"allow for BVH order ", mesh.bvh.order, " of mesh.")
 			return
 		elif bvh.order > mesh.bvh.order:
+			# TODO Add editor warning for mismatched bvh orders
 			push_warning("PT: BVH order of mesh is ", mesh.bvh.order, ", ",
 			"while BVH order of scene is ", bvh.order, ".\n Mesh BVH order ",
 			"will be changed to ", bvh.order, ".")
@@ -391,10 +401,7 @@ func add_object(object : PTObject) -> void:
 	_add_material(object.material, true)
 	_add_texture(object.texture)
 
-	object.connect("object_changed", update_object)
-	object.connect("deleted", queue_remove_object)
-	object.connect("material_changed", _material_changed)
-	object.connect("texture_changed", _texture_changed)
+	bind_object_signals(object)
 
 	# Add object to bvh
 	if bvh and not object.is_meshlet:
@@ -403,6 +410,13 @@ func add_object(object : PTObject) -> void:
 	# If object is added after scene ready, update buffer
 	if is_node_ready():
 		update_object(object)
+
+
+func bind_object_signals(object : PTObject) -> void:
+	object.connect("object_changed", update_object)
+	object.connect("deleted", queue_remove_object)
+	object.connect("material_changed", _material_changed)
+	object.connect("texture_changed", _texture_changed)
 
 
 func queue_remove_object(object : PTObject) -> void:

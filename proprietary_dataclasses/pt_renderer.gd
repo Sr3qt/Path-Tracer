@@ -7,6 +7,8 @@ extends Node
 ## PTScenes will add themselves to this Singleton. The user can ask PTRenderer
 ## to swap scenes.
 
+# TODO WOuld be cool to have custom icons (@icons)
+
 const WindowGui := preload("res://ui_scenes/render_window_gui/render_window_gui.tscn")
 
 # NOTE: CPU control over gpu invocations has not been added.
@@ -23,21 +25,21 @@ const compute_invocation_depth : int = 1
 		_set_canvas_visibility()
 
 ## Override for stopping rendering. Specifically for when no scene is present.
-var no_scene_is_active := true:
+var has_active_scene := false:
 	set(value):
-		no_scene_is_active = value
+		has_active_scene = value
 		_set_canvas_visibility()
 
-var no_camera_is_active := false:
+var has_active_camera := true:
 	set(value):
-		no_camera_is_active = value
+		has_active_camera = value
 		_set_canvas_visibility()
 
 func _set_canvas_visibility() -> void:
 	if canvas:
-		var is_rendering := (not is_rendering_disabled and not no_scene_is_active
-				and not no_camera_is_active)
-		var mat : ShaderMaterial = canvas.mesh.surface_get_material(0) # UNSTATIC
+		var is_rendering := (not is_rendering_disabled and has_active_scene
+				and has_active_camera)
+		var mat := canvas.mesh.surface_get_material(0) as ShaderMaterial
 		mat.set_shader_parameter("is_rendering", is_rendering)
 		canvas.visible = is_rendering
 
@@ -50,6 +52,7 @@ var scene : PTScene # The scene currently in use
 var scenes : Array[PTScene] # An array of scenes. Primarily used by plugin
 var scenes_to_remove : Array[PTScene]
 
+# TODO Refactor root_node_to_scene into to dicts
 # A dicitionary that keeps track of multiple PTScenes within one Godot scene.
 # Only used by plugin, for runtime scene tracker see scene_to_scene_index
 var root_node_to_scene := {
@@ -97,7 +100,7 @@ var samples_per_pixel : int = 1 # DEPRECATED REMOVE
 var was_rendered := false
 
 var _startup_time : int = 0
-# Whether all scenes have been initiated. Only in Editor
+# Whether all scenes have been initiated. Only in Editor. Only toggled by plugin.gd
 var _is_init := false
 
 # Array of scenes that wants one or more of their objects to be removed from buffers.
@@ -164,6 +167,10 @@ func _process(_delta : float) -> void:
 
 	_object_queue_remove()
 
+	# Make sure the rendering scene has up to date bvh buffer
+	if scene and scene.bvh:
+		update_bvh_nodes(scene)
+
 	# If editor camera moved, copy the data to scene.camera
 	if Engine.is_editor_hint() and editor_camera and is_camera_linked:
 		if (not (editor_camera.position == _pt_editor_camera.position and
@@ -175,8 +182,8 @@ func _process(_delta : float) -> void:
 	var runtime := (get_window().has_focus() and not Engine.is_editor_hint())
 	var plugin := (Engine.is_editor_hint())
 
-	var common := (not is_rendering_disabled and not no_scene_is_active and
-			not no_camera_is_active)
+	var common := (not is_rendering_disabled and has_active_scene and
+			has_active_camera)
 
 	#print(Engine.is_editor_hint())
 	if (runtime or plugin) and common:
@@ -186,11 +193,9 @@ func _process(_delta : float) -> void:
 			# https://docs.godotengine.org/en/stable/tutorials/plugins/running_code_in_the_editor.html
 			raise_error("No camera has been set in current scene.\n" +
 					"Rendering is therefore temporarily disabled.")
-			no_camera_is_active = true
+			has_active_camera = false
 
-		common = (not is_rendering_disabled and not no_scene_is_active and
-				not no_camera_is_active)
-		if common:
+		if has_active_camera:
 			# If no warnings are raised, this will render
 			for window in windows:
 				render_window(window)
@@ -213,7 +218,7 @@ func _set_plugin_camera(cam : PTCamera) -> void:
 	if not canvas:
 		canvas = create_canvas()
 
-	no_camera_is_active = false
+	has_active_camera = true
 	_pt_editor_camera = cam
 	_pt_editor_camera.add_child(canvas)
 
@@ -457,7 +462,7 @@ func add_scene(new_ptscene : PTScene) -> void:
 	wds.append(new_wd)
 
 	# Set new_ptscene to scene if no scene was previously active and is in runtime
-	if not Engine.is_editor_hint() and no_scene_is_active:
+	if not Engine.is_editor_hint() and not has_active_scene:
 		change_scene(new_ptscene)
 
 	if new_ptscene.get_size() == 0:
@@ -476,10 +481,10 @@ func _plugin_scene_closed(scene_path : String) -> void:
 	for node : Node in root_node_to_scene.keys(): # UNSTATIC
 		if node.scene_file_path == scene_path:
 			var temp_array : Array = root_node_to_scene[node]["scenes"] # UNSTATIC
-			for _scene : PTScene in temp_array.duplicate(): # UNSTATIC
+			for ptscene : PTScene in temp_array.duplicate(): # UNSTATIC
 				print("Closing scene: ")
-				printraw(_scene)
-				remove_scene(_scene)
+				printraw(ptscene)
+				remove_scene(ptscene)
 
 
 func remove_scene(ptscene : PTScene) -> void:
@@ -518,7 +523,7 @@ func remove_scene(ptscene : PTScene) -> void:
 	if ptscene == scene:
 		scene = null
 		wd = null
-		no_scene_is_active = true
+		has_active_scene = false
 
 
 ## Wrapper function for the plugin to change scenes
@@ -527,7 +532,7 @@ func _plugin_change_scene(scene_root : Node) -> void:
 		# scene_root is a new empty node or a root without a PTScene in the scene
 		scene = null
 		wd = null
-		no_scene_is_active = true
+		has_active_scene = false
 		return
 
 	var temp_dict : Dictionary = root_node_to_scene[scene_root]  # UNSTATIC
@@ -537,24 +542,27 @@ func _plugin_change_scene(scene_root : Node) -> void:
 	change_scene(scene_to_change)
 
 
-func change_scene(new_scene : PTScene) -> void:
+func change_scene(ptscene : PTScene) -> void:
+	if not scene_to_scene_index.has(ptscene):
+		push_warning("PT: Cannot switch to unregistered scene.")
+		return
 
 	# Remove (and later add) canvas from camera in runtime
 	if not Engine.is_editor_hint():
 		if scene and scene.camera:
 			scene.camera.remove_child(canvas)
 
-	var scene_index : int = scene_to_scene_index[new_scene]  # UNSTATIC
+	var scene_index : int = scene_to_scene_index[ptscene]  # UNSTATIC
 	scene = scenes[scene_index]
 	wd = wds[scene_index]
 	# Change buffer displayed on canvas
 	wd.texture.texture_rd_rid = wd.image_buffer
 
-	no_scene_is_active = false
+	has_active_scene = true
 
 	if not Engine.is_editor_hint():
 		if scene.camera:
-			no_camera_is_active = false
+			has_active_camera = true
 			scene.camera.add_child(canvas)
 
 	# TODO Update GUI values
@@ -567,29 +575,22 @@ func add_scene_to_remove_objects(ptscene : PTScene) -> void:
 
 ## Removes objects from any queue in scenes
 func _object_queue_remove() -> void:
-	for _scene in scenes_to_remove_objects:
-		if not _scene: # If scene is null; idk can prob remove
+	for ptscene in scenes_to_remove_objects:
+		if not ptscene: # If scene is null; idk can prob remove
 			push_warning("Help; Scene is no longer valid for deletion.")
 			continue
-		if _scene.is_inside_tree() and _scene.check_objects_for_removal():
+		if ptscene.is_inside_tree() and ptscene.check_objects_for_removal():
 			print("PT: Removing object(s) that was deleted by the user.")
-			_scene.remove_objects()
+			ptscene.remove_objects()
 		else:
-			_scene.objects_to_remove.clear()
-			if Engine.is_editor_hint() and not _is_init:
-				_is_init = true
-				print()
-				print("PT [Insert name here] total startup time: ",
-				(Time.get_ticks_usec() - _startup_time) / 1000., "ms ")
-				print((Time.get_ticks_usec()) / 1000., "ms ")
-			elif Engine.is_editor_hint():
-				pass
+			ptscene.objects_to_remove.clear()
 			print("PT: Scene was changed, or the editor just started, " +
 					"so no object removal will occur.")
 
 	scenes_to_remove_objects.clear()
 
 
+# TODO Can be made static, and moved elsewhere
 func create_canvas() -> MeshInstance3D:
 	# Create canvas that will display rendered image
 	# Prepare canvas shader
@@ -613,9 +614,8 @@ func create_canvas() -> MeshInstance3D:
 	return canvas
 
 
-func create_bvh(_order : int, function_name : String) -> void:
+func create_bvh(ptscene : PTScene, _order : int, function_name : String) -> void:
 	# TODO Rework shader to work with different bvh orders without reloading
-	#var _start = Time.get_ticks_usec()
 	if not is_instance_valid(scene):
 		push_warning("PT: Cannot create bvh as there is no set scene.")
 		return
@@ -626,162 +626,147 @@ func create_bvh(_order : int, function_name : String) -> void:
 	var prev_max : int = bvh_order
 	bvh_order = _order
 
-	scene.create_BVH(bvh_order, function_name)
-	scene.scene_changed = true
+	ptscene.create_BVH(bvh_order, function_name)
 
 	if prev_max != bvh_order:
-		load_shader(scene)
+		load_shader(ptscene)
 
+	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[ptscene]]
 	# NOTE: Removing and adding buffer seem to be as fast as trying to update it
-	wd.rd.free_rid(wd.BVH_buffer)
+	scene_wd.rd.free_rid(scene_wd.BVH_buffer)
 
-	wd.create_bvh_buffer()
+	scene_wd.create_bvh_buffer()
 
-	var BVH_uniforms : Array[RDUniform] = wd.uniforms.get_set_uniforms(wd.BVH_SET_INDEX)
-	wd.BVH_set = wd.rd.uniform_set_create(BVH_uniforms, wd.shader,
-			wd.BVH_SET_INDEX)
+	# TODO Make WD function to create set with just index +
+	# TODO Document what is needed to add new set
+	var BVH_uniforms := scene_wd.uniforms.get_set_uniforms(scene_wd.BVH_SET_INDEX)
+	scene_wd.BVH_set = scene_wd.rd.uniform_set_create(
+			BVH_uniforms,
+			scene_wd.shader,
+			scene_wd.BVH_SET_INDEX
+	)
 
-	#print((Time.get_ticks_usec() - _start) / 1000.)
+
+func update_bvh_nodes(ptscene : PTScene) -> void:
+	if ptscene.bvh:
+		for node in ptscene.bvh.updated_nodes:
+			var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[ptscene]]
+			var bvh_bytes : PackedByteArray = node.to_byte_array()
+			scene_wd.rd.buffer_update(
+					scene_wd.BVH_buffer,
+					ptscene.bvh.get_node_index(node)  * bvh_bytes.size(),
+					bvh_bytes.size(),
+					bvh_bytes
+			)
+	else:
+		push_warning("PT: Cannot update BVH of scene with no BVH.")
 
 
 ## Updates all scenes that have changed. Called at the end of _process
 func _update_scenes() -> void:
+	# Remove queued scenes
 	if scenes_to_remove and not scenes_to_remove.is_empty():
-		for _scene in scenes_to_remove:
-			var index : int = scene_to_scene_index[_scene]
+		for ptscene in scenes_to_remove:
+			var index : int = scene_to_scene_index[ptscene]
 			var temp_wd : PTWorkDispatcher = wds.pop_at(index)
 			temp_wd.free_RIDs()
 			scenes.remove_at(index)
 
-			if scene == _scene:
+			if scene == ptscene:
 				scene = null
 			if wd == temp_wd:
 				wd = null
-
+		scenes_to_remove.clear()
 
 	# Re-create buffers if asked for
-	for _scene in scenes:
-		if not is_instance_valid(_scene):
-			# TODO Print line of warning
-			push_warning("PT: Bad garbage collection. Scene: ", _scene,
-					" is still in PRenderer.scenes and is invalid.")
-			#print("hi")
-			#print(scene_to_scene_index[_scene])
+	for ptscene in scenes:
+		var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[ptscene]]
 
-			scenes_to_remove.append(_scene)
+		# Catch scene removal leaks
+		if not is_instance_valid(ptscene):
+			push_warning("PT: Bad garbage collection. Scene: ", ptscene,
+					" is still in PRenderer.scenes and is invalid.")
+			scenes_to_remove.append(ptscene)
 			return
 
-		if _scene.added_object or _scene.material_added:
-			remake_buffers(_scene)
+		# Update BVHNodes in bvh buffer
+		if ptscene.bvh and not ptscene.bvh.updated_nodes.is_empty():
+			update_bvh_nodes(ptscene)
 
-			_scene.added_object = false
-			_scene.material_added = false
+		# Just debug
+		if ptscene.material_added or ptscene.procedural_texture_added:
+			print()
+			print("Expanding object buffers for ", ptscene, ":")
 
-		if _scene.procedural_texture_added:
-			var _scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
-			_scene_wd.load_shader(load_shader(_scene))
+		# Expands material buffer if required, skips set creation if
+		#  object buffers also need updating.
+		if ptscene.material_added:
+			scene_wd.expand_material_buffer(0, not ptscene.added_object)
+		if ptscene.added_object:
+			var buffers := PTObject.bool_to_object_type_array(ptscene.added_types)
+			scene_wd.expand_object_buffers(buffers)
+
+		if ptscene.procedural_texture_added:
+			scene_wd.load_shader(load_shader(ptscene))
 			print("Reloaded shader")
-			_scene.procedural_texture_added = false
 
-		_scene.material_removed = false
-		_scene.scene_changed = false
+		# Reset frame based flags
+		ptscene.added_object = false
+		ptscene.added_types.fill(false)
 
-		if _scene.camera:
-			_scene.camera.camera_changed = false
+		ptscene.procedural_texture_added = false
+		ptscene.procedural_texture_removed = false
+		ptscene.material_added = false
+		ptscene.material_removed = false
+		ptscene.scene_changed = false
+
+		if ptscene.camera:
+			ptscene.camera.camera_changed = false
 
 	if Engine.is_editor_hint():
 		_pt_editor_camera.camera_changed = false
 
 
 ## Will not update materials with index bigger than the scenes material buffer size
-func update_material(_scene : PTScene, material : PTMaterial) -> void:
-	# Find right wd based on _scene
-	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
-	if scene_wd.material_buffer_size < _scene.materials.size():
+func update_material(ptscene : PTScene, material : PTMaterial) -> void:
+	# Find right wd based on ptscene
+	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[ptscene]]
+	if scene_wd.material_buffer_size < ptscene.materials.size():
 		# If material is out of index do nothing
 		return
 
 	var buffer : RID = scene_wd.material_buffer
 	var bytes : PackedByteArray = material.to_byte_array()
-	var offset : int = _scene.get_material_index(material) * bytes.size()
-	scene_wd.rd.buffer_update(
-			buffer,
-			offset,
-			bytes.size(),
-			bytes
-	)
+	var offset : int = ptscene.get_material_index(material) * bytes.size()
+	scene_wd.rd.buffer_update(buffer, offset, bytes.size(), bytes)
 
 
 ## NOTE: This function is not optimized for moving many objects at the same time
-func update_object(_scene : PTScene, object : PTObject) -> void:
+func update_object(ptscene : PTScene, object : PTObject) -> void:
 	"""Updates an individual object in the buffer"""
 
-	# Find right wd based on _scene
-	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
+	# Find right wd based on ptscene
+	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[ptscene]]
 
 	# Update object buffer
 	var buffer : RID = scene_wd.get_object_buffer(object.get_type())
-
-	var obj_bytes : PackedByteArray = object.to_byte_array()
-	scene_wd.rd.buffer_update(
-			buffer,
-			_scene.get_object_index(object) * obj_bytes.size(),
-			obj_bytes.size(),
-			obj_bytes
-	)
+	var bytes : PackedByteArray = object.to_byte_array()
+	var offset : int = ptscene.get_object_index(object) * bytes.size()
+	scene_wd.rd.buffer_update(buffer, offset, bytes.size(), bytes)
 
 	# return early if object cannot be in bvh
 	if not PTBVHTree.objects_to_include.has(object.get_type()):
 		return
 
-	# Update BVH buffer if applicable
-	if _scene.bvh:
-		for node in _scene.bvh.updated_nodes:
-			var bvh_bytes : PackedByteArray = node.to_byte_array()
-			scene_wd.rd.buffer_update(
-					scene_wd.BVH_buffer,
-					_scene.bvh.get_node_index(node) * bvh_bytes.size(),
-					bvh_bytes.size(),
-					bvh_bytes
-			)
 
 ## NOTE: Optimizations can probably be made, i just remake buffers for simplicity
-func remove_object(_scene : PTScene, object : PTObject) -> void:
-	# Find right wd based on _scene
-	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
+func remove_object(ptscene : PTScene, object : PTObject) -> void:
+	# Find right wd based on ptscene
+	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[ptscene]]
 
 	# Update object buffer
 	scene_wd.create_object_buffer(object.get_type())
 
-	# Update bvh if possible
-	if _scene.bvh:
-		for node in _scene.bvh.updated_nodes:
-			var bvh_bytes : PackedByteArray = node.to_byte_array()
-			scene_wd.rd.buffer_update(
-					scene_wd.BVH_buffer,
-					_scene.bvh.get_node_index(node)  * bvh_bytes.size(),
-					bvh_bytes.size(),
-					bvh_bytes
-			)
-
 	# NOTE: A bit overkill, but dont care
+	# TODO Can be updated when making individual sets are possible
 	scene_wd.bind_sets()
-
-
-func remake_buffers(_scene : PTScene) -> void:
-	var _wd : PTWorkDispatcher = wds[scene_to_scene_index[_scene]]
-	var buffers : Array[PTObject.ObjectType] = []
-	print()
-	print("Expanding object buffers for ", _scene, ":")
-	for type : int in PTObject.ObjectType.values(): # UNSTATIC
-		if type == PTObject.ObjectType.NOT_OBJECT or type == PTObject.ObjectType.MAX:
-			continue
-
-		if _scene.added_types[type]:
-			_scene.added_types[type] = false
-			buffers.append(type)
-
-	if _scene.material_added:
-		wd.expand_material_buffer(0, false)
-
-	wd.expand_object_buffers(buffers)

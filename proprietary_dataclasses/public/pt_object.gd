@@ -76,7 +76,7 @@ var transform_before : Transform3D
 
 func _enter_tree() -> void:
 	# Find scene when entering tree if scene is not set
-	if not is_instance_valid(_scene):
+	if not is_instance_valid(_scene) and not is_instance_valid(_mesh):
 		var temp := PTObject.find_scene_or_mesh_ancestor(self)
 		_scene = temp[0] # UNSTATIC
 		_mesh = temp[1] # UNSTATIC
@@ -166,6 +166,18 @@ static func find_scene_or_mesh_ancestor(start_node : Node) -> Array:
 		current_node = current_node.get_parent()
 
 	return [null, null]
+
+
+## Turn an array of bools indexed by ObjectType, into an array of ObjectType
+static func bool_to_object_type_array(booleans : Array[bool]) -> Array[ObjectType]:
+	var buffers : Array[ObjectType] = []
+	for type : int in ObjectType.values(): # UNSTATIC
+		if type == ObjectType.NOT_OBJECT or type == ObjectType.MAX:
+			continue
+
+		if booleans[type]:
+			buffers.append(type)
+	return buffers
 
 
 func get_type() -> ObjectType:
