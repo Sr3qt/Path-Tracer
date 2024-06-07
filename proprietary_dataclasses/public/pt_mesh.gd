@@ -91,7 +91,8 @@ func remove_mesh(mesh : PTMesh) -> void:
 
 
 func add_object(object : PTObject) -> void:
-	print("Adding object to mesh")
+	if PTRendererAuto.is_debug:
+		print("Adding object to mesh")
 	objects.add_object(object)
 	if _scene:
 		object._scene = _scene

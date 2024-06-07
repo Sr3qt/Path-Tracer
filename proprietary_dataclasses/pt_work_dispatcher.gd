@@ -123,7 +123,7 @@ func create_buffers() -> void:
 	# NOTE: get_shader_parameter literally returns variant; get fgucked. UNSTATIC
 	texture = material.get_shader_parameter("image_buffer") as Texture2DRD
 
-	if _scene.get_size() != 0:
+	if _scene.get_size() != 0 and PTRendererAuto.is_debug:
 		print("Setting up buffers took %s ms" % ((Time.get_ticks_usec() - prev_time) / 1000.))
 
 
@@ -293,7 +293,8 @@ func expand_object_buffer(
 			return false
 		PTObject.ObjectType.SPHERE:
 			if sphere_buffer_size >= _scene.objects.spheres.size() and steps < 1:
-				print("Sphere buffer already fits. No buffer expansion")
+				if PTRendererAuto.is_debug:
+					print("Sphere buffer already fits. No buffer expansion")
 				return false
 			if steps < 1:
 				@warning_ignore("integer_division")
@@ -307,7 +308,8 @@ func expand_object_buffer(
 			create_sphere_buffer()
 		PTObject.ObjectType.PLANE:
 			if plane_buffer_size >= _scene.objects.planes.size() and steps < 1:
-				print("Plane buffer already fits. No buffer expansion")
+				if PTRendererAuto.is_debug:
+					print("Plane buffer already fits. No buffer expansion")
 				return false
 			if steps < 1:
 				@warning_ignore("integer_division")
@@ -321,7 +323,8 @@ func expand_object_buffer(
 			create_plane_buffer()
 		PTObject.ObjectType.TRIANGLE:
 			if triangle_buffer_size >= _scene.objects.triangles.size() and steps < 1:
-				print("Triangle buffer already fits. No buffer expansion")
+				if PTRendererAuto.is_debug:
+					print("Triangle buffer already fits. No buffer expansion")
 				return false
 			if steps < 1:
 				@warning_ignore("integer_division")
@@ -346,7 +349,8 @@ func expand_object_buffer(
 ##  to fit objects in scene. If objects already fit, do nothing, return false.
 func expand_material_buffer(steps : int = 0, create_set := true) -> bool:
 	if material_buffer_size >= _scene.materials.size() and steps < 1:
-		print("Material buffer already fits. No buffer expansion")
+		if PTRendererAuto.is_debug:
+			print("Material buffer already fits. No buffer expansion")
 		return false
 	if steps < 1:
 		@warning_ignore("integer_division")

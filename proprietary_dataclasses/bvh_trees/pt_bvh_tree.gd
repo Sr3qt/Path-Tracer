@@ -121,6 +121,9 @@ func add_object(object : PTObject) -> void:
 		print("PT: Object is already in BVHTree.")
 		return
 
+	if PTRendererAuto.is_debug:
+		print("adding obejct to bvh")
+
 	var added_object := false
 	# This algorithm only tries to fit in a new object wherever possible.
 	# TODO Implement algorithm that targets bvhnodes the new object can fit inside of.
@@ -135,9 +138,9 @@ func add_object(object : PTObject) -> void:
 
 		push_error("PT: Vacant leaf node not found. Object was not added to BVHTree")
 
-	# TODO Implement actual algorithm later, for now just remake
-	@warning_ignore("unsafe_cast")
-	PTRendererAuto.create_bvh(PTRendererAuto.scene, order, enum_to_dict[type] as String) # UNSTATIC
+		# TODO Implement actual algorithm later, for now just remake
+		@warning_ignore("unsafe_cast")
+		PTRendererAuto.create_bvh(object._scene, order, enum_to_dict[type] as String) # UNSTATIC
 
 
 func remove_object(object : PTObject) -> void:

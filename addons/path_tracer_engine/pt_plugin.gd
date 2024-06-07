@@ -46,11 +46,7 @@ func _exit_tree():
 
 func _set_window_layout(configuration):
 	#var temp = configuration.get_value(PLUGIN_NAME, "open_scenes", PackedStringArray([]))
-	print()
-	print("Loading PT plugin config (there has never been one)")
-	print("Total Editor Startup Time: ", (Time.get_ticks_usec()) / 1000., " ms")
-	print()
-	PTRendererAuto._is_init = true
+	PTRendererAuto._post_init()
 
 
 func _has_main_screen():

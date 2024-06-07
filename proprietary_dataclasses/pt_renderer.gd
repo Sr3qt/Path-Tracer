@@ -19,6 +19,9 @@ const compute_invocation_depth : int = 1
 
 const _MAX_OWNER_SEARCH_DEPTH = 30
 
+## Whether the plugin should print internal debug messages
+var is_debug := true
+
 ## General override for stopping rendering. When enabled no work will be pushed to the
 ##  GPU and the screen will be white.
 @export var is_rendering_disabled := false:
@@ -57,7 +60,8 @@ var scenes_to_remove : Array[PTScene]
 # Two dicitionary that keeps track of multiple PTScenes within one Godot scene.
 # Only used by plugin, for runtime scene tracker see scene_to_scene_index
 var _root_node_to_scenes := {}
-var _root_node_to_last_index := {}
+var _root_node_to_last_index := {} # TODO add to main control
+var _scene_to_root_node := {}
 
 # PTScene as key and scene_index pointing to the same scene in scenes
 var scene_to_scene_index := {}
@@ -95,6 +99,9 @@ var samples_per_pixel : int = 1 # DEPRECATED REMOVE
 # Whether anything was rendered in the last render_window call. Only used by plugin
 var was_rendered := false
 
+# Whether a scene was changed in the editor dock. Only used by plugin
+var _has_scenes_swapped := false
+
 var _startup_time : int = 0
 # Whether all scenes have been initiated. Only in Editor. Only toggled by plugin.gd
 var _is_init := false
@@ -109,6 +116,16 @@ var screenshot_folder := "res://renders/temps/" + Time.get_date_string_from_syst
 func _init() -> void:
 	# NOTE: Only triggers when not Engine.is_editor_hint()
 	print("PTRenderer init time: ", (Time.get_ticks_usec()) / 1000., "ms ")
+
+
+## Called by plugin.gd after PTRenderer has setup everything
+func _post_init() -> void:
+	print()
+	print("Loading PT plugin config (lie)")
+	print("Total Editor Startup Time: ", (Time.get_ticks_usec()) / 1000., " ms")
+	print()
+	PTRendererAuto._is_init = true
+	PTRendererAuto.scenes_to_remove.clear()
 
 
 func _ready() -> void:
@@ -161,6 +178,7 @@ func _process(_delta : float) -> void:
 	#  monitor with different resolution on windows. lol
 	was_rendered = false
 
+	_remove_queued_scenes()
 	_object_queue_remove()
 
 	# Make sure the rendering scene has up to date bvh buffer
@@ -386,6 +404,10 @@ func get_scene_wd(ptscene : PTScene) -> PTWorkDispatcher:
 	return wds[scene_to_scene_index[ptscene]]
 
 
+func has_scene(ptscene : PTScene) -> bool:
+	return scenes.has(ptscene)
+
+
 func add_scene(new_ptscene : PTScene) -> void:
 	"""Adds a scene to renderer"""
 
@@ -412,12 +434,14 @@ func add_scene(new_ptscene : PTScene) -> void:
 			# If search for the new_ptscenes owner found it
 			if counter < _MAX_OWNER_SEARCH_DEPTH and current_node:
 				# current_node is new_ptscene.owner
-				print("owner found! ", current_node)
+				if is_debug:
+					print("owner found! ", current_node)
 				# NOTE: We set owner since the editor doesn't set it before saving scene
 				new_ptscene.owner = current_node
 
 				@warning_ignore("unsafe_method_access")
 				_root_node_to_scenes[current_node].append(new_ptscene) # UNSTATIC
+				_scene_to_root_node[new_ptscene] = current_node # UNSTATIC
 
 			# Here new_ptscene is the root node of a scene,
 			# register it if not already registered
@@ -430,22 +454,26 @@ func add_scene(new_ptscene : PTScene) -> void:
 					var temp_array : Array[PTScene] = [new_ptscene]
 					_root_node_to_scenes[new_ptscene] = temp_array # UNSTATIC
 					_root_node_to_last_index[new_ptscene] = 0 # UNSTATIC
+				_scene_to_root_node[new_ptscene] = new_ptscene # UNSTATIC
 
 		# If root_node already has a ptscene associated with it
 		elif _root_node_to_scenes.has(new_ptscene.owner):
 			@warning_ignore("unsafe_method_access")
 			_root_node_to_scenes[new_ptscene.owner].append(new_ptscene) # UNSTATIC
+			_scene_to_root_node[new_ptscene] = new_ptscene.owner # UNSTATIC
 		else:
 			# new_ptscene is a child of an unseen scene
 			var temp_array : Array[PTScene] = [new_ptscene]
 			_root_node_to_scenes[new_ptscene.owner] = temp_array # UNSTATIC
 			_root_node_to_last_index[new_ptscene.owner] = 0 # UNSTATIC
+			_scene_to_root_node[new_ptscene] = new_ptscene.owner # UNSTATIC
 
 	scene_to_scene_index[new_ptscene] = scenes.size() # UNSTATIC
 	scenes.append(new_ptscene)
 
-	print()
-	print(new_ptscene.owner, " Root node, ", new_ptscene, " PTScene node")
+	if is_debug:
+		print()
+		print(new_ptscene.owner, " Root node, ", new_ptscene, " PTScene node")
 
 	if new_ptscene.get_size() > 0:
 		var function_name : String = PTBVHTree.enum_to_dict[new_ptscene.default_bvh] # UNSTATIC
@@ -466,16 +494,17 @@ func add_scene(new_ptscene : PTScene) -> void:
 	if not Engine.is_editor_hint() and not has_active_scene:
 		change_scene(new_ptscene)
 
-	if new_ptscene.get_size() == 0:
-		print("Added empty scene")
-		return
+	if is_debug:
+		if new_ptscene.get_size() == 0:
+			print("Added empty scene")
+			return
 
-	print("PTScene ready time: ",
-			(Time.get_ticks_usec() - new_ptscene._enter_tree_time) / 1000.0, " ms")
-	print("Total PTScene setup time: ",
-			(Time.get_ticks_usec() - new_ptscene._init_time) / 1000.0, " ms")
-	if not _is_init:
-		print((Time.get_ticks_usec()) / 1000., " ms")
+		print("PTScene ready time: ",
+				(Time.get_ticks_usec() - new_ptscene._enter_tree_time) / 1000.0, " ms")
+		if not _is_init:
+			print("Total PTScene setup time: ",
+					(Time.get_ticks_usec() - new_ptscene._init_time) / 1000.0, " ms")
+			print((Time.get_ticks_usec()) / 1000., " ms")
 
 
 func remove_scene(ptscene : PTScene) -> void:
@@ -487,7 +516,7 @@ func remove_scene(ptscene : PTScene) -> void:
 	# Remove all references to ptscene
 	var index := scenes.find(ptscene)
 	if index != -1:
-		var _scene_wd := wds[index] # Remove var eventually
+		var _scene_wd := wds[index]
 		scenes.remove_at(index)
 		wds.remove_at(index)
 		_scene_wd.queue_free()
@@ -497,10 +526,10 @@ func remove_scene(ptscene : PTScene) -> void:
 		# If ptscene was a root_node, remove it from the keys
 		_root_node_to_scenes.erase(ptscene)
 		_root_node_to_last_index.erase(ptscene)
-		# TODO Remove scene from _root_node_to_scenes when scene is deleted
+		_scene_to_root_node.erase(ptscene)
 		# If ptscene is a reference under any other root nodes
 		for root_node : Node in _root_node_to_scenes.keys(): # UNSTATIC
-			# NOTE: Because child PTScenes add themselves first _root_node_to_scenes,
+			# NOTE: Because child PTScenes add themselves first to _root_node_to_scenes,
 			# they should also be the first to removed when closing a scene.
 			# Just in case they are not we check to see if root_node is a valid index
 			if not _root_node_to_scenes.has(root_node):
@@ -524,12 +553,11 @@ func remove_scene(ptscene : PTScene) -> void:
 
 	scene_to_scene_index.erase(ptscene)
 	scenes_to_remove_objects.erase(ptscene)
-	scenes_to_remove.erase(ptscene)
 
 	# Reindex scenes
 	var i : int = 0
 	for pt_scene in scenes:
-		scene_to_scene_index[scene] = i # UNSTATIC
+		scene_to_scene_index[pt_scene] = i # UNSTATIC
 		i += 1
 
 	if ptscene == scene:
@@ -569,22 +597,32 @@ func add_scene_to_remove_objects(ptscene : PTScene) -> void:
 		scenes_to_remove_objects.append(ptscene)
 
 
+func add_scene_to_remove(ptscene : PTScene) -> void:
+	if not ptscene in scenes_to_remove:
+		scenes_to_remove.append(ptscene)
+
+
+func _remove_queued_scenes() -> void:
+	if scenes_to_remove.is_empty():
+		return
+
+	if not _has_scenes_swapped:
+		print("PT: Removing PTScene(s) that was deleted by the user.")
+		for ptscene in scenes_to_remove:
+			if not is_instance_valid(ptscene): # If scene is null; idk can prob remove
+				push_warning("PT: Help; Scene is no longer valid for deletion.")
+				continue
+			remove_scene(ptscene)
+	else:
+		if is_debug:
+			print("PT: Scene was changed, or the editor just started, " +
+					"so no scene removal will occur.")
+
+	scenes_to_remove.clear()
+
+
 ## Updates all scenes that have changed. Called at the end of _process
 func _update_scenes() -> void:
-	# Remove queued scenes
-	if scenes_to_remove and not scenes_to_remove.is_empty():
-		for ptscene in scenes_to_remove:
-			var index : int = scene_to_scene_index[ptscene] # UNSTATIC
-			var temp_wd : PTWorkDispatcher = wds.pop_at(index) # UNSTATIC
-			temp_wd.free_RIDs()
-			scenes.remove_at(index)
-
-			if scene == ptscene:
-				scene = null
-			if wd == temp_wd:
-				wd = null
-		scenes_to_remove.clear()
-
 	# Re-create buffers if asked for
 	for ptscene in scenes:
 		var scene_wd := get_scene_wd(ptscene)
@@ -603,7 +641,7 @@ func _update_scenes() -> void:
 			update_bvh_nodes(ptscene)
 
 		# Just debug
-		if ptscene.material_added or ptscene.procedural_texture_added:
+		if (ptscene.material_added or ptscene.procedural_texture_added) and is_debug:
 			print()
 			print("Expanding object buffers for ", ptscene, ":")
 
@@ -617,7 +655,8 @@ func _update_scenes() -> void:
 
 		if ptscene.procedural_texture_added:
 			scene_wd.load_shader(load_shader(ptscene))
-			print("Reloaded shader")
+			if is_debug:
+				print("Reloaded shader")
 
 		# Reset frame based flags
 		ptscene.added_object = false
@@ -634,6 +673,7 @@ func _update_scenes() -> void:
 
 	if Engine.is_editor_hint():
 		_pt_editor_camera.camera_changed = false
+		_has_scenes_swapped = false
 
 
 func _plugin_scene_closed(scene_path : String) -> void:
@@ -646,6 +686,7 @@ func _plugin_scene_closed(scene_path : String) -> void:
 
 ## Wrapper function for the plugin to change scenes
 func _plugin_change_scene(scene_root : Node) -> void:
+	_has_scenes_swapped = true
 	if scene_root == null or not _root_node_to_scenes.has(scene_root):
 		# scene_root is a new empty node or a root without a PTScene in the scene
 		scene = null
@@ -780,16 +821,19 @@ func remove_object(ptscene : PTScene, object : PTObject) -> void:
 
 ## Removes objects from any queue in scenes
 func _object_queue_remove() -> void:
-	for ptscene in scenes_to_remove_objects:
-		if not ptscene: # If scene is null; idk can prob remove
-			push_warning("Help; Scene is no longer valid for deletion.")
-			continue
-		if ptscene.is_inside_tree() and ptscene.check_objects_for_removal():
-			print("PT: Removing object(s) that was deleted by the user.")
-			ptscene.remove_objects()
-		else:
-			ptscene.objects_to_remove.clear()
-			print("PT: Scene was changed, or the editor just started, " +
-					"so no object removal will occur.")
+	if not scenes_to_remove_objects.is_empty() and not _has_scenes_swapped:
+		print("PT: Removing object(s) that was deleted by the user.")
+		for ptscene in scenes_to_remove_objects:
+			if not ptscene: # If scene is null; idk can prob remove
+				push_warning("Help; Scene is no longer valid for deletion.")
+				continue
+			if ptscene.is_inside_tree() and ptscene.check_objects_for_removal():
+				print("Removing objects from ", ptscene)
+				ptscene.remove_objects()
+			else:
+				ptscene.objects_to_remove.clear()
+				if is_debug:
+					print("PT: Scene was changed, or the editor just started, " +
+							"so no object removal will occur.")
 
 	scenes_to_remove_objects.clear()

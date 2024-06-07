@@ -126,6 +126,11 @@ func _init() -> void:
 
 func _enter_tree() -> void:
 	_enter_tree_time = Time.get_ticks_usec()
+	if is_node_ready() and not PTRendererAuto.has_scene(self):
+		if PTRendererAuto.is_debug:
+			print(self)
+			print("added scene on scenes enter_tree")
+		request_ready()
 
 
 func _ready() -> void:
@@ -143,6 +148,13 @@ func _ready() -> void:
 	procedural_texture_added = false
 
 	PTRendererAuto.add_scene(self)
+
+
+func _exit_tree() -> void:
+	# NOTE: This is only for the user deleting scenes in the editor scene tree.
+	#  Otherwise, a scene should explicitly be removed with a function call.
+	if Engine.is_editor_hint():
+		PTRendererAuto.add_scene_to_remove(self)
 
 
 func get_object_index(object : PTObject) -> int:

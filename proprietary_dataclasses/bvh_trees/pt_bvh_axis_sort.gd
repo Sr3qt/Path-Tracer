@@ -60,9 +60,10 @@ func create_bvh(objects : PTObjectContainer, axis := "x") -> void:
 
 	creation_time = Time.get_ticks_usec() - start_time
 
-	print(("Finished creating %s-axis sorted BVH tree with %s inner nodes, " +
-			"%s leaf nodes and %s objects in %s ms.") % [
-			axis, inner_count, leaf_count, object_count, creation_time / 1000.])
+	if PTRendererAuto.is_debug:
+		print(("Finished creating %s-axis sorted BVH tree with %s inner nodes, " +
+				"%s leaf nodes and %s objects in %s ms.") % [
+				axis, inner_count, leaf_count, object_count, creation_time / 1000.])
 
 
 func _recursive_split(object_list : Array[PTObject], parent : BVHNode) -> Array[BVHNode]:
