@@ -186,7 +186,7 @@ func _process(_delta : float) -> void:
 		if not is_instance_valid(scene.camera) and not Engine.is_editor_hint():
 			# TODO ADD Reporting node configuration warnings
 			# https://docs.godotengine.org/en/stable/tutorials/plugins/running_code_in_the_editor.html
-			raise_error("No camera has been set in current scene.\n" +
+			push_error("No camera has been set in current scene.\n" +
 					"Rendering is therefore temporarily disabled.")
 			has_active_camera = false
 
@@ -216,16 +216,6 @@ func _set_plugin_camera(cam : PTCamera) -> void:
 	has_active_camera = true
 	_pt_editor_camera = cam
 	_pt_editor_camera.add_child(canvas)
-
-
-func raise_error(msg : String) -> void:
-	var prepend := "PT"
-	if Engine.is_editor_hint():
-		prepend += " Plugin"
-
-	msg = prepend + ": " + msg
-
-	push_error(msg)
 
 
 # TODO Move to a preprocessor script ?
@@ -392,6 +382,10 @@ func take_screenshot() -> void:
 	print("PT: Picture taken :)")
 
 
+func get_scene_wd(ptscene : PTScene) -> PTWorkDispatcher:
+	return wds[scene_to_scene_index[ptscene]]
+
+
 func add_scene(new_ptscene : PTScene) -> void:
 	"""Adds a scene to renderer"""
 
@@ -484,15 +478,11 @@ func add_scene(new_ptscene : PTScene) -> void:
 		print((Time.get_ticks_usec()) / 1000., " ms")
 
 
-func _plugin_scene_closed(scene_path : String) -> void:
-	for node : Node in _root_node_to_scenes.keys(): # UNSTATIC
-		if node.scene_file_path == scene_path:
-			var temp_array : Array[PTScene] = _root_node_to_scenes[node] # UNSTATIC
-			for ptscene : PTScene in temp_array.duplicate(): # UNSTATIC
-				remove_scene(ptscene)
-
-
 func remove_scene(ptscene : PTScene) -> void:
+	if not scenes.has(ptscene):
+		push_warning("PT: Cannot remove PTScene that is not registered in scenes.\n",
+			"scenes: ", scenes, "\nPTScene to remove: ", ptscene)
+
 	print("Closing scene: ", ptscene)
 	# Remove all references to ptscene
 	var index := scenes.find(ptscene)
@@ -534,6 +524,7 @@ func remove_scene(ptscene : PTScene) -> void:
 
 	scene_to_scene_index.erase(ptscene)
 	scenes_to_remove_objects.erase(ptscene)
+	scenes_to_remove.erase(ptscene)
 
 	# Reindex scenes
 	var i : int = 0
@@ -545,21 +536,6 @@ func remove_scene(ptscene : PTScene) -> void:
 		scene = null
 		wd = null
 		has_active_scene = false
-
-
-## Wrapper function for the plugin to change scenes
-func _plugin_change_scene(scene_root : Node) -> void:
-	if scene_root == null or not _root_node_to_scenes.has(scene_root):
-		# scene_root is a new empty node or a root without a PTScene in the scene
-		scene = null
-		wd = null
-		has_active_scene = false
-		return
-
-	var temp_scenes : Array[PTScene] = _root_node_to_scenes[scene_root] # UNSTATIC
-	var scene_to_change : PTScene = temp_scenes[_root_node_to_last_index[scene_root]]
-
-	change_scene(scene_to_change)
 
 
 func change_scene(ptscene : PTScene) -> void:
@@ -593,25 +569,94 @@ func add_scene_to_remove_objects(ptscene : PTScene) -> void:
 		scenes_to_remove_objects.append(ptscene)
 
 
-func get_scene_wd(ptscene : PTScene) -> PTWorkDispatcher:
-	return wds[scene_to_scene_index[ptscene]]
+## Updates all scenes that have changed. Called at the end of _process
+func _update_scenes() -> void:
+	# Remove queued scenes
+	if scenes_to_remove and not scenes_to_remove.is_empty():
+		for ptscene in scenes_to_remove:
+			var index : int = scene_to_scene_index[ptscene] # UNSTATIC
+			var temp_wd : PTWorkDispatcher = wds.pop_at(index) # UNSTATIC
+			temp_wd.free_RIDs()
+			scenes.remove_at(index)
 
+			if scene == ptscene:
+				scene = null
+			if wd == temp_wd:
+				wd = null
+		scenes_to_remove.clear()
 
-## Removes objects from any queue in scenes
-func _object_queue_remove() -> void:
-	for ptscene in scenes_to_remove_objects:
-		if not ptscene: # If scene is null; idk can prob remove
-			push_warning("Help; Scene is no longer valid for deletion.")
+	# Re-create buffers if asked for
+	for ptscene in scenes:
+		var scene_wd := get_scene_wd(ptscene)
+
+		# Catch scene removal leaks
+		if not is_instance_valid(ptscene):
+			push_warning("PT: Bad garbage collection. Scene: ", ptscene,
+					" is still in PRenderer.scenes and is invalid.")
+
+			# NOTE: Cannot append freed object to typed array apparently
+			#scenes_to_remove.append(ptscene)
 			continue
-		if ptscene.is_inside_tree() and ptscene.check_objects_for_removal():
-			print("PT: Removing object(s) that was deleted by the user.")
-			ptscene.remove_objects()
-		else:
-			ptscene.objects_to_remove.clear()
-			print("PT: Scene was changed, or the editor just started, " +
-					"so no object removal will occur.")
 
-	scenes_to_remove_objects.clear()
+		# Update BVHNodes in bvh buffer
+		if ptscene.bvh and not ptscene.bvh.updated_nodes.is_empty():
+			update_bvh_nodes(ptscene)
+
+		# Just debug
+		if ptscene.material_added or ptscene.procedural_texture_added:
+			print()
+			print("Expanding object buffers for ", ptscene, ":")
+
+		# Expands material buffer if required, skips set creation if
+		#  object buffers also need updating.
+		if ptscene.material_added:
+			scene_wd.expand_material_buffer(0, not ptscene.added_object)
+		if ptscene.added_object:
+			var buffers := PTObject.bool_to_object_type_array(ptscene.added_types)
+			scene_wd.expand_object_buffers(buffers)
+
+		if ptscene.procedural_texture_added:
+			scene_wd.load_shader(load_shader(ptscene))
+			print("Reloaded shader")
+
+		# Reset frame based flags
+		ptscene.added_object = false
+		ptscene.added_types.fill(false)
+
+		ptscene.procedural_texture_added = false
+		ptscene.procedural_texture_removed = false
+		ptscene.material_added = false
+		ptscene.material_removed = false
+		ptscene.scene_changed = false
+
+		if ptscene.camera:
+			ptscene.camera.camera_changed = false
+
+	if Engine.is_editor_hint():
+		_pt_editor_camera.camera_changed = false
+
+
+func _plugin_scene_closed(scene_path : String) -> void:
+	for node : Node in _root_node_to_scenes.keys(): # UNSTATIC
+		if node.scene_file_path == scene_path:
+			var temp_array : Array[PTScene] = _root_node_to_scenes[node] # UNSTATIC
+			for ptscene : PTScene in temp_array.duplicate(): # UNSTATIC
+				remove_scene(ptscene)
+
+
+## Wrapper function for the plugin to change scenes
+func _plugin_change_scene(scene_root : Node) -> void:
+	if scene_root == null or not _root_node_to_scenes.has(scene_root):
+		# scene_root is a new empty node or a root without a PTScene in the scene
+		scene = null
+		wd = null
+		has_active_scene = false
+		return
+
+	var temp_scenes : Array[PTScene] = _root_node_to_scenes[scene_root] # UNSTATIC
+	var scene_to_change : PTScene = temp_scenes[_root_node_to_last_index[scene_root]]
+
+	change_scene(scene_to_change)
 
 
 # TODO Can be made static, and moved elsewhere
@@ -686,73 +731,6 @@ func update_bvh_nodes(ptscene : PTScene) -> void:
 		push_warning("PT: Cannot update BVH of scene with no BVH.")
 
 
-## Updates all scenes that have changed. Called at the end of _process
-func _update_scenes() -> void:
-	# Remove queued scenes
-	if scenes_to_remove and not scenes_to_remove.is_empty():
-		for ptscene in scenes_to_remove:
-			var index : int = scene_to_scene_index[ptscene] # UNSTATIC
-			var temp_wd : PTWorkDispatcher = wds.pop_at(index) # UNSTATIC
-			temp_wd.free_RIDs()
-			scenes.remove_at(index)
-
-			if scene == ptscene:
-				scene = null
-			if wd == temp_wd:
-				wd = null
-		scenes_to_remove.clear()
-
-	# Re-create buffers if asked for
-	for ptscene in scenes:
-		var scene_wd := get_scene_wd(ptscene)
-
-		# Catch scene removal leaks
-		if not is_instance_valid(ptscene):
-			push_warning("PT: Bad garbage collection. Scene: ", ptscene,
-					" is still in PRenderer.scenes and is invalid.")
-
-			# NOTE: Cannot append freed object to typed array apparently
-			#scenes_to_remove.append(ptscene)
-			continue
-
-		# Update BVHNodes in bvh buffer
-		if ptscene.bvh and not ptscene.bvh.updated_nodes.is_empty():
-			update_bvh_nodes(ptscene)
-
-		# Just debug
-		if ptscene.material_added or ptscene.procedural_texture_added:
-			print()
-			print("Expanding object buffers for ", ptscene, ":")
-
-		# Expands material buffer if required, skips set creation if
-		#  object buffers also need updating.
-		if ptscene.material_added:
-			scene_wd.expand_material_buffer(0, not ptscene.added_object)
-		if ptscene.added_object:
-			var buffers := PTObject.bool_to_object_type_array(ptscene.added_types)
-			scene_wd.expand_object_buffers(buffers)
-
-		if ptscene.procedural_texture_added:
-			scene_wd.load_shader(load_shader(ptscene))
-			print("Reloaded shader")
-
-		# Reset frame based flags
-		ptscene.added_object = false
-		ptscene.added_types.fill(false)
-
-		ptscene.procedural_texture_added = false
-		ptscene.procedural_texture_removed = false
-		ptscene.material_added = false
-		ptscene.material_removed = false
-		ptscene.scene_changed = false
-
-		if ptscene.camera:
-			ptscene.camera.camera_changed = false
-
-	if Engine.is_editor_hint():
-		_pt_editor_camera.camera_changed = false
-
-
 ## Will not update materials with index bigger than the scenes material buffer size
 func update_material(ptscene : PTScene, material : PTMaterial) -> void:
 	# Find right wd based on ptscene
@@ -798,3 +776,20 @@ func remove_object(ptscene : PTScene, object : PTObject) -> void:
 	# NOTE: A bit overkill, but dont care
 	# TODO Can be updated when making individual sets are possible
 	scene_wd.bind_sets()
+
+
+## Removes objects from any queue in scenes
+func _object_queue_remove() -> void:
+	for ptscene in scenes_to_remove_objects:
+		if not ptscene: # If scene is null; idk can prob remove
+			push_warning("Help; Scene is no longer valid for deletion.")
+			continue
+		if ptscene.is_inside_tree() and ptscene.check_objects_for_removal():
+			print("PT: Removing object(s) that was deleted by the user.")
+			ptscene.remove_objects()
+		else:
+			ptscene.objects_to_remove.clear()
+			print("PT: Scene was changed, or the editor just started, " +
+					"so no object removal will occur.")
+
+	scenes_to_remove_objects.clear()
