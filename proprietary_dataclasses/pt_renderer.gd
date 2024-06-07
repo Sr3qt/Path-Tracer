@@ -17,6 +17,8 @@ const compute_invocation_width : int = 8
 const compute_invocation_height : int = 8
 const compute_invocation_depth : int = 1
 
+const _MAX_OWNER_SEARCH_DEPTH = 30
+
 ## General override for stopping rendering. When enabled no work will be pushed to the
 ##  GPU and the screen will be white.
 @export var is_rendering_disabled := false:
@@ -52,16 +54,10 @@ var scene : PTScene # The scene currently in use
 var scenes : Array[PTScene] # An array of scenes. Primarily used by plugin
 var scenes_to_remove : Array[PTScene]
 
-# TODO Refactor root_node_to_scene into to dicts
-# A dicitionary that keeps track of multiple PTScenes within one Godot scene.
+# Two dicitionary that keeps track of multiple PTScenes within one Godot scene.
 # Only used by plugin, for runtime scene tracker see scene_to_scene_index
-var root_node_to_scene := {
-	## Example:
-	# root_node : {
-	#	"last_index" : 1 # This is an index to this sublist, ptscene1
-	#	"scenes" : [ptscene0, ptscene1] # Array of PTScenes within root_node scene
-	# }
-}
+var _root_node_to_scenes := {}
+var _root_node_to_last_index := {}
 
 # PTScene as key and scene_index pointing to the same scene in scenes
 var scene_to_scene_index := {}
@@ -185,7 +181,6 @@ func _process(_delta : float) -> void:
 	var common := (not is_rendering_disabled and has_active_scene and
 			has_active_camera)
 
-	#print(Engine.is_editor_hint())
 	if (runtime or plugin) and common:
 		# Double check camera is there
 		if not is_instance_valid(scene.camera) and not Engine.is_editor_hint():
@@ -408,37 +403,49 @@ func add_scene(new_ptscene : PTScene) -> void:
 	# If in editor, add translation layer from ptscenes owner to ptscene
 	if Engine.is_editor_hint():
 		if not new_ptscene.owner:
+			# Here new_ptscene is either a root node or has just been instantiated
+			#  in the editor tree.
 			# Find root node of PTScene
-			var max_count : int = 100
 			var counter : int = 0
 			var current_node : Node = new_ptscene.get_parent()
-			while counter < max_count and current_node and not root_node_to_scene.has(current_node):
+			while (counter < _MAX_OWNER_SEARCH_DEPTH and
+					current_node and
+					not _root_node_to_scenes.has(current_node)
+				):
 				current_node = current_node.get_parent()
 				counter += 1
 
-			if counter < max_count and current_node:
+			# If search for the new_ptscenes owner found it
+			if counter < _MAX_OWNER_SEARCH_DEPTH and current_node:
 				# current_node is new_ptscene.owner
 				print("owner found! ", current_node)
-				@warning_ignore("unsafe_method_access")
+				# NOTE: We set owner since the editor doesn't set it before saving scene
 				new_ptscene.owner = current_node
+
 				@warning_ignore("unsafe_method_access")
-				root_node_to_scene[current_node]["scenes"].append(new_ptscene) # UNSTATIC
+				_root_node_to_scenes[current_node].append(new_ptscene) # UNSTATIC
+
+			# Here new_ptscene is the root node of a scene,
+			# register it if not already registered
+			# NOTE: Child nodes will always register before root node
 			else:
-				# new_ptscene is the root node of an unseen scene
-				root_node_to_scene[new_ptscene] = { # UNSTATIC
-						"last_index" : 0,
-						"scenes" : [new_ptscene]
-				}
+				if _root_node_to_scenes.has(new_ptscene):
+					@warning_ignore("unsafe_method_access")
+					_root_node_to_scenes[new_ptscene].append(new_ptscene) # UNSTATIC
+				else:
+					var temp_array : Array[PTScene] = [new_ptscene]
+					_root_node_to_scenes[new_ptscene] = temp_array # UNSTATIC
+					_root_node_to_last_index[new_ptscene] = 0 # UNSTATIC
+
 		# If root_node already has a ptscene associated with it
-		elif root_node_to_scene.has(new_ptscene.owner):
-				@warning_ignore("unsafe_method_access")
-				root_node_to_scene[new_ptscene.owner]["scenes"].append(new_ptscene) # UNSTATIC
+		elif _root_node_to_scenes.has(new_ptscene.owner):
+			@warning_ignore("unsafe_method_access")
+			_root_node_to_scenes[new_ptscene.owner].append(new_ptscene) # UNSTATIC
 		else:
 			# new_ptscene is a child of an unseen scene
-			root_node_to_scene[new_ptscene.owner] = { # UNSTATIC
-					"last_index" : 0,
-					"scenes" : [new_ptscene]
-			}
+			var temp_array : Array[PTScene] = [new_ptscene]
+			_root_node_to_scenes[new_ptscene.owner] = temp_array # UNSTATIC
+			_root_node_to_last_index[new_ptscene.owner] = 0 # UNSTATIC
 
 	scene_to_scene_index[new_ptscene] = scenes.size() # UNSTATIC
 	scenes.append(new_ptscene)
@@ -478,17 +485,15 @@ func add_scene(new_ptscene : PTScene) -> void:
 
 
 func _plugin_scene_closed(scene_path : String) -> void:
-	for node : Node in root_node_to_scene.keys(): # UNSTATIC
+	for node : Node in _root_node_to_scenes.keys(): # UNSTATIC
 		if node.scene_file_path == scene_path:
-			var temp_array : Array = root_node_to_scene[node]["scenes"] # UNSTATIC
+			var temp_array : Array[PTScene] = _root_node_to_scenes[node] # UNSTATIC
 			for ptscene : PTScene in temp_array.duplicate(): # UNSTATIC
-				print("Closing scene: ")
-				printraw(ptscene)
 				remove_scene(ptscene)
 
 
 func remove_scene(ptscene : PTScene) -> void:
-	# TODO Remember to reindex "scenes"
+	print("Closing scene: ", ptscene)
 	# Remove all references to ptscene
 	var index := scenes.find(ptscene)
 	if index != -1:
@@ -497,28 +502,44 @@ func remove_scene(ptscene : PTScene) -> void:
 		wds.remove_at(index)
 		_scene_wd.queue_free()
 
-	# if running in editor, try to cleanup root_node_to_scene
-	print(root_node_to_scene)
-	if Engine.is_editor_hint() and not root_node_to_scene.erase(ptscene):
-		# TODO Remove scene from root_node_to_scene when scene is deleted
+	# if running in editor, cleanup _root_node_to_scenes and _root_node_to_last_index
+	if Engine.is_editor_hint():
+		# If ptscene was a root_node, remove it from the keys
+		_root_node_to_scenes.erase(ptscene)
+		_root_node_to_last_index.erase(ptscene)
+		# TODO Remove scene from _root_node_to_scenes when scene is deleted
 		# If ptscene is a reference under any other root nodes
-		for key : Node in root_node_to_scene.keys(): # UNSTATIC
-			var value : Dictionary = root_node_to_scene[key] # UNSTATIC
-			var temp_array : Array = value["scenes"] # UNSTATIC
-			var _index : int = temp_array.find(ptscene)
+		for root_node : Node in _root_node_to_scenes.keys(): # UNSTATIC
+			# NOTE: Because child PTScenes add themselves first _root_node_to_scenes,
+			# they should also be the first to removed when closing a scene.
+			# Just in case they are not we check to see if root_node is a valid index
+			if not _root_node_to_scenes.has(root_node):
+				push_warning("PT: Root node PTScene was deleted before descendant PTScene")
+				continue
+			var temp_scenes : Array[PTScene] = _root_node_to_scenes[root_node]# UNSTATIC
+			var temp_scenes_size := temp_scenes.size()
+			var _index : int = temp_scenes.find(ptscene)
 			if _index == -1:
 				continue
 
-			temp_array.remove_at(_index)
+			temp_scenes.remove_at(_index)
 
-			if temp_array.is_empty():
-				root_node_to_scene.erase(key)
-			elif value["last_index"] == _index: # UNSTATIC
-				root_node_to_scene[key]["last_index"] = 0 # UNSTATIC
-	print(root_node_to_scene)
+			# Remove keys if the root's scenes are empty
+			if temp_scenes.is_empty():
+				_root_node_to_scenes.erase(root_node)
+				_root_node_to_last_index.erase(root_node)
+			# If last_index is out of range, redefine it within range
+			elif _root_node_to_last_index[root_node] >= temp_scenes_size: # UNSTATIC
+				_root_node_to_last_index[root_node] = temp_scenes_size - 1 # UNSTATIC
 
 	scene_to_scene_index.erase(ptscene)
 	scenes_to_remove_objects.erase(ptscene)
+
+	# Reindex scenes
+	var i : int = 0
+	for pt_scene in scenes:
+		scene_to_scene_index[scene] = i # UNSTATIC
+		i += 1
 
 	if ptscene == scene:
 		scene = null
@@ -528,16 +549,15 @@ func remove_scene(ptscene : PTScene) -> void:
 
 ## Wrapper function for the plugin to change scenes
 func _plugin_change_scene(scene_root : Node) -> void:
-	if scene_root == null or not root_node_to_scene.has(scene_root):
+	if scene_root == null or not _root_node_to_scenes.has(scene_root):
 		# scene_root is a new empty node or a root without a PTScene in the scene
 		scene = null
 		wd = null
 		has_active_scene = false
 		return
 
-	var temp_dict : Dictionary = root_node_to_scene[scene_root]  # UNSTATIC
-
-	var scene_to_change : PTScene = temp_dict["scenes"][temp_dict["last_index"]]  # UNSTATIC
+	var temp_scenes : Array[PTScene] = _root_node_to_scenes[scene_root] # UNSTATIC
+	var scene_to_change : PTScene = temp_scenes[_root_node_to_last_index[scene_root]]
 
 	change_scene(scene_to_change)
 
@@ -571,6 +591,10 @@ func change_scene(ptscene : PTScene) -> void:
 func add_scene_to_remove_objects(ptscene : PTScene) -> void:
 	if not ptscene in scenes_to_remove_objects:
 		scenes_to_remove_objects.append(ptscene)
+
+
+func get_scene_wd(ptscene : PTScene) -> PTWorkDispatcher:
+	return wds[scene_to_scene_index[ptscene]]
 
 
 ## Removes objects from any queue in scenes
@@ -631,7 +655,7 @@ func create_bvh(ptscene : PTScene, _order : int, function_name : String) -> void
 	if prev_max != bvh_order:
 		load_shader(ptscene)
 
-	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[ptscene]]
+	var scene_wd := get_scene_wd(ptscene)
 	# NOTE: Removing and adding buffer seem to be as fast as trying to update it
 	scene_wd.rd.free_rid(scene_wd.BVH_buffer)
 
@@ -650,7 +674,7 @@ func create_bvh(ptscene : PTScene, _order : int, function_name : String) -> void
 func update_bvh_nodes(ptscene : PTScene) -> void:
 	if ptscene.bvh:
 		for node in ptscene.bvh.updated_nodes:
-			var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[ptscene]]
+			var scene_wd := get_scene_wd(ptscene)
 			var bvh_bytes : PackedByteArray = node.to_byte_array()
 			scene_wd.rd.buffer_update(
 					scene_wd.BVH_buffer,
@@ -667,8 +691,8 @@ func _update_scenes() -> void:
 	# Remove queued scenes
 	if scenes_to_remove and not scenes_to_remove.is_empty():
 		for ptscene in scenes_to_remove:
-			var index : int = scene_to_scene_index[ptscene]
-			var temp_wd : PTWorkDispatcher = wds.pop_at(index)
+			var index : int = scene_to_scene_index[ptscene] # UNSTATIC
+			var temp_wd : PTWorkDispatcher = wds.pop_at(index) # UNSTATIC
 			temp_wd.free_RIDs()
 			scenes.remove_at(index)
 
@@ -680,14 +704,16 @@ func _update_scenes() -> void:
 
 	# Re-create buffers if asked for
 	for ptscene in scenes:
-		var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[ptscene]]
+		var scene_wd := get_scene_wd(ptscene)
 
 		# Catch scene removal leaks
 		if not is_instance_valid(ptscene):
 			push_warning("PT: Bad garbage collection. Scene: ", ptscene,
 					" is still in PRenderer.scenes and is invalid.")
-			scenes_to_remove.append(ptscene)
-			return
+
+			# NOTE: Cannot append freed object to typed array apparently
+			#scenes_to_remove.append(ptscene)
+			continue
 
 		# Update BVHNodes in bvh buffer
 		if ptscene.bvh and not ptscene.bvh.updated_nodes.is_empty():
@@ -730,8 +756,9 @@ func _update_scenes() -> void:
 ## Will not update materials with index bigger than the scenes material buffer size
 func update_material(ptscene : PTScene, material : PTMaterial) -> void:
 	# Find right wd based on ptscene
-	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[ptscene]]
+	var scene_wd := get_scene_wd(ptscene)
 	if scene_wd.material_buffer_size < ptscene.materials.size():
+		push_error("PT: Cannot update material as index is out of range for buffer.")
 		# If material is out of index do nothing
 		return
 
@@ -746,7 +773,7 @@ func update_object(ptscene : PTScene, object : PTObject) -> void:
 	"""Updates an individual object in the buffer"""
 
 	# Find right wd based on ptscene
-	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[ptscene]]
+	var scene_wd := get_scene_wd(ptscene)
 
 	# Update object buffer
 	var buffer : RID = scene_wd.get_object_buffer(object.get_type())
@@ -757,12 +784,13 @@ func update_object(ptscene : PTScene, object : PTObject) -> void:
 	# return early if object cannot be in bvh
 	if not PTBVHTree.objects_to_include.has(object.get_type()):
 		return
+	# TODO INvestigate if this function is complete
 
 
 ## NOTE: Optimizations can probably be made, i just remake buffers for simplicity
 func remove_object(ptscene : PTScene, object : PTObject) -> void:
 	# Find right wd based on ptscene
-	var scene_wd : PTWorkDispatcher = wds[scene_to_scene_index[ptscene]]
+	var scene_wd := get_scene_wd(ptscene)
 
 	# Update object buffer
 	scene_wd.create_object_buffer(object.get_type())

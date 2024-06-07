@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3 uid="uid://cna20q0dsq2m"]
+
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_c6562"]
+
+[node name="PTScene3" type="Node"]
+script = ExtResource("1_c6562")
+
+[node name="Node3D" type="Node3D" parent="."]
+
+[node name="PTScene" type="Node" parent="Node3D"]
+script = ExtResource("1_c6562")
+
+[node name="PTScene2" type="Node" parent="Node3D"]
+script = ExtResource("1_c6562")
