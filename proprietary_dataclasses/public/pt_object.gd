@@ -15,11 +15,12 @@ const MAX_SEARCH_DEPTH = 30
 
 # NOTE: This is helpful list of places to update when you add a new object type
 #	- This enum obviously
-#	- Remember to update get_type or add a get_type function to the new object
+#	- Remember to update type_of here and add a get_type function to the new object
 #	- PTObjectContainer, variables and methods
 #	- PTWorkDispatcher, create_buffers needs a create_[object]_buffer also
 #		expand_object_buffer needs an entry
-#	- PTBVHTree needs the object_type in its objects_to_include list
+#	- PTBVHTree needs the object_type in its objects_to_exclude list if the object
+#		has an undefined bounding box
 # Tied to object_type enum in shader
 enum ObjectType {
 	NOT_OBJECT = 0,
@@ -97,13 +98,6 @@ func _exit_tree() -> void:
 		# This narrows down which objects are actually deleted vs. scene changed
 		if self in selection.get_selected_nodes():
 			deleted.emit(self)
-	#else:
-		# I'm not sure if this is how runtime should be handled. Objects that the
-		#  user wants removed should be explicitly told so. If the whole scene is
-		#  removed and not deleted, we should do nothing. If the whole scene is
-		#  removed and deleted, all child nodes and buffers should be deleted anyways.
-		#  So no point in removing an object here.
-		#_scene.queue_remove_object(self)
 
 
 func _notification(what : int) -> void:
@@ -180,16 +174,32 @@ static func bool_to_object_type_array(booleans : Array[bool]) -> Array[ObjectTyp
 	return buffers
 
 
-func get_type() -> ObjectType:
-	"""Returns the PTObject sub type"""
-	if self is PTSphere:
+## Get ObjectType of Variant, can return NOT_OBJECT
+static func type_of(object : Variant) -> ObjectType:
+	if object is PTSphere:
 		return ObjectType.SPHERE
-	elif self is PTPlane:
+	elif object is PTPlane:
 		return ObjectType.PLANE
-	elif self is PTTriangle:
+	elif object is PTTriangle:
 		return ObjectType.TRIANGLE
 	else:
 		return ObjectType.NOT_OBJECT
+
+
+## Every PTObject defines this function with their own ObjectType.
+## PTObject returns MAX.
+func get_type() -> ObjectType:
+	return ObjectType.MAX
+
+
+func get_type_name() -> String:
+	return ObjectType.find_key(get_type())
+
+
+## NOTE: This was planned as a feature for objects with potential to be added to
+## a BVH. As of now there is not intention of implementing that idea
+func has_aabb() -> bool:
+	return true
 
 
 func get_global_aabb() -> AABB:

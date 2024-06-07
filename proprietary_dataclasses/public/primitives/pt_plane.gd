@@ -37,6 +37,12 @@ func _init(
 		material = p_material
 
 
+## Every PTObject defines this function with their own ObjectType.
+## PTObject returns MAX.
+func get_type() -> ObjectType:
+	return ObjectType.PLANE
+
+
 func rotate_to_new_normal(new_normal : Vector3) -> void:
 	var axis := new_normal.cross(normal).normalized()
 	var angle := normal.signed_angle_to(new_normal, axis)

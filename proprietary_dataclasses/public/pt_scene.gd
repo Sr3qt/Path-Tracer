@@ -382,7 +382,7 @@ func _texture_changed(
 func update_object(object : PTObject) -> void:
 	## Called by an object when its properties changed
 	# Send request to update bvh if object is in it
-	if bvh and PTBVHTree.objects_to_include.has(object.get_type()):
+	if bvh and not object.get_type() in PTBVHTree.objects_to_exclude:
 		bvh.update_aabb(object)
 
 	# Send request to update buffer
@@ -416,7 +416,7 @@ func add_object(object : PTObject) -> void:
 	bind_object_signals(object)
 
 	# Add object to bvh
-	if bvh and not object.is_meshlet:
+	if bvh and not object.is_meshlet and not object.get_type() in bvh.objects_to_exclude:
 		bvh.add_object(object)
 
 	# If object is added after scene ready, update buffer
@@ -476,7 +476,7 @@ func remove_object(object : PTObject) -> void:
 	object.disconnect("material_changed", _material_changed)
 	object.disconnect("texture_changed", _texture_changed)
 
-	if bvh:
+	if bvh and not object.get_type() in PTBVHTree.objects_to_exclude:
 		bvh.remove_object(object)
 
 	# Send request to update buffer
@@ -489,7 +489,6 @@ func remove_object(object : PTObject) -> void:
 
 
 ## Removes objects that are queued for removal
-# TODO FIX support for removing multiple objects at the same time
 func remove_objects() -> void:
 	for mesh in meshes_to_remove:
 		remove_mesh(mesh)

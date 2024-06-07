@@ -801,7 +801,7 @@ func update_object(ptscene : PTScene, object : PTObject) -> void:
 	scene_wd.rd.buffer_update(buffer, offset, bytes.size(), bytes)
 
 	# return early if object cannot be in bvh
-	if not PTBVHTree.objects_to_include.has(object.get_type()):
+	if object.get_type() in PTBVHTree.objects_to_exclude:
 		return
 	# TODO INvestigate if this function is complete
 

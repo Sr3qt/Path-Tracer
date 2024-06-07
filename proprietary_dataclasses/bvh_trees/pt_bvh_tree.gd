@@ -47,9 +47,10 @@ static var built_in_bvh_functions := {
 static var bvh_functions := built_in_bvh_functions
 
 # TODO add support for meshes
-const objects_to_include : Array[PTObject.ObjectType] = [
-	PTObject.ObjectType.SPHERE,
-	PTObject.ObjectType.TRIANGLE,
+const objects_to_exclude : Array[PTObject.ObjectType] = [
+	PTObject.ObjectType.NOT_OBJECT,
+	PTObject.ObjectType.PLANE,
+	PTObject.ObjectType.MAX,
 ]
 
 # TODO Implement transforms for bvhnodes
@@ -64,6 +65,7 @@ var root_node : BVHNode
 
 var object_container : PTObjectContainer
 var object_to_leaf := {}
+var leaf_nodes : Array[BVHNode]
 
 var _node_to_index := {}
 
@@ -108,8 +110,12 @@ static func create_bvh_with_function_name(
 
 
 func update_aabb(object : PTObject) -> void:
-	var node : BVHNode = object_to_leaf[object] # UNSTATIC
-	node.update_aabb()
+	if has(object):
+		var node : BVHNode = object_to_leaf[object] # UNSTATIC
+		node.update_aabb()
+	else:
+		push_warning("PT: Cannot update the aabb of an object that is not in BVH.\n",
+				"object: ", object)
 
 
 func has(object : PTObject) -> bool:
@@ -117,19 +123,25 @@ func has(object : PTObject) -> bool:
 
 
 func add_object(object : PTObject) -> void:
+	if object.get_type() in objects_to_exclude:
+		push_warning("PT: Cannot add object to BVH as it is explicitly excluded.\n",
+				"object: ", object, "\ntype: ", object.get_type_name())
+		return
+
 	if has(object):
 		print("PT: Object is already in BVHTree.")
 		return
 
 	if PTRendererAuto.is_debug:
-		print("adding obejct to bvh")
+		print("Adding object ", object, " to bvh")
 
 	var added_object := false
 	# This algorithm only tries to fit in a new object wherever possible.
 	# TODO Implement algorithm that targets bvhnodes the new object can fit inside of.
-	for leaf_node : BVHNode in object_to_leaf.values():
+	for leaf_node in leaf_nodes:
 		if not leaf_node.is_full:
 			leaf_node.object_list.append(object)
+			object_to_leaf[object] = leaf_node # UNSTATIC
 			added_object = true
 			break
 
@@ -145,30 +157,34 @@ func add_object(object : PTObject) -> void:
 
 func remove_object(object : PTObject) -> void:
 	# TODO remove object from bvh_list and call back parent_tree
-	if has(object):
-		var leaf : BVHNode = object_to_leaf[object] # UNSTATIC
-		object_to_leaf.erase(object)
+	if not has(object):
+		push_warning("Object: %s already removed from bvh tree" % object)
+		return
 
-		var index : int = leaf.object_list.find(object)
-		if index != -1:
-			leaf.object_list.remove_at(index)
-			if leaf.size() == 0:
-				# TODO Remove BVH node
-				pass
+	if PTRendererAuto.is_debug:
+		print("Removing object ", object, " from bvh")
 
-			leaf.update_aabb()
-			return
+	var leaf : BVHNode = object_to_leaf[object] # UNSTATIC
+	object_to_leaf.erase(object)
 
-	push_warning("Object: %s already removed from bvh tree" % object)
+	var index : int = leaf.object_list.find(object)
+	if index != -1:
+		leaf.object_list.remove_at(index)
+		if leaf.size() == 0:
+			# TODO Remove BVH node
+			pass
+
+		leaf.update_aabb()
 
 
 func get_node_index(node : BVHNode) -> int:
-	return _node_to_index[node]
+	return _node_to_index[node] # UNSTATIC
 
 
 ## Sets the required indexes required for the BVHTree to work with the engine
 func index_tree() -> void:
 	bvh_list = []
+	leaf_nodes = []
 	object_to_leaf = {}
 	_node_to_index = {}
 	inner_count = 0
@@ -187,6 +203,8 @@ func _index_node(node : BVHNode) -> void:
 		if child.is_leaf:
 			_node_to_index[child] = bvh_list.size()  # UNSTATIC
 			bvh_list.append(child)
+			leaf_nodes.append(child)
+
 			leaf_count += 1
 			object_count += child.object_list.size()
 			for object in child.object_list:
@@ -253,6 +271,7 @@ func merge_with(other : PTBVHTree, root := root_node) -> void:
 
 	object_to_leaf.merge(other.object_to_leaf)
 	_node_to_index.merge(other._node_to_index)
+	leaf_nodes.append_array(other.leaf_nodes)
 
 	# Reindexing
 	for node : BVHNode in other._node_to_index:
@@ -276,6 +295,7 @@ func _remove_node(node : BVHNode) -> void:
 			_remove_node(child)
 		inner_count -= 1
 	else:
+		leaf_nodes.erase(node)
 		for object in node.object_list:
 			object_to_leaf.erase(object)
 			object_count -= 1

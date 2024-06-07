@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_c6562"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_sphere.gd" id="2_txd5b"]
-[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_plane.gd" id="3_n5g3c"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_plane.gd" id="3_syi38"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_qnddp"]
 radius = 1.0
@@ -16,7 +16,7 @@ height = 2.0
 radius = 1.0
 height = 2.0
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_ua8pu"]
+[sub_resource type="PlaneMesh" id="PlaneMesh_k18cq"]
 size = Vector2(1000, 1000)
 
 [node name="PTScene3" type="Node"]
@@ -46,6 +46,6 @@ script = ExtResource("2_txd5b")
 mesh = SubResource("SphereMesh_7u3mu")
 
 [node name="PTPlane" type="MeshInstance3D" parent="Node3D/PTScene2"]
-mesh = SubResource("PlaneMesh_ua8pu")
-script = ExtResource("3_n5g3c")
-mesh = SubResource("PlaneMesh_ua8pu")
+mesh = SubResource("PlaneMesh_k18cq")
+script = ExtResource("3_syi38")
+mesh = SubResource("PlaneMesh_k18cq")

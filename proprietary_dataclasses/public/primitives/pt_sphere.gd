@@ -51,6 +51,12 @@ func _set(property : StringName, _value : Variant) -> bool:
 	return false
 
 
+## Every PTObject defines this function with their own ObjectType.
+## PTObject returns MAX.
+func get_type() -> ObjectType:
+	return ObjectType.SPHERE
+
+
 func _get_aabb() -> AABB:
 	return AABB(-Vector3.ONE, Vector3.ONE * 2)
 

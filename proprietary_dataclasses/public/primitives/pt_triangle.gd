@@ -72,6 +72,12 @@ func create_triangle_mesh() -> void:
 	(mesh as ImmediateMesh).surface_end()
 
 
+## Every PTObject defines this function with their own ObjectType.
+## PTObject returns MAX.
+func get_type() -> ObjectType:
+	return ObjectType.TRIANGLE
+
+
 func set_aabb() -> void:
 	var temp := AABB()
 	temp = temp.expand(vertex1)

@@ -34,8 +34,10 @@ func create_bvh(objects : PTObjectContainer, axis := "x") -> void:
 	object_container = objects
 	var flat_object_list : Array[PTObject] = []
 
-	for _type in objects_to_include:
-		flat_object_list.append_array(objects.get_object_array(_type))
+	for object_type : PTObject.ObjectType in PTObject.ObjectType.values(): # UNSTATIC
+		if object_type in objects_to_exclude:
+			continue
+		flat_object_list.append_array(objects.get_object_array(object_type))
 
 	object_count = flat_object_list.size()
 
@@ -99,6 +101,7 @@ func _recursive_split(object_list : Array[PTObject], parent : BVHNode) -> Array[
 func _set_leaf(node : BVHNode, object_list : Array[PTObject]) -> BVHNode:
 	node.is_leaf = true
 	node.object_list = object_list
+	leaf_nodes.append(node)
 
 	for object in object_list:
 		object_to_leaf[object] = node # UNSTATIC
