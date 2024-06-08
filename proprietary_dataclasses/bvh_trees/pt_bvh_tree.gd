@@ -60,6 +60,9 @@ var order : int
 
 # BVHTrees can merge, parent_tree is the BVH this tree was merged with
 var parent_tree : PTBVHTree
+var is_sub_tree : bool:
+	get:
+		return is_instance_valid(parent_tree)
 
 var root_node : BVHNode
 
@@ -67,6 +70,7 @@ var object_container : PTObjectContainer
 var object_to_leaf := {}
 var leaf_nodes : Array[BVHNode]
 
+## Takes in a node gives its index in bvh_list
 var _node_to_index := {}
 
 # TODO Add bvh constructor with bvh_list as argument
@@ -82,6 +86,7 @@ var creation_time : int # In usecs
 var SAH_cost : float
 
 var updated_nodes : Array[BVHNode] = [] # Nodes that need to update their buffer
+# TODO MAke BVHBUffer abler to expand + have empty space
 
 
 func _init(_order := 2) -> void:
@@ -135,27 +140,34 @@ func add_object(object : PTObject) -> void:
 	if PTRendererAuto.is_debug:
 		print("Adding object ", object, " to bvh")
 
-	var added_object := false
-	# This algorithm only tries to fit in a new object wherever possible.
-	# TODO Implement algorithm that targets bvhnodes the new object can fit inside of.
-	for leaf_node in leaf_nodes:
-		if not leaf_node.is_full:
-			leaf_node.object_list.append(object)
-			object_to_leaf[object] = leaf_node # UNSTATIC
-			added_object = true
-			break
+	# TODO Change to local aabb when using meshes + transforms
+	var fitting_node := find_aabb_spot(object.get_global_aabb())
 
-	if not added_object:
-		# TODO Implement split function on node
+	# If node is full, split and get non-full fitting node
+	if fitting_node.is_full:
+		split_node(fitting_node)
+		fitting_node = find_aabb_spot(object.get_global_aabb(), fitting_node)
 
-		push_error("PT: Vacant leaf node not found. Object was not added to BVHTree")
+	# Add object to node
+	if fitting_node.is_inner:
+		var new_node := BVHNode.new(fitting_node, self)
+		new_node.object_list.append(object)
+		new_node.set_aabb()
+		fitting_node.add_children([new_node])
+		index_node(new_node)
+	else:
+		fitting_node.object_list.append(object)
+		index_node(fitting_node)
 
-		# TODO Implement actual algorithm later, for now just remake
-		@warning_ignore("unsafe_cast")
-		PTRendererAuto.create_bvh(object._scene, order, enum_to_dict[type] as String) # UNSTATIC
+	fitting_node.update_aabb()
+
+	# TODO MAke BVHBUffer abler to expand + have empty space
+	# Would set flag for buffer expansion here
+
 
 
 func remove_object(object : PTObject) -> void:
+	# TODO FIX, currently messes up order of bvh
 	# TODO remove object from bvh_list and call back parent_tree
 	if not has(object):
 		push_warning("Object: %s already removed from bvh tree" % object)
@@ -178,7 +190,34 @@ func remove_object(object : PTObject) -> void:
 
 
 func get_node_index(node : BVHNode) -> int:
+	assert(node.tree == self)
 	return _node_to_index[node] # UNSTATIC
+
+
+## Sets tree indices of tree for newly created node
+func index_node(node : BVHNode) -> void:
+	assert(node.tree == self)
+	if node.is_inner:
+		for child in node.children:
+			child.parent = node
+	else:
+		for object in node.object_list:
+			object_to_leaf[object] = node # UNSTATIC
+			if is_sub_tree:
+				parent_tree.object_to_leaf[object] = node # UNSTATIC
+
+		if not node in leaf_nodes:
+			leaf_nodes.append(node)
+			if is_sub_tree:
+				parent_tree.leaf_nodes.append(node)
+
+	if not node in _node_to_index:
+		_node_to_index[node] = bvh_list.size() # UNSTATIC
+		bvh_list.append(node)
+
+		if is_sub_tree:
+			parent_tree._node_to_index[node] = parent_tree.bvh_list.size() # UNSTATIC
+			parent_tree.bvh_list.append(node)
 
 
 ## Sets the required indexes required for the BVHTree to work with the engine
@@ -194,7 +233,9 @@ func index_tree() -> void:
 	_index_node(root_node)
 
 
+## Recursively index whole tree/sub-tree under given node
 func _index_node(node : BVHNode) -> void:
+	assert(node.tree == self)
 	_node_to_index[node] = bvh_list.size() # UNSTATIC
 	bvh_list.append(node)
 	inner_count += 1
@@ -214,30 +255,9 @@ func _index_node(node : BVHNode) -> void:
 		_index_node(child)
 
 
-func size() -> int:
-	"""Returns the total bumber of nodes in the tree"""
-	return inner_count + leaf_count
-
-
-func depth() -> int:
-	"""Returns the length of the longest path from the root to a leaf node"""
-	var counter : int = 0
-	var current_node := root_node
-	# The default tree is created in a way in which the longest path will be
-	#	along the first indices of each node
-	while !current_node.is_leaf:
-		current_node = current_node.children[0]
-		counter += 1
-	return counter
-
-
-# TODO Implement sah_cost fucntion
-func tree_sah_cost() -> void:
-	"Calculates the SAH cost for the whole tree"
-
-
 ## Finds a non-full inner node
 func find_inner_node(node : BVHNode) -> BVHNode:
+	assert(node.tree == self)
 	if node.is_leaf:
 		return null
 	if node.size() < order:
@@ -249,6 +269,74 @@ func find_inner_node(node : BVHNode) -> BVHNode:
 			if is_instance_valid(temp):
 				return temp
 	return null # If no inner nodes have room return null
+
+
+## Splits a node in two, dividing its children/objects evenly among two new nodes.
+## Returns these new nodes.
+func split_node(node : BVHNode) -> Array[BVHNode]:
+	assert(node.tree == self)
+	var new_node_left := BVHNode.new(node, self)
+	var new_node_right := BVHNode.new(node, self)
+
+	new_node_left.is_inner = node.is_inner
+	new_node_right.is_inner = node.is_inner
+
+	if node.is_inner:
+		@warning_ignore("integer_division")
+		var halfway := node.children.size() / 2
+		new_node_left.add_children(node.children.slice(0, halfway))
+		new_node_right.add_children(node.children.slice(halfway))
+
+		node.children.clear()
+
+		inner_count += 2
+	else:
+		@warning_ignore("integer_division")
+		var halfway := node.object_list.size() / 2
+		new_node_left.object_list.append_array(node.object_list.slice(0, halfway))
+		new_node_left.object_list.append_array(node.object_list.slice(halfway))
+
+		# Remove leaf node references in node
+		node.object_list.clear()
+		leaf_nodes.erase(node)
+		if is_sub_tree:
+			parent_tree.leaf_nodes.erase(node)
+		node.is_inner = true
+
+		inner_count += 1
+		leaf_count += 1
+
+	node.add_children([new_node_left, new_node_right])
+
+	updated_nodes.append(node)
+	updated_nodes.append(new_node_left)
+	new_node_left.set_aabb()
+	new_node_right.update_aabb() # Also calls updated_nodes.append
+
+	index_node(new_node_left)
+	index_node(new_node_right)
+
+	return [new_node_left, new_node_right]
+
+
+## Based on an AABB, finds a spot in the tree where it is fully enclosed
+## by a node's AABB if there is one. If not then return null.
+## The function does not account for whether the found node is full or not.
+## NOTE: This is a greedy search algorithm and it will return the first spot
+##  that is good enough
+func find_aabb_spot(aabb : AABB, node := root_node) -> BVHNode:
+	if node.aabb.encloses(aabb):
+		if node.is_inner:
+			for child in node.children:
+				var temp_node := find_aabb_spot(aabb, child)
+				if is_instance_valid(temp_node):
+					# Return the first child that encloses aabb
+					return temp_node
+		# node fits, but none of its children (if it has children) does
+		return node
+
+	# We found no nodes that fit
+	return null
 
 
 ## Inserts another tree at a node in the bvh.
@@ -274,8 +362,8 @@ func merge_with(other : PTBVHTree, root := root_node) -> void:
 	leaf_nodes.append_array(other.leaf_nodes)
 
 	# Reindexing
-	for node : BVHNode in other._node_to_index:
-		_node_to_index[node] += index_offset
+	for node : BVHNode in other._node_to_index: # UNSTATIC
+		_node_to_index[node] += index_offset # UNSTATIC
 
 	object_count += other.object_count
 	leaf_count += other.leaf_count
@@ -287,6 +375,7 @@ func merge_with(other : PTBVHTree, root := root_node) -> void:
 
 
 func _remove_node(node : BVHNode) -> void:
+	assert(node.tree == self)
 	# TODO Remember to reindex / or fill hole with last node + fix indices
 	bvh_list.remove_at(get_node_index(node))
 	_node_to_index.erase(node)
@@ -304,6 +393,7 @@ func _remove_node(node : BVHNode) -> void:
 
 ## Remove all nodes that are descendants of a given node from the tree
 func remove_subtree(node : BVHNode) -> void:
+	assert(node.tree == self)
 	# Remove from parent node
 	node.parent.children.erase(node)
 
@@ -313,6 +403,28 @@ func remove_subtree(node : BVHNode) -> void:
 	# Reindex all nodes from index to end of bvh_list
 	for i in range(index, bvh_list.size()):
 		_node_to_index[bvh_list[i]] = i # UNTSTATIC
+
+
+func size() -> int:
+	"""Returns the total bumber of nodes in the tree"""
+	return inner_count + leaf_count
+
+
+func depth() -> int:
+	"""Returns the length of the longest path from the root to a leaf node"""
+	var counter : int = 0
+	var current_node := root_node
+	# The default tree is created in a way in which the longest path will be
+	#	along the first indices of each node
+	while !current_node.is_leaf:
+		current_node = current_node.children[0]
+		counter += 1
+	return counter
+
+
+# TODO Implement sah_cost fucntion
+func tree_sah_cost() -> void:
+	"Calculates the SAH cost for the whole tree"
 
 
 func to_byte_array() -> PackedByteArray:
@@ -372,13 +484,13 @@ class BVHNode:
 
 
 	func set_aabb() -> void:
-		if is_leaf and object_list:
+		if is_leaf and not object_list.is_empty():
 			aabb = object_list[0].get_global_aabb()
 			for object in object_list:
 				aabb = aabb.merge(object.get_global_aabb())
 			return
 
-		if children.size() > 0:
+		if not children.is_empty():
 			aabb = children[0].aabb
 			for child in children:
 				if child.aabb:
@@ -388,10 +500,13 @@ class BVHNode:
 
 
 	func update_aabb() -> void:
-		tree.updated_nodes.append(self)
+		var old_aabb = aabb
 		set_aabb()
-		if parent != null:
-			parent.update_aabb()
+		# Intentional floating point inequality check
+		if aabb != aabb:
+			tree.updated_nodes.append(self)
+			if is_instance_valid(parent):
+				parent.update_aabb()
 
 
 	func add_children(new_children : Array[BVHNode]) -> void:
