@@ -223,7 +223,7 @@ func _process(_delta : float) -> void:
 
 func _exit_tree() -> void:
 	for _wd in wds:
-		_wd.free_RIDs()
+		_wd.free_rids()
 
 
 ## It is plugin_control_root's responsibility to call this function
@@ -519,7 +519,6 @@ func remove_scene(ptscene : PTScene) -> void:
 		var _scene_wd := wds[index]
 		scenes.remove_at(index)
 		wds.remove_at(index)
-		_scene_wd.queue_free()
 
 	# if running in editor, cleanup _root_node_to_scenes and _root_node_to_last_index
 	if Engine.is_editor_hint():
@@ -743,18 +742,9 @@ func create_bvh(ptscene : PTScene, _order : int, function_name : String) -> void
 
 	var scene_wd := get_scene_wd(ptscene)
 	# NOTE: Removing and adding buffer seem to be as fast as trying to update it
-	scene_wd.rd.free_rid(scene_wd.BVH_buffer)
-
+	scene_wd.rd.free_rid(scene_wd.bvh_buffer)
 	scene_wd.create_bvh_buffer()
-
-	# TODO Make WD function to create set with just index +
-	# TODO Document what is needed to add new set
-	var BVH_uniforms := scene_wd.uniforms.get_set_uniforms(scene_wd.BVH_SET_INDEX)
-	scene_wd.BVH_set = scene_wd.rd.uniform_set_create(
-			BVH_uniforms,
-			scene_wd.shader,
-			scene_wd.BVH_SET_INDEX
-	)
+	scene_wd.bind_set(scene_wd.BVH_SET_INDEX)
 
 
 func update_bvh_nodes(ptscene : PTScene) -> void:
@@ -763,7 +753,7 @@ func update_bvh_nodes(ptscene : PTScene) -> void:
 			var scene_wd := get_scene_wd(ptscene)
 			var bvh_bytes : PackedByteArray = node.to_byte_array()
 			scene_wd.rd.buffer_update(
-					scene_wd.BVH_buffer,
+					scene_wd.bvh_buffer,
 					ptscene.bvh.get_node_index(node)  * bvh_bytes.size(),
 					bvh_bytes.size(),
 					bvh_bytes
@@ -811,16 +801,15 @@ func remove_object(ptscene : PTScene, object : PTObject) -> void:
 	# Find right wd based on ptscene
 	var scene_wd := get_scene_wd(ptscene)
 
-	# Update object buffer
+	# TODO just update object buffer nad no need to rebind uniform set
 	scene_wd.create_object_buffer(object.get_type())
 
-	# NOTE: A bit overkill, but dont care
-	# TODO Can be updated when making individual sets are possible
-	scene_wd.bind_sets()
+	scene_wd.bind_set(scene_wd.OBJECT_SET_INDEX)
 
 
 ## Removes objects from any queue in scenes
 func _object_queue_remove() -> void:
+	# TODO Unneccessary true negative appears on start (with "temp" scene)
 	if not scenes_to_remove_objects.is_empty() and not _has_scenes_swapped:
 		print("PT: Removing object(s) that was deleted by the user.")
 		for ptscene in scenes_to_remove_objects:

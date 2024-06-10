@@ -1,8 +1,7 @@
 class_name PTWorkDispatcher
-extends Node
-# Can potentially be Refcounted
+extends RefCounted
 
-"""The work dispatcher sends work to the gpu by orders of PTRenderer"""
+## The work dispatcher sends work to the gpu by orders of PTRenderer
 
 # How many objects can be added without needing to update any buffers.
 # This means that the buffers' sizes are divisible by the step count.
@@ -23,7 +22,8 @@ var material_buffer_size : int = 0
 var uniforms : UniformStorage
 
 # Array of RIDs that need to be freed when done with them.
-var RIDs_to_free : Array[RID] = []
+# Only shader and buffers need to be manually removed
+var rids_to_free : Array[RID] = []
 
 var rd : RenderingDevice
 var shader : RID
@@ -31,10 +31,18 @@ var pipeline : RID
 
 var texture : Texture2DRD
 
+# TODO Report umlaut bug to godot devs
+## TO-DO List for creating new uniform set
+##	- See also instructions for creating buffer \
+##	- Add set index constant and MAX constant
+##	- Update UniformStorage
+##	- Add set RID variable for WD
+##	- Update bind_set and bind_sets
+##	- Update create_compute_list
+
 # Set / binding indices
 const IMAGE_SET_INDEX : int = 0
 const IMAGE_BUFFER_BIND : int = 0
-const IMAGE_SIZE_BIND : int = 1 # DEPRECATED
 const IMAGE_SET_MAX : int = 1
 
 const CAMERA_SET_INDEX : int = 1
@@ -56,7 +64,7 @@ const BVH_SET_MAX : int = 1
 var image_set : RID
 var camera_set : RID
 var object_set : RID
-var BVH_set : RID
+var bvh_set : RID
 
 # Buffer RIDS
 var image_buffer : RID
@@ -69,7 +77,7 @@ var sphere_buffer : RID
 var plane_buffer : RID
 var triangle_buffer : RID
 
-var BVH_buffer : RID
+var bvh_buffer : RID
 
 # Whether this instance is using a local RenderDevice
 var is_local_renderer := false
@@ -77,7 +85,6 @@ var is_local_renderer := false
 # References to renderer and scene that will render
 var _renderer : PTRenderer
 var _scene : PTScene
-
 
 
 func _init(renderer : PTRenderer, is_local := false) -> void:
@@ -95,14 +102,15 @@ func _init(renderer : PTRenderer, is_local := false) -> void:
 		rd = RenderingServer.get_rendering_device()
 
 
+## Creates and binds buffers to RenderDevice
 func create_buffers() -> void:
-	"""Creates and binds buffers to RenderDevice"""
 
 	var prev_time := Time.get_ticks_usec()
 
 	# Trying to set up buffers without a scene makes no sense
 	if not _scene:
-		push_warning("Set a scene to the Renderer before trying to create gpu buffers.")
+		push_warning("PT: Set a scene for the WorkDispatcher before trying to",
+				" create gpu buffers.")
 		return
 
 	# The image buffer used in compute and fragment shader
@@ -176,23 +184,34 @@ func create_material_buffer() -> void:
 
 func create_bvh_buffer() -> void:
 	# Contains the BVH tree in the form of a list
-	BVH_buffer = _create_uniform(
+	bvh_buffer = _create_uniform(
 			_create_bvh_byte_array(), BVH_SET_INDEX, BVH_BIND
 	)
 
+func bind_set(index : int) -> void:
+	match index:
+		IMAGE_SET_INDEX:
+			var image_uniforms := uniforms.get_set_uniforms(IMAGE_SET_INDEX)
+			image_set = rd.uniform_set_create(image_uniforms, shader, IMAGE_SET_INDEX)
+		CAMERA_SET_INDEX:
+			var camera_uniform := uniforms.get_set_uniforms(CAMERA_SET_INDEX)
+			camera_set = rd.uniform_set_create(camera_uniform, shader, CAMERA_SET_INDEX)
+		OBJECT_SET_INDEX:
+			var object_uniforms := uniforms.get_set_uniforms(OBJECT_SET_INDEX)
+			object_set = rd.uniform_set_create(object_uniforms, shader, OBJECT_SET_INDEX)
+		BVH_SET_INDEX:
+			var BVH_uniforms := uniforms.get_set_uniforms(BVH_SET_INDEX)
+			bvh_set = rd.uniform_set_create(BVH_uniforms, shader, BVH_SET_INDEX)
+		_:
+			push_error("PT: Cannot bind set with index ", index, ".")
+
+
 func bind_sets() -> void:
 	# Bind uniforms and sets
-	# Get uniforms
-	var image_uniforms := uniforms.get_set_uniforms(IMAGE_SET_INDEX)
-	var camera_uniform := uniforms.get_set_uniforms(CAMERA_SET_INDEX)
-	var object_uniforms := uniforms.get_set_uniforms(OBJECT_SET_INDEX)
-	var BVH_uniforms := uniforms.get_set_uniforms(BVH_SET_INDEX)
-
-	# Bind uniforms to sets
-	image_set = rd.uniform_set_create(image_uniforms, shader, IMAGE_SET_INDEX)
-	camera_set = rd.uniform_set_create(camera_uniform, shader, CAMERA_SET_INDEX)
-	object_set = rd.uniform_set_create(object_uniforms, shader, OBJECT_SET_INDEX)
-	BVH_set = rd.uniform_set_create(BVH_uniforms, shader, BVH_SET_INDEX)
+	bind_set(IMAGE_SET_INDEX)
+	bind_set(CAMERA_SET_INDEX)
+	bind_set(OBJECT_SET_INDEX)
+	bind_set(BVH_SET_INDEX)
 
 
 func load_shader(shader_ : RDShaderSource) -> void:
@@ -201,26 +220,26 @@ func load_shader(shader_ : RDShaderSource) -> void:
 	#	in RDShaderSource documentation wrrr
 	var shader_spirv: RDShaderSPIRV = rd.shader_compile_spirv_from_source(shader_)
 	shader = rd.shader_create_from_spirv(shader_spirv)
-	RIDs_to_free.append(shader)
+	rids_to_free.append(shader)
 
 	# Create a compute pipeline
 	pipeline = rd.compute_pipeline_create(shader)
 
 
-func free_RIDs() -> void:
+func free_rids() -> void:
 	if texture:
 		texture.texture_rd_rid = RID()
 
 	# Frees buffers and shader RIDS
-	for rid in RIDs_to_free:
+	for rid in rids_to_free:
 		rd.free_rid(rid)
 
 
 func free_rid(rid : RID) -> void:
 	"""Free a single rid"""
-	var index : int= RIDs_to_free.find(rid)
+	var index : int= rids_to_free.find(rid)
 	if index != -1:
-		RIDs_to_free.remove_at(index)
+		rids_to_free.remove_at(index)
 		rd.free_rid(rid)
 	else:
 		push_warning("PT: RID " + str(rid) + " is not meant to be freed.")
@@ -257,7 +276,7 @@ func create_compute_list(window : PTRenderWindow = null) -> void:
 	rd.compute_list_bind_uniform_set(compute_list, image_set, IMAGE_SET_INDEX)
 	rd.compute_list_bind_uniform_set(compute_list, camera_set, CAMERA_SET_INDEX)
 	rd.compute_list_bind_uniform_set(compute_list, object_set, OBJECT_SET_INDEX)
-	rd.compute_list_bind_uniform_set(compute_list, BVH_set, BVH_SET_INDEX)
+	rd.compute_list_bind_uniform_set(compute_list, bvh_set, BVH_SET_INDEX)
 	rd.compute_list_set_push_constant(compute_list, push_bytes, push_bytes.size())
 
 	rd.capture_timestamp(window.render_name)
@@ -385,7 +404,7 @@ func _create_uniform(bytes : PackedByteArray, _set : int, binding : int) -> RID:
 	returns the uniform and buffer created in an array"""
 
 	var buffer : RID = rd.storage_buffer_create(bytes.size(), bytes)
-	RIDs_to_free.append(buffer)
+	rids_to_free.append(buffer)
 	var uniform := RDUniform.new()
 
 	uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
@@ -453,7 +472,7 @@ func _create_texture_buffer(
 	tf.usage_bits = usage_bits
 
 	var new_texture_buffer := rd.texture_create(tf, RDTextureView.new(), data)
-	RIDs_to_free.append(new_texture_buffer)
+	rids_to_free.append(new_texture_buffer)
 
 	return new_texture_buffer
 
@@ -602,8 +621,3 @@ class UniformStorage:
 	func set_uniform(set_index : int, bind_index : int, uniform : RDUniform) -> void:
 		var uniform_set := get_set_uniforms(set_index)
 		uniform_set[bind_index] = uniform
-
-
-	#func create_uniform_set(set_index : int) -> void:
-		#var uniform_set := get_set_uniforms(set_index)
-

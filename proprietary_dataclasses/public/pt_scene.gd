@@ -8,7 +8,8 @@ extends Node
 ## changes to them or the BVH. The camera is self sufficient.
 ##
 ## TODO Make a mesh be able to only exist in one place in memory when multiple
-##  sub_scenes are using it
+##  sub_scenes are using it.
+## TODO ALSO make bvh nodes only appear once
 ##
 ## TODO Make scenes and meshes able to convert to static. Their objects will only
 ##  exist as buffers and cannot be updated. For performance optimization

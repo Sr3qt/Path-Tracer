@@ -1,7 +1,6 @@
 @tool
 class_name PTBVHTree
-extends Node
-# Can potentially be Refcounted
+extends RefCounted
 
 # TODO If i turn BVHNodes into actual nodes i can save and load BVHTrees
 # TODO Alternatively look at inst_to_dict for serialization, or var_to_bytes
@@ -85,6 +84,7 @@ var type : BVHType
 var creation_time : int # In usecs
 var SAH_cost : float
 
+# TODO Instead make a list of indices that needs to be updated
 var updated_nodes : Array[BVHNode] = [] # Nodes that need to update their buffer
 # TODO MAke BVHBUffer abler to expand + have empty space
 
@@ -500,10 +500,10 @@ class BVHNode:
 
 
 	func update_aabb() -> void:
-		var old_aabb = aabb
+		var old_aabb := aabb
 		set_aabb()
 		# Intentional floating point inequality check
-		if aabb != aabb:
+		if old_aabb != aabb:
 			tree.updated_nodes.append(self)
 			if is_instance_valid(parent):
 				parent.update_aabb()
