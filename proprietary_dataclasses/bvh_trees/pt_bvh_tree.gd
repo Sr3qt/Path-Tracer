@@ -527,7 +527,7 @@ class BVHNode:
 		for object in object_list:
 			var type : int = object.get_type()
 			var _index : int = tree.object_container.get_object_index(object)
-			child_indices_array.append(_index + (type << 24))
+			child_indices_array.append(PTObject.make_object_id(_index, type))
 
 		# Needed for buffer alignement
 		#child_indices_array.resize(tree.order)

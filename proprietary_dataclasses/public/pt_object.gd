@@ -10,6 +10,10 @@ extends MeshInstance3D
 
 const EPSILON = 1e-6
 const AABB_PADDING := Vector3(EPSILON, EPSILON, EPSILON)
+
+## Number of bits spared for object type in object_id. DON'T CHANGE
+const OBJECT_TYPE_NUM_BITS = 8
+
 ## How many nodes will be checked when searching for an ancestor
 const MAX_SEARCH_DEPTH = 30
 
@@ -82,8 +86,12 @@ func _enter_tree() -> void:
 		_scene = temp[0] # UNSTATIC
 		_mesh = temp[1] # UNSTATIC
 		if _scene:
+			if PTRendererAuto.is_debug and _scene.is_node_ready():
+				print("Object adds itself to scene. object: ", self, " ", _scene)
 			_scene.add_object(self)
 		if _mesh:
+			if PTRendererAuto.is_debug and _mesh.is_node_ready():
+				print("Object adds itself to mesh. object: ", self, " ", _mesh)
 			_mesh.add_object(self)
 
 	transform_before = Transform3D(transform)
@@ -97,6 +105,8 @@ func _exit_tree() -> void:
 		var selection := EditorInterface.get_selection()
 		# This narrows down which objects are actually deleted vs. scene changed
 		if self in selection.get_selected_nodes():
+			if PTRendererAuto.is_debug:
+				print("Object queued for deletion. ", self)
 			deleted.emit(self)
 
 
@@ -172,6 +182,20 @@ static func bool_to_object_type_array(booleans : Array[bool]) -> Array[ObjectTyp
 		if booleans[type]:
 			buffers.append(type)
 	return buffers
+
+
+## Based on an index ana an object type, create the object_id that would be used by the shader
+static func make_object_id(index : int, type : ObjectType) -> int:
+	return index + (type << (32 - OBJECT_TYPE_NUM_BITS))
+
+
+static func get_object_type_from_id(object_id : int) -> ObjectType:
+	return object_id >> (32 - OBJECT_TYPE_NUM_BITS) as ObjectType
+
+
+static func get_object_index_from_id(object_id : int) -> int:
+	var int_limit := 2147483647
+	return (int_limit >> OBJECT_TYPE_NUM_BITS) & object_id
 
 
 ## Get ObjectType of Variant, can return NOT_OBJECT

@@ -49,6 +49,8 @@ func _exit_tree() -> void:
 		var selection := EditorInterface.get_selection()
 		# This narrows down which objects are actually deleted vs. scene changed
 		if self in selection.get_selected_nodes():
+			if PTRendererAuto.is_debug:
+				print("Mesh queued for deletion. ", self)
 			deleted.emit(self)
 
 
@@ -57,8 +59,12 @@ func _ready() -> void:
 	bvh = PTBVHTree.create_bvh_with_function_name(objects, bvh_order, function_name)
 
 	if _mesh:
+		if PTRendererAuto.is_debug:
+			print("Mesh adds itself to other mesh. mesh: ", self, " other: ", _mesh)
 		_mesh.add_mesh(self)
 	elif _scene:
+		if PTRendererAuto.is_debug:
+			print("Mesh adds itself to scene. mesh: ", self, " ", _scene)
 		_scene.add_mesh(self)
 
 
@@ -94,11 +100,11 @@ func add_object(object : PTObject) -> void:
 	if PTRendererAuto.is_debug:
 		print("Adding object to mesh")
 	objects.add_object(object)
-	if _scene:
-		object._scene = _scene
-		_scene.add_object(object)
-
+	object._scene = _scene
 	if is_node_ready():
+		if is_instance_valid(_scene):
+			_scene.add_object(object)
+
 		bvh.add_object(object)
 
 
