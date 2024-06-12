@@ -55,7 +55,7 @@ func _init(
 
 
 static func get_object_byte_size() -> int:
-	return 68
+	return 80
 
 
 func _ready() -> void:

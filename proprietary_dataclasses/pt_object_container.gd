@@ -159,11 +159,13 @@ func merge(other : PTObjectContainer) -> Array[bool]:
 func _rebalance_objects(
 		added_objects : PTObjectContainer,
 		removed_objects : PTObjectContainer
-	) -> void: # MIGHT HAVE RETURN VALUE LATER; CHANGED INDICES OR SMTHN
+	) -> Array[int]: # MIGHT HAVE RETURN VALUE LATER; CHANGED INDICES OR SMTHN
 
 	# This is called only by a PTScene. We can assume all removed objects are in
 	# this instance and all new objects are not in this object.
 	# There is still a chance an object has been freed.
+
+	var object_ids_to_update : Array[int] = []
 
 	for mesh in removed_objects.meshes:
 		meshes.erase(mesh)
@@ -174,7 +176,11 @@ func _rebalance_objects(
 	var index_sort := func(x : PTObject, y: PTObject) -> bool:
 		return get_object_index(x) > get_object_index(y)
 
+	# Remove objects
 	for type : ObjectType in ObjectType.values(): # UNSTATIC
+		if not added_objects.has_type(type) and not removed_objects.has_type(type):
+			continue
+
 		var object_array : Array = get_object_array(type)
 		var new_object_array := added_objects.get_object_array(type)
 		var removed_object_array := removed_objects.get_object_array(type)
@@ -183,11 +189,14 @@ func _rebalance_objects(
 		# Sorts objects according to descending index
 		removed_object_array.sort_custom(index_sort)
 		for object : PTObject in removed_object_array: # UNSTATIC
+			var index := get_object_index(object)
+			_object_to_object_index.erase(object)
+
+			object_ids_to_update.append(PTObject.make_object_id(index, type))
 
 			# Removed object is at the back of object_array
-			if get_object_index(object) == object_array.size() - 1:
+			if index == object_array.size() - 1:
 				object_array.pop_back()
-				_object_to_object_index.erase(object)
 				object_count -= 1
 				continue
 
@@ -196,17 +205,14 @@ func _rebalance_objects(
 				assert(is_instance_valid(new_object),
 						"PT: Cannot add freed or null object to PTObjectContainer. " +
 						str(new_object))
-				var index := get_object_index(object)
 				object_array[index] = new_object # UNSTATIC
-				_object_to_object_index.erase(object)
 				_set_object_index(new_object, index)
 				new_object_index -= 1
 			else:
 				# Object is removed in the middle of object_array and no new
 				# object can take its place. Move the last index to fill in
 				var last_object : PTObject = object_array.pop_back() # UNSTATIC
-				var index := get_object_index(object)
-				_object_to_object_index.erase(object)
+				object_ids_to_update.append(PTObject.make_object_id(object_array.size(), type))
 				_set_object_index(last_object, index)
 				object_array[index] = last_object
 				object_count -= 1
@@ -224,3 +230,4 @@ func _rebalance_objects(
 	assert(size() + added_objects.size() - removed_objects.size() == count(),
 			"PT: Number of objects in != number of objects out.")
 
+	return object_ids_to_update

@@ -27,6 +27,8 @@ static func z_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxi
 	temp.type = BVHType.Z_SORTED
 	return temp
 
+# TODO Implement longest axis split
+
 
 func create_bvh(objects : PTObjectContainer, axis := "x") -> void:
 	var start_time := Time.get_ticks_usec()

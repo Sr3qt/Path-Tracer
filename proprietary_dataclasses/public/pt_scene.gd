@@ -559,6 +559,8 @@ func remove_objects() -> void:
 ## Almost definitely a result of premature optimization
 func _re_index() -> void:
 
+	var start_time = Time.get_ticks_usec()
+
 	# These variables will hold ALL objects that needs to be added/removed
 	# The BVHTree only requires meshes and the scene's objects to reindex
 	var unpacked_to_add := PTObjectContainer.new()
@@ -615,22 +617,23 @@ func _re_index() -> void:
 
 	## Actual functions
 	# Re-index objects
-	objects._rebalance_objects(unpacked_to_add, unpacked_to_remove)
+	var updated_object_ids := objects._rebalance_objects(unpacked_to_add, unpacked_to_remove)
 
 	# Re-index BVHNodes
-	# TEMP Merge with bvh.updated_nodes
 	var updated_node_indices := bvh._rebalance_objects(_to_add, _to_remove)
 
 	# TODO Resize buffers
-
-	# TODO Update object buffers
-	# NOTE: IMPORTANT object types that are not in the bvh have to be nulled out
-
-	# TODO Update BVHBuffer
+	# Can probably be moved to  Renderer
+	PTRendererAuto._update_object_buffers(self, updated_object_ids)
+	PTRendererAuto._update_bvh_buffer(self, updated_node_indices)
 
 	# TODO Reset values
+	_to_add.clear()
+	_to_remove.clear()
 
-	pass
+
+	print("Object/meshes queued for deletion or addition trigger. Time taken: ",
+			((Time.get_ticks_usec() - start_time) / 1000.0))
 
 
 func get_size() -> int:

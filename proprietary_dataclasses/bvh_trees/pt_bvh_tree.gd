@@ -126,6 +126,11 @@ static func create_bvh_with_function_name(
 	return bvh
 
 
+func node_byte_size() -> int:
+	# Number of child indices times 4 plus aabb 32 bytes
+	return (order + ((order % 4) - 4) * -1) * 4 + 32
+
+
 func update_aabb(object : PTObject) -> void:
 	assert(has(object), "PT: Cannot update the aabb of an object that is not in BVH.\n" +
 				"object: " + str(object))
@@ -617,6 +622,12 @@ func _rebalance_objects(
 
 			node_indices_to_update.append(index)
 
+	# TODO Rework Update_nodes to use indexing
+	for node in updated_nodes:
+		assert(not get_node_index(node) in node_indices_to_update,
+				"Node index is already in node_indices_to_update.")
+		node_indices_to_update.append(get_node_index(node))
+
 	return node_indices_to_update
 
 
@@ -659,6 +670,8 @@ class BVHNode:
 	## other BVHNodes, or a leaf node, where its object_list property point to
 	## objects. Having a mixed node is technically supported, but is unadviced.
 	## Rather, wrap the objects in the mixed node into a new leaf node child.
+
+	const BYTE_SIZE = 32
 
 	var tree : PTBVHTree # Reference to the tree this node is a part of
 	var parent : BVHNode # Reference to parent BVHNode
@@ -749,7 +762,11 @@ class BVHNode:
 								   int((tree.order % 4) - 4) * -1)
 
 		var bbox_bytes : PackedByteArray = PTObject.aabb_to_byte_array(aabb)
+		var bytes := PackedInt32Array(child_indices_array).to_byte_array() + bbox_bytes
+		assert(bytes.size() == tree.node_byte_size(),
+				"Acutal byte size and set byte size do not match. set:" +
+				str(tree.node_byte_size()) +" actual " + str(bytes.size()))
 
-		return PackedInt32Array(child_indices_array).to_byte_array() + bbox_bytes
+		return bytes
 
 

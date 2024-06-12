@@ -69,6 +69,6 @@ func to_byte_array() -> PackedByteArray:
 		[distance]).to_byte_array() +
 		_get_property_byte_array()
 	)
-	assert(bytes.size() == PTTriangle.get_object_byte_size(),
+	assert(bytes.size() == PTPlane.get_object_byte_size(),
 			"Acutal byte size and set byte size do not match ")
 	return bytes

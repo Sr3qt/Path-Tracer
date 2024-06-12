@@ -826,3 +826,40 @@ func _object_queue_remove() -> void:
 							"so no object removal will occur.")
 
 	scenes_to_remove_objects.clear()
+
+
+func _update_object_buffers(ptscene : PTScene, updated_object_ids : Array[int]) -> void:
+	var scene_wd := get_scene_wd(ptscene)
+
+	for object_id in updated_object_ids:
+		var type := PTObject.get_object_type_from_id(object_id)
+		assert(type != PTObject.ObjectType.NOT_OBJECT,
+				"Invalid object id type (NOT_OBJECT)")
+		var index := PTObject.get_object_index_from_id(object_id)
+
+		var buffer := scene_wd.get_object_buffer(type)
+
+		var bytes : PackedByteArray
+		# If index is out of range of objects, null out index
+		if index >= ptscene.objects.get_object_array(type).size():
+			bytes = PTObject.empty_object_bytes(type)
+		else:
+			bytes = ptscene.objects.get_object_array(type)[index].to_byte_array()
+		scene_wd.rd.buffer_update(buffer, index, bytes.size(), bytes)
+
+
+func _update_bvh_buffer(ptscene : PTScene, updated_node_indices : Array[int]) -> void:
+	var scene_wd := get_scene_wd(ptscene)
+
+	for node_index in updated_node_indices:
+
+		var buffer := scene_wd.bvh_buffer
+
+		var bytes : PackedByteArray
+		# If index is out of range of objects, null out index
+		if node_index >= ptscene.bvh.bvh_list.size():
+			# Empy node
+			bytes = PTObject.empty_byte_array(ptscene.bvh.node_byte_size())
+		else:
+			bytes = ptscene.bvh.bvh_list[node_index].to_byte_array()
+		scene_wd.rd.buffer_update(buffer, node_index, bytes.size(), bytes)
