@@ -132,6 +132,10 @@ func _get_property_list() -> Array:
 	return properties
 
 
+static func get_object_byte_size() -> int:
+	return 0
+
+
 static func vector_to_array(vector : Vector3) -> Array[float]:
 	return [vector.x, vector.y, vector.z]
 
@@ -210,6 +214,29 @@ static func type_of(object : Variant) -> ObjectType:
 		return ObjectType.NOT_OBJECT
 
 
+static func empty_byte_array(size : int) -> PackedByteArray:
+	var ints : Array[int] = []
+	ints.resize(size)
+	ints.fill(0)
+
+	return PackedInt32Array(ints).to_byte_array()
+
+
+static func empty_object_bytes(type : ObjectType) -> PackedByteArray:
+	match type:
+		ObjectType.SPHERE:
+			return empty_byte_array(PTSphere.get_object_byte_size())
+		ObjectType.PLANE:
+			return empty_byte_array(PTPlane.get_object_byte_size())
+		ObjectType.TRIANGLE:
+			return empty_byte_array(PTTriangle.get_object_byte_size())
+		_:
+			push_error("PT: Object type does not support 'empty_object_bytes' ",
+					"static function in PTObject.")
+
+	return PackedByteArray([])
+
+
 ## Every PTObject defines this function with their own ObjectType.
 ## PTObject returns MAX.
 func get_type() -> ObjectType:
@@ -243,7 +270,7 @@ func _get_property_byte_array() -> PackedByteArray:
 
 
 func to_byte_array() -> PackedByteArray:
-	push_warning("No 'to_byte_array' function set for object " + str(self) + ". \
+	push_error("No 'to_byte_array' function set for object " + str(self) + ". \
 	A default function will be used instead.")
 	return PackedInt32Array([0,0,0,0,0,0,0,0]).to_byte_array()
 

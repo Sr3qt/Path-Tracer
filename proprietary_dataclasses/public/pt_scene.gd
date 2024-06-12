@@ -621,6 +621,8 @@ func _re_index() -> void:
 	# TEMP Merge with bvh.updated_nodes
 	var updated_node_indices := bvh._rebalance_objects(_to_add, _to_remove)
 
+	# TODO Resize buffers
+
 	# TODO Update object buffers
 	# NOTE: IMPORTANT object types that are not in the bvh have to be nulled out
 

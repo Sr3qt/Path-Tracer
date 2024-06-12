@@ -54,6 +54,10 @@ func _init(
 		material = p_material
 
 
+static func get_object_byte_size() -> int:
+	return 68
+
+
 func _ready() -> void:
 	set_aabb()
 	if Engine.is_editor_hint():
@@ -103,5 +107,8 @@ func to_byte_array() -> PackedByteArray:
 		PTObject.vector_to_array((vertex2 - vertex1).cross(vertex3 -  vertex1).normalized()) + [0]
 	).to_byte_array()
 	bytes += _get_property_byte_array()
+
+	assert(bytes.size() == PTTriangle.get_object_byte_size(),
+			"Acutal byte size and set byte size do not match ")
 
 	return bytes

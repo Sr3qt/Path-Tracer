@@ -37,6 +37,10 @@ func _init(
 		material = p_material
 
 
+static func get_object_byte_size() -> int:
+	return 32
+
+
 ## Every PTObject defines this function with their own ObjectType.
 ## PTObject returns MAX.
 func get_type() -> ObjectType:
@@ -60,5 +64,11 @@ func translate_with_new_d(new_d : float) -> void:
 
 
 func to_byte_array() -> PackedByteArray:
-	return (PackedFloat32Array(PTObject.vector_to_array(normal) + [distance]).to_byte_array() +
-	_get_property_byte_array())
+	var bytes := (
+		PackedFloat32Array(PTObject.vector_to_array(normal) +
+		[distance]).to_byte_array() +
+		_get_property_byte_array()
+	)
+	assert(bytes.size() == PTTriangle.get_object_byte_size(),
+			"Acutal byte size and set byte size do not match ")
+	return bytes

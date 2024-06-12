@@ -51,6 +51,10 @@ func _set(property : StringName, _value : Variant) -> bool:
 	return false
 
 
+static func get_object_byte_size() -> int:
+	return 64
+
+
 ## Every PTObject defines this function with their own ObjectType.
 ## PTObject returns MAX.
 func get_type() -> ObjectType:
@@ -90,6 +94,9 @@ func to_byte_array() -> PackedByteArray:
 			PackedFloat32Array(PTObject.vector_to_array(ttransform.origin)).to_byte_array() +
 			PackedInt32Array([0]).to_byte_array()
 			)
+
+	assert(bytes.size() == PTSphere.get_object_byte_size(),
+			"Acutal byte size and set byte size do not match ")
 
 	return bytes
 
