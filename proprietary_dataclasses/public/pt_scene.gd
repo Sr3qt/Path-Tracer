@@ -7,6 +7,8 @@ extends Node
 ## It's responsibility is to keep track of objects and materials, as well as any
 ## changes to them or the BVH. The camera is self sufficient.
 ##
+## TODO Make option to only render an object/mesh and its reflections
+##
 ## TODO Make a mesh be able to only exist in one place in memory when multiple
 ##  sub_scenes are using it.
 ## TODO ALSO make bvh nodes only appear once
@@ -54,8 +56,6 @@ var camera_settings_values := {
 		#create_random_scene(0)
 		#print("Created random scene")
 
-# Objects owned by the scene
-var scene_objects : PTObjectContainer
 # Objects owned by the scene and objects owned by meshes
 var objects : PTObjectContainer
 
@@ -110,6 +110,10 @@ var material_removed := false
 var procedural_texture_added := false
 var procedural_texture_removed := false
 
+## Contains objects and meshes to add before rendering starts
+var _to_add : PTObjectContainer
+var _to_remove : PTObjectContainer
+
 # Mainly for editor tree. Nodes need to be kept for a little longer after exit_tree
 #  to verify if they were deleted or just the scenes were swapped.
 var objects_to_remove : Array[PTObject]
@@ -118,11 +122,15 @@ var meshes_to_remove : Array[PTMesh]
 var _init_time : int
 var _enter_tree_time : int
 
+# TODO Add method for scene to free all objects
+
 
 func _init() -> void:
 	_init_time = Time.get_ticks_usec()
 	added_types.resize(ObjectType.MAX)
 	objects = PTObjectContainer.new()
+	_to_add = PTObjectContainer.new()
+	_to_remove = PTObjectContainer.new()
 
 
 func _enter_tree() -> void:
@@ -203,23 +211,15 @@ func _change_camera() -> void:
 func add_mesh(mesh : PTMesh) -> void:
 	#Add objects
 	meshes.append(mesh)
-	var new_added_types := objects.merge(mesh.objects)
+	# NOTE: Should scene also add any sub-meshes that have not already been added?
 
-	# Update object update flags
-	for i in range(new_added_types.size()):
-		added_types[i] = added_types[i] or new_added_types[i]
-	if mesh.objects.object_count != 0:
-		added_object = true
-
-	# Bind signals
-	for _objects : Array in mesh.objects.get_object_lists(): # UNSTATIC
-		for object : PTObject in _objects: # UNSTATIC
-			bind_object_signals(object)
-
-	mesh.transform_changed.connect(_update_mesh)
-	mesh.deleted.connect(remove_mesh)
-
-	scene_changed = true
+	#var new_added_types := objects.merge(mesh.objects)
+#
+	## Update object update flags
+	#for i in range(new_added_types.size()):
+		#added_types[i] = added_types[i] or new_added_types[i]
+	#if mesh.objects.object_count != 0:
+		#added_object = true
 
 	if bvh:
 		if bvh.order < mesh.bvh.order:
@@ -235,17 +235,30 @@ func add_mesh(mesh : PTMesh) -> void:
 
 		bvh.merge_with(mesh.bvh)
 
+	print("Binding signals for objects in mesh")
+	print(mesh.objects.get_object_lists())
+	# Bind signals
+	for _objects : Array in mesh.objects.get_object_lists(): # UNSTATIC
+		for object : PTObject in _objects: # UNSTATIC
+			add_object(object)
 
-@warning_ignore("unused_parameter")
-func _update_mesh(mesh : PTMesh) -> void:
-	# TODO Update mesh and sub-meshes transform in buffer, update bvh aabbs
-	pass
+	mesh.transform_changed.connect(_update_mesh)
+	mesh.deleted.connect(remove_mesh)
+
+	scene_changed = true
 
 
 func remove_mesh(mesh : PTMesh) -> void:
-	print("removing mesh")
+	print("removing mesh ", mesh)
+	print(meshes_to_remove)
+	print(objects_to_remove)
 	# TODO Remove mesh and objects from scene and bvh, as well as buffers
 	meshes.erase(mesh)
+
+	for object : PTObject in objects_to_remove.duplicate():
+		if object._mesh == mesh:
+			objects_to_remove.erase(object)
+
 
 	for _objects : Array in mesh.objects.get_object_lists(): # UNSTATIC
 		for object : PTObject in _objects: # UNSTATIC
@@ -256,6 +269,12 @@ func remove_mesh(mesh : PTMesh) -> void:
 
 	if bvh:
 		bvh.remove_subtree(mesh.bvh.root_node)
+
+
+@warning_ignore("unused_parameter")
+func _update_mesh(mesh : PTMesh) -> void:
+	# TODO Update mesh and sub-meshes transform in buffer, update bvh aabbs
+	pass
 
 
 ## Returns material index of added material. used_by_object refers to whether or
@@ -380,16 +399,18 @@ func _texture_changed(
 	#PTRendererAuto.remove_material()
 
 
-func update_object(object : PTObject) -> void:
-	## Called by an object when its properties changed
-	# Send request to update bvh if object is in it
-	if bvh and not object.get_type() in PTBVHTree.objects_to_exclude:
-		bvh.update_aabb(object)
+func connect_object_signals(object : PTObject) -> void:
+	object.connect("object_changed", update_object)
+	object.connect("deleted", queue_remove_object)
+	object.connect("material_changed", _material_changed)
+	object.connect("texture_changed", _texture_changed)
 
-	# Send request to update buffer
-	PTRendererAuto.update_object(self, object)
 
-	scene_changed = true
+func disconnect_object_signals(object : PTObject) -> void:
+	object.disconnect("object_changed", update_object)
+	object.disconnect("deleted", queue_remove_object)
+	object.disconnect("material_changed", _material_changed)
+	object.disconnect("texture_changed", _texture_changed)
 
 
 ## NOTE: Don't know if i should allow user to add object via code and not by adding
@@ -414,7 +435,7 @@ func add_object(object : PTObject) -> void:
 	_add_material(object.material, true)
 	_add_texture(object.texture)
 
-	bind_object_signals(object)
+	connect_object_signals(object)
 
 	# Add object to bvh
 	if bvh and not object.is_meshlet and not object.get_type() in bvh.objects_to_exclude:
@@ -425,15 +446,81 @@ func add_object(object : PTObject) -> void:
 		update_object(object)
 
 
-func bind_object_signals(object : PTObject) -> void:
-	object.connect("object_changed", update_object)
-	object.connect("deleted", queue_remove_object)
-	object.connect("material_changed", _material_changed)
-	object.connect("texture_changed", _texture_changed)
+## Internal function for removing objects in the re-indexing step and
+## also part of the complete remove_object function
+func _remove_object(object : PTObject) -> void:
+	## This is TEMP
+	objects.remove_object(object)
+
+	# NOTE: Might be unneccessary
+	# Only remove from tree if not in editor. Else it can potentially prevent
+	#  an object from being saved to scene on editor quit.
+	if object.is_inside_tree() and not Engine.is_editor_hint():
+		remove_child(object)
+
+	object._scene = null
+
+	# TODO Remove from texture list if object was their last user
+
+	disconnect_object_signals(object)
+
+
+## Removes an object from the scene and tree immidietaly. The object is not deleted.
+## Can be slow for many objects. Consider using queue_remove_object for mass deletion.
+func remove_object(object : PTObject) -> void:
+	print( "\nRemoving object from scene. ", object, " ", self)
+	objects.remove_object(object)
+
+	# NOTE: Might be unneccessary
+	# Only remove from tree if not in editor. Else it can potentially prevent
+	#  an object from being saved to scene on editor quit.
+	if object.is_inside_tree() and not Engine.is_editor_hint():
+		remove_child(object)
+
+	object._scene = null
+
+	# TODO Remove from texture list if object was their last user
+
+	object.disconnect("object_changed", update_object)
+	object.disconnect("deleted", queue_remove_object)
+	object.disconnect("material_changed", _material_changed)
+	object.disconnect("texture_changed", _texture_changed)
+
+	if bvh and not object.get_type() in PTBVHTree.objects_to_exclude:
+		bvh.remove_object(object)
+
+	# Send request to update buffer
+	# TODO MOVE out of funciton, to PTRenderer maybe
+	PTRendererAuto.remove_object(self, object)
+
+	#if object.is_meshlet and not object._mesh in meshes_to_remove:
+		#object._mesh.remove_object(object)
+
+	scene_changed = true
+
+
+func update_object(object : PTObject) -> void:
+	## Called by an object when its properties changed
+	# Send request to update bvh if object is in it
+	if bvh and not object.get_type() in PTBVHTree.objects_to_exclude:
+		bvh.update_aabb(object)
+
+	# Send request to update buffer
+	PTRendererAuto.update_object(self, object)
+
+	scene_changed = true
+
+
+func queue_add_object(object : PTObject) -> void:
+	if not _to_add.has(object):
+		_to_add.add_object(object)
 
 
 func queue_remove_object(object : PTObject) -> void:
-	if not object in objects_to_remove:
+	# TODO test if deleting mesh and object at the same time in editor causes bugs
+	if not _to_remove.has(object):
+		_to_remove.add_object(object)
+	if not object in objects_to_remove and not object._mesh in meshes_to_remove:
 		objects_to_remove.append(object)
 
 	PTRendererAuto.add_scene_to_remove_objects(self)
@@ -458,37 +545,6 @@ func check_objects_for_removal() -> bool:
 	return not objects_to_remove.is_empty() or not meshes_to_remove.is_empty()
 
 
-## Removes an object from the scene and tree. The object is not deleted.
-func remove_object(object : PTObject) -> void:
-	objects.remove_object(object)
-
-	# NOTE: Might be unneccessary
-	# Only remove from tree if not in editor. Else it can potentially prevent
-	#  an object from being saved to scene on editor quit.
-	if object.is_inside_tree() and not Engine.is_editor_hint():
-		remove_child(object)
-
-	object._scene = null
-
-	# TODO Remove from texture list if object was their last user
-
-	object.disconnect("object_changed", update_object)
-	object.disconnect("deleted", queue_remove_object)
-	object.disconnect("material_changed", _material_changed)
-	object.disconnect("texture_changed", _texture_changed)
-
-	if bvh and not object.get_type() in PTBVHTree.objects_to_exclude:
-		bvh.remove_object(object)
-
-	# Send request to update buffer
-	PTRendererAuto.remove_object(self, object)
-
-	if object.is_meshlet:
-		object._mesh.remove_object(object)
-
-	scene_changed = true
-
-
 ## Removes objects that are queued for removal
 func remove_objects() -> void:
 	for mesh in meshes_to_remove:
@@ -497,6 +553,82 @@ func remove_objects() -> void:
 	for object in objects_to_remove:
 		remove_object(object)
 	objects_to_remove.clear()
+
+
+## Called after all have objects and meshes have been removed, added and updated.
+## Almost definitely a result of premature optimization
+func _re_index() -> void:
+
+	# These variables will hold ALL objects that needs to be added/removed
+	# The BVHTree only requires meshes and the scene's objects to reindex
+	var unpacked_to_add := PTObjectContainer.new()
+	var unpacked_to_remove := PTObjectContainer.new()
+	# Add meshes objects to conatiners of objects to add/remove
+	unpacked_to_add.merge(_to_add)
+	for mesh in _to_add.meshes:
+		unpacked_to_add.merge(mesh.objects)
+	unpacked_to_remove.merge(_to_remove)
+	for mesh in _to_remove.meshes:
+		unpacked_to_remove.merge(mesh.objects)
+
+	## Functions for assert check
+	# Checks if any object is a part of a mesh in a given object container
+	var no_object_part_of_mesh := func temp(object_container : PTObjectContainer) -> bool:
+		for type : ObjectType in ObjectType.values():
+			for object : PTObject in object_container.get_object_array(type):
+				if object.is_meshlet:
+					return false
+		return true
+
+	# Checks for any objects being shared by containers
+	var no_object_part_of_container := func (object_container1 : PTObjectContainer,
+	object_container2 : PTObjectContainer) -> bool:
+		for mesh in object_container1.meshes:
+			if mesh in object_container2.meshes:
+				return true
+		for type : ObjectType in ObjectType.values():
+			var object_array := object_container2.get_object_array(type)
+			for object : PTObject in object_container1.get_object_array(type):
+				if object in object_array:
+					return false
+		return true
+
+	var all_objects_part_of_container := func (object_container1 : PTObjectContainer,
+	object_container2 : PTObjectContainer) -> bool:
+		for type : ObjectType in ObjectType.values():
+			var object_array := object_container2.get_object_array(type)
+			for object : PTObject in object_container1.get_object_array(type):
+				if not object in object_array:
+					return false
+		return true
+
+	assert(no_object_part_of_mesh.callv([_to_add]),
+		"PT - _re_index: Trying to add object that is part of mesh, " +
+		"instead of adding mesh.")
+	assert(no_object_part_of_mesh.callv([_to_remove]),
+		"PT - _re_index: Trying to remove object that is part of mesh, " +
+		"instead of removing mesh.")
+	assert(no_object_part_of_container.callv([unpacked_to_add, objects]),
+		"PT - _re_index: Trying to add object to scene that is already there.")
+	assert(all_objects_part_of_container.callv([unpacked_to_remove, objects]),
+		"PT - _re_index: Trying to remove object when it is not a part of the scene.")
+
+	## Actual functions
+	# Re-index objects
+	objects._rebalance_objects(unpacked_to_add, unpacked_to_remove)
+
+	# Re-index BVHNodes
+	# TEMP Merge with bvh.updated_nodes
+	var updated_node_indices := bvh._rebalance_objects(_to_add, _to_remove)
+
+	# TODO Update object buffers
+	# NOTE: IMPORTANT object types that are not in the bvh have to be nulled out
+
+	# TODO Update BVHBuffer
+
+	# TODO Reset values
+
+	pass
 
 
 func get_size() -> int:

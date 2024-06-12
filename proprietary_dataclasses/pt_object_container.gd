@@ -10,6 +10,7 @@ const ObjectType = PTObject.ObjectType
 var meshes : Array[PTMesh]
 
 # Object lists
+# NOTE: Don't know if arrays should be PTObject for easier typing with get_obejct_array
 var spheres : Array[PTSphere]
 var planes : Array[PTPlane]
 var triangles : Array[PTTriangle]
@@ -45,6 +46,38 @@ func get_object_array(type : ObjectType) -> Array:
 	return []
 
 
+## Recount every object, return the number of objects and meshes
+func count() -> int:
+	object_count = 0
+	for object_array : Array in get_object_lists(): # UNSTATIC
+		object_count += object_array.size()
+	return object_count + meshes.size()
+
+
+## Return current object_count
+func size() -> int:
+	return object_count + meshes.size()
+
+
+func is_empty() -> bool:
+	return object_count == 0 and meshes.size() == 0
+
+
+func clear() -> void:
+	for object_array : Array in get_object_lists(): # UNSTATIC
+		object_array.clear()
+	_object_to_object_index.clear()
+
+
+func has(object : PTObject) -> bool:
+	return get_object_array(object.get_type()).has(object)
+
+
+## Returns whether the given type has a non-empty field
+func has_type(type : ObjectType) -> bool:
+	return get_object_array(type).size() != 0
+
+
 func get_object_lists() -> Array:
 	return objects.values()
 
@@ -53,33 +86,34 @@ func get_object_index(object : PTObject) -> int:
 	return _object_to_object_index[object] # UNSTATIC
 
 
-## Returns whether the given type has a non-empty field
-func has_type(type : ObjectType) -> bool:
-	return get_object_array(type).size() != 0
+func _set_object_index(object : PTObject, index : int) -> void:
+	_object_to_object_index[object] = index # UNSTATIC
 
 
-# Complete
 func add_object(object : PTObject) -> void:
 	var type := object.get_type()
 	var object_array : Array = get_object_array(type)
-	_object_to_object_index[object] = object_array.size() # UNSTATIC
+	_set_object_index(object, object_array.size())
 	object_array.append(object)
 
 	object_count += 1
 
 
-# Complete
 func remove_object(object : PTObject) -> void:
+	assert(object in _object_to_object_index,
+			"Object already removed from container")
 	var type := object.get_type()
 	var object_array : Array = get_object_array(type)
-	var index : int = _object_to_object_index[object] # UNSTATIC
+	var index : int = get_object_index(object)
 	object_array.remove_at(index)
 	_object_to_object_index.erase(object)
 
-	# TODO Moving last object to removed index might be fine
+	# TODO Moving last object to removed index might be fine, in which case i also
+	# need to update one bvhnode
 	# Re-index every object
 	for i in range(object_array.size()):
-		_object_to_object_index[object_array[i]] = i # UNSTATIC
+		@warning_ignore("unsafe_cast")
+		_set_object_index(object_array[i] as PTObject, i) # UNSTATIC
 
 	object_count -= 1
 
@@ -92,9 +126,10 @@ func remove_mesh(mesh : PTMesh) -> void:
 	meshes.erase(mesh)
 
 
-## Add other PTObjectContainers objects to this object
+## Add another PTObjectContainer's objects to this object
 ## Returns a bool array, indexed by ObjectType, of which objects were added.
 func merge(other : PTObjectContainer) -> Array[bool]:
+	meshes.append_array(other.meshes)
 	var added_types : Array[bool] = []
 	added_types.resize(ObjectType.MAX)
 	added_types.fill(false)
@@ -116,4 +151,76 @@ func merge(other : PTObjectContainer) -> Array[bool]:
 
 		assert(get_object_array(type).size() == last_index + new_object_array.size())
 
+	object_count += other.object_count
 	return added_types
+
+## Adds and removes objects given in the least computationally intensive way.
+## Called by scene at maximum once a frame.
+func _rebalance_objects(
+		added_objects : PTObjectContainer,
+		removed_objects : PTObjectContainer
+	) -> void: # MIGHT HAVE RETURN VALUE LATER; CHANGED INDICES OR SMTHN
+
+	# This is called only by a PTScene. We can assume all removed objects are in
+	# this instance and all new objects are not in this object.
+	# There is still a chance an object has been freed.
+
+	for mesh in removed_objects.meshes:
+		meshes.erase(mesh)
+
+	for mesh in added_objects.meshes:
+		meshes.append(mesh)
+
+	var index_sort := func(x : PTObject, y: PTObject) -> bool:
+		return get_object_index(x) > get_object_index(y)
+
+	for type : ObjectType in ObjectType.values(): # UNSTATIC
+		var object_array : Array = get_object_array(type)
+		var new_object_array := added_objects.get_object_array(type)
+		var removed_object_array := removed_objects.get_object_array(type)
+		var new_object_index := new_object_array.size() - 1
+
+		# Sorts objects according to descending index
+		removed_object_array.sort_custom(index_sort)
+		for object : PTObject in removed_object_array: # UNSTATIC
+
+			# Removed object is at the back of object_array
+			if get_object_index(object) == object_array.size() - 1:
+				object_array.pop_back()
+				_object_to_object_index.erase(object)
+				object_count -= 1
+				continue
+
+			if not new_object_array.is_empty() and new_object_index >= 0:
+				var new_object : PTObject = new_object_array[new_object_index] # UNSTATIC
+				assert(is_instance_valid(new_object),
+						"PT: Cannot add freed or null object to PTObjectContainer. " +
+						str(new_object))
+				var index := get_object_index(object)
+				object_array[index] = new_object # UNSTATIC
+				_object_to_object_index.erase(object)
+				_set_object_index(new_object, index)
+				new_object_index -= 1
+			else:
+				# Object is removed in the middle of object_array and no new
+				# object can take its place. Move the last index to fill in
+				var last_object : PTObject = object_array.pop_back() # UNSTATIC
+				var index := get_object_index(object)
+				_object_to_object_index.erase(object)
+				_set_object_index(last_object, index)
+				object_array[index] = last_object
+				object_count -= 1
+
+		# If there are more objects added than removed, append them.
+		if not new_object_array.is_empty() and new_object_index >= 0:
+			while new_object_index >= 0:
+				var object : PTObject = new_object_array[new_object_index] # UNSTATIC
+				_set_object_index(object, object_array.size())
+				object_array.append(object)
+
+				object_count += 1
+				new_object_index -= 1
+
+	assert(size() + added_objects.size() - removed_objects.size() == count(),
+			"PT: Number of objects in != number of objects out.")
+

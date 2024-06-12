@@ -133,7 +133,7 @@ material = SubResource("Resource_bvoeq")
 mesh = SubResource("SphereMesh_rjrq8")
 
 [node name="PTSphere4" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.905)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.815518, 1.905)
 mesh = SubResource("SphereMesh_rjrq8")
 script = ExtResource("3_8wdme")
 material = SubResource("Resource_bvoeq")

@@ -1,15 +1,38 @@
-[gd_scene load_steps=5 format=3 uid="uid://yy1pqk3nwqvd"]
+[gd_scene load_steps=8 format=3 uid="uid://yy1pqk3nwqvd"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_mesh.gd" id="1_g5lwj"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_sphere.gd" id="2_use3l"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_material.gd" id="3_3yse0"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_wfme2"]
 radius = 1.0
 height = 2.0
 
+[sub_resource type="Resource" id="Resource_xhijx"]
+script = ExtResource("3_3yse0")
+albedo = Color(0.576471, 0.909804, 0.133333, 1)
+roughness = 0.0
+metallic = 0.0
+opacity = 1.0
+reflectivity = 1.0
+IOR = 1.0
+refraction_depth = 0
+is_emissive = false
+
 [sub_resource type="SphereMesh" id="SphereMesh_v80pf"]
 radius = 1.0
 height = 2.0
+
+[sub_resource type="Resource" id="Resource_bu327"]
+script = ExtResource("3_3yse0")
+albedo = Color(0.164706, 0.0352941, 1, 1)
+roughness = 0.0
+metallic = 0.0
+opacity = 1.0
+reflectivity = 1.0
+IOR = 1.0
+refraction_depth = 0
+is_emissive = false
 
 [node name="PTMesh" type="Node3D"]
 script = ExtResource("1_g5lwj")
@@ -17,9 +40,12 @@ script = ExtResource("1_g5lwj")
 [node name="PTSphere" type="MeshInstance3D" parent="."]
 mesh = SubResource("SphereMesh_wfme2")
 script = ExtResource("2_use3l")
+material = SubResource("Resource_xhijx")
 mesh = SubResource("SphereMesh_wfme2")
 
 [node name="PTSphere2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.12814)
 mesh = SubResource("SphereMesh_v80pf")
 script = ExtResource("2_use3l")
+material = SubResource("Resource_bu327")
 mesh = SubResource("SphereMesh_v80pf")
