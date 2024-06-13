@@ -9,12 +9,13 @@ var changed_mask : ColorRect
 
 var size_margin := Vector2(4, 5)
 
+# TODO Make previous value optional, make instant updates possible
 # The value selected might not be the same as the one in effect,
 #  which this value represents
 var previous_value := value:
-	set(value):
-		previous_value = value
-		_value_changed(value)
+	set(_value):
+		previous_value = _value
+		_value_changed(_value)
 
 
 func _ready() -> void:
@@ -33,6 +34,7 @@ func _ready() -> void:
 
 	# Create changed mask
 	changed_mask = disabled_mask.duplicate() as ColorRect
+	changed_mask.visible = false
 
 	changed_mask.color = PTButtonController.CHANGED_VALUE_COLOR
 
@@ -40,6 +42,15 @@ func _ready() -> void:
 
 	# Connect signals
 	resized.connect(_on_resized)
+
+	# NOTE: Apparently linedit focus is seperate from the spinbox,
+	#  which doesn't have focus to begin with.
+	#  Therefore we have to manually bind it.
+	get_line_edit().connect("focus_exited", emit_wrapper)
+
+
+func emit_wrapper() -> void:
+	focus_exited.emit()
 
 
 func set_disable(is_disabled : bool) -> void:

@@ -26,7 +26,7 @@ func _process(delta : float) -> void:
 			self.position += (right * Vector3(1,0,1) * move_speed * delta)
 
 
-func _input(event : InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if not Engine.is_editor_hint():
 		if event is InputEventKey:
 			if (

@@ -580,10 +580,19 @@ func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 	var repeat := 10.0 # in seconds
 	var time : float = fmod(Time.get_ticks_msec() / divisor, (repeat * 1000) / divisor)
 
-	bytes += PackedFloat32Array([time]).to_byte_array()
+	# NOTE: Must be 16-byte aligned
 	bytes += window.flags_to_byte_array()
-	bytes += PackedInt32Array([window.x_offset, window.y_offset]).to_byte_array()
-	bytes += PackedFloat32Array([window.frame, window.max_samples, 0, 0]).to_byte_array()
+	bytes += PackedInt32Array([
+		window.x_offset,
+		window.y_offset,
+		window.node_display_threshold,
+		window.object_display_threshold,
+	]).to_byte_array()
+	bytes += PackedFloat32Array([time]).to_byte_array()
+	bytes += PackedFloat32Array([
+		window.frame,
+		window.max_samples,
+	]).to_byte_array()
 
 	return bytes
 

@@ -9,6 +9,8 @@ enum RenderFlagsBits {
 	USE_BVH = 1,
 	SHOW_BVH_DEPTH = 2,
 	MULTISAMPLE = 4,
+	SHOW_NODE_COUNT = 8,
+	SHOW_OBJECT_COUNT = 16,
 }
 
 ## GPU RENDER FLAGS
@@ -34,6 +36,29 @@ var show_bvh_depth := false:
 		render_mode_changed = true
 		show_bvh_depth = value
 		frame = 0
+
+var display_node_count := true:
+	set(value):
+		_set_flag_bit(RenderFlagsBits.SHOW_NODE_COUNT, int(value))
+		render_mode_changed = true
+		display_node_count = value
+var display_object_count := false:
+	set(value):
+		_set_flag_bit(RenderFlagsBits.SHOW_OBJECT_COUNT, int(value))
+		render_mode_changed = true
+		display_object_count = value
+
+## How many object tests appear in show_bvh_depth before deufaulting color
+var object_display_threshold := 40:
+	set(value):
+		render_mode_changed = true
+		object_display_threshold = value
+
+## How many node tests appear in show_bvh_depth before deufaulting color
+var node_display_threshold := 50:
+	set(value):
+		render_mode_changed = true
+		node_display_threshold = value
 
 # Whether the shader will sample from previous draw call or not
 var _multisample := true:
@@ -144,7 +169,9 @@ func _set_flags() -> void:
 	flags = (
 		RenderFlagsBits.USE_BVH * int(use_bvh) +
 		RenderFlagsBits.SHOW_BVH_DEPTH * int(show_bvh_depth) +
-		RenderFlagsBits.MULTISAMPLE * int(_multisample)
+		RenderFlagsBits.MULTISAMPLE * int(_multisample) +
+		RenderFlagsBits.SHOW_NODE_COUNT * int(display_node_count) +
+		RenderFlagsBits.SHOW_OBJECT_COUNT * int(display_object_count)
 	)
 
 func _set_flag_bit(bit : int, boolean : bool) -> void:

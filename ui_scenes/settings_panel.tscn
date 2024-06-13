@@ -159,6 +159,47 @@ offset_bottom = 7.5
 mouse_filter = 2
 color = Color(160, 0, 0, 0.4)
 
+[node name="ShowNodeLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "        Show node count"
+
+[node name="ShowNodeButton" type="CheckBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("3_g0amw")
+
+[node name="NodeCountLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "        Node count threshold"
+
+[node name="NodeCountThreshold" type="SpinBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("5_v8pkx")
+
+[node name="ShowObjectLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "        Show object count"
+
+[node name="ShowObjectButton" type="CheckBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("3_g0amw")
+
+[node name="ObjectCountLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "        Object count threshold"
+
+[node name="ObjectCountThreshold" type="SpinBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 10000.0
+script = ExtResource("5_v8pkx")
+
 [node name="BVHTypeLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
 layout_mode = 2
 text = "    BVH algorithm"
@@ -191,7 +232,7 @@ offset_bottom = 31.0
 mouse_filter = 2
 color = Color(220, 165, 0, 0.6)
 
-[node name="Label" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
+[node name="BVHTreeOrderLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
 layout_mode = 2
 text = "    BVH tree order"
 
@@ -244,11 +285,6 @@ offset_right = 369.0
 offset_bottom = 34.0
 mouse_filter = 2
 color = Color(160, 0, 0, 0.4)
-
-[node name="Container" type="BoxContainer" parent="MarginContainer/AllSettings/BVHContainer"]
-layout_mode = 2
-alignment = 1
-vertical = true
 
 [node name="SamplingContainer" type="VBoxContainer" parent="MarginContainer/AllSettings"]
 layout_mode = 2
@@ -369,6 +405,10 @@ color = Color(160, 0, 0, 0.4)
 [connection signal="pressed" from="MarginContainer/AllSettings/ScreenshotButton" to="MarginContainer/ButtonController" method="_on_screenshot_button_pressed"]
 [connection signal="toggled" from="MarginContainer/AllSettings/BVHContainer/BVHOptions/UseBVHButton" to="MarginContainer/ButtonController" method="_on_use_bvh_button_toggled"]
 [connection signal="toggled" from="MarginContainer/AllSettings/BVHContainer/BVHOptions/ShowBVHDepthButton" to="MarginContainer/ButtonController" method="_on_show_bvh_depth_button_toggled"]
+[connection signal="toggled" from="MarginContainer/AllSettings/BVHContainer/BVHOptions/ShowNodeButton" to="MarginContainer/ButtonController" method="_on_show_node_button_toggled"]
+[connection signal="value_changed" from="MarginContainer/AllSettings/BVHContainer/BVHOptions/NodeCountThreshold" to="MarginContainer/ButtonController" method="_on_node_count_threshold_value_changed"]
+[connection signal="toggled" from="MarginContainer/AllSettings/BVHContainer/BVHOptions/ShowObjectButton" to="MarginContainer/ButtonController" method="_on_show_object_button_toggled"]
+[connection signal="value_changed" from="MarginContainer/AllSettings/BVHContainer/BVHOptions/ObjectCountThreshold" to="MarginContainer/ButtonController" method="_on_object_count_threshold_value_changed"]
 [connection signal="pressed" from="MarginContainer/AllSettings/BVHContainer/CreateBVHButton" to="MarginContainer/ButtonController" method="_on_create_bvh_button_pressed"]
 [connection signal="toggled" from="MarginContainer/AllSettings/SamplingContainer/SamplingOptions/EnableMultisampleButton" to="MarginContainer/ButtonController" method="_on_enable_multisample_button_toggled"]
 [connection signal="toggled" from="MarginContainer/AllSettings/SamplingContainer/SamplingOptions/MaxSamplePauseButton" to="MarginContainer/ButtonController" method="_on_max_sample_pause_button_toggled"]

@@ -242,6 +242,8 @@ bool flags[flag_size];
 
 bool use_bvh;
 bool show_bvh_depth;
+bool show_node_count;
+bool show_object_count;
 
 bool multisample;
 
@@ -440,9 +442,12 @@ layout(set = 3, binding = 0, std430) restrict readonly buffer BVH_List {
 
 layout(push_constant, std430) restrict readonly uniform constants {
     Camera camera;
-    float time;
     int flags;
-    ivec2 image_offset; // How many pixels offset should the viewport origin be
+    int image_offset_x; // How many pixels offset should the viewport origin be
+    int image_offset_y; 
+    int node_count_threshold;
+    int object_count_threshold;
+    float time;
     float frame;
     float max_samples;
 } push;
@@ -574,6 +579,8 @@ void parse_flags() {
     use_bvh = flags[0];
     show_bvh_depth = flags[1];
     multisample = flags[2];
+    show_node_count = flags[3];
+    show_object_count = flags[4];
 }
 
 int get_object_type(int object_id) {
@@ -970,14 +977,14 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
     // TODO Read on how to make improvements traversing bvh tree,
     //  potentially make it less memory intensive
     // TODO Give BVHNodes a is_overlapping flag for earlier returns
-    int hit_check_count = 0;
+    int node_hit_count = 0;
+    int object_hit_count = 0;
     while (true) {
         if (current_index >= max_depth) {
             break;
         }
         BVHNode node = BVH.list[current_index];
 
-        hit_check_count++;
 
         // If ray already hit something, ignore aabbs which are not in the same octant as the 
         //  ray origin relative to the intersection point
@@ -999,29 +1006,32 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
             }
         }
 
-        if (!small_break && hit_AABB(ray, node.bbox, range, inv_direction, dir_is_negative)) {
-            // Loop over child indices to add them to stack or do hit check
-            for (int i = 0; i < order; i++) {
-                int tochild = node.children[i];
+        if (!small_break) {
+            node_hit_count++;
+            if (hit_AABB(ray, node.bbox, range, inv_direction, dir_is_negative)) {
+                // Loop over child indices to add them to stack or do hit check
+                for (int i = 0; i < order; i++) {
+                    int tochild = node.children[i];
 
-                // If child is invalid, skip
-                if (tochild == 0) {continue;}
+                    // If child is invalid, skip
+                    if (tochild == 0) {continue;}
 
-                if (get_object_type(tochild) == is_not_obj) {
-                    // If children[i] points to inner node, add it to to_visit
-                    to_visit[to_visit_i++] = tochild;
-                } 
-                else {
-                    // children[i] points to object_index, do a hit test
-                    
-                    // PART OF BVH TEST, SEE COMMENT BELOW
-                    // float t_before = rayhit.t;
-                    // bool hit_before = rayhit.hit;
-                    hit_object(ray, range, rayhit, tochild);
-                    hit_check_count++;
-                    
-                    // if (!hit_before && rayhit.hit) {last_bvhnode = node.self;}
-                    // if (hit_before && t_before > rayhit.t) {last_bvhnode = node.self;}
+                    if (get_object_type(tochild) == is_not_obj) {
+                        // If children[i] points to inner node, add it to to_visit
+                        to_visit[to_visit_i++] = tochild;
+                    } 
+                    else {
+                        // children[i] points to object_index, do a hit test
+                        
+                        // PART OF BVH TEST, SEE COMMENT BELOW
+                        // float t_before = rayhit.t;
+                        // bool hit_before = rayhit.hit;
+                        hit_object(ray, range, rayhit, tochild);
+                        object_hit_count++;
+                        
+                        // if (!hit_before && rayhit.hit) {last_bvhnode = node.self;}
+                        // if (hit_before && t_before > rayhit.t) {last_bvhnode = node.self;}
+                    }
                 }
             }
         }
@@ -1089,10 +1099,9 @@ RayHit check_ray_hit_BVH(Ray ray, Range range) {
     }
 
     if (show_bvh_depth) {
-        // TODO Improve visual accuracy 
-        float a = float(hit_check_count) / float(BVH.list.length() * 2);
-        float b = pow(a, 3.5);
-        rayhit.color = vec4(a,b,1,0);
+        float a = show_node_count ? float(node_hit_count) / float(push.node_count_threshold) : 0.0;
+        float b = show_object_count ? float(object_hit_count) / float(push.object_count_threshold) : 0.0;
+        rayhit.color = (max(a, b) > 1.0) ? vec4(1) : vec4(b, 0, a, 0);
     }
 
     return rayhit;
@@ -1373,7 +1382,7 @@ void main() {
 
     // gl_GlobalInvocationID uniquely identifies this invocation across all work groups
     // const uvec3 UVu = gl_GlobalInvocationID + uvec3(push.image_offset, 0);
-    const ivec3 UVi = ivec3(gl_GlobalInvocationID) + ivec3(push.image_offset, 0);
+    const ivec3 UVi = ivec3(gl_GlobalInvocationID) + ivec3(push.image_offset_x, push.image_offset_y, 0);
     const vec3 UV = vec3(UVi);
 
     const vec3 pixel_center = pixel00_loc + (UV.x * pixel_delta_u) + (UV.y * pixel_delta_v);
