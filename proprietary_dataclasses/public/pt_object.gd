@@ -86,9 +86,14 @@ func _enter_tree() -> void:
 		_scene = temp[0] # UNSTATIC
 		_mesh = temp[1] # UNSTATIC
 		if _scene:
-			if PTRendererAuto.is_debug and _scene.is_node_ready():
-				print("Object adds itself to scene. object: ", self, " ", _scene)
-			_scene.add_object(self)
+			if _scene.is_node_ready():
+				#_scene.queue_add_object(self)
+				#if PTRendererAuto.is_debug:
+					#print("Object queue adds itself to scene. object: ", self, " ", _scene)
+				_scene.add_object(self)
+			else:
+				_scene.add_object(self)
+				#_scene.queue_add_object(self)
 		if _mesh:
 			if PTRendererAuto.is_debug and _mesh.is_node_ready():
 				print("Object adds itself to mesh. object: ", self, " ", _mesh)
@@ -214,9 +219,10 @@ static func type_of(object : Variant) -> ObjectType:
 		return ObjectType.NOT_OBJECT
 
 
+## Create empty byte array with given size in bytes
 static func empty_byte_array(size : int) -> PackedByteArray:
 	var ints : Array[int] = []
-	ints.resize(size)
+	ints.resize(size / 4)
 	ints.fill(0)
 
 	return PackedInt32Array(ints).to_byte_array()

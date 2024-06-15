@@ -23,6 +23,8 @@ var transform_before : Transform3D
 
 # TODO Be able to see and edit meshes while they are instatiated
 
+# TODO Add mesh defualt material and texture, objects withouth any will use mesh's
+
 
 func _init() -> void:
 	objects = PTObjectContainer.new()

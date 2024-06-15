@@ -114,6 +114,10 @@ var procedural_texture_removed := false
 var _to_add : PTObjectContainer
 var _to_remove : PTObjectContainer
 
+var _can_reindex : bool:
+	get:
+		return not (_to_add.is_empty() and _to_remove.is_empty())
+
 # Mainly for editor tree. Nodes need to be kept for a little longer after exit_tree
 #  to verify if they were deleted or just the scenes were swapped.
 var objects_to_remove : Array[PTObject]
@@ -222,6 +226,7 @@ func add_mesh(mesh : PTMesh) -> void:
 		#added_object = true
 
 	if bvh:
+		# TODO MOVe to merge_with in bvh
 		if bvh.order < mesh.bvh.order:
 			push_error("PT: BVH order ", bvh.order, " of scene does not ",
 			"allow for BVH order ", mesh.bvh.order, " of mesh.")
@@ -311,10 +316,10 @@ func _remove_material(material : PTMaterial) -> void:
 	if material:
 		var material_index : int = materials.find(material)
 		if material_index == -1:
-			push_warning("Tried to remove material that was already removed from materials")
+			push_error("Tried to remove material that was already removed from materials")
 			return
 		if material_ref_count[material] >= 1:
-			push_warning("Material: ", material, " is used by one or more objects")
+			push_error("Material: ", material, " is used by one or more objects")
 
 		materials[material_index] = null
 		materials_holes.append(material_index)
@@ -481,10 +486,7 @@ func remove_object(object : PTObject) -> void:
 
 	# TODO Remove from texture list if object was their last user
 
-	object.disconnect("object_changed", update_object)
-	object.disconnect("deleted", queue_remove_object)
-	object.disconnect("material_changed", _material_changed)
-	object.disconnect("texture_changed", _texture_changed)
+	disconnect_object_signals(object)
 
 	if bvh and not object.get_type() in PTBVHTree.objects_to_exclude:
 		bvh.remove_object(object)
@@ -573,10 +575,24 @@ func _re_index() -> void:
 	for mesh in _to_remove.meshes:
 		unpacked_to_remove.merge(mesh.objects)
 
+	if PTRendererAuto.is_debug:
+		print()
+		print("_to_add and _to_remove:")
+		print(_to_add.objects)
+		print(_to_remove.objects)
+
+		print()
+		print("unpacked_to_add and unpacked_to_remove:")
+		print(unpacked_to_add.objects)
+		print(unpacked_to_remove.objects)
+
 	## Functions for assert check
+	# TODO MOVE TO OBJECT CONTAINER
 	# Checks if any object is a part of a mesh in a given object container
 	var no_object_part_of_mesh := func temp(object_container : PTObjectContainer) -> bool:
 		for type : ObjectType in ObjectType.values():
+			if (type == ObjectType.NOT_OBJECT or type == ObjectType.MAX):
+				continue
 			for object : PTObject in object_container.get_object_array(type):
 				if object.is_meshlet:
 					return false
@@ -589,6 +605,8 @@ func _re_index() -> void:
 			if mesh in object_container2.meshes:
 				return true
 		for type : ObjectType in ObjectType.values():
+			if (type == ObjectType.NOT_OBJECT or type == ObjectType.MAX):
+				continue
 			var object_array := object_container2.get_object_array(type)
 			for object : PTObject in object_container1.get_object_array(type):
 				if object in object_array:
@@ -598,6 +616,8 @@ func _re_index() -> void:
 	var all_objects_part_of_container := func (object_container1 : PTObjectContainer,
 	object_container2 : PTObjectContainer) -> bool:
 		for type : ObjectType in ObjectType.values():
+			if (type == ObjectType.NOT_OBJECT or type == ObjectType.MAX):
+				continue
 			var object_array := object_container2.get_object_array(type)
 			for object : PTObject in object_container1.get_object_array(type):
 				if not object in object_array:
@@ -618,19 +638,47 @@ func _re_index() -> void:
 	## Actual functions
 	# Re-index objects
 	var updated_object_ids := objects._rebalance_objects(unpacked_to_add, unpacked_to_remove)
+	if PTRendererAuto.is_debug:
+		print(updated_object_ids)
 
+
+	# TODO add/REmove material, texture and signal
+	for _objects in unpacked_to_add.get_object_lists():
+		for object : PTObject in _objects:
+			_add_material(object.material, true)
+			_add_texture(object.texture)
+
+			connect_object_signals(object)
+
+
+	for _objects in unpacked_to_remove.get_object_lists():
+		for object : PTObject in _objects:
+			if material_ref_count[object.material] == 1:
+				_remove_material(object.material)
+			else:
+				material_ref_count[object.material] -= 1
+			#_add_texture(object.texture)
+
+
+			disconnect_object_signals(object)
+
+	var updated_node_indices : Array[int] = []
 	# Re-index BVHNodes
-	var updated_node_indices := bvh._rebalance_objects(_to_add, _to_remove)
+	if bvh:
+		updated_node_indices = bvh._rebalance_objects(_to_add, _to_remove)
 
-	# TODO Resize buffers
-	# Can probably be moved to  Renderer
-	PTRendererAuto._update_object_buffers(self, updated_object_ids)
-	PTRendererAuto._update_bvh_buffer(self, updated_node_indices)
+	if PTRendererAuto.is_debug:
+		print()
+		print(updated_node_indices)
+
+	# Resize (if neccessary) and update buffers
+	PTRendererAuto._update(self, updated_object_ids, updated_node_indices)
 
 	# TODO Reset values
 	_to_add.clear()
 	_to_remove.clear()
 
+	scene_changed = true
 
 	print("Object/meshes queued for deletion or addition trigger. Time taken: ",
 			((Time.get_ticks_usec() - start_time) / 1000.0))

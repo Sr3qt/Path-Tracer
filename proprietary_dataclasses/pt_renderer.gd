@@ -126,6 +126,9 @@ func _post_init() -> void:
 	print()
 	PTRendererAuto._is_init = true
 	PTRendererAuto.scenes_to_remove.clear()
+	for ptscene in scenes:
+		ptscene._to_add.clear()
+		ptscene._to_remove.clear()
 
 
 func _ready() -> void:
@@ -180,6 +183,9 @@ func _process(_delta : float) -> void:
 
 	_remove_queued_scenes()
 	_object_queue_remove()
+
+	#if not Engine.is_editor_hint():
+	#_re_index_scenes()
 
 	# Make sure the rendering scene has up to date bvh buffer
 	if scene and scene.bvh:
@@ -478,6 +484,9 @@ func add_scene(new_ptscene : PTScene) -> void:
 	if new_ptscene.get_size() > 0:
 		var function_name : String = PTBVHTree.enum_to_dict[new_ptscene.default_bvh] # UNSTATIC
 		new_ptscene.create_BVH(bvh_order, function_name)
+	else:
+		new_ptscene.bvh = PTBVHTree.new(bvh_order)
+		new_ptscene.bvh.object_container = new_ptscene.objects
 
 	if not canvas:
 		canvas = create_canvas()
@@ -636,8 +645,8 @@ func _update_scenes() -> void:
 			continue
 
 		# Update BVHNodes in bvh buffer
-		if ptscene.bvh and not ptscene.bvh.updated_nodes.is_empty():
-			update_bvh_nodes(ptscene)
+		#if ptscene.bvh and not ptscene.bvh.updated_nodes.is_empty():
+			#update_bvh_nodes(ptscene)
 
 		# Just debug
 		if (ptscene.material_added or ptscene.procedural_texture_added) and is_debug:
@@ -747,6 +756,8 @@ func create_bvh(ptscene : PTScene, _order : int, function_name : String) -> void
 	scene_wd.bind_set(scene_wd.BVH_SET_INDEX)
 
 
+# CAN BE DEPRECATED
+# We have function which takes in an array of indices that does the same
 func update_bvh_nodes(ptscene : PTScene) -> void:
 	if ptscene.bvh:
 		for node in ptscene.bvh.updated_nodes:
@@ -827,6 +838,26 @@ func _object_queue_remove() -> void:
 
 	scenes_to_remove_objects.clear()
 
+# TEMP FUCNTION
+func _update(ptscene : PTScene, updated_object_ids : Array[int], updated_node_indices : Array[int]) -> void:
+	var scene_wd := get_scene_wd(ptscene)
+
+	scene_wd.check_object_buffer_size()
+	if ptscene.bvh:
+		print("excpanding bvh buffer")
+		scene_wd.expand_bvh_buffer()
+
+	_update_object_buffers(ptscene, updated_object_ids)
+	_update_bvh_buffer(ptscene, updated_node_indices)
+
+
+func _re_index_scenes() -> void:
+	for ptscene in scenes:
+		if ptscene._can_reindex:
+			if is_debug:
+				print("Re-indexing scene now. ", ptscene)
+			ptscene._re_index()
+
 
 func _update_object_buffers(ptscene : PTScene, updated_object_ids : Array[int]) -> void:
 	var scene_wd := get_scene_wd(ptscene)
@@ -845,15 +876,17 @@ func _update_object_buffers(ptscene : PTScene, updated_object_ids : Array[int]) 
 			bytes = PTObject.empty_object_bytes(type)
 		else:
 			bytes = ptscene.objects.get_object_array(type)[index].to_byte_array()
-		scene_wd.rd.buffer_update(buffer, index, bytes.size(), bytes)
+		print(bytes)
+		print(type)
+		print(index)
+		scene_wd.rd.buffer_update(buffer, index * bytes.size(), bytes.size(), bytes)
 
 
 func _update_bvh_buffer(ptscene : PTScene, updated_node_indices : Array[int]) -> void:
 	var scene_wd := get_scene_wd(ptscene)
+	var buffer := scene_wd.bvh_buffer
 
 	for node_index in updated_node_indices:
-
-		var buffer := scene_wd.bvh_buffer
 
 		var bytes : PackedByteArray
 		# If index is out of range of objects, null out index
@@ -862,4 +895,4 @@ func _update_bvh_buffer(ptscene : PTScene, updated_node_indices : Array[int]) ->
 			bytes = PTObject.empty_byte_array(ptscene.bvh.node_byte_size())
 		else:
 			bytes = ptscene.bvh.bvh_list[node_index].to_byte_array()
-		scene_wd.rd.buffer_update(buffer, node_index, bytes.size(), bytes)
+		scene_wd.rd.buffer_update(buffer, node_index * bytes.size(), bytes.size(), bytes)

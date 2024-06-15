@@ -104,6 +104,7 @@ var updated_nodes : Array[BVHNode] = [] # Nodes that need to update their buffer
 func _init(_order := 2) -> void:
 	order = _order
 	root_node = BVHNode.new(null, self)
+	_node_to_index[root_node] = 0
 	inner_count += 1
 
 	bvh_list = [root_node]
@@ -166,6 +167,7 @@ func _add_object_to_tree(object : PTObject) -> Array[BVHNode]:
 	# Add object to node
 	if fitting_node.is_inner:
 		var new_node := BVHNode.new(fitting_node, self)
+		new_node.is_leaf = true
 		new_node.object_list.append(object)
 		new_node.set_aabb()
 		fitting_node.add_children([new_node])
@@ -551,6 +553,8 @@ func _rebalance_objects(
 
 	# Remove scene objects from tree
 	for _type : PTObject.ObjectType in PTObject.ObjectType.values(): # UNSTATIC
+		if (_type == PTObject.ObjectType.NOT_OBJECT or _type == PTObject.ObjectType.MAX):
+			continue
 		for object : PTObject in removed_objects.get_object_array(_type): # UNSTATIC
 			var node : BVHNode = object_to_leaf[object] # UNSTATIC
 			object_to_leaf.erase(object)
@@ -589,7 +593,10 @@ func _rebalance_objects(
 
 	# Add objects to tree, updated nodes are appended to updated_nodes
 	for _type : PTObject.ObjectType in PTObject.ObjectType.values():
-		for object : PTObject in removed_objects.get_object_array(_type): # UNSTATIC
+		if (_type == PTObject.ObjectType.NOT_OBJECT or _type == PTObject.ObjectType.MAX):
+			continue
+		for object : PTObject in added_objects.get_object_array(_type): # UNSTATIC
+			print("Adding object ", object)
 			added_nodes.append_array(_add_object_to_tree(object))
 
 	# Fit new objects into holes created by removed nodes (if any)
@@ -624,9 +631,15 @@ func _rebalance_objects(
 
 	# TODO Rework Update_nodes to use indexing
 	for node in updated_nodes:
-		assert(not get_node_index(node) in node_indices_to_update,
-				"Node index is already in node_indices_to_update.")
-		node_indices_to_update.append(get_node_index(node))
+		#assert(not get_node_index(node) in node_indices_to_update,
+				#"Node index is already in node_indices_to_update.")
+		if not get_node_index(node) in node_indices_to_update:
+			node_indices_to_update.append(get_node_index(node))
+
+	if PTRendererAuto.is_debug:
+		print(bvh_list)
+		print(updated_nodes)
+		print(root_node.aabb)
 
 	return node_indices_to_update
 

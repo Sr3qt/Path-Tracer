@@ -28,19 +28,18 @@ var _object_to_object_index := {}
 
 
 func get_object_array(type : ObjectType) -> Array:
+	assert(type != ObjectType.NOT_OBJECT,
+		"PT: Array for ObjectType: 'NOT_OBJECT' does not exist.")
+	assert(type != ObjectType.MAX,
+			"PT: Array for ObjectType: 'MAX' does not exist")
+
 	match type:
-		ObjectType.NOT_OBJECT:
-			push_warning("PT: Array for ObjectType: 'NOT_OBJECT' does not exist.")
-			return []
 		ObjectType.SPHERE:
 			return spheres
 		ObjectType.PLANE:
 			return planes
 		ObjectType.TRIANGLE:
 			return triangles
-		ObjectType.MAX:
-			push_warning("PT: Array for ObjectType: 'MAX' does not exist")
-			return []
 
 	push_error("PT: PTMesh.get_object_array with argument: ", type, ", is not supported.")
 	return []
@@ -64,9 +63,11 @@ func is_empty() -> bool:
 
 
 func clear() -> void:
+	meshes.clear()
 	for object_array : Array in get_object_lists(): # UNSTATIC
 		object_array.clear()
 	_object_to_object_index.clear()
+	object_count = 0
 
 
 func has(object : PTObject) -> bool:
@@ -165,6 +166,7 @@ func _rebalance_objects(
 	# this instance and all new objects are not in this object.
 	# There is still a chance an object has been freed.
 
+	var previous_size = size()
 	var object_ids_to_update : Array[int] = []
 
 	for mesh in removed_objects.meshes:
@@ -178,6 +180,9 @@ func _rebalance_objects(
 
 	# Remove objects
 	for type : ObjectType in ObjectType.values(): # UNSTATIC
+		if (type == ObjectType.NOT_OBJECT or type == ObjectType.MAX):
+			continue
+
 		if not added_objects.has_type(type) and not removed_objects.has_type(type):
 			continue
 
@@ -219,15 +224,18 @@ func _rebalance_objects(
 
 		# If there are more objects added than removed, append them.
 		if not new_object_array.is_empty() and new_object_index >= 0:
+			if PTRendererAuto.is_debug:
+				print("Adding excessive objects to object container")
 			while new_object_index >= 0:
 				var object : PTObject = new_object_array[new_object_index] # UNSTATIC
 				_set_object_index(object, object_array.size())
+				object_ids_to_update.append(PTObject.make_object_id(object_array.size(), type))
 				object_array.append(object)
 
 				object_count += 1
 				new_object_index -= 1
 
-	assert(size() + added_objects.size() - removed_objects.size() == count(),
+	assert(previous_size + added_objects.size() - removed_objects.size() == count(),
 			"PT: Number of objects in != number of objects out.")
 
 	return object_ids_to_update

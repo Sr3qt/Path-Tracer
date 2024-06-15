@@ -12,12 +12,32 @@ const TRIANGLE_COUNT_STEP = 16
 # How many materials can be added without needing to update any buffers
 const MATERIAL_COUNT_STEP = 16
 
+const BVH_COUNT_STEP = 64
+
 # How many objects can fit in each buffer
-var sphere_buffer_size : int = 0
-var plane_buffer_size : int = 0
-var triangle_buffer_size : int = 0
+var sphere_buffer_size : int = PTObject.ObjectType.SPHERE:
+	set(value):
+		object_buffer_sizes[PTObject.ObjectType.SPHERE] = value
+	get:
+		return object_buffer_sizes[sphere_buffer_size]
+var plane_buffer_size : int = PTObject.ObjectType.PLANE:
+	set(value):
+		object_buffer_sizes[PTObject.ObjectType.PLANE] = value
+	get:
+		return object_buffer_sizes[plane_buffer_size]
+var triangle_buffer_size : int = PTObject.ObjectType.TRIANGLE:
+	set(value):
+		object_buffer_sizes[PTObject.ObjectType.TRIANGLE] = value
+	get:
+		return object_buffer_sizes[triangle_buffer_size]
+
+## Can be indexed with ObjectType to get the size of the objects buffer size
+var object_buffer_sizes : Array[int] = []
 
 var material_buffer_size : int = 0
+
+# TODO implement size check and expansion func
+var bvh_buffer_size : int = 0
 
 var uniforms : UniformStorage
 
@@ -89,6 +109,8 @@ var _scene : PTScene
 
 func _init(renderer : PTRenderer, is_local := false) -> void:
 	uniforms = UniformStorage.new()
+	object_buffer_sizes.resize(PTObject.ObjectType.MAX)
+	object_buffer_sizes.fill(0)
 
 	_renderer = renderer
 
@@ -100,6 +122,11 @@ func _init(renderer : PTRenderer, is_local := false) -> void:
 		# Holy merge clutch https://github.com/godotengine/godot/pull/79288
 		# RenderingDevice for realtime rendering
 		rd = RenderingServer.get_rendering_device()
+
+
+func ceil_snap(x : int, step : int) -> int:
+	@warning_ignore("integer_division")
+	return (x / step + 1) * step
 
 
 ## Creates and binds buffers to RenderDevice
@@ -297,6 +324,7 @@ func set_scene(scene : PTScene) -> void:
 
 # TODO Find a way for the cpu to wait for buffer access
 
+# TODO Make single expand buffer function which can expand any buffer
 ## Will expand a given object buffer by its respective step constant times given steps.
 ## Will return true if buffer was expanded.
 ## Setting create_set to false skips creating a set. By defualt will expand buffer to
@@ -316,8 +344,7 @@ func expand_object_buffer(
 					print("Sphere buffer already fits. No buffer expansion")
 				return false
 			if steps < 1:
-				@warning_ignore("integer_division")
-				var new_size : int = _scene.objects.spheres.size() / SPHERE_COUNT_STEP + 1
+				var new_size : int = ceil_snap(_scene.objects.spheres.size(), SPHERE_COUNT_STEP)
 				if new_size <= sphere_buffer_size:
 					return false
 				sphere_buffer_size = new_size
@@ -331,8 +358,7 @@ func expand_object_buffer(
 					print("Plane buffer already fits. No buffer expansion")
 				return false
 			if steps < 1:
-				@warning_ignore("integer_division")
-				var new_size : int = _scene.objects.planes.size() / PLANE_COUNT_STEP + 1
+				var new_size : int = ceil_snap(_scene.objects.planes.size(), PLANE_COUNT_STEP)
 				if new_size <= plane_buffer_size:
 					return false
 				plane_buffer_size = new_size
@@ -346,8 +372,7 @@ func expand_object_buffer(
 					print("Triangle buffer already fits. No buffer expansion")
 				return false
 			if steps < 1:
-				@warning_ignore("integer_division")
-				var new_size : int = _scene.objects.triangles.size() / TRIANGLE_COUNT_STEP + 1
+				var new_size : int = ceil_snap(_scene.objects.triangles.size(), TRIANGLE_COUNT_STEP)
 				if new_size <= triangle_buffer_size:
 					return false
 				triangle_buffer_size = new_size
@@ -362,6 +387,42 @@ func expand_object_buffer(
 
 	return true
 
+
+func check_object_buffer_size() -> void:
+	var expanded_buffer := false
+	for type : PTObject.ObjectType in PTObject.ObjectType.values():
+		if type == PTObject.ObjectType.NOT_OBJECT or type == PTObject.ObjectType.MAX:
+			continue
+
+		if _scene.objects.get_object_array(type).size() > object_buffer_sizes[type]:
+			expand_object_buffer(type, 0, false)
+			expanded_buffer = true
+
+	if expanded_buffer:
+		bind_set(OBJECT_SET_INDEX)
+
+
+func expand_bvh_buffer(steps : int = 0, create_set := true) -> bool:
+	if  bvh_buffer_size >= _scene.bvh.bvh_list.size() and steps < 1:
+		if PTRendererAuto.is_debug:
+			print("BVH buffer already fits. No buffer expansion")
+		return false
+	if steps < 1:
+		var new_size : int = ceil_snap(_scene.bvh.bvh_list.size(), BVH_COUNT_STEP)
+		if new_size <= bvh_buffer_size:
+			return false
+		bvh_buffer_size = new_size
+	else:
+		bvh_buffer_size = bvh_buffer_size + BVH_COUNT_STEP * steps
+	free_rid(bvh_buffer)
+	create_bvh_buffer()
+
+	if create_set:
+		var bvh_uniforms := uniforms.get_set_uniforms(BVH_SET_INDEX)
+		bvh_set = rd.uniform_set_create(bvh_uniforms, shader, BVH_SET_INDEX)
+
+	return true
+
 ## Will expand the material buffer by its step constant times given steps.
 ## Will return true if buffer was expanded.
 ## Setting create_set to false skips creating a set. By defualt will create buffer
@@ -372,8 +433,7 @@ func expand_material_buffer(steps : int = 0, create_set := true) -> bool:
 			print("Material buffer already fits. No buffer expansion")
 		return false
 	if steps < 1:
-		@warning_ignore("integer_division")
-		var new_size : int = _scene.materials.size() / MATERIAL_COUNT_STEP + 1
+		var new_size : int = ceil_snap(_scene.materials.size(), MATERIAL_COUNT_STEP)
 		if new_size <= material_buffer_size:
 			return false
 		material_buffer_size = new_size
@@ -499,8 +559,7 @@ func _create_materials_byte_array() -> PackedByteArray:
 
 	# Fill rest of bytes with empty
 	if material_buffer_size == 0:
-		@warning_ignore("integer_division")
-		material_buffer_size = (size / MATERIAL_COUNT_STEP + 1) * MATERIAL_COUNT_STEP
+		material_buffer_size = ceil_snap(size, MATERIAL_COUNT_STEP)
 
 	for i in range(material_buffer_size - size):
 		bytes += PTMaterial.new().to_byte_array()
@@ -516,8 +575,7 @@ func _create_spheres_byte_array() -> PackedByteArray:
 
 	# Fill rest of bytes with empty
 	if sphere_buffer_size == 0:
-		@warning_ignore("integer_division")
-		sphere_buffer_size = (size / SPHERE_COUNT_STEP + 1) * SPHERE_COUNT_STEP
+		sphere_buffer_size = ceil_snap(size, SPHERE_COUNT_STEP)
 
 	for i in range(sphere_buffer_size - size):
 		bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
@@ -533,8 +591,7 @@ func _create_planes_byte_array() -> PackedByteArray:
 
 	# Fill rest of bytes with empty
 	if plane_buffer_size == 0:
-		@warning_ignore("integer_division")
-		plane_buffer_size = (size / PLANE_COUNT_STEP + 1) * PLANE_COUNT_STEP
+		plane_buffer_size = ceil_snap(size, PLANE_COUNT_STEP)
 
 	for i in range(plane_buffer_size - size):
 		bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
@@ -550,8 +607,7 @@ func _create_triangles_byte_array() -> PackedByteArray:
 
 	# Fill rest of bytes with empty
 	if triangle_buffer_size == 0:
-		@warning_ignore("integer_division")
-		triangle_buffer_size = (size / TRIANGLE_COUNT_STEP + 1) * TRIANGLE_COUNT_STEP
+		triangle_buffer_size = ceil_snap(size, TRIANGLE_COUNT_STEP)
 
 	for i in range(triangle_buffer_size - size):
 		bytes += PackedFloat32Array([0,0,0,0,0,0,0,0]).to_byte_array()
@@ -560,6 +616,7 @@ func _create_triangles_byte_array() -> PackedByteArray:
 
 
 func _create_bvh_byte_array() -> PackedByteArray:
+	# TODO Use bvh_buffer_size to pad
 	if _scene.bvh:
 		return _scene.bvh.to_byte_array()
 	else:
