@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://chfcv0we7p7gx"]
+
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_fxs5i"]
+[ext_resource type="PackedScene" uid="uid://cxonp0erxjax2" path="res://test_models/grimchild/HN_GrimmChild_Anim_final.LP_96frames_baked.blend" id="2_31onq"]
+
+[node name="PTScene" type="Node"]
+script = ExtResource("1_fxs5i")
+
+[node name="HN_GrimmChild_Anim_final_LP_96frames_baked" parent="." instance=ExtResource("2_31onq")]
+transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, -0.111063, 0.964613, -0.458301)
