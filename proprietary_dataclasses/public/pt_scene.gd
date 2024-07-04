@@ -125,8 +125,6 @@ var meshes_to_remove : Array[PTMesh]
 var _init_time : int
 var _enter_tree_time : int
 
-# TODO Add method for scene to free all objects
-
 
 func _init() -> void:
 	_init_time = Time.get_ticks_usec()
@@ -167,6 +165,19 @@ func _exit_tree() -> void:
 	#  Otherwise, a scene should explicitly be removed with a function call.
 	if Engine.is_editor_hint():
 		PTRendererAuto.add_scene_to_remove(self)
+
+
+func _notification(what: int) -> void:
+	match what:
+		NOTIFICATION_PREDELETE:
+			# NOTE: This is generally good solution for assuring a freed scene
+			# doesn't cause problems. However, it was strictly required because,
+			# when an instantiated child scene is saved, which happens with 'save on run',
+			# it will reload every scene it is in.
+			if PTRendererAuto.has_scene(self):
+				if PTRendererAuto.is_debug:
+					print("PT: Scene is being freed. Will remove itself from renderer.")
+				PTRendererAuto.remove_scene(self)
 
 
 func temp_load_obj():

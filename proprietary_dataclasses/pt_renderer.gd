@@ -633,10 +633,6 @@ func _remove_queued_scenes() -> void:
 func _update_scenes() -> void:
 	# Re-create buffers if asked for
 	for ptscene in scenes:
-		# TODO FIX error: res://proprietary_dataclasses/pt_renderer.gd:636 -
-		# Invalid type in function 'get_scene_wd' in base 'Node (PTRenderer)'.
-		# The Object-derived class of argument 1 (previously freed) is not a subclass of the expected argument class.
-		# happens when running import_test, then switching scenes back and forth
 		var scene_wd := get_scene_wd(ptscene)
 
 		# Catch scene removal leaks
@@ -824,23 +820,25 @@ func remove_object(ptscene : PTScene, object : PTObject) -> void:
 
 ## Removes objects from any queue in scenes
 func _object_queue_remove() -> void:
-	# TODO Unneccessary true negative appears on start (with "temp" scene)
-	if not scenes_to_remove_objects.is_empty() and not _has_scenes_swapped:
-		print("PT: Removing object(s) that was deleted by the user.")
-		for ptscene in scenes_to_remove_objects:
-			if not ptscene: # If scene is null; idk can prob remove
-				push_warning("Help; Scene is no longer valid for deletion.")
-				continue
-			if ptscene.is_inside_tree() and ptscene.check_objects_for_removal():
-				print("Removing objects from ", ptscene)
-				ptscene.remove_objects()
-			else:
-				ptscene.objects_to_remove.clear()
-				if is_debug:
-					print("PT: Scene was changed, or the editor just started, " +
-							"so no object removal will occur.")
+	if scenes_to_remove_objects.is_empty() or _has_scenes_swapped:
+		scenes_to_remove_objects.clear()
+		return
+
+	for ptscene in scenes_to_remove_objects:
+		if not ptscene: # If scene is null; idk can prob remove
+			push_warning("Help; Scene is no longer valid for deletion.")
+			continue
+		if ptscene.is_inside_tree() and ptscene.check_objects_for_removal():
+			print("Removing objects from ", ptscene)
+			ptscene.remove_objects()
+		else:
+			ptscene.objects_to_remove.clear()
+			if is_debug:
+				print("PT: Scene was changed, or the editor just started, " +
+						"so no object removal will occur.")
 
 	scenes_to_remove_objects.clear()
+
 
 # TEMP FUCNTION
 func _update(ptscene : PTScene, updated_object_ids : Array[int], updated_node_indices : Array[int]) -> void:

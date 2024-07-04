@@ -70,6 +70,19 @@ func clear() -> void:
 	object_count = 0
 
 
+## Similar to clear, but also immidietaly frees all objects and meshes
+func clean() -> void:
+	for mesh in meshes:
+		mesh.free()
+	meshes.clear()
+	for object_array : Array in get_object_lists(): # UNSTATIC
+		for object : PTObject in object_array:
+			object.free()
+		object_array.clear()
+	_object_to_object_index.clear()
+	object_count = 0
+
+
 func has(object : PTObject) -> bool:
 	return get_object_array(object.get_type()).has(object)
 
@@ -170,7 +183,7 @@ func merge(other : PTObjectContainer) -> Array[bool]:
 		added_types[type] = true
 
 		for i in range(new_object_array.size()):
-			_object_to_object_index[new_object_array[i]] = last_index + i # UNSTATIC
+			_set_object_index(new_object_array[i], last_index + i) # UNSTATIC
 
 		assert(get_object_array(type).size() == last_index + new_object_array.size())
 

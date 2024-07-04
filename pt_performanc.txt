@@ -30,6 +30,7 @@ tokei . -e /archive
 
 or
 
-cloc . --exclude-dir=archive --exclude-ext=tscn,tres
+cloc . --exclude-dir=archive,gut --exclude-ext=tscn,tres,gltf
+
 
 

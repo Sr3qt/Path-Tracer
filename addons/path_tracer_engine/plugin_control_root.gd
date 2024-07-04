@@ -7,7 +7,7 @@ var viewport : SubViewport
 var _is_plugin_hint := false
 
 # TODO Add button to adjust render size and aspect ratio based on editor viewport
-func _enter_tree():
+func _ready():
 	if _is_plugin_hint:
 		viewport = %SubViewport as SubViewport
 
@@ -32,8 +32,6 @@ func _enter_tree():
 		PTRendererAuto.add_window(better_window)
 		viewport.get_parent().add_child(better_window)
 
-
-func _ready():
 	resized.connect(_on_resized)
 
 

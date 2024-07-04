@@ -347,7 +347,6 @@ func create_compute_list(window : PTRenderWindow = null) -> void:
 	rd.compute_list_bind_uniform_set(compute_list, object_set, OBJECT_SET_INDEX)
 	rd.compute_list_bind_uniform_set(compute_list, bvh_set, BVH_SET_INDEX)
 	rd.compute_list_bind_uniform_set(compute_list, triangle_set, TRIANGLE_SET_INDEX)
-	# TODO ADD TRAINGLES TO COMPUTE LIST WHEN IMPLEMENTED
 	rd.compute_list_set_push_constant(compute_list, push_bytes, push_bytes.size())
 
 	rd.capture_timestamp(window.render_name)
