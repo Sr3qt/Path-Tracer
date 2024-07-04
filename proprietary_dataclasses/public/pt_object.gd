@@ -95,8 +95,8 @@ func _enter_tree() -> void:
 				_scene.add_object(self)
 				#_scene.queue_add_object(self)
 		if _mesh:
-			if PTRendererAuto.is_debug and _mesh.is_node_ready():
-				print("Object adds itself to mesh. object: ", self, " ", _mesh)
+			#if PTRendererAuto.is_debug and _mesh.is_node_ready():
+				#print("Object adds itself to mesh. object: ", self, " ", _mesh)
 			_mesh.add_object(self)
 
 	transform_before = Transform3D(transform)
@@ -265,14 +265,20 @@ func get_global_aabb() -> AABB:
 
 
 func _get_property_byte_array() -> PackedByteArray:
-	var floats : Array[int] = [
-		_scene.get_material_index(material),
+	var actual_material = material
+	if is_meshlet and _mesh.override_material:
+		actual_material = _mesh.override_material
+	elif is_meshlet and _mesh.defualt_material and not material:
+		actual_material = _mesh.defualt_material
+
+	var ints : Array[int] = [
+		_scene.get_material_index(actual_material),
 		_scene.get_texture_id(texture),
 		0,
 		0
 	]
 
-	return PackedInt32Array(floats).to_byte_array()
+	return PackedInt32Array(ints).to_byte_array()
 
 
 func to_byte_array() -> PackedByteArray:

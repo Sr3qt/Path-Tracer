@@ -633,6 +633,10 @@ func _remove_queued_scenes() -> void:
 func _update_scenes() -> void:
 	# Re-create buffers if asked for
 	for ptscene in scenes:
+		# TODO FIX error: res://proprietary_dataclasses/pt_renderer.gd:636 -
+		# Invalid type in function 'get_scene_wd' in base 'Node (PTRenderer)'.
+		# The Object-derived class of argument 1 (previously freed) is not a subclass of the expected argument class.
+		# happens when running import_test, then switching scenes back and forth
 		var scene_wd := get_scene_wd(ptscene)
 
 		# Catch scene removal leaks

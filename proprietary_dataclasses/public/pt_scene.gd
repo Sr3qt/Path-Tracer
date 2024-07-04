@@ -53,13 +53,12 @@ var camera_settings_values := {
 @export var create_random_scene_ := false:
 	set(value):
 		create_random_scene_ = value
+		temp_load_obj()
 		#create_random_scene(0)
 		#print("Created random scene")
 
 # Objects owned by the scene and objects owned by meshes
 var objects : PTObjectContainer
-
-var meshes : Array[PTMesh]
 
 ## NOTE: Because of refraction tracking in the shader, a material index is reserved
 ## for the IOR of air. Currently index 0 is reserved.
@@ -170,6 +169,22 @@ func _exit_tree() -> void:
 		PTRendererAuto.add_scene_to_remove(self)
 
 
+func temp_load_obj():
+
+	# Find imported mesh, if it exists
+	var skeleton = get_node_or_null("HN_GrimmChild_Anim_final_LP_96frames_baked/Armature/Skeleton3D")
+	print("looking for bones")
+	if skeleton:
+		print("found skelton")
+		var temp : MeshInstance3D = skeleton.get_child(0)
+		#mesh = temp.mesh
+
+		for triangle in objects.mesh_to_pttriangles(temp.mesh):
+			triangle._scene = self
+			add_child(triangle)
+			triangle.owner = self
+
+
 func get_object_index(object : PTObject) -> int:
 	return objects._object_to_object_index[object] # UNSTATIC
 
@@ -214,7 +229,7 @@ func _change_camera() -> void:
 
 func add_mesh(mesh : PTMesh) -> void:
 	#Add objects
-	meshes.append(mesh)
+	objects.add_mesh(mesh)
 	# NOTE: Should scene also add any sub-meshes that have not already been added?
 
 	#var new_added_types := objects.merge(mesh.objects)
@@ -225,27 +240,14 @@ func add_mesh(mesh : PTMesh) -> void:
 	#if mesh.objects.object_count != 0:
 		#added_object = true
 
-	if bvh:
-		# TODO MOVe to merge_with in bvh
-		if bvh.order < mesh.bvh.order:
-			push_error("PT: BVH order ", bvh.order, " of scene does not ",
-			"allow for BVH order ", mesh.bvh.order, " of mesh.")
-			return
-		elif bvh.order > mesh.bvh.order:
-			# TODO Add editor warning for mismatched bvh orders
-			push_warning("PT: BVH order of mesh is ", mesh.bvh.order, ", ",
-			"while BVH order of scene is ", bvh.order, ".\n Mesh BVH order ",
-			"will be changed to ", bvh.order, ".")
-			mesh.bvh.order = bvh.order
-
+	if bvh and not mesh.objects.is_empty():
 		bvh.merge_with(mesh.bvh)
 
 	print("Binding signals for objects in mesh")
-	print(mesh.objects.get_object_lists())
 	# Bind signals
-	for _objects : Array in mesh.objects.get_object_lists(): # UNSTATIC
-		for object : PTObject in _objects: # UNSTATIC
-			add_object(object)
+	#for _objects : Array in mesh.objects.get_object_lists(): # UNSTATIC
+		#for object : PTObject in _objects: # UNSTATIC
+			#add_object(object)
 
 	mesh.transform_changed.connect(_update_mesh)
 	mesh.deleted.connect(remove_mesh)
@@ -258,7 +260,7 @@ func remove_mesh(mesh : PTMesh) -> void:
 	print(meshes_to_remove)
 	print(objects_to_remove)
 	# TODO Remove mesh and objects from scene and bvh, as well as buffers
-	meshes.erase(mesh)
+	objects.remove_mesh(mesh)
 
 	for object : PTObject in objects_to_remove.duplicate():
 		if object._mesh == mesh:
@@ -368,6 +370,38 @@ func update_material(material : PTMaterial)  -> void:
 	scene_changed = true
 
 
+func make_mesh_arrays() -> Array:
+	#TODO Make method that only loads the same resource once
+	var unique_meshes := []
+	for mesh in objects.meshes:
+		if mesh.mesh:
+			unique_meshes.append(mesh.mesh)
+			print("PTmesh has mesh")
+
+	var verts := PackedVector3Array()
+	var uvs := PackedVector2Array()
+	var normals := PackedVector3Array()
+	var bones := PackedInt32Array() # Can also be float 32 according to docs
+
+	var indices := PackedInt32Array()
+
+	var new_surface : Array = []
+	new_surface.resize(ArrayMesh.ARRAY_MAX)
+	new_surface[Mesh.ARRAY_VERTEX] = verts
+	new_surface[Mesh.ARRAY_TEX_UV] = uvs
+	new_surface[Mesh.ARRAY_NORMAL] = normals
+	new_surface[Mesh.ARRAY_INDEX] = indices
+
+	for mesh in unique_meshes:
+		var arrays = mesh.surface_get_arrays(0)
+		new_surface[Mesh.ARRAY_VERTEX] += arrays[Mesh.ARRAY_VERTEX]
+		new_surface[Mesh.ARRAY_TEX_UV] += arrays[Mesh.ARRAY_TEX_UV]
+		new_surface[Mesh.ARRAY_NORMAL] += arrays[Mesh.ARRAY_NORMAL]
+		new_surface[Mesh.ARRAY_INDEX] += arrays[Mesh.ARRAY_INDEX]
+
+	return new_surface
+
+
 ## Returns the texture id
 func _add_texture(texture : PTTexture) -> int:
 	# Add object texture to textures if applicable
@@ -422,10 +456,10 @@ func disconnect_object_signals(object : PTObject) -> void:
 ##  object to tree.
 func add_object(object : PTObject) -> void:
 	# IDK if this should be here or just return warning
-	if not object.get_parent():
-		print("Added child")
-		object._scene = self # Setting _scene first is important
-		add_child(object)
+	#if not object.get_parent():
+		#print("Added child")
+		#object._scene = self # Setting _scene first is important
+		#add_child(object)
 
 	var type := object.get_type()
 	objects.add_object(object)
@@ -436,8 +470,16 @@ func add_object(object : PTObject) -> void:
 
 	scene_changed = true
 
+	if object.is_meshlet and object._mesh.override_material:
+		_add_material(object._mesh.override_material, true)
+	elif object.is_meshlet and object._mesh.defualt_material and not object.material:
+		_add_material(object._mesh.default_material, true)
+	else:
+		_add_material(object.material, true)
+
+
+
 	# Connect signals
-	_add_material(object.material, true)
 	_add_texture(object.texture)
 
 	connect_object_signals(object)
@@ -447,8 +489,8 @@ func add_object(object : PTObject) -> void:
 		bvh.add_object(object)
 
 	# If object is added after scene ready, update buffer
-	if is_node_ready():
-		update_object(object)
+	#if is_node_ready():
+		#update_object(object)
 
 
 ## Internal function for removing objects in the re-indexing step and

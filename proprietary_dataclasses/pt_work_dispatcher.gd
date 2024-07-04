@@ -73,6 +73,8 @@ const OBJECT_SET_INDEX : int = 2
 const MATERIALS_BIND : int = 0
 const SPHERES_BIND : int = 1
 const PLANES_BIND : int = 2
+## Refers to buffer storing PTTraingles, distinct from TRIANGLE_SET which stores
+## godot surface/mesh arrays
 const TRIANGLES_BIND : int = 3
 const OBJECT_SET_MAX : int = 4
 
@@ -80,11 +82,18 @@ const BVH_SET_INDEX : int = 3
 const BVH_BIND : int = 0
 const BVH_SET_MAX : int = 1
 
+const TRIANGLE_SET_INDEX : int = 4
+const TRIANGLE_VERTEX_BIND : int = 0
+const TRIANGLE_UV_BIND : int = 1
+const TRIANGLE_INDEX_BIND : int = 2
+const TRIANGLE_SET_MAX : int = 3
+
 # Set RIDs
 var image_set : RID
 var camera_set : RID
 var object_set : RID
 var bvh_set : RID
+var triangle_set : RID
 
 # Buffer RIDS
 var image_buffer : RID
@@ -98,6 +107,10 @@ var plane_buffer : RID
 var triangle_buffer : RID
 
 var bvh_buffer : RID
+
+var triangle_vertex_buffer : RID
+var triangle_uv_buffer : RID
+var triangle_index_buffer : RID
 
 # Whether this instance is using a local RenderDevice
 var is_local_renderer := false
@@ -150,6 +163,7 @@ func create_buffers() -> void:
 	create_plane_buffer()
 	create_triangle_buffer()
 	create_bvh_buffer()
+	create_triangle_buffers(_scene.make_mesh_arrays())
 
 	bind_sets()
 
@@ -215,22 +229,49 @@ func create_bvh_buffer() -> void:
 			_create_bvh_byte_array(), BVH_SET_INDEX, BVH_BIND
 	)
 
+func create_triangle_buffers(surface : Array = [null]) -> void:
+
+	var vertex_bytes := PTObject.empty_byte_array(12)
+	var uv_bytes := PTObject.empty_byte_array(12)
+	var index_bytes := PTObject.empty_byte_array(12)
+
+	if surface[0] != null and surface[0].size() != 0:
+		assert(surface.size() == Mesh.ARRAY_MAX)
+		vertex_bytes = surface[ArrayMesh.ARRAY_VERTEX].to_byte_array()
+		uv_bytes = surface[ArrayMesh.ARRAY_TEX_UV].to_byte_array()
+		index_bytes = surface[ArrayMesh.ARRAY_INDEX].to_byte_array()
+
+	triangle_vertex_buffer = _create_uniform(
+		vertex_bytes,
+		TRIANGLE_SET_INDEX,
+		TRIANGLE_VERTEX_BIND
+	)
+	triangle_uv_buffer = _create_uniform(
+		uv_bytes,
+		TRIANGLE_SET_INDEX,
+		TRIANGLE_UV_BIND
+	)
+	triangle_index_buffer = _create_uniform(
+		index_bytes,
+		TRIANGLE_SET_INDEX,
+		TRIANGLE_INDEX_BIND
+	)
+
+
 func bind_set(index : int) -> void:
+	var uniforms_array := uniforms.get_set_uniforms(index)
+	var new_set_rid := rd.uniform_set_create(uniforms_array, shader, index)
 	match index:
 		IMAGE_SET_INDEX:
-			var image_uniforms := uniforms.get_set_uniforms(IMAGE_SET_INDEX)
-			image_set = rd.uniform_set_create(image_uniforms, shader, IMAGE_SET_INDEX)
+			image_set = new_set_rid
 		CAMERA_SET_INDEX:
-			var camera_uniform := uniforms.get_set_uniforms(CAMERA_SET_INDEX)
-			camera_set = rd.uniform_set_create(camera_uniform, shader, CAMERA_SET_INDEX)
+			camera_set = new_set_rid
 		OBJECT_SET_INDEX:
-			var object_uniforms := uniforms.get_set_uniforms(OBJECT_SET_INDEX)
-			object_set = rd.uniform_set_create(object_uniforms, shader, OBJECT_SET_INDEX)
+			object_set = new_set_rid
 		BVH_SET_INDEX:
-			var BVH_uniforms := uniforms.get_set_uniforms(BVH_SET_INDEX)
-			bvh_set = rd.uniform_set_create(BVH_uniforms, shader, BVH_SET_INDEX)
-		_:
-			push_error("PT: Cannot bind set with index ", index, ".")
+			bvh_set = new_set_rid
+		TRIANGLE_SET_INDEX:
+			triangle_set = new_set_rid
 
 
 func bind_sets() -> void:
@@ -239,6 +280,7 @@ func bind_sets() -> void:
 	bind_set(CAMERA_SET_INDEX)
 	bind_set(OBJECT_SET_INDEX)
 	bind_set(BVH_SET_INDEX)
+	bind_set(TRIANGLE_SET_INDEX)
 
 
 func load_shader(shader_ : RDShaderSource) -> void:
@@ -304,6 +346,8 @@ func create_compute_list(window : PTRenderWindow = null) -> void:
 	rd.compute_list_bind_uniform_set(compute_list, camera_set, CAMERA_SET_INDEX)
 	rd.compute_list_bind_uniform_set(compute_list, object_set, OBJECT_SET_INDEX)
 	rd.compute_list_bind_uniform_set(compute_list, bvh_set, BVH_SET_INDEX)
+	rd.compute_list_bind_uniform_set(compute_list, triangle_set, TRIANGLE_SET_INDEX)
+	# TODO ADD TRAINGLES TO COMPUTE LIST WHEN IMPLEMENTED
 	rd.compute_list_set_push_constant(compute_list, push_bytes, push_bytes.size())
 
 	rd.capture_timestamp(window.render_name)
@@ -659,6 +703,7 @@ class UniformStorage:
 	var camera_set : Array[RDUniform]
 	var object_set : Array[RDUniform]
 	var bvh_set : Array[RDUniform]
+	var triangle_set : Array[RDUniform]
 
 
 	func _init() -> void:
@@ -667,6 +712,7 @@ class UniformStorage:
 		camera_set.resize(CAMERA_SET_MAX)
 		object_set.resize(OBJECT_SET_MAX)
 		bvh_set.resize(BVH_SET_MAX)
+		triangle_set.resize(TRIANGLE_SET_MAX)
 
 
 	func get_set_uniforms(index : int) -> Array[RDUniform]:
@@ -679,8 +725,10 @@ class UniformStorage:
 				return object_set
 			BVH_SET_INDEX:
 				return bvh_set
+			TRIANGLE_SET_INDEX:
+				return triangle_set
 
-		push_error("PT: Uniform index '%S' is invalid." % index)
+		assert(false, "PT: Uniform index '%S' is invalid." % index)
 		return []
 
 

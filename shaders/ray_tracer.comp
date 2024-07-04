@@ -225,7 +225,7 @@ const vec4 default_color = vec4(0.7, 0.7, 0.9, 1);
 const vec4 default_color = vec4(0);
 #endif
 
-const int max_depth = 64 * 8; // Length of rayhits to visit stack in BVH 
+const int max_depth = 64 * 16; // Length of rayhits to visit stack in BVH 
 int refraction_bounces = 0; // Counts the number of times a ray has refracted
 
 int last_bvhnode = 0;
@@ -439,6 +439,18 @@ layout(set = 2, binding = 3, std430) restrict readonly buffer TrainglesBuffer {
 layout(set = 3, binding = 0, std430) restrict readonly buffer BVH_List {
     BVHNode list[];
 } BVH;
+
+layout(set = 4, binding = 0, std430) restrict readonly buffer TriangleVertex {
+    float data[];
+} triangle_vertices;
+
+layout(set = 4, binding = 1, std430) restrict readonly buffer TriangleUV {
+    float data[];
+} triangle_uvs;
+
+layout(set = 4, binding = 2, std430) restrict readonly buffer TriangleIndex {
+    float data[];
+} triangle_indices;
 
 layout(push_constant, std430) restrict readonly uniform constants {
     Camera camera;
@@ -877,6 +889,14 @@ bool hit_triangle_MT(Ray ray, int object_id, Range t_range, inout RayHit rayhit)
     return false;
 }
 
+RayHit hit_triangles(Ray ray, Range t_range, inout RayHit rayhit) {
+    // Uses global scope planes array to bypass function parameter limitations
+    for (int i = 0; i < triangles.data.length(); ++i) {
+        hit_triangle_MT(ray, i + (is_triangle << 24), t_range, rayhit);
+    }
+    return rayhit;
+}
+
 RayHit hit_object(Ray ray, Range range, inout RayHit rayhit, int object_id) {
     // Chooses the appropriate hit_ function for given object_type
     int object_type = get_object_type(object_id);
@@ -931,7 +951,7 @@ RayHit check_ray_hit(Ray ray, Range range) {
     
     RayHit rayhit = empty_rayhit();
     hit_spheres(ray, range, rayhit);
-    hit_triangle_MT_branchless(ray, 1, range, rayhit);
+    hit_triangles(ray, range, rayhit);
     
     hit_planes(ray, range, rayhit);
 

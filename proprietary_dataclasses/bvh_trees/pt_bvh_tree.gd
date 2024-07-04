@@ -163,6 +163,8 @@ func _add_object_to_tree(object : PTObject) -> Array[BVHNode]:
 			print("No vacant leaf node to add new object. Splitting node in two.")
 		new_nodes.append_array(_split_node(fitting_node))
 		fitting_node = find_aabb_spot(object.get_global_aabb(), fitting_node)
+		if fitting_node == null:
+			fitting_node = root_node
 
 	# Add object to node
 	if fitting_node.is_inner:
@@ -293,11 +295,11 @@ func index_tree() -> void:
 	leaf_count = 0
 	object_count = 0
 
-	_index_node(root_node)
+	__index_node(root_node)
 
 
 ## Recursively index whole tree/sub-tree under given node
-func _index_node(node : BVHNode) -> void:
+func __index_node(node : BVHNode) -> void:
 	# TODO Make function comply with new sub-tree policy
 	#assert(node.tree == self, "The given node is not a part of this tree or is in" +
 			#"a sub-tree. Please use the sub-tree's methods instead.")
@@ -318,7 +320,7 @@ func _index_node(node : BVHNode) -> void:
 			continue
 
 		#if child
-		_index_node(child)
+		__index_node(child)
 
 
 ## Finds a non-full inner node recursively
@@ -455,8 +457,12 @@ func _merge_with(other : PTBVHTree, root := root_node) -> Array[BVHNode]:
 	if fitting_node.is_full or fitting_node.is_leaf:
 		if PTRendererAuto.is_debug:
 			print("No vacant leaf node to add new object. Splitting node in two.")
-		new_nodes.append_array(_split_node(fitting_node))
+		#new_nodes.append_array(_split_node(fitting_node))
+		split_node(fitting_node)
 		fitting_node = find_aabb_spot(other.root_node.aabb, fitting_node)
+
+		if fitting_node == null:
+			fitting_node = root_node
 
 	new_nodes.append_array(other.bvh_list.duplicate())
 
@@ -467,8 +473,9 @@ func _merge_with(other : PTBVHTree, root := root_node) -> Array[BVHNode]:
 	other.root_node.parent = fitting_node
 
 	object_to_leaf.merge(other.object_to_leaf)
-	_node_to_index.merge(other._node_to_index)
 	leaf_nodes.append_array(other.leaf_nodes)
+	# TODO FIX NOTE THis gets reindexed correctly in the public function
+	_node_to_index.merge(other._node_to_index)
 
 	object_count += other.object_count
 	leaf_count += other.leaf_count
@@ -484,13 +491,24 @@ func _merge_with(other : PTBVHTree, root := root_node) -> Array[BVHNode]:
 ## An optional argument root can be given, the insertion will
 ##  happen to one of its children
 func merge_with(other : PTBVHTree, root := root_node) -> void:
-	_merge_with(other, root)
+	if order < other.order:
+		push_error("PT: BVH order ", order, " of scene does not ",
+		"allow for BVH order ", other.order, " of mesh.")
+		return
+	elif order > other.order:
+		# TODO Add editor warning for mismatched bvh orders
+		push_warning("PT: BVH order of mesh is ", other.order, ", ",
+		"while BVH order of scene is ", order, ".\n Mesh BVH order ",
+		"will be changed to ", order, ".")
+		other.order = order
+
+	var new_nodes := _merge_with(other, root)
 
 	var index_offset := bvh_list.size()
-	bvh_list.append_array(other.bvh_list)
+	bvh_list.append_array(new_nodes)
 
 	# Reindexing
-	for node : BVHNode in other.bvh_list:
+	for node : BVHNode in new_nodes:
 		_node_to_index[node] += index_offset # UNSTATIC
 
 
@@ -760,19 +778,25 @@ class BVHNode:
 	func to_byte_array() -> PackedByteArray:
 		var child_indices_array := []
 
+		# NOTE THis is not safe for multiple times nested bvh trees
+		# TODO FIX
+		var root_tree = tree
+		if tree.is_sub_tree:
+			root_tree = tree.parent_tree
+
 		# Add children nodes and objects to children list
 		for child in children:
-			child_indices_array.append(tree.get_node_index(child))
+			child_indices_array.append(root_tree.get_node_index(child))
 
 		for object in object_list:
 			var type : int = object.get_type()
-			var _index : int = tree.object_container.get_object_index(object)
+			var _index : int = root_tree.object_container.get_object_index(object)
 			child_indices_array.append(PTObject.make_object_id(_index, type))
 
 		# Needed for buffer alignement
-		#child_indices_array.resize(tree.order)
-		child_indices_array.resize(tree.order +
-								   int((tree.order % 4) - 4) * -1)
+		#child_indices_array.resize(root_tree.order)
+		child_indices_array.resize(root_tree.order +
+								   int((root_tree.order % 4) - 4) * -1)
 
 		var bbox_bytes : PackedByteArray = PTObject.aabb_to_byte_array(aabb)
 		var bytes := PackedInt32Array(child_indices_array).to_byte_array() + bbox_bytes

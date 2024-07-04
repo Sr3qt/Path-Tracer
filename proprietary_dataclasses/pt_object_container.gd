@@ -127,6 +127,28 @@ func remove_mesh(mesh : PTMesh) -> void:
 	meshes.erase(mesh)
 
 
+func mesh_to_pttriangles(f_mesh : Mesh) -> Array[PTTriangle]:
+
+	var new_traingles :Array[PTTriangle]
+	#var surface_mesh = ArrayMesh.new()
+	#surface_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, f_mesh.surface_get_arrays(0))
+	var mesh_array := f_mesh.surface_get_arrays(0)
+	for i in range(0, mesh_array[ArrayMesh.ARRAY_INDEX].size(), 3):
+		var index1 : int = mesh_array[ArrayMesh.ARRAY_INDEX][i]
+		var index2 : int = mesh_array[ArrayMesh.ARRAY_INDEX][i + 1]
+		var index3 : int = mesh_array[ArrayMesh.ARRAY_INDEX][i + 2]
+
+		var vertices : PackedVector3Array = mesh_array[ArrayMesh.ARRAY_VERTEX]
+		var new_tri := PTTriangle.new(vertices[index1], vertices[index2], vertices[index3])
+
+		var uvs : PackedVector2Array = mesh_array[ArrayMesh.ARRAY_TEX_UV]
+		new_tri.set_uvs(uvs[index1], uvs[index2], uvs[index3])
+
+		new_traingles.append(new_tri)
+
+	return new_traingles
+
+
 ## Add another PTObjectContainer's objects to this object
 ## Returns a bool array, indexed by ObjectType, of which objects were added.
 func merge(other : PTObjectContainer) -> Array[bool]:
@@ -154,6 +176,7 @@ func merge(other : PTObjectContainer) -> Array[bool]:
 
 	object_count += other.object_count
 	return added_types
+
 
 ## Adds and removes objects given in the least computationally intensive way.
 ## Called by scene at maximum once a frame.

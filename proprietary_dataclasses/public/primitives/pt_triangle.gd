@@ -11,27 +11,28 @@ extends PTPrimitive3D
 @export var vertex1 := Vector3.LEFT:
 	set(value):
 		vertex1 = value
-		if is_node_ready():
-			create_triangle_mesh()
-			set_aabb()
-			if _scene:
-				object_changed.emit(self)
+		_update()
 @export var vertex2 := Vector3.FORWARD:
 	set(value):
 		vertex2 = value
-		if is_node_ready():
-			create_triangle_mesh()
-			set_aabb()
-			if _scene:
-				object_changed.emit(self)
+		_update()
 @export var vertex3 := Vector3.ZERO:
 	set(value):
 		vertex3 = value
-		if is_node_ready():
-			create_triangle_mesh()
-			set_aabb()
-			if _scene:
-				object_changed.emit(self)
+		_update()
+
+var uv_pos1 := Vector2.ZERO
+var uv_pos2 := Vector2.ZERO
+var uv_pos3 := Vector2.ZERO
+
+## Is true when any uv_pos is set
+var is_uv_set : bool:
+	get:
+		return not (uv_pos1 == uv_pos2 and uv_pos3 == uv_pos2 and uv_pos3 == Vector2.ZERO)
+
+var vertex_normal1 : Vector3
+var vertex_normal2 : Vector3
+var vertex_normal3 : Vector3
 
 var aabb : AABB
 
@@ -50,8 +51,19 @@ func _init(
 	if p_vertex3 != Vector3.ZERO:
 		vertex3 = p_vertex3
 
+	set_aabb()
+
 	if p_material:
 		material = p_material
+
+
+func _update() -> void:
+	if is_node_ready():
+		set_aabb()
+		if Engine.is_editor_hint():
+			create_triangle_mesh()
+		if _scene:
+			object_changed.emit(self)
 
 
 static func get_object_byte_size() -> int:
@@ -94,7 +106,15 @@ func _get_aabb() -> AABB:
 
 
 func get_global_aabb() -> AABB:
+	#if not is_inside_tree():
+		#return _get_aabb()
 	return global_transform * _get_aabb()
+
+
+func set_uvs(uv1 : Vector2, uv2 : Vector2, uv3 : Vector2):
+	uv_pos1 = uv1
+	uv_pos2 = uv2
+	uv_pos3 = uv3
 
 
 func to_byte_array() -> PackedByteArray:

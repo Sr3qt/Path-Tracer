@@ -1,8 +1,10 @@
-extends Node3D
+extends PTMesh
 
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	super._ready()
+
 	var mesh = $Armature/Skeleton3D/Grimm.mesh
 
 	var mesh_tool = MeshDataTool.new()
@@ -11,6 +13,14 @@ func _ready() -> void:
 
 	var mesh_arrays : Array = mesh.surface_get_arrays(0)
 	#print(mesh_arrays)
+
+	var mesh_array : ArrayMesh = ArrayMesh.new()
+	mesh_array.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, mesh_arrays)
+	#print(mesh_array._surfaces)
+	mesh_array.surface_set_name(0, "my surfACE")
+	#print(mesh_array.surface_get_name(0))
+	#print(mesh_array.surface_get_arrays(0))
+	#mesh.
 
 	var unique_vertices = PackedVector3Array([])
 
@@ -47,14 +57,13 @@ func _ready() -> void:
 			print("null")
 
 	mesh_tool
-	pass # Replace with function body.
 
-	get_tree().quit()
+	#get_tree().quit()
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
+#func _process(delta: float) -> void:
+	#pass
 
 
 ## Remove duplicate vertex data in surface array. Returns new array without duplicates.

@@ -6,6 +6,11 @@ extends Node3D
 
 @export var bvh_type := PTBVHTree.BVHType.X_SORTED
 @export var bvh_order : int = 8
+@export var group_mesh_instance := true
+
+@export_group("Overrides")
+@export var defualt_material : PTMaterial
+@export var override_material : PTMaterial
 
 signal transform_changed(mesh : PTMesh)
 
@@ -18,6 +23,9 @@ var bvh : PTBVHTree
 # The scene this object is part of. This object might also be a part of a mesh.
 var _scene : PTScene
 var _mesh : PTMesh
+
+#var surface_mesh : ArrayMesh
+var mesh : Mesh
 
 var transform_before : Transform3D
 
@@ -57,6 +65,18 @@ func _exit_tree() -> void:
 
 
 func _ready() -> void:
+
+	# Find imported mesh, if it exists
+	var skeleton = get_node_or_null("Armature/Skeleton3D")
+	print("looking for bones")
+	if skeleton:
+		print("found skelton")
+		var temp : MeshInstance3D = skeleton.get_child(0)
+		mesh = temp.mesh
+
+		#for triangle in objects.mesh_to_pttriangles(mesh):
+			#_scene.add_child.call_deferred(triangle)
+
 	var function_name : String = PTBVHTree.enum_to_dict[bvh_type] # UNSTATIC
 	bvh = PTBVHTree.create_bvh_with_function_name(objects, bvh_order, function_name)
 
@@ -99,15 +119,16 @@ func remove_mesh(mesh : PTMesh) -> void:
 
 
 func add_object(object : PTObject) -> void:
-	if PTRendererAuto.is_debug:
-		print("Adding object to mesh")
+	#if PTRendererAuto.is_debug:
+		#print("Adding object to mesh")
 	objects.add_object(object)
 	object._scene = _scene
 	if is_node_ready():
 		if is_instance_valid(_scene):
 			_scene.add_object(object)
 
-		bvh.add_object(object)
+		if bvh:
+			bvh.add_object(object)
 
 
 # Incomplete
