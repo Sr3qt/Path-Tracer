@@ -222,6 +222,7 @@ static func type_of(object : Variant) -> ObjectType:
 ## Create empty byte array with given size in bytes
 static func empty_byte_array(size : int) -> PackedByteArray:
 	var ints : Array[int] = []
+	@warning_ignore("integer_division")
 	ints.resize(size / 4)
 	ints.fill(0)
 
@@ -265,11 +266,11 @@ func get_global_aabb() -> AABB:
 
 
 func _get_property_byte_array() -> PackedByteArray:
-	var actual_material = material
+	var actual_material := material
 	if is_meshlet and _mesh.override_material:
 		actual_material = _mesh.override_material
-	elif is_meshlet and _mesh.defualt_material and not material:
-		actual_material = _mesh.defualt_material
+	elif is_meshlet and _mesh.default_material and not material:
+		actual_material = _mesh.default_material
 
 	var ints : Array[int] = [
 		_scene.get_material_index(actual_material),

@@ -3,16 +3,15 @@ extends GutTest
 var container : PTObjectContainer= null
 
 
-func before_all():
-	gut.p("hello")
+func before_all() -> void:
 	container = PTObjectContainer.new()
 
 
-func after_each():
+func after_each() -> void:
 	container.clean()
 
 
-func test_merge():
+func test_merge() -> void:
 	container.add_object(PTSphere.new())
 	container.add_object(PTSphere.new())
 	container.add_object(PTSphere.new())

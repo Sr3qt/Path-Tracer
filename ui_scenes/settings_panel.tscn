@@ -177,6 +177,7 @@ text = "        Node count threshold"
 [node name="NodeCountThreshold" type="SpinBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
 unique_name_in_owner = true
 layout_mode = 2
+allow_greater = true
 script = ExtResource("5_v8pkx")
 
 [node name="ShowObjectLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
@@ -197,7 +198,7 @@ text = "        Object count threshold"
 [node name="ObjectCountThreshold" type="SpinBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
 unique_name_in_owner = true
 layout_mode = 2
-max_value = 10000.0
+allow_greater = true
 script = ExtResource("5_v8pkx")
 
 [node name="BVHTypeLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]

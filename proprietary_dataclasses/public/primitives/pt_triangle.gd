@@ -111,7 +111,7 @@ func get_global_aabb() -> AABB:
 	return global_transform * _get_aabb()
 
 
-func set_uvs(uv1 : Vector2, uv2 : Vector2, uv3 : Vector2):
+func set_uvs(uv1 : Vector2, uv2 : Vector2, uv3 : Vector2) -> void:
 	uv_pos1 = uv1
 	uv_pos2 = uv2
 	uv_pos3 = uv3

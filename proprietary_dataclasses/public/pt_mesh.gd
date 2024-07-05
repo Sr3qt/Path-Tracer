@@ -9,7 +9,7 @@ extends Node3D
 @export var group_mesh_instance := true
 
 @export_group("Overrides")
-@export var defualt_material : PTMaterial
+@export var default_material : PTMaterial
 @export var override_material : PTMaterial
 
 signal transform_changed(mesh : PTMesh)
