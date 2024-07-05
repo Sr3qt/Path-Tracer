@@ -382,12 +382,12 @@ func expand_object_buffer(
 		PTObject.ObjectType.NOT_OBJECT:
 			return false
 		PTObject.ObjectType.SPHERE:
-			if sphere_buffer_size >= _scene.objects.spheres.size() and steps < 1:
+			if sphere_buffer_size >= _scene.unpacked_objects.spheres.size() and steps < 1:
 				if PTRendererAuto.is_debug:
 					print("Sphere buffer already fits. No buffer expansion")
 				return false
 			if steps < 1:
-				var new_size : int = ceil_snap(_scene.objects.spheres.size(), SPHERE_COUNT_STEP)
+				var new_size : int = ceil_snap(_scene.unpacked_objects.spheres.size(), SPHERE_COUNT_STEP)
 				if new_size <= sphere_buffer_size:
 					return false
 				sphere_buffer_size = new_size
@@ -396,12 +396,12 @@ func expand_object_buffer(
 			free_rid(sphere_buffer)
 			create_sphere_buffer()
 		PTObject.ObjectType.PLANE:
-			if plane_buffer_size >= _scene.objects.planes.size() and steps < 1:
+			if plane_buffer_size >= _scene.unpacked_objects.planes.size() and steps < 1:
 				if PTRendererAuto.is_debug:
 					print("Plane buffer already fits. No buffer expansion")
 				return false
 			if steps < 1:
-				var new_size : int = ceil_snap(_scene.objects.planes.size(), PLANE_COUNT_STEP)
+				var new_size : int = ceil_snap(_scene.unpacked_objects.planes.size(), PLANE_COUNT_STEP)
 				if new_size <= plane_buffer_size:
 					return false
 				plane_buffer_size = new_size
@@ -410,12 +410,12 @@ func expand_object_buffer(
 			free_rid(plane_buffer)
 			create_plane_buffer()
 		PTObject.ObjectType.TRIANGLE:
-			if triangle_buffer_size >= _scene.objects.triangles.size() and steps < 1:
+			if triangle_buffer_size >= _scene.unpacked_objects.triangles.size() and steps < 1:
 				if PTRendererAuto.is_debug:
 					print("Triangle buffer already fits. No buffer expansion")
 				return false
 			if steps < 1:
-				var new_size : int = ceil_snap(_scene.objects.triangles.size(), TRIANGLE_COUNT_STEP)
+				var new_size : int = ceil_snap(_scene.unpacked_objects.triangles.size(), TRIANGLE_COUNT_STEP)
 				if new_size <= triangle_buffer_size:
 					return false
 				triangle_buffer_size = new_size
@@ -437,7 +437,7 @@ func check_object_buffer_size() -> void:
 		if type == PTObject.ObjectType.NOT_OBJECT or type == PTObject.ObjectType.MAX:
 			continue
 
-		if _scene.objects.get_object_array(type).size() > object_buffer_sizes[type]:
+		if _scene.unpacked_objects.get_object_array(type).size() > object_buffer_sizes[type]:
 			expand_object_buffer(type, 0, false)
 			expanded_buffer = true
 
@@ -612,8 +612,8 @@ func _create_materials_byte_array() -> PackedByteArray:
 
 func _create_spheres_byte_array() -> PackedByteArray:
 	var bytes := PackedByteArray()
-	var size : int = _scene.objects.spheres.size()
-	for sphere in _scene.objects.spheres:
+	var size : int = _scene.unpacked_objects.spheres.size()
+	for sphere in _scene.unpacked_objects.spheres:
 		bytes += sphere.to_byte_array()
 
 	# Fill rest of bytes with empty
@@ -628,8 +628,8 @@ func _create_spheres_byte_array() -> PackedByteArray:
 
 func _create_planes_byte_array() -> PackedByteArray:
 	var bytes := PackedByteArray()
-	var size : int = _scene.objects.planes.size()
-	for plane in _scene.objects.planes:
+	var size : int = _scene.unpacked_objects.planes.size()
+	for plane in _scene.unpacked_objects.planes:
 		bytes += plane.to_byte_array()
 
 	# Fill rest of bytes with empty
@@ -644,8 +644,8 @@ func _create_planes_byte_array() -> PackedByteArray:
 
 func _create_triangles_byte_array() -> PackedByteArray:
 	var bytes := PackedByteArray()
-	var size : int = _scene.objects.triangles.size()
-	for triangle in _scene.objects.triangles:
+	var size : int = _scene.unpacked_objects.triangles.size()
+	for triangle in _scene.unpacked_objects.triangles:
 		bytes += triangle.to_byte_array()
 
 	# Fill rest of bytes with empty

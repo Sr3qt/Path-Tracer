@@ -2,10 +2,21 @@
 class_name PTObjectContainer
 extends RefCounted
 
-## Class to hold PTObjects
+## Class to hold PTObjects and meshes
+##
+## Policy: A PTOC cannot hold objects that are inside of one of the meshes it holds.
+## It can still hold meshlets, however the mesh cannot also be present.
+## A PTMesh cannot be inside its own container.
+## Additionally it can hold no duplicate objects with the same reference.
 
 # Enum for different custom 3D object types
 const ObjectType = PTObject.ObjectType
+
+## So far only three classes are allowed to hold PTOC: PTScene, PTBVHTree and PTMesh.
+var owner : Variant:
+	set(value):
+		assert((value is PTScene or value is PTBVHTree or value is PTMesh or value == null))
+		owner = value
 
 var meshes : Array[PTMesh]
 
@@ -29,7 +40,7 @@ var _object_to_object_index := {}
 
 func get_object_array(type : ObjectType) -> Array:
 	assert(type != ObjectType.NOT_OBJECT,
-		"PT: Array for ObjectType: 'NOT_OBJECT' does not exist.")
+			"PT: Array for ObjectType: 'NOT_OBJECT' does not exist.")
 	assert(type != ObjectType.MAX,
 			"PT: Array for ObjectType: 'MAX' does not exist")
 
@@ -142,7 +153,7 @@ func remove_mesh(mesh : PTMesh) -> void:
 
 func mesh_to_pttriangles(f_mesh : Mesh) -> Array[PTTriangle]:
 
-	var new_traingles :Array[PTTriangle]
+	var new_traingles : Array[PTTriangle] = []
 	#var surface_mesh = ArrayMesh.new()
 	#surface_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, f_mesh.surface_get_arrays(0))
 	var mesh_array := f_mesh.surface_get_arrays(0)
@@ -189,6 +200,44 @@ func merge(other : PTObjectContainer) -> Array[bool]:
 
 	object_count += other.object_count
 	return added_types
+
+
+## Checks if any object is a part of any mesh.
+func check_no_object_is_meshlet() -> bool:
+	for type : ObjectType in ObjectType.values():
+		if (type == ObjectType.NOT_OBJECT or type == ObjectType.MAX):
+			continue
+		for object : PTObject in self.get_object_array(type):
+			if object.is_meshlet:
+				return false
+	return true
+
+
+## Checks if any objects are being shared by other container
+func check_no_object_shared_with_container(other : PTObjectContainer) -> bool:
+	for mesh in self.meshes:
+		if mesh in other.meshes:
+			return true
+	for type : ObjectType in ObjectType.values():
+		if (type == ObjectType.NOT_OBJECT or type == ObjectType.MAX):
+			continue
+		var object_array := other.get_object_array(type)
+		for object : PTObject in self.get_object_array(type):
+			if object in object_array:
+				return false
+	return true
+
+
+## Check if all objects in this container is also in other
+func check_all_objects_shared_with_container(other : PTObjectContainer) -> bool:
+	for type : ObjectType in ObjectType.values():
+		if (type == ObjectType.NOT_OBJECT or type == ObjectType.MAX):
+			continue
+		var object_array := other.get_object_array(type)
+		for object : PTObject in self.get_object_array(type):
+			if not object in object_array:
+				return false
+	return true
 
 
 ## Adds and removes objects given in the least computationally intensive way.

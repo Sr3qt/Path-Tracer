@@ -74,8 +74,9 @@ func _ready() -> void:
 		var temp : MeshInstance3D = skeleton.get_child(0)
 		mesh = temp.mesh
 
-		#for triangle in objects.mesh_to_pttriangles(mesh):
-			#_scene.add_child.call_deferred(triangle)
+		for triangle in objects.mesh_to_pttriangles(mesh):
+			add_object(triangle)
+			add_child(triangle)
 
 	var function_name : String = PTBVHTree.enum_to_dict[bvh_type] # UNSTATIC
 	bvh = PTBVHTree.create_bvh_with_function_name(objects, bvh_order, function_name)
@@ -121,10 +122,11 @@ func remove_mesh(mesh : PTMesh) -> void:
 func add_object(object : PTObject) -> void:
 	#if PTRendererAuto.is_debug:
 		#print("Adding object to mesh")
-	objects.add_object(object)
 	object._scene = _scene
+	object._mesh = self
+	objects.add_object(object)
 	if is_node_ready():
-		if is_instance_valid(_scene):
+		if is_instance_valid(_scene) and _scene.has_mesh(self):
 			_scene.add_object(object)
 
 		if bvh:

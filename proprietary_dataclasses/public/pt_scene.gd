@@ -57,6 +57,11 @@ var camera_settings_values := {
 		#create_random_scene(0)
 		#print("Created random scene")
 
+## Objects and meshes owned by PTScene
+var scene_objects : PTObjectContainer
+## All PTScene objects and objects in PTScene's meshes
+var unpacked_objects : PTObjectContainer
+
 # Objects owned by the scene and objects owned by meshes
 var objects : PTObjectContainer
 
@@ -130,6 +135,8 @@ func _init() -> void:
 	_init_time = Time.get_ticks_usec()
 	added_types.resize(ObjectType.MAX)
 	objects = PTObjectContainer.new()
+	scene_objects = PTObjectContainer.new()
+	unpacked_objects = PTObjectContainer.new()
 	_to_add = PTObjectContainer.new()
 	_to_remove = PTObjectContainer.new()
 
@@ -180,24 +187,24 @@ func _notification(what: int) -> void:
 				PTRendererAuto.remove_scene(self)
 
 
-func temp_load_obj():
+func temp_load_obj() -> void:
 
 	# Find imported mesh, if it exists
-	var skeleton = get_node_or_null("HN_GrimmChild_Anim_final_LP_96frames_baked/Armature/Skeleton3D")
+	var skeleton := get_node_or_null("HN_GrimmChild_Anim_final_LP_96frames_baked/Armature/Skeleton3D")
 	print("looking for bones")
 	if skeleton:
 		print("found skelton")
 		var temp : MeshInstance3D = skeleton.get_child(0)
 		#mesh = temp.mesh
 
-		for triangle in objects.mesh_to_pttriangles(temp.mesh):
+		for triangle in unpacked_objects.mesh_to_pttriangles(temp.mesh):
 			triangle._scene = self
 			add_child(triangle)
 			triangle.owner = self
 
 
 func get_object_index(object : PTObject) -> int:
-	return objects._object_to_object_index[object] # UNSTATIC
+	return unpacked_objects._object_to_object_index[object] # UNSTATIC
 
 
 func get_material_index(material : PTMaterial) -> int:
@@ -206,6 +213,10 @@ func get_material_index(material : PTMaterial) -> int:
 
 func get_texture_id(texture : PTTexture) -> int:
 	return _texture_to_texture_id[texture] # UNSTATIC
+
+
+func has_mesh(mesh : PTMesh) -> bool:
+	return scene_objects.meshes.has(mesh)
 
 
 func add_camera(f_camera : PTCamera) -> void:
@@ -240,16 +251,16 @@ func _change_camera() -> void:
 
 func add_mesh(mesh : PTMesh) -> void:
 	#Add objects
-	objects.add_mesh(mesh)
+	scene_objects.add_mesh(mesh)
 	# NOTE: Should scene also add any sub-meshes that have not already been added?
 
-	#var new_added_types := objects.merge(mesh.objects)
+	var new_added_types := unpacked_objects.merge(mesh.objects)
 #
 	## Update object update flags
-	#for i in range(new_added_types.size()):
-		#added_types[i] = added_types[i] or new_added_types[i]
-	#if mesh.objects.object_count != 0:
-		#added_object = true
+	for i in range(new_added_types.size()):
+		added_types[i] = added_types[i] or new_added_types[i]
+	if mesh.objects.object_count != 0:
+		added_object = true
 
 	if bvh and not mesh.objects.is_empty():
 		bvh.merge_with(mesh.bvh)
@@ -271,7 +282,8 @@ func remove_mesh(mesh : PTMesh) -> void:
 	print(meshes_to_remove)
 	print(objects_to_remove)
 	# TODO Remove mesh and objects from scene and bvh, as well as buffers
-	objects.remove_mesh(mesh)
+	scene_objects.remove_mesh(mesh)
+	# TODO Rmove mesh objects from unpacked_objects
 
 	for object : PTObject in objects_to_remove.duplicate():
 		if object._mesh == mesh:
@@ -383,8 +395,8 @@ func update_material(material : PTMaterial)  -> void:
 
 func make_mesh_arrays() -> Array:
 	#TODO Make method that only loads the same resource once
-	var unique_meshes := []
-	for mesh in objects.meshes:
+	var unique_meshes : Array[Mesh] = []
+	for mesh in scene_objects.meshes:
 		if mesh.mesh:
 			unique_meshes.append(mesh.mesh)
 			print("PTmesh has mesh")
@@ -392,7 +404,7 @@ func make_mesh_arrays() -> Array:
 	var verts := PackedVector3Array()
 	var uvs := PackedVector2Array()
 	var normals := PackedVector3Array()
-	var bones := PackedInt32Array() # Can also be float 32 according to docs
+	# var bones := PackedInt32Array() # Can also be float 32 according to docs
 
 	var indices := PackedInt32Array()
 
@@ -404,7 +416,7 @@ func make_mesh_arrays() -> Array:
 	new_surface[Mesh.ARRAY_INDEX] = indices
 
 	for mesh in unique_meshes:
-		var arrays = mesh.surface_get_arrays(0)
+		var arrays := mesh.surface_get_arrays(0)
 		new_surface[Mesh.ARRAY_VERTEX] += arrays[Mesh.ARRAY_VERTEX]
 		new_surface[Mesh.ARRAY_TEX_UV] += arrays[Mesh.ARRAY_TEX_UV]
 		new_surface[Mesh.ARRAY_NORMAL] += arrays[Mesh.ARRAY_NORMAL]
@@ -472,8 +484,11 @@ func add_object(object : PTObject) -> void:
 		#object._scene = self # Setting _scene first is important
 		#add_child(object)
 
+	unpacked_objects.add_object(object)
+	if not object.is_meshlet:
+		scene_objects.add_object(object)
+
 	var type := object.get_type()
-	objects.add_object(object)
 
 	# For making sure buffer fits
 	added_object = true
@@ -483,7 +498,7 @@ func add_object(object : PTObject) -> void:
 
 	if object.is_meshlet and object._mesh.override_material:
 		_add_material(object._mesh.override_material, true)
-	elif object.is_meshlet and object._mesh.defualt_material and not object.material:
+	elif object.is_meshlet and object._mesh.default_material and not object.material:
 		_add_material(object._mesh.default_material, true)
 	else:
 		_add_material(object.material, true)
@@ -507,8 +522,10 @@ func add_object(object : PTObject) -> void:
 ## Internal function for removing objects in the re-indexing step and
 ## also part of the complete remove_object function
 func _remove_object(object : PTObject) -> void:
-	## This is TEMP
-	objects.remove_object(object)
+	## TODO This is TEMP, REDESIGN
+	unpacked_objects.remove_object(object)
+	if not object.is_meshlet:
+		scene_objects.remove_object(object)
 
 	# NOTE: Might be unneccessary
 	# Only remove from tree if not in editor. Else it can potentially prevent
@@ -527,7 +544,9 @@ func _remove_object(object : PTObject) -> void:
 ## Can be slow for many objects. Consider using queue_remove_object for mass deletion.
 func remove_object(object : PTObject) -> void:
 	print( "\nRemoving object from scene. ", object, " ", self)
-	objects.remove_object(object)
+	unpacked_objects.remove_object(object)
+	if not object.is_meshlet:
+		scene_objects.remove_object(object)
 
 	# NOTE: Might be unneccessary
 	# Only remove from tree if not in editor. Else it can potentially prevent
@@ -639,53 +658,15 @@ func _re_index() -> void:
 		print(unpacked_to_add.objects)
 		print(unpacked_to_remove.objects)
 
-	## Functions for assert check
-	# TODO MOVE TO OBJECT CONTAINER
-	# Checks if any object is a part of a mesh in a given object container
-	var no_object_part_of_mesh := func temp(object_container : PTObjectContainer) -> bool:
-		for type : ObjectType in ObjectType.values():
-			if (type == ObjectType.NOT_OBJECT or type == ObjectType.MAX):
-				continue
-			for object : PTObject in object_container.get_object_array(type):
-				if object.is_meshlet:
-					return false
-		return true
-
-	# Checks for any objects being shared by containers
-	var no_object_part_of_container := func (object_container1 : PTObjectContainer,
-	object_container2 : PTObjectContainer) -> bool:
-		for mesh in object_container1.meshes:
-			if mesh in object_container2.meshes:
-				return true
-		for type : ObjectType in ObjectType.values():
-			if (type == ObjectType.NOT_OBJECT or type == ObjectType.MAX):
-				continue
-			var object_array := object_container2.get_object_array(type)
-			for object : PTObject in object_container1.get_object_array(type):
-				if object in object_array:
-					return false
-		return true
-
-	var all_objects_part_of_container := func (object_container1 : PTObjectContainer,
-	object_container2 : PTObjectContainer) -> bool:
-		for type : ObjectType in ObjectType.values():
-			if (type == ObjectType.NOT_OBJECT or type == ObjectType.MAX):
-				continue
-			var object_array := object_container2.get_object_array(type)
-			for object : PTObject in object_container1.get_object_array(type):
-				if not object in object_array:
-					return false
-		return true
-
-	assert(no_object_part_of_mesh.callv([_to_add]),
+	assert(_to_add.check_no_object_part_of_mesh(),
 		"PT - _re_index: Trying to add object that is part of mesh, " +
 		"instead of adding mesh.")
-	assert(no_object_part_of_mesh.callv([_to_remove]),
+	assert(_to_remove.check_no_object_part_of_mesh(),
 		"PT - _re_index: Trying to remove object that is part of mesh, " +
 		"instead of removing mesh.")
-	assert(no_object_part_of_container.callv([unpacked_to_add, objects]),
+	assert(unpacked_to_add.check_no_object_shared_with_container(unpacked_objects),
 		"PT - _re_index: Trying to add object to scene that is already there.")
-	assert(all_objects_part_of_container.callv([unpacked_to_remove, objects]),
+	assert(unpacked_to_remove.check_all_objects_shared_with_container(unpacked_objects),
 		"PT - _re_index: Trying to remove object when it is not a part of the scene.")
 
 	## Actual functions
@@ -739,7 +720,7 @@ func _re_index() -> void:
 
 func get_size() -> int:
 	"""Calculates the number of primitives stored in the scene"""
-	return objects.object_count
+	return unpacked_objects.object_count
 
 
 func create_BVH(order : int, function_name : String) -> void:
@@ -748,7 +729,7 @@ func create_BVH(order : int, function_name : String) -> void:
 	if bvh:
 		cached_bvhs.append(bvh)
 
-	bvh = PTBVHTree.create_bvh_with_function_name(objects, order, function_name)
+	bvh = PTBVHTree.create_bvh_with_function_name(scene_objects, order, function_name)
 
 
 func set_camera_setting(cam : CameraSetting) -> void:
