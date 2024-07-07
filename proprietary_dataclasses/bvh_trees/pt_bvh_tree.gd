@@ -28,24 +28,29 @@ extends RefCounted
 ## should control changes to their own branches and nodes. The super-trees will
 ## still have indices to nodes in the sub-trees and can only use get functions on them.
 
+const MAX_TREE_NESTING = 20
+
 ## Enum of different possible BVH algorithms, should be updated as more algortithms
 ##  are added. Only positive numbers (and zero) are allowed as values.
 enum BVHType {
 	X_SORTED,
 	Y_SORTED,
 	Z_SORTED,
+	XYZ_SORTED,
 }
 
 const enum_to_dict := {
 	BVHType.X_SORTED : "X-Axis Sorted",
 	BVHType.Y_SORTED : "Y-Axis Sorted",
 	BVHType.Z_SORTED : "Z-Axis Sorted",
+	BVHType.XYZ_SORTED : "XYZ-Axis Sorted",
 }
 
 static var built_in_bvh_functions := {
 	"X-Axis Sorted" : PTBVHAxisSort.x_axis_sorted,
 	"Y-Axis Sorted" : PTBVHAxisSort.y_axis_sorted,
 	"Z-Axis Sorted" : PTBVHAxisSort.z_axis_sorted,
+	"XYZ-Axis Sorted" : PTBVHAxisSort.longest_axis_sort,
 }
 
 # TODO Should add config file where the user can specify functions and names
@@ -73,9 +78,11 @@ var is_sub_tree : bool:
 	get:
 		return is_instance_valid(parent_tree)
 
+## Only used to get correct obejct indexing when converting to byte array
+var _scene : PTScene
+
 var root_node : BVHNode
 
-var object_container : PTObjectContainer
 var object_to_leaf := {}
 var leaf_nodes : Array[BVHNode]
 
@@ -778,11 +785,13 @@ class BVHNode:
 	func to_byte_array() -> PackedByteArray:
 		var child_indices_array := []
 
-		# NOTE THis is not safe for multiple times nested bvh trees
-		# TODO FIX
-		var root_tree = tree
-		if tree.is_sub_tree:
-			root_tree = tree.parent_tree
+		var root_tree := tree
+		for i in range(MAX_TREE_NESTING):
+			if root_tree.is_sub_tree:
+				root_tree = root_tree.parent_tree
+		
+		assert(not root_tree.is_sub_tree, "PT: Max BVHTree nesting limit reached. " +
+				"Please don't nest them more than %s times." % [MAX_TREE_NESTING])
 
 		# Add children nodes and objects to children list
 		for child in children:
@@ -790,7 +799,7 @@ class BVHNode:
 
 		for object in object_list:
 			var type : int = object.get_type()
-			var _index : int = root_tree.object_container.get_object_index(object)
+			var _index : int = root_tree._scene.get_object_index(object)
 			child_indices_array.append(PTObject.make_object_id(_index, type))
 
 		# Needed for buffer alignement

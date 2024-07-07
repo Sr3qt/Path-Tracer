@@ -486,7 +486,6 @@ func add_scene(new_ptscene : PTScene) -> void:
 		new_ptscene.create_BVH(bvh_order, function_name)
 	else:
 		new_ptscene.bvh = PTBVHTree.new(bvh_order)
-		new_ptscene.bvh.object_container = new_ptscene.objects
 
 	if not canvas:
 		canvas = create_canvas()

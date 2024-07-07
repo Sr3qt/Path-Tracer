@@ -204,7 +204,7 @@ func temp_load_obj() -> void:
 
 
 func get_object_index(object : PTObject) -> int:
-	return unpacked_objects._object_to_object_index[object] # UNSTATIC
+	return unpacked_objects.get_object_index(object)
 
 
 func get_material_index(material : PTMaterial) -> int:
@@ -730,6 +730,7 @@ func create_BVH(order : int, function_name : String) -> void:
 		cached_bvhs.append(bvh)
 
 	bvh = PTBVHTree.create_bvh_with_function_name(scene_objects, order, function_name)
+	bvh._scene = self
 
 
 func set_camera_setting(cam : CameraSetting) -> void:

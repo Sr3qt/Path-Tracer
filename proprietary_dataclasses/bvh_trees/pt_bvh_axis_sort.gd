@@ -5,35 +5,41 @@ extends PTBVHTree
 ## Basic implementation of BVHTree
 
 var _index := 0 # Used to keep track of index when creating bvh_list
+var _axis_sorts : Array[Callable] = []
 
 
 static func x_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxisSort:
 	var temp := PTBVHAxisSort.new(_order)
-	temp.create_bvh(objects)
-	temp.type = BVHType.X_SORTED
+	temp.create_bvh(objects, BVHType.X_SORTED)
 	return temp
 
 
 static func y_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxisSort:
 	var temp := PTBVHAxisSort.new(_order)
-	temp.create_bvh(objects, "y")
-	temp.type = BVHType.Y_SORTED
+	temp.create_bvh(objects, BVHType.Y_SORTED)
 	return temp
 
 
 static func z_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxisSort:
 	var temp := PTBVHAxisSort.new(_order)
-	temp.create_bvh(objects, "z")
-	temp.type = BVHType.Z_SORTED
+	temp.create_bvh(objects, BVHType.Z_SORTED)
 	return temp
 
-# TODO Implement longest axis split
+
+static func longest_axis_sort(objects : PTObjectContainer, _order : int) -> PTBVHAxisSort:
+	var temp := PTBVHAxisSort.new(_order)
+	temp.create_bvh(objects, BVHType.XYZ_SORTED)
+	return temp
 
 
-func create_bvh(objects : PTObjectContainer, axis := "x") -> void:
+func create_bvh(objects : PTObjectContainer, f_type := BVHType.XYZ_SORTED) -> void:
 	var start_time := Time.get_ticks_usec()
 
-	object_container = objects
+	assert(f_type in [BVHType.XYZ_SORTED, BVHType.X_SORTED, BVHType.Y_SORTED, BVHType.Z_SORTED],
+			"PT: PTBVHAxisSort cannot create bvh of type: " + str(BVHType.find_key(f_type)))	
+
+	type = f_type
+
 	var flat_object_list : Array[PTObject] = []
 
 	for object_type : PTObject.ObjectType in PTObject.ObjectType.values(): # UNSTATIC
@@ -43,17 +49,24 @@ func create_bvh(objects : PTObjectContainer, axis := "x") -> void:
 
 	object_count = flat_object_list.size()
 
+	for i in range(3):
+		_axis_sorts.append(
+				func(a : PTObject, b : PTObject) -> bool:
+					return a.get_global_aabb().position[i] > b.get_global_aabb().end[i])
+
 	# Sort according to given axis
 	var _axis : int = 0
-	match axis:
-		"y":
+	match type:
+		BVHType.X_SORTED:
+			_axis = 0
+		BVHType.Y_SORTED:
 			_axis = 1
-		"z":
+		BVHType.Z_SORTED:
 			_axis = 2
-	var axis_sort := func(a : PTObject, b : PTObject) -> bool:
-		return a.get_global_aabb().position[_axis] > b.get_global_aabb().end[_axis]
 
-	flat_object_list.sort_custom(axis_sort)
+	# MAKE XYZ
+	if type != BVHType.XYZ_SORTED:
+		flat_object_list.sort_custom(_axis_sorts[_axis])
 
 	# Creates tree recursively
 	root_node.add_children(_recursive_split(flat_object_list, root_node))
@@ -64,13 +77,23 @@ func create_bvh(objects : PTObjectContainer, axis := "x") -> void:
 
 	creation_time = Time.get_ticks_usec() - start_time
 
+	if objects.meshes.size() > 0:
+		for mesh in objects.meshes:
+			if mesh.bvh:
+				merge_with(mesh.bvh)
+
 	if PTRendererAuto.is_debug:
-		print(("Finished creating %s-axis sorted BVH tree with %s inner nodes, " +
+		print(("Finished creating %s BVH tree with %s inner nodes, " +
 				"%s leaf nodes and %s objects in %s ms.") % [
-				axis, inner_count, leaf_count, object_count, creation_time / 1000.])
+				BVHType.find_key(type), inner_count, leaf_count, object_count, creation_time / 1000.])
 
 
 func _recursive_split(object_list : Array[PTObject], parent : BVHNode) -> Array[BVHNode]:
+
+	if type == BVHType.XYZ_SORTED:
+		var longest_axis := find_longest_axis(object_list)
+		object_list.sort_custom(_axis_sorts[longest_axis])
+
 	# Will distriute objects evenly with first indices having slightly more
 	@warning_ignore("integer_division")
 	var even_division : int = object_list.size() / order
@@ -126,3 +149,12 @@ func _index_node(parent : BVHNode) -> void:
 			continue
 
 		_index_node(child)
+
+
+func find_longest_axis(object_list : Array[PTObject]) -> int:
+	var temp := AABB()
+
+	for object in object_list:
+		temp = temp.merge(object.get_global_aabb())
+	
+	return temp.get_longest_axis_index()

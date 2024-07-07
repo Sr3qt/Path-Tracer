@@ -1,5 +1,6 @@
 Performance on random_scene with book_ex camera settings
 
+Added Longest axis bvh sort is 54 fps vs x axis which is 47, instancing on
 
 Mesh Displayed for spheres is 50-51 on linux, with instancing 50-51
 
