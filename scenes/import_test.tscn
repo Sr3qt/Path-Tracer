@@ -56,6 +56,7 @@ distance = -0.21
 mesh = SubResource("PlaneMesh_6yu2x")
 
 [node name="HN_GrimmChild_Anim_final_LP_96frames_baked" parent="." instance=ExtResource("4_cbihy")]
+bvh_type = 3
 
 [node name="PTSphere" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.649341, 0, -1.46476)

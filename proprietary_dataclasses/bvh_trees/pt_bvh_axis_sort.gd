@@ -52,7 +52,7 @@ func create_bvh(objects : PTObjectContainer, f_type := BVHType.XYZ_SORTED) -> vo
 	for i in range(3):
 		_axis_sorts.append(
 				func(a : PTObject, b : PTObject) -> bool:
-					return a.get_global_aabb().position[i] > b.get_global_aabb().end[i])
+					return a.get_global_aabb().get_center()[i] > b.get_global_aabb().get_center()[i])
 
 	# Sort according to given axis
 	var _axis : int = 0
