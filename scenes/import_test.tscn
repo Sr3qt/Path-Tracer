@@ -1,14 +1,26 @@
-[gd_scene load_steps=12 format=3 uid="uid://chfcv0we7p7gx"]
+[gd_scene load_steps=14 format=3 uid="uid://chfcv0we7p7gx"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_fxs5i"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_370bu"]
 [ext_resource type="PackedScene" uid="uid://dktxfs7huilrv" path="res://test_models/grimchild/grimchild_test.tscn" id="4_cbihy"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_sphere.gd" id="5_a8vhs"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_mesh.gd" id="5_mfldx"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_plane.gd" id="6_es863"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_material.gd" id="6_helh2"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_6yu2x"]
 size = Vector2(1000, 1000)
+
+[sub_resource type="Resource" id="Resource_y4bi6"]
+script = ExtResource("6_helh2")
+albedo = Color(0.0313726, 0.0313726, 0.0313726, 1)
+roughness = 0.0
+metallic = 0.0
+opacity = 1.0
+reflectivity = 1.0
+IOR = 1.0
+refraction_depth = 0
+is_emissive = false
 
 [sub_resource type="SphereMesh" id="SphereMesh_b0vj7"]
 radius = 1.0
@@ -56,7 +68,9 @@ distance = -0.21
 mesh = SubResource("PlaneMesh_6yu2x")
 
 [node name="HN_GrimmChild_Anim_final_LP_96frames_baked" parent="." instance=ExtResource("4_cbihy")]
+script = ExtResource("5_mfldx")
 bvh_type = 3
+override_material = SubResource("Resource_y4bi6")
 
 [node name="PTSphere" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.649341, 0, -1.46476)

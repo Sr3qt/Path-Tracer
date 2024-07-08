@@ -31,8 +31,6 @@ var transform_before : Transform3D
 
 # TODO Be able to see and edit meshes while they are instatiated
 
-# TODO Add mesh defualt material and texture, objects withouth any will use mesh's
-
 
 func _init() -> void:
 	objects = PTObjectContainer.new()
@@ -67,10 +65,12 @@ func _exit_tree() -> void:
 func _ready() -> void:
 
 	# Find imported mesh, if it exists
-	var skeleton = get_node_or_null("Armature/Skeleton3D")
-	print("looking for bones")
+	var skeleton := get_node_or_null("Armature/Skeleton3D")
+	if PTRendererAuto.is_debug:
+		print("\nPT: Looking for mesh...")
 	if skeleton:
-		print("found skelton")
+		if PTRendererAuto.is_debug:
+			print("PT: Found mesh")
 		var temp : MeshInstance3D = skeleton.get_child(0)
 		mesh = temp.mesh
 
@@ -99,24 +99,24 @@ func _notification(what : int) -> void:
 				transform_before = Transform3D(transform)
 
 
-func add_mesh(mesh : PTMesh) -> void:
-	# TODO Decide if mesh bvhs are merged first before being merged to scene bvh
-	# NOTE: DOn't merge bvh between meshes, only in scene
+func add_mesh(other : PTMesh) -> void:
+	# NOTE: Meshes can merge their bvhs before merging with the scenes.
+	#  However, adding mesh to a mesh that is already in scene might require mergin recursivively
 	if _scene:
-		if not mesh._scene:
-			mesh._scene = _scene
-		_scene.add_mesh(mesh)
+		if not other._scene:
+			other._scene = _scene
+		_scene.add_mesh(other)
 	else:
 		print("Mesh should have valid scene but hasnt")
 
-	objects.add_mesh(mesh)
+	objects.add_mesh(other)
 
 	# TODO Adding mesh gives core/variant/variant_utility.cpp:1111 -
 	# Warning: Child node <RefCounted#-9223369183218032947> does not have aabb
 
 
-func remove_mesh(mesh : PTMesh) -> void:
-	objects.remove_mesh(mesh)
+func remove_mesh(other : PTMesh) -> void:
+	objects.remove_mesh(other)
 
 
 func add_object(object : PTObject) -> void:
@@ -137,7 +137,6 @@ func add_object(object : PTObject) -> void:
 ## This function should only be called by the user.
 ## Removes object from mesh and scene immidietaly
 func remove_object(object : PTObject) -> void:
-	# TODO Add checks to see if object is a part of container yoo are removing it from
 	if object._mesh != self:
 		push_error("PT: Cannot remove object -", object, "- from mesh -", self,
 		"- as it is not a part of the mesh.")

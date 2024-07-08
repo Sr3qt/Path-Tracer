@@ -234,7 +234,14 @@ func add_mesh(mesh : PTMesh) -> void:
 		added_object = true
 
 	if bvh and not mesh.objects.is_empty():
+		if PTRendererAuto.is_debug:
+			print("PT: Scene already has bvh, mesh bvh is merged into it.")
 		bvh.merge_with(mesh.bvh)
+
+	if mesh.override_material:
+		_add_material(mesh.override_material, true)
+	if mesh.default_material:
+		_add_material(mesh.default_material, true)
 
 	print("Binding signals for objects in mesh")
 	# Bind signals
@@ -243,7 +250,9 @@ func add_mesh(mesh : PTMesh) -> void:
 			#add_object(object)
 
 	mesh.transform_changed.connect(_update_mesh)
-	mesh.deleted.connect(remove_mesh)
+	# TODO Make meshes support queue deletion
+	# TODO Make material changed signal for meshes
+	# mesh.deleted.connect(remove_mesh)
 
 	scene_changed = true
 
@@ -266,7 +275,7 @@ func remove_mesh(mesh : PTMesh) -> void:
 			remove_object(object)
 
 	mesh.transform_changed.disconnect(_update_mesh)
-	mesh.deleted.disconnect(remove_mesh)
+	# mesh.deleted.disconnect(remove_mesh)
 
 	if bvh:
 		bvh.remove_subtree(mesh.bvh.root_node)
