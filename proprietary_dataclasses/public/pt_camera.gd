@@ -6,6 +6,20 @@ extends Camera3D
 ##
 ## Extends Camera3D for path traced rendering
 
+# Semi-Temp
+enum CameraSetting {none, top_down, corner, book_ex, center, left, right, middle, cornell}
+
+const camera_settings_values := {
+	CameraSetting.top_down : [Vector3(0, 8, -15), Vector3(0,0,-6), 106.],
+	CameraSetting.corner : [Vector3(-11, 3, -11), Vector3(0,0,0), 106.],
+	CameraSetting.book_ex : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.],
+	CameraSetting.center : [Vector3(0, 0, 1), Vector3(0,0,0), 106.],
+	CameraSetting.left : [Vector3(0, 0, 1), Vector3(-1,0,1), 106.],
+	CameraSetting.right : [Vector3(0, 0, 1), Vector3(1,0,1), 106.],
+	CameraSetting.middle : [Vector3(7, 2, -3), Vector3(0,0,0), 30 * 16 / 9.],
+	CameraSetting.cornell : [Vector3(-1, 0.5, 0.5), Vector3(1,0.5,0.5), 106.0],
+}
+
 # Render variables
 @export var aspect_ratio_x : int = 16
 @export var aspect_ratio_y : int = 9
@@ -96,6 +110,19 @@ func set_viewport_size() -> void:
 	viewport_width = viewport_height * aspect_ratio
 
 	camera_changed = true
+
+
+func set_camera_setting(cam : CameraSetting) -> void:
+	var pos : Vector3 = camera_settings_values[cam][0] # UNSTATIC
+	var look : Vector3 = camera_settings_values[cam][1] # UNSTATIC
+	var _fov : float = camera_settings_values[cam][2] # UNSTATIC
+
+	position = pos
+
+	look_at(look)
+
+	fov = _fov / aspect_ratio
+	set_viewport_size()
 
 
 func vector_to_array(vector : Vector3) -> Array[float]:

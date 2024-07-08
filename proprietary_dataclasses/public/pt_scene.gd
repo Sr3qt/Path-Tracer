@@ -29,19 +29,7 @@ extends Node
 # Enum for different custom 3D object types
 const ObjectType = PTObject.ObjectType
 
-# Semi-Temp
-enum CameraSetting {none, top_down, corner, book_ex, center, left, right, middle, cornell}
-
-var camera_settings_values := {
-	CameraSetting.top_down : [Vector3(0, 8, -15), Vector3(0,0,-6), 106.],
-	CameraSetting.corner : [Vector3(-11, 3, -11), Vector3(0,0,0), 106.],
-	CameraSetting.book_ex : [Vector3(13, 2, 3), Vector3(0,0,0), 20 * 16 / 9.],
-	CameraSetting.center : [Vector3(0, 0, 1), Vector3(0,0,0), 106.],
-	CameraSetting.left : [Vector3(0, 0, 1), Vector3(-1,0,1), 106.],
-	CameraSetting.right : [Vector3(0, 0, 1), Vector3(1,0,1), 106.],
-	CameraSetting.middle : [Vector3(7, 2, -3), Vector3(0,0,0), 30 * 16 / 9.],
-	CameraSetting.cornell : [Vector3(-1, 0.5, 0.5), Vector3(1,0.5,0.5), 106.0],
-}
+var CameraSetting := PTCamera.CameraSetting
 
 ## Overrides starting camera values with predefined sets of values
 @export var starting_camera := CameraSetting.none
@@ -53,7 +41,6 @@ var camera_settings_values := {
 @export var create_random_scene_ := false:
 	set(value):
 		create_random_scene_ = value
-		temp_load_obj()
 		#create_random_scene(0)
 		#print("Created random scene")
 
@@ -155,7 +142,7 @@ func _ready() -> void:
 		get_size()
 
 		if starting_camera != CameraSetting.none:
-			set_camera_setting(starting_camera)
+			camera.set_camera_setting(starting_camera)
 
 	# Scene will probably trigger this when objects add themselves to the scene
 	#  Set to false to skip trigger
@@ -185,22 +172,6 @@ func _notification(what: int) -> void:
 				if PTRendererAuto.is_debug:
 					print("PT: Scene is being freed. Will remove itself from renderer.")
 				PTRendererAuto.remove_scene(self)
-
-
-func temp_load_obj() -> void:
-
-	# Find imported mesh, if it exists
-	var skeleton := get_node_or_null("HN_GrimmChild_Anim_final_LP_96frames_baked/Armature/Skeleton3D")
-	print("looking for bones")
-	if skeleton:
-		print("found skelton")
-		var temp : MeshInstance3D = skeleton.get_child(0)
-		#mesh = temp.mesh
-
-		for triangle in unpacked_objects.mesh_to_pttriangles(temp.mesh):
-			triangle._scene = self
-			add_child(triangle)
-			triangle.owner = self
 
 
 func get_object_index(object : PTObject) -> int:
@@ -633,7 +604,7 @@ func remove_objects() -> void:
 ## Almost definitely a result of premature optimization
 func _re_index() -> void:
 
-	var start_time = Time.get_ticks_usec()
+	var start_time := Time.get_ticks_usec()
 
 	# These variables will hold ALL objects that needs to be added/removed
 	# The BVHTree only requires meshes and the scene's objects to reindex
@@ -658,10 +629,10 @@ func _re_index() -> void:
 		print(unpacked_to_add.objects)
 		print(unpacked_to_remove.objects)
 
-	assert(_to_add.check_no_object_part_of_mesh(),
+	assert(_to_add.check_no_object_is_meshlet(),
 		"PT - _re_index: Trying to add object that is part of mesh, " +
 		"instead of adding mesh.")
-	assert(_to_remove.check_no_object_part_of_mesh(),
+	assert(_to_remove.check_no_object_is_meshlet(),
 		"PT - _re_index: Trying to remove object that is part of mesh, " +
 		"instead of removing mesh.")
 	assert(unpacked_to_add.check_no_object_shared_with_container(unpacked_objects),
@@ -677,7 +648,7 @@ func _re_index() -> void:
 
 
 	# TODO add/REmove material, texture and signal
-	for _objects in unpacked_to_add.get_object_lists():
+	for _objects : Array[PTObject] in unpacked_to_add.get_object_lists():
 		for object : PTObject in _objects:
 			_add_material(object.material, true)
 			_add_texture(object.texture)
@@ -685,7 +656,7 @@ func _re_index() -> void:
 			connect_object_signals(object)
 
 
-	for _objects in unpacked_to_remove.get_object_lists():
+	for _objects : Array[PTObject] in unpacked_to_remove.get_object_lists():
 		for object : PTObject in _objects:
 			if material_ref_count[object.material] == 1:
 				_remove_material(object.material)
@@ -731,23 +702,6 @@ func create_BVH(order : int, function_name : String) -> void:
 
 	bvh = PTBVHTree.create_bvh_with_function_name(scene_objects, order, function_name)
 	bvh._scene = self
-
-
-func set_camera_setting(cam : CameraSetting) -> void:
-	if camera:
-		var pos : Vector3 = camera_settings_values[cam][0] # UNSTATIC
-		var look : Vector3 = camera_settings_values[cam][1] # UNSTATIC
-		var fov : float = camera_settings_values[cam][2] # UNSTATIC
-
-		camera.position = pos
-
-		camera.look_at(look)
-
-		camera.fov = fov / camera.aspect_ratio
-		camera.set_viewport_size()
-	else:
-		push_warning("PT: Cannot set camera settings when no camera has been attached \
-to the scene")
 
 
 func create_random_scene(_seed : int) -> void:
