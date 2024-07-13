@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://chfcv0we7p7gx"]
+[gd_scene load_steps=15 format=3 uid="uid://chfcv0we7p7gx"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_fxs5i"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_370bu"]
@@ -17,7 +17,7 @@ albedo = Color(0.0313726, 0.0313726, 0.0313726, 1)
 roughness = 0.0
 metallic = 0.0
 opacity = 1.0
-reflectivity = 1.0
+reflectivity = 1.5
 IOR = 1.0
 refraction_depth = 0
 is_emissive = false
@@ -52,6 +52,10 @@ IOR = 1.0
 refraction_depth = 0
 is_emissive = false
 
+[sub_resource type="SphereMesh" id="SphereMesh_4vgg4"]
+radius = 1.0
+height = 2.0
+
 [node name="PTScene" type="Node"]
 script = ExtResource("1_fxs5i")
 starting_camera = 4
@@ -73,15 +77,21 @@ bvh_type = 3
 override_material = SubResource("Resource_y4bi6")
 
 [node name="PTSphere" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.649341, 0, -1.46476)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.649341, 0.929793, -1.46476)
 mesh = SubResource("SphereMesh_b0vj7")
 script = ExtResource("5_a8vhs")
 material = SubResource("Resource_fidn6")
 mesh = SubResource("SphereMesh_b0vj7")
 
 [node name="PTSphere2" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25574, 0, -1.23845)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.95393, 0, -1.23845)
 mesh = SubResource("SphereMesh_ijkxo")
 script = ExtResource("5_a8vhs")
 material = SubResource("Resource_bpiye")
 mesh = SubResource("SphereMesh_ijkxo")
+
+[node name="PTSphere3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.65907, 0.744648, 0.823026)
+mesh = SubResource("SphereMesh_4vgg4")
+script = ExtResource("5_a8vhs")
+mesh = SubResource("SphereMesh_4vgg4")

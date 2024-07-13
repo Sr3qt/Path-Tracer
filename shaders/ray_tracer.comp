@@ -1,4 +1,5 @@
 #version 450
+#extension GL_EXT_nonuniform_qualifier : require
 
 // Based on the great tutorial "Ray Tracing in One Weekend Series"
 //  by Peter Shirley, Trevor David Black, Steve Hollasch 
@@ -12,12 +13,14 @@
 List of features:
     - Supported objects:
         3D simples:
+            - TODO Add rounding for 3d simples
             - spheres
 
         2D simples:
             - triangles  
 
-        -planes
+        - planes
+        - meshes (Collection of primitives)
     
     - instancing of objects (spheres so far)
 
@@ -28,9 +31,9 @@ List of features:
     
     - Multisampling
 
-    - Procedural (and sampled) textures (soon)
+    - Procedural and sampled textures
 
-    - Refraction tracking
+    - Refraction tracking (Found out this is called "Nested Dielectrics")
 
 
 POLICIES
@@ -53,13 +56,13 @@ Materials have something called refraction_depth. A lower number takes priority.
 See Refraction Tracking in PRE PROCESSOR STUFF
 
 mtl_index and object_index refer to a material and an object in the global material list and 
-object list respectively. There may be multiple object lists in which case an object_type enum
-will determine which object list object_index points to. The object_type and object_index is 
+object list respectively. There are multiple object lists object_index can point to, which 
+the object_type enum will determine. The object_type and object_index is 
 encoded in an object_id. object_id is an unique identifier for every object.
 
 texture_index and texture_type, similarly to object_index and object_type, point to a texture 
 and specifies what kind of texture it is respectively. Similarly to object_index and object_type,
-textrue_index and texture_type is consolidated into a texture_id. texture_type can have the flag
+texture_index and texture_type is consolidated into a texture_id. texture_type can have the flag
 is_sampled which means the texture is sampled. If not then the texture is procedurally generated.
 
 Procedural textures are single function files which takes in a vec3 position and returns a vec4 color.
@@ -134,11 +137,11 @@ Enabling refraction tracking has a small performance impact
 
 /*
 This is what will happen. also i think mesh = scene
-1. I will make a mesh class inherited from PTScene ( or just use PTScene).
-2. I will add support for nested scene like objects. BVHs will be able to be glued together in 
+1. X  I will make a mesh class inherited from PTScene ( or just use PTScene).
+2. X  I will add support for nested scene like objects. BVHs will be able to be glued together in 
 a way that all objects still will be drawn.
 
-3. These meshes will have their own transforms. Meshes store transform_index'es to transforms 
+3. Yes These meshes will have their own transforms. Meshes store transform_index'es to transforms 
 in an array. Meshes will probably need to send their own rayhits, then copy over relevant
 information when the ray caster goes up the bvh tree; Points and normals need to be transformed
 back.
@@ -181,6 +184,8 @@ const int is_procedural_flat = 0; // For uv procedural functions
 const int is_procedural_spatial = 2; // For point hit procedural function
 const int is_sampled_texture = 1; // For uv sampling from texture buffer
 const int is_no_texture = 4;
+
+const int MAX_TEXTURE_COUNT = 512;
 
 // Keeps values of inside_of neatly organized
 struct InsideOf {
@@ -452,6 +457,8 @@ layout(set = 4, binding = 2, std430) restrict readonly buffer TriangleIndex {
     float data[];
 } triangle_indices;
 
+layout(set = 5, binding = 0) uniform sampler2D Textures[MAX_TEXTURE_COUNT];
+
 layout(push_constant, std430) restrict readonly uniform constants {
     Camera camera;
     int flags;
@@ -618,13 +625,12 @@ int get_texture_index(int texture_id) {
 // =============
 
 vec2 sphere_get_uv(vec3 pos) {
-    float theta = acos(-pos.y);
+    float theta = acos(pos.y);
     float phi = atan(-pos.z, pos.x) + pi;
 
     vec2 uv = vec2(phi / pi_double, theta / pi);
 
     return uv;
-
 }
 
 // Preprocessor will place procedural function definitions here
@@ -649,14 +655,16 @@ vec4 procedural_texture(vec3 pos, int function) {
 
 vec4 get_texture(RayHit rayhit) {
     int texture_type = get_texture_type(rayhit.texture_id);
+    int texture_index = get_texture_index(rayhit.texture_id);
     vec3 sampled_point = (texture_type & is_spatial) > 0 ? rayhit.point : vec3(rayhit.uv, 0);
     
+    // TODO Support for texture_index to work on objects properly 
+    return texture(Textures[2], rayhit.uv);
     if ((texture_type & is_sampled) > 0) {
-        // TODO DO SAMPLED TEXTURE HERE
-        return vec4(1);
+        return texture(Textures[3], rayhit.uv);
     }
     
-    return procedural_texture(sampled_point, get_texture_index(rayhit.texture_id));
+    return procedural_texture(sampled_point, texture_index);
 }
 
 
@@ -925,7 +933,8 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         Sphere sphere = spheres.data[object_index];
         rayhit.mtl_index = sphere.mtl_index;
         rayhit.texture_id = sphere.texture_id;
-        rayhit.uv = sphere_get_uv(rayhit.point);
+        // TODO NOTE For rotated spheres we would use the normal prior to the world space transformation
+        rayhit.uv = sphere_get_uv(rayhit.normal);
 
     // Procedure for hitting plane
     } else if (object_type == is_plane) {
@@ -1190,6 +1199,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     // Returns a refracted or reflected ray based on ray_in and rayhit
     // TODO: Add support for cpu to send InsideOf buffer based on camera position
     // TODO: Add tiny random direction change coupled with color shift, prism, diffraction
+    // TODO Add support for meshes to refract
     // TODO: Implement Beer's law:
     // https://www.flipcode.com/archives/Raytracing_Topics_Techniques-Part_3_Refractions_and_Beers_Law.shtml 
     

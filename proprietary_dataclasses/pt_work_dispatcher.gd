@@ -3,6 +3,10 @@ extends RefCounted
 
 ## The work dispatcher sends work to the gpu by orders of PTRenderer
 
+## The maximum number of textures that in the shader array of texture.
+## This is an arbitrary value, but must match the number in the shader.
+const MAX_TEXTURE_COUNT := 512
+
 # How many objects can be added without needing to update any buffers.
 # This means that the buffers' sizes are divisible by the step count.
 #  Mostly useful for plugin, but might be important for runtime as well.
@@ -51,9 +55,11 @@ var pipeline : RID
 
 var texture : Texture2DRD
 
+# TODO Maybe consider order of sets
+#  https://stackoverflow.com/a/76655166
 # TODO Report umlaut bug to godot devs
 ## TO-DO List for creating new uniform set
-##	- See also instructions for creating buffer \
+##	- See also instructions for creating buffer (There are none currently)
 ##	- Add set index constant and MAX constant
 ##	- Update UniformStorage
 ##	- Add set RID variable for WD
@@ -88,12 +94,17 @@ const TRIANGLE_UV_BIND : int = 1
 const TRIANGLE_INDEX_BIND : int = 2
 const TRIANGLE_SET_MAX : int = 3
 
+const TEXTURE_SET_INDEX : int = 5
+const TEXTURE_BIND : int = 0
+const TEXTURE_SET_MAX : int = 1
+
 # Set RIDs
 var image_set : RID
 var camera_set : RID
 var object_set : RID
 var bvh_set : RID
 var triangle_set : RID
+var texture_set : RID
 
 # Buffer RIDS
 var image_buffer : RID
@@ -164,6 +175,7 @@ func create_buffers() -> void:
 	create_triangle_buffer()
 	create_bvh_buffer()
 	create_triangle_buffers(_scene.make_mesh_arrays())
+	create_texture_buffers()
 
 	bind_sets()
 
@@ -184,6 +196,7 @@ func get_object_buffer(type : PTObject.ObjectType) -> RID:
 			return plane_buffer
 		PTObject.ObjectType.TRIANGLE:
 			return triangle_buffer
+	assert(false, "PT: ObjectType %s does not have a buffer." % [type])
 	return RID()
 
 
@@ -196,6 +209,8 @@ func create_object_buffer(type : PTObject.ObjectType) -> void:
 			create_plane_buffer()
 		PTObject.ObjectType.TRIANGLE:
 			create_triangle_buffer()
+		_:
+			assert(false, "PT: ObjectType %s does cannot create a buffer." % [type])
 
 
 func create_lod_buffer() -> void:
@@ -237,8 +252,11 @@ func create_triangle_buffers(surface : Array = [null]) -> void:
 
 	if surface[0] != null and surface[0].size() != 0:
 		assert(surface.size() == Mesh.ARRAY_MAX)
+		@warning_ignore("unsafe_method_access")
 		vertex_bytes = surface[ArrayMesh.ARRAY_VERTEX].to_byte_array()
+		@warning_ignore("unsafe_method_access")
 		uv_bytes = surface[ArrayMesh.ARRAY_TEX_UV].to_byte_array()
+		@warning_ignore("unsafe_method_access")
 		index_bytes = surface[ArrayMesh.ARRAY_INDEX].to_byte_array()
 
 	triangle_vertex_buffer = _create_uniform(
@@ -257,6 +275,133 @@ func create_triangle_buffers(surface : Array = [null]) -> void:
 		TRIANGLE_INDEX_BIND
 	)
 
+func create_texture_buffers() -> void:
+	# TODO Measure texture load time
+	# # TODO REPORT GOOFY AH BUG
+	# # https://forum.godotengine.org/t/retrieving-image-data-from-noisetexture2d-returns-null/55303/4
+
+	var placeholder := load("res://assets/C4-D-UV-Grid-1024x1024.jpg")
+	var texture1 := load("res://test_models/grimchild/GrimmchildTexture.png")
+	var texture2 := load("res://assets/earthmap.jpg")
+
+	var textures : Array[CompressedTexture2D] = [placeholder, texture1, texture2]
+
+	var uniform := RDUniform.new()
+	uniform.binding = TEXTURE_BIND
+	uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_SAMPLER_WITH_TEXTURE
+
+	var usage_bits : int = (
+			RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT +
+			RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT
+		)
+
+	var fill_texture := _create_fill_texture()
+
+	var sample_state := RDSamplerState.new()
+	var sampler := rd.sampler_create(sample_state)
+	for tex in textures:
+		# TODO Find a way to use the compressed textures
+		var img := tex.get_image()
+		img.decompress()
+		img.convert(Image.FORMAT_RGBAF)
+
+		var tf : RDTextureFormat = RDTextureFormat.new()
+		tf.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT
+		tf.texture_type = RenderingDevice.TEXTURE_TYPE_2D
+		tf.width = img.get_width()
+		tf.height = img.get_height()
+		tf.mipmaps = img.get_mipmap_count() + 1 
+		tf.usage_bits = usage_bits
+
+		var new_texture_buffer := rd.texture_create(tf, RDTextureView.new(), [img.get_data()])
+		rids_to_free.append(new_texture_buffer)
+
+		uniform.add_id(sampler)
+		uniform.add_id(new_texture_buffer)
+
+	var fill := MAX_TEXTURE_COUNT - textures.size()
+	for i in range(fill):
+		uniform.add_id(sampler)
+		uniform.add_id(fill_texture)
+
+	uniforms.set_uniform(TEXTURE_SET_INDEX, TEXTURE_BIND, uniform)
+
+
+func _create_fill_texture() -> RID:
+	# TODO Force texture to be pink and black grid filler texture / Override albedo
+	var usage_bits : int = (
+			RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT
+			+ RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT
+		)
+
+	# TODO GOOD FUNCTION TO UNIT TEST
+	var create_missing_texture_grid := func (grid_size : int) -> PackedByteArray:
+		var black := [0, 0, 0, 56]
+		var pink := [56, 16, 56, 56]
+		var colours : Array[Array]= [pink, black]
+		var grid : Array[int] = []
+		for i in range(grid_size):
+			for j in range(grid_size):
+				grid.append_array(colours[((i % 2) + (j % 2)) % 2])
+
+		var temp_packed := PackedByteArray()
+		temp_packed.resize(grid_size ** 2 * 4)
+
+		for i in range(grid_size ** 2 * 4):
+			temp_packed.encode_u8(i, grid[i])
+
+		return temp_packed
+	
+	var texture_size := 8
+	var missing_texture : PackedByteArray = create_missing_texture_grid.call(texture_size)
+
+	var tf : RDTextureFormat = RDTextureFormat.new()
+	tf.format = RenderingDevice.DATA_FORMAT_R8G8B8A8_UNORM
+	tf.texture_type = RenderingDevice.TEXTURE_TYPE_2D
+	tf.width = texture_size
+	tf.height = texture_size
+	tf.usage_bits = RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT + RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT
+
+	var new_texture_buffer := rd.texture_create(tf, RDTextureView.new(), [missing_texture])
+	rids_to_free.append(new_texture_buffer)
+
+	return new_texture_buffer
+
+
+## Creates and binds render result texture buffer aka. image_buffer
+func _create_image_buffer() -> RID:
+	var usage_bits : int = (
+		RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT +
+		RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT +
+		RenderingDevice.TEXTURE_USAGE_STORAGE_BIT +
+		RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT
+		# Remove bit for increased performance, have to add writeonly to shader buffer
+		+ RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
+	)
+
+	#if is_local_renderer:
+		#usage_bits += RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
+
+	# TODO Explore multi-layered texture for multisampling/ ping-ponging
+	var tf : RDTextureFormat = RDTextureFormat.new()
+	tf.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT
+	tf.texture_type = RenderingDevice.TEXTURE_TYPE_2D
+	tf.width = PTRendererAuto.render_width
+	tf.height = PTRendererAuto.render_height
+	tf.usage_bits = usage_bits
+
+	var new_image_buffer := rd.texture_create(tf, RDTextureView.new(), [])
+	rids_to_free.append(new_image_buffer)
+
+	var uniform := RDUniform.new()
+	uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
+	uniform.binding = IMAGE_BUFFER_BIND
+	uniform.add_id(new_image_buffer)
+
+	uniforms.set_uniform(IMAGE_SET_INDEX, IMAGE_BUFFER_BIND, uniform)
+
+	return new_image_buffer
+
 
 func bind_set(index : int) -> void:
 	var uniforms_array := uniforms.get_set_uniforms(index)
@@ -272,6 +417,8 @@ func bind_set(index : int) -> void:
 			bvh_set = new_set_rid
 		TRIANGLE_SET_INDEX:
 			triangle_set = new_set_rid
+		TEXTURE_SET_INDEX:
+			texture_set = new_set_rid
 
 
 func bind_sets() -> void:
@@ -281,6 +428,7 @@ func bind_sets() -> void:
 	bind_set(OBJECT_SET_INDEX)
 	bind_set(BVH_SET_INDEX)
 	bind_set(TRIANGLE_SET_INDEX)
+	bind_set(TEXTURE_SET_INDEX)
 
 
 func load_shader(shader_ : RDShaderSource) -> void:
@@ -304,8 +452,8 @@ func free_rids() -> void:
 		rd.free_rid(rid)
 
 
+## Free a single rid
 func free_rid(rid : RID) -> void:
-	"""Free a single rid"""
 	var index : int= rids_to_free.find(rid)
 	if index != -1:
 		rids_to_free.remove_at(index)
@@ -314,11 +462,10 @@ func free_rid(rid : RID) -> void:
 		push_warning("PT: RID " + str(rid) + " is not meant to be freed.")
 
 
+## Creates the compute list required for every compute call
+##
+## Requires workgroup coordinates to be given in an array or vector
 func create_compute_list(window : PTRenderWindow = null) -> void:
-	""" Creates the compute list required for every compute call
-
-	Requires workgroup coordinates to be given in an array or vector
-	"""
 
 	# By default, will dispatch groups to fill whole render size
 	if window == null:
@@ -347,6 +494,7 @@ func create_compute_list(window : PTRenderWindow = null) -> void:
 	rd.compute_list_bind_uniform_set(compute_list, object_set, OBJECT_SET_INDEX)
 	rd.compute_list_bind_uniform_set(compute_list, bvh_set, BVH_SET_INDEX)
 	rd.compute_list_bind_uniform_set(compute_list, triangle_set, TRIANGLE_SET_INDEX)
+	rd.compute_list_bind_uniform_set(compute_list, texture_set, TEXTURE_SET_INDEX)
 	rd.compute_list_set_push_constant(compute_list, push_bytes, push_bytes.size())
 
 	rd.capture_timestamp(window.render_name)
@@ -360,10 +508,9 @@ func create_compute_list(window : PTRenderWindow = null) -> void:
 		rd.sync()
 
 
+## set this this PTWorkDispatcher to use specified scene data
 func set_scene(scene : PTScene) -> void:
-	"""set this this PTWorkDispatcher to use specified scene data"""
 	_scene = scene
-
 
 # TODO Find a way for the cpu to wait for buffer access
 
@@ -501,11 +648,9 @@ func expand_object_buffers(object_types : Array[PTObject.ObjectType]) -> void:
 	object_set = rd.uniform_set_create(object_uniforms, shader, OBJECT_SET_INDEX)
 
 
+## Create and bind uniform to the shader from bytes.
+## Returns the buffer created
 func _create_uniform(bytes : PackedByteArray, _set : int, binding : int) -> RID:
-	"""Create and bind uniform to a shader from bytes.
-
-	returns the uniform and buffer created in an array"""
-
 	var buffer : RID = rd.storage_buffer_create(bytes.size(), bytes)
 	rids_to_free.append(buffer)
 	var uniform := RDUniform.new()
@@ -517,67 +662,6 @@ func _create_uniform(bytes : PackedByteArray, _set : int, binding : int) -> RID:
 	uniforms.set_uniform(_set, binding, uniform)
 
 	return buffer
-
-
-func _create_image_buffer() -> RID:
-	"""Creates and binds render result texture buffer aka. image_buffer"""
-	var usage_bits : int = (
-		RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT +
-		RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT +
-		RenderingDevice.TEXTURE_USAGE_STORAGE_BIT +
-		RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT
-		# Remove bit for increased performance, have to add writeonly to shader buffer
-		+ RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
-	)
-
-	#if is_local_renderer:
-		#usage_bits += RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
-
-	# TODO Explore multi-layered texture for multisampling
-	var new_image_buffer := _create_texture_buffer(
-		RenderingDevice.TEXTURE_TYPE_2D,
-		_renderer.render_width,
-		_renderer.render_height,
-		[],
-		1,
-		usage_bits
-	)
-
-	var uniform := RDUniform.new()
-	uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
-	uniform.binding = IMAGE_BUFFER_BIND
-	uniform.add_id(new_image_buffer)
-
-	uniforms.set_uniform(IMAGE_SET_INDEX, IMAGE_BUFFER_BIND, uniform)
-
-	return new_image_buffer
-
-
-func _create_texture_buffer(
-	texture_type : RenderingDevice.TextureType,
-	width : int,
-	height : int,
-	data : PackedByteArray,
-	array_layers : int,
-	usage_bits : int
-	) -> RID:
-	"""Creates an unbound texture buffer"""
-
-	# Create image buffer for compute and fragment shader
-	var tf : RDTextureFormat = RDTextureFormat.new()
-	tf.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT
-	tf.texture_type = texture_type
-	tf.width = width
-	tf.height = height
-	tf.depth = 1
-	tf.array_layers = array_layers
-	tf.mipmaps = 1
-	tf.usage_bits = usage_bits
-
-	var new_texture_buffer := rd.texture_create(tf, RDTextureView.new(), data)
-	rids_to_free.append(new_texture_buffer)
-
-	return new_texture_buffer
 
 
 func _create_lod_byte_array() -> PackedByteArray:
@@ -703,6 +787,7 @@ class UniformStorage:
 	var object_set : Array[RDUniform]
 	var bvh_set : Array[RDUniform]
 	var triangle_set : Array[RDUniform]
+	var texture_set : Array[RDUniform]
 
 
 	func _init() -> void:
@@ -712,6 +797,7 @@ class UniformStorage:
 		object_set.resize(OBJECT_SET_MAX)
 		bvh_set.resize(BVH_SET_MAX)
 		triangle_set.resize(TRIANGLE_SET_MAX)
+		texture_set.resize(TEXTURE_SET_MAX)
 
 
 	func get_set_uniforms(index : int) -> Array[RDUniform]:
@@ -726,6 +812,8 @@ class UniformStorage:
 				return bvh_set
 			TRIANGLE_SET_INDEX:
 				return triangle_set
+			TEXTURE_SET_INDEX:
+				return texture_set
 
 		assert(false, "PT: Uniform index '%S' is invalid." % index)
 		return []

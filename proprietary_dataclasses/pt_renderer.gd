@@ -124,6 +124,10 @@ func _post_init() -> void:
 	print("Loading PT plugin config (lie)")
 	print("Total Editor Startup Time: ", (Time.get_ticks_usec()) / 1000., " ms")
 	print()
+	print("reeeeeeee")
+	# TODO REport bug where bottom of output is not shown to exist. Only when show duplicate is toggled on specifically
+	#  Might be connected to the _set_window_layout not triggering correctly.
+	#  ACtually it can't be, because the time printed is correct.
 	PTRendererAuto._is_init = true
 	PTRendererAuto.scenes_to_remove.clear()
 	for ptscene in scenes:

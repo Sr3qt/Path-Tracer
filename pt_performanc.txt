@@ -1,5 +1,7 @@
 Performance on random_scene with book_ex camera settings
 
+Added texture smapling longest is 52, is 48/49
+
 Made Meshes work! longest is 54, x is 48, import_test center is 64 fps
 
 Added Longest axis bvh sort is 54 fps vs x axis which is 47, instancing on
