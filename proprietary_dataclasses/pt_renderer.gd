@@ -246,65 +246,6 @@ func _set_plugin_camera(cam : PTCamera) -> void:
 	_pt_editor_camera.add_child(canvas)
 
 
-# TODO Move to a preprocessor script ?
-func load_shader(ptscene : PTScene) -> RDShaderSource:
-	var file := FileAccess.open("res://shaders/ray_tracer.comp",
-		FileAccess.READ_WRITE)
-	var res := file.get_as_text()
-	file.close()
-
-	# Do changes
-	# Change BVH tree degree
-	res = res.replace("const int order = 2;",
-	"const int order = %s;" % bvh_order)
-
-	# Insert procedural texture functions
-	const DEFUALT_FUNCTION_NAME = "procedural_texture"
-	const BASE_FUNCTION_NAME = "_procedural_texture_function"
-
-	var i : int = 1
-	var function_definitons := ""
-	var function_calls := ""
-	for _texture in ptscene.textures:
-		if not _texture is PTProceduralTexture:
-			continue
-		var texture := _texture as PTProceduralTexture
-		var path : String = texture.texture_path
-		var tex_file := FileAccess.open(path, FileAccess.READ_WRITE)
-		if not tex_file:
-			push_error("PT: No procedural texture file found: " +
-					texture.texture_path + " in " + path)
-		var text := tex_file.get_as_text()
-
-		var function_index : int = text.find(DEFUALT_FUNCTION_NAME)
-		if function_index == -1:
-			push_error("PT: No procedural texture function found in file: " +
-					texture.texture_path + " in " + path)
-
-		text = text.replace(DEFUALT_FUNCTION_NAME, BASE_FUNCTION_NAME + str(i))
-
-		function_calls += (
-			"else if (function == %s) {\n" % i + "		return " +
-			BASE_FUNCTION_NAME + str(i) + "(pos);\n	}\n	"
-		)
-
-		function_definitons += text
-		i += 1
-
-	# Inserts function definitions
-	res = res.replace("//procedural_texture_function_definition_hook",
-			function_definitons)
-
-	# Inserts function calls
-	res = res.replace("//procedural_texture_function_call_hook", function_calls)
-
-	# Set shader
-	var shader := RDShaderSource.new()
-	shader.source_compute = res
-
-	return shader
-
-
 ## Although PTRenderer can store multiple PTRenderWindows, there is currently
 ##  no plan to support multiple windows simultaniously.
 func add_window(window : PTRenderWindow) -> void:
@@ -497,7 +438,7 @@ func add_scene(new_ptscene : PTScene) -> void:
 	# Create new WD
 	var new_wd := PTWorkDispatcher.new(self)
 	new_wd.set_scene(new_ptscene)
-	new_wd.load_shader(load_shader(new_ptscene))
+	new_wd.load_shader(PTUtils.load_shader(new_ptscene))
 	new_wd.create_buffers()
 
 	wds.append(new_wd)
@@ -665,11 +606,12 @@ func _update_scenes() -> void:
 			scene_wd.expand_object_buffers(buffers)
 
 		if ptscene.procedural_texture_added:
-			scene_wd.load_shader(load_shader(ptscene))
+			scene_wd.load_shader(PTUtils.load_shader(ptscene))
 			if is_debug:
 				print("Reloaded shader")
 
 		# Reset frame based flags
+		# TODO Turn into public ptscene func
 		ptscene.added_object = false
 		ptscene.added_types.fill(false)
 
@@ -750,7 +692,7 @@ func create_bvh(ptscene : PTScene, _order : int, function_name : String) -> void
 	ptscene.create_BVH(bvh_order, function_name)
 
 	if prev_max != bvh_order:
-		load_shader(ptscene)
+		PTUtils.load_shader(ptscene)
 
 	var scene_wd := get_scene_wd(ptscene)
 	# NOTE: Removing and adding buffer seem to be as fast as trying to update it
@@ -880,6 +822,7 @@ func _update_object_buffers(ptscene : PTScene, updated_object_ids : Array[int]) 
 		if index >= ptscene.objects.get_object_array(type).size():
 			bytes = PTObject.empty_object_bytes(type)
 		else:
+			@warning_ignore("unsafe_method_access")
 			bytes = ptscene.objects.get_object_array(type)[index].to_byte_array()
 		print(bytes)
 		print(type)

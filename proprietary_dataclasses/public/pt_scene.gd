@@ -35,8 +35,9 @@ var CameraSetting := PTCamera.CameraSetting
 @export var starting_camera := CameraSetting.none
 
 @export var default_bvh := PTBVHTree.BVHType.X_SORTED
-# NOTE: Support for changing bvh_order will be added later
-#@export var bvh_order := 8
+## NOTE: Only currently supported order is 8
+## Support for changing bvh_order will be added later
+@export var bvh_order := 8
 
 @export var create_random_scene_ := false:
 	set(value):

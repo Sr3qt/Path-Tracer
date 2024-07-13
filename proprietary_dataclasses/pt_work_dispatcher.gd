@@ -334,26 +334,8 @@ func _create_fill_texture() -> RID:
 			+ RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT
 		)
 
-	# TODO GOOD FUNCTION TO UNIT TEST
-	var create_missing_texture_grid := func (grid_size : int) -> PackedByteArray:
-		var black := [0, 0, 0, 56]
-		var pink := [56, 16, 56, 56]
-		var colours : Array[Array]= [pink, black]
-		var grid : Array[int] = []
-		for i in range(grid_size):
-			for j in range(grid_size):
-				grid.append_array(colours[((i % 2) + (j % 2)) % 2])
-
-		var temp_packed := PackedByteArray()
-		temp_packed.resize(grid_size ** 2 * 4)
-
-		for i in range(grid_size ** 2 * 4):
-			temp_packed.encode_u8(i, grid[i])
-
-		return temp_packed
-	
 	var texture_size := 8
-	var missing_texture : PackedByteArray = create_missing_texture_grid.call(texture_size)
+	var missing_texture := PTUtils.create_missing_texture_grid(texture_size)
 
 	var tf : RDTextureFormat = RDTextureFormat.new()
 	tf.format = RenderingDevice.DATA_FORMAT_R8G8B8A8_UNORM
