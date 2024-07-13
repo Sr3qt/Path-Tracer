@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bt8pld3q335nw"
-path="res://.godot/imported/earthmap.jpg-4d7b84407df94af3a80bee62e7747ec7.ctex"
+uid="uid://his15bceolpe"
+path="res://.godot/imported/C4-D-UV-Grid-1024x1024.jpg-fe9cefa009fbe5239ac9ed57e805e571.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://earthmap.jpg"
-dest_files=["res://.godot/imported/earthmap.jpg-4d7b84407df94af3a80bee62e7747ec7.ctex"]
+source_file="res://assets/C4-D-UV-Grid-1024x1024.jpg"
+dest_files=["res://.godot/imported/C4-D-UV-Grid-1024x1024.jpg-fe9cefa009fbe5239ac9ed57e805e571.ctex"]
 
 [params]
 
