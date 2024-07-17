@@ -27,6 +27,8 @@ var link_camera : PTButton
 var create_bvh : PTButton
 var clear_samples : PTButton
 
+var ray_bounces : PTSpinBox
+
 # For BVHType option button
 var bvh_function_names : Array[String]
 # TODO Update this and BVHType option button when new bvh added
@@ -55,6 +57,8 @@ func _ready() -> void:
 	link_camera = %LinkCameraButton as PTButton
 	create_bvh = %CreateBVHButton as PTButton
 	clear_samples = %ClearSamples as PTButton
+
+	ray_bounces = %RayBounces as PTSpinBox
 
 	# Initialize bvh dropdown menu
 	bvh_function_names.assign(PTBVHTree.enum_to_dict.values())
@@ -101,11 +105,11 @@ func _ready() -> void:
 	# Set default for rendering disabled
 	disable_rendering.button_pressed = PTRendererAuto.is_rendering_disabled
 
+	ray_bounces.value = PTRendererAuto.max_default_depth
+
 	# TODO THINGS TO ADD:
-	#	-add button to select camera angle from enum and add method to add
-	#	  new camera angle from current camera
+	#	-add button to make a new camera instance and a way top change between camera instances
 	#	-add ability to change camera variables, fov, gamma, focal
-	#	-add abilitiy to change recursive ray depth
 
 	# TODO TURN labels to rich text labels with hints on hover'
 	#  Also fix those labels' background being wrong in the editor
@@ -197,3 +201,8 @@ func _on_node_count_threshold_value_changed(value: float) -> void:
 func _on_object_count_threshold_value_changed(value: float) -> void:
 	pt_window.object_display_threshold = int(object_count_threshold.value)
 	object_count_threshold.previous_value = object_count_threshold.value
+
+
+func _on_ray_bounces_value_changed(value : int) -> void:
+	PTRendererAuto.max_default_depth = value
+	ray_bounces.previous_value = value

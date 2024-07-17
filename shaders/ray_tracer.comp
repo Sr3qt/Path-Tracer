@@ -1393,7 +1393,8 @@ vec4 cast_ray(Ray ray) {
     vec4 new_color = vec4(1);
     vec4 tex_col = vec4(1);
 
-    for (int i = 0;i < LOD.max_default_depth + refraction_bounces; i++) {
+    // MICRO-OPT Having the loop be static/const is slightly faster than with having it dynamic
+    for (int i = 0; i < LOD.max_default_depth + refraction_bounces; i++) {
         if (use_bvh) {
             #if bvh1 
             rayhit = check_ray_hit_BVH1(new_ray);

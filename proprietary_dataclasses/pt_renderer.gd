@@ -93,7 +93,13 @@ var render_width := 1920
 var render_height := 1080
 
 var samples_per_pixel : int = 1 # DEPRECATED REMOVE
-@export var max_default_depth : int = 8
+@export var max_default_depth : int = 8:
+	# NOTE: Temp implementation, move values to render settings. BRUH that is what render window is for.
+	set(value):
+		if wd:
+			max_default_depth = value
+			wd.create_lod_buffer()
+			wd.bind_set(wd.CAMERA_SET_INDEX)
 @export var max_refraction_bounces : int = 8
 
 # Whether anything was rendered in the last render_window call. Only used by plugin
