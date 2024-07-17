@@ -239,12 +239,13 @@ bool is_emissive = false;
 
 const int max_depth = 64 * 16; // Length of rayhits to visit stack in BVH 
 int refraction_bounces = 0; // Counts the number of times a ray has refracted
-
-int last_bvhnode = 0;
+int node_hit_count = 0;
+int object_hit_count = 0;
 
 // Maximum number of children a BVHNode can have
 const int order = 2; // Replaced by script preprocessor, do NOT touch this line
 // NOTE: For some weird reason adding unneseccary padding gives a small performance boost
+// TODO Investigate this weird phenomenon
 const int filler_const = -1 * int(mod(order, 4) - 4.); 
 
 // Flags
@@ -401,6 +402,7 @@ struct AABB {
 };
 
 struct BVHNode {
+    // TODO Use macros instead for more compactness
     // A BVHNode is an node in a n-ary tree. They are stored in a global BVH buffer. 
     // Every node points to either child nodes or to objects with object_ids.
     int children[order];
@@ -678,12 +680,13 @@ vec4 hit_skybox(Ray ray, inout RayHit rayhit) {
     return default_color;
 }
 
-bool hit_AABB(Ray ray, AABB bbox, vec3 inv_dir, bvec3 is_dir_neg) {
+float hit_AABB(Ray ray, AABB bbox, vec3 inv_dir, bvec3 is_dir_neg) {
+    // I think I got this implementation from stackoverflow, but I forgot where from
+    node_hit_count++;
     // Returns true if ray hits aabb within given range
     for (int i = 0; i < 3; i++) {
-        float orig = ray.origin[i]; // This is an optimazation. Source: Trust me (real)
-        float t0 = ((bbox.minimum[i] - orig) * inv_dir[i]);
-        float t1 = ((bbox.maximum[i] - orig) * inv_dir[i]);
+        float t0 = ((bbox.minimum[i] - ray.origin[i]) * inv_dir[i]);
+        float t1 = ((bbox.maximum[i] - ray.origin[i]) * inv_dir[i]);
 
         // Make sure t0 is smallest
         if (is_dir_neg[i]) {swap(t0, t1);}
@@ -691,9 +694,11 @@ bool hit_AABB(Ray ray, AABB bbox, vec3 inv_dir, bvec3 is_dir_neg) {
         if (t0 > ray.start) {ray.start = t0;}
         if (t1 < ray.end) {ray.end = t1;}
 
-        if (ray.end <= ray.start) {return false;}
+        if (ray.end <= ray.start) {return -1.0;}
     }
-    return true;
+    // But if ray origin is inside the box shouldn't ray.start be negative?
+    return ray.start; // t value of ray intersecting the bounding box
+    // return (ray.start > 0.0) ? ray.start : ray.end; // t value of ray intersecting the bounding box
 }
 
 #if !USE_INSTANCING 
@@ -910,15 +915,15 @@ RayHit hit_triangles(inout Ray ray, inout RayHit rayhit) {
     return rayhit;
 }
 
-RayHit hit_object(inout Ray ray, inout RayHit rayhit, int object_id) {
+void hit_object(inout Ray ray, inout RayHit rayhit, int object_id) {
     // Chooses the appropriate hit_ function for given object_type
     int object_type = get_object_type(object_id);
+    object_hit_count++;
 
     if (object_type == is_sphere) {
-        return hit_sphere(ray, object_id, rayhit);
+        hit_sphere(ray, object_id, rayhit);
     } else if (object_type == is_triangle) {
         hit_triangle_MT(ray, object_id, rayhit);
-        return rayhit;
     }
 }
 
@@ -977,17 +982,122 @@ RayHit check_ray_hit(inout Ray ray) {
     return rayhit;
 }
 
+#define bvh1 1
+
+// TODO If sibling nodes are optimized to be adjacent in memory,
+// and leaf nodes can only have one object type or i have an intermediary object_id array,
+// BVHNodes only need two numbers to work
+RayHit check_ray_hit_BVH1(inout Ray ray) {
+    RayHit rayhit = empty_rayhit();
+
+    // NOTE: Objects that go before bvh can be used as Occluders
+    hit_planes(ray, rayhit);
+
+    // Pre-compute values for hit detection
+    vec3 inv_direction = vec3(1. / ray.direction.x, 1. / ray.direction.y, 1. / ray.direction.z);
+    bvec3 dir_is_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
+
+    // Stack of indices of nodes yet to traverse
+    // NOTE: might need to be bigger for larger scenes and/or with higher order trees
+    int to_visit[max_depth];
+    to_visit[0] = 0;
+
+    // float to_visit_t[max_depth];
+
+    // Test if root node is hit by ray
+    float tmp = hit_AABB(ray, BVH.list[0].bbox, inv_direction, dir_is_negative);
+
+    // Index to top of the stack, points to vacant spot ABOVE the stack
+    int to_visit_i = (in_range(tmp, ray)) ? 1 : 0;
+
+    // Index to current node being processed
+    int current_index = 0;
+
+    int temp_children[order];
+    float temp_ts[order];
+
+    for (int h = 0; h < order; h++) {
+        temp_ts[h] = infinity;
+    }
+        
+    while (to_visit_i > 0 && to_visit_i <= max_depth) {
+        current_index = to_visit[--to_visit_i];
+        BVHNode node = BVH.list[current_index];
+
+        /*
+        All nodes in to_visit should be in sorted order, 
+         we can break if the last node is out of range
+        NOTE: This is MUCH slower
+        if (!in_range(to_visit_t[to_visit_i], ray)) {
+            continue;
+        }
+        */
+
+        // If node is leaf node, hit all children
+        if (get_object_type(node.children[0]) != is_not_obj) {
+            for (int k = 0; k < order; k++) {         
+                hit_object(ray, rayhit, node.children[k]);
+            }
+            continue;
+        }
+
+        // Do hit check on child inner nodes and add them to temp array
+        int number_of_children = 0; // Is the same value as temp_to_visit
+        for (int l = 0; l < order; l++) {
+            int tochild = node.children[l];
+
+            // If anything breaks try toggling this line
+            // if (tochild == 0) {break;}
+
+            float aabb_t = hit_AABB(ray, BVH.list[tochild].bbox, inv_direction, dir_is_negative);
+            // xin_range much faster, but has an artifact
+            if (in_range(aabb_t, ray)) {
+                // If tochild is invalid (0), t will be infinite and will not be a problem
+                temp_ts[number_of_children] = aabb_t / sign(tochild);
+                temp_children[number_of_children] = tochild;
+                // If child is valid, increment index pointer
+                number_of_children += sign(tochild);
+            }
+        }
+        
+        // TODO COnsider min heap or insertion sort
+        // Add nodes to stack in a sorted order
+        to_visit_i += number_of_children;
+        for (int i = 0; i < number_of_children; i++) { // Looping over constant is not faster here
+            // Finds smallest t, closest box
+            float smallest_t = infinity;
+            int smallest_index = order;
+            for (int j = 0; j < order; j++) { // Looping over constant is faster here
+                if (temp_ts[j] < smallest_t ) {
+                    smallest_t = temp_ts[j];
+                    smallest_index = j;
+                }
+            }
+
+            // Zero out the smallest
+            temp_ts[smallest_index] = infinity;
+            to_visit[to_visit_i - i - 1] = temp_children[smallest_index];
+            // to_visit_t[to_visit_i - i - 1] = smallest_t;
+        }        
+    }
+
+    if (!rayhit.hit) {
+        rayhit.color = hit_skybox(ray, rayhit);
+    }
+
+    if (show_bvh_depth) {
+        float a = show_node_count ? float(node_hit_count) / float(push.node_count_threshold) : 0.0;
+        float b = show_object_count ? float(object_hit_count) / float(push.object_count_threshold) : 0.0;
+        rayhit.color = (max(a, b) > 1.0) ? vec4(1) : vec4(b, 0, a, 0);
+    }
+
+    return rayhit;
+}
+
 
 RayHit check_ray_hit_BVH(inout Ray ray) {
     // Like check_ray_hit but it checks against a BVH tree instead of each object_list individually
     RayHit rayhit = empty_rayhit();
-
-    // TODO Using a depth first search can limit to_vist.size() to the maximum bvh depth * 2 
-    // You use one array for nodes and the other for times you have visited the node,
-    // then you index the last node in the array by the number of times you have visited it.
-    // THis is very good for high order trees
-    // Opposite migth be true for low order trees
-
 
     // Stack of indices of nodes yet to traverse
     // NOTE: might need to be bigger for larger scenes and/or with higher order trees
@@ -996,10 +1106,7 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
     int to_visit_i = 0;
 
     // Index to current node being processed
-    int current_index = last_bvhnode;
-
-    // The node closest to the root or the root, that we have visited
-    int highest_parent = last_bvhnode;
+    int current_index = 0;
 
     bool small_break = false;
 
@@ -1009,17 +1116,11 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
     vec3 inv_direction = vec3(1. / ray.direction.x, 1. / ray.direction.y, 1. / ray.direction.z);
     bvec3 dir_is_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
 
-    // TODO Read on how to make improvements traversing bvh tree,
-    //  potentially make it less memory intensive
-    // TODO Give BVHNodes a is_overlapping flag for earlier returns
-    int node_hit_count = 0;
-    int object_hit_count = 0;
     while (true) {
         if (current_index >= max_depth) {
             break;
         }
         BVHNode node = BVH.list[current_index];
-
 
         // If ray already hit something, ignore aabbs which are not in the same octant as the 
         //  ray origin relative to the intersection point
@@ -1042,8 +1143,7 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
         }
 
         if (!small_break) {
-            node_hit_count++;
-            if (hit_AABB(ray, node.bbox, inv_direction, dir_is_negative)) {
+            if (in_range(hit_AABB(ray, node.bbox, inv_direction, dir_is_negative), ray)) {
                 // Loop over child indices to add them to stack or do hit check
                 for (int i = 0; i < order; i++) {
                     int tochild = node.children[i];
@@ -1056,72 +1156,15 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
                         to_visit[to_visit_i++] = tochild;
                     } 
                     else {
-                        // children[i] points to object_index, do a hit test
-                        
-                        // PART OF BVH TEST, SEE COMMENT BELOW
-                        // float t_before = rayhit.t;
-                        // bool hit_before = rayhit.hit;
                         hit_object(ray, rayhit, tochild);
-                        object_hit_count++;
-                        
-                        // if (!hit_before && rayhit.hit) {last_bvhnode = node.self;}
-                        // if (hit_before && t_before > rayhit.t) {last_bvhnode = node.self;}
                     }
                 }
             }
         }
         small_break = false;
 
-        // ATTEMPT AT STARTING BVH SEARCH FROM PREVIOUSLY HIT OBJECT'S BVHNODE
-        // Also currently broken, because BVHNode was changed.
-        // To fix you can smuggle self and parent values in AABB.maximum.w and AABB.minimum.w 
-        //  with a macro. Remember to change to_byte_array for bvhnodes.
-        // ===================================================================
-        // This attempt wasn't very succsessfull, performance was worse, but that might be because of
-        // inoptimal bvh tree
-
-        // // We can early break if all siblings have been checked and a hit is found
-        // if (rayhit.hit && to_visit_i == 0) {
-        //     // last_bvhnode = node.self;
-        //     break;
-        // }
-
-        // if (to_visit_i == 0 && highest_parent == 0) {break;}
-
-        // // visit grandparant if nothing to do and parent already visited
-        // if (to_visit_i == 0 && highest_parent == node.parent && highest_parent != 0) {
-        //     BVHNode parent = BVH.list[node.parent];
-        //     parent = BVH.list[parent.parent];
-        //     highest_parent = parent.self;
-        //     for (int i = parent.child_count; i > 0; i--) {
-        //         int new_child = parent.children[i - 1];
-                
-        //         // If parent's child is not the node we just calculated
-        //         if (new_child != node.self) {
-        //             to_visit[to_visit_i++] = new_child;
-        //         }
-        //     }
-        // }
-
-        // // // IMPORTANT: This shortcut assumes no aabb overlaps
-        // // // Visit parent if nothing more to do and root node has not been visited yet
-        // if (to_visit_i == 0 && highest_parent != 0) {
-        //     BVHNode parent = BVH.list[node.parent];
-        //     highest_parent = parent.self;
-        //     for (int i = parent.child_count; i > 0; i--) {
-        //         int new_child = parent.children[i - 1];
-                
-        //         // If parent's child is not the node we just calculated
-        //         if (new_child != node.self) {
-        //             to_visit[to_visit_i++] = new_child;
-        //         }
-        //     }
-        // }
-        // =======================================================================
-
         // Break if no more nodes to visit, else go to next node in list
         if (to_visit_i == 0) {
-            // last_bvhnode = node.self;
             break;
         }
         current_index = to_visit[--to_visit_i];
@@ -1352,8 +1395,11 @@ vec4 cast_ray(Ray ray) {
 
     for (int i = 0;i < LOD.max_default_depth + refraction_bounces; i++) {
         if (use_bvh) {
+            #if bvh1 
+            rayhit = check_ray_hit_BVH1(new_ray);
+            #else
             rayhit = check_ray_hit_BVH(new_ray);
-
+            #endif
             // Send one ray, skip bouncing
             if (show_bvh_depth) {
                 new_color = rayhit.color;

@@ -1,5 +1,7 @@
 Performance on random_scene with book_ex camera settings
 
+BVH traversal optimization, 72, 103
+
 before Packed range into ray, 54, 51, same after
 
 Added texture smapling longest is 52, is 48/49

@@ -33,6 +33,8 @@ This [blogpost](http://chunkstories.xyz/blog/a-note-on-descriptor-indexing/) for
 A nice [video](https://www.youtube.com/watch?v=YTfdBSjitd8) by 
 Aurailus related to the same problem of needing to bind many textures, although it is in OpenGL not Vulkan (Would still advise looking at the comments, especially by @fabiangiesen306).
 
+More about dynamic uniform indexing https://stackoverflow.com/questions/67056068/arrays-in-uniform-blocks-cannot-be-indexed-with-vertex-attributes-right
+
 
 ## GPU precision considerations
 
@@ -64,6 +66,8 @@ There are many considerations for choosing specific BVH algorithms over another.
   - "[Talking about 2015 Bittner algorithm]  This algorithm produces BVHs of the highest possible quality at the cost of higher build times."
 
 - If you need help implementing a certain algorithm, [here](https://github.com/madmann91/bvh) is a c++ library of different BVH creation algorithms by madmann91.
+
+- Sebastian Lague has a [video](https://www.youtube.com/watch?v=C1H4zIiCOaI&) on BVHs and it is a nice introduction to creation and traversal. It helped me figure out box distance ordering in traversal.
 
 ## Fast Ray-Triangle Intersection
 

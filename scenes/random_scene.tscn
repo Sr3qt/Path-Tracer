@@ -7340,6 +7340,7 @@ starting_camera = 3
 transform = Transform3D(0.224859, -0.144453, 0.963624, 0, 0.98895, 0.14825, -0.974391, -0.0333354, 0.222375, 13, 2, 3)
 fov = 20.0
 script = ExtResource("2_8wgmd")
+move_speed = 7.0
 
 [node name="@MeshInstance3D@21098" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
