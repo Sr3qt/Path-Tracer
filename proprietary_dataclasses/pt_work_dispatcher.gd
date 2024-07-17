@@ -244,6 +244,7 @@ func create_bvh_buffer() -> void:
 			_create_bvh_byte_array(), BVH_SET_INDEX, BVH_BIND
 	)
 
+# TODO Make checks for sub-arrays existing in, array creation, destruction and here
 func create_triangle_buffers(surface : Array = [null]) -> void:
 
 	var vertex_bytes := PTObject.empty_byte_array(12)
@@ -254,8 +255,9 @@ func create_triangle_buffers(surface : Array = [null]) -> void:
 		assert(surface.size() == Mesh.ARRAY_MAX)
 		@warning_ignore("unsafe_method_access")
 		vertex_bytes = surface[ArrayMesh.ARRAY_VERTEX].to_byte_array()
-		@warning_ignore("unsafe_method_access")
-		uv_bytes = surface[ArrayMesh.ARRAY_TEX_UV].to_byte_array()
+		if surface[ArrayMesh.ARRAY_TEX_UV] != null and not surface[ArrayMesh.ARRAY_TEX_UV].is_empty() :
+			@warning_ignore("unsafe_method_access")
+			uv_bytes = surface[ArrayMesh.ARRAY_TEX_UV].to_byte_array()
 		@warning_ignore("unsafe_method_access")
 		index_bytes = surface[ArrayMesh.ARRAY_INDEX].to_byte_array()
 

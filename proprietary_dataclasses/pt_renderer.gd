@@ -93,7 +93,7 @@ var render_width := 1920
 var render_height := 1080
 
 var samples_per_pixel : int = 1 # DEPRECATED REMOVE
-@export var max_default_depth : int = 8:
+@export var max_default_depth : int = 1:
 	# NOTE: Temp implementation, move values to render settings. BRUH that is what render window is for.
 	set(value):
 		if wd:

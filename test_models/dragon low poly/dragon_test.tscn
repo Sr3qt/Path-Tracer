@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3 uid="uid://0mi1f4ldvkin"]
+
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_q7bac"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_3x2xy"]
+[ext_resource type="PackedScene" uid="uid://ce0tw8jq01nyq" path="res://test_models/dragon low poly/dragon_import.tscn" id="3_ndbym"]
+
+[node name="Node3D" type="Node"]
+script = ExtResource("1_q7bac")
+
+[node name="PTCameraFPS" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+script = ExtResource("2_3x2xy")
+
+[node name="untitled" parent="." instance=ExtResource("3_ndbym")]
+transform = Transform3D(-4.37114e-08, 1, -4.37114e-08, 0, -4.37114e-08, -1, -1, -4.37114e-08, 1.91069e-15, 0, 0, 0)
+bvh_type = 3

@@ -399,7 +399,8 @@ func make_mesh_arrays() -> Array:
 	for mesh in unique_meshes:
 		var arrays := mesh.surface_get_arrays(0)
 		new_surface[Mesh.ARRAY_VERTEX] += arrays[Mesh.ARRAY_VERTEX]
-		new_surface[Mesh.ARRAY_TEX_UV] += arrays[Mesh.ARRAY_TEX_UV]
+		if arrays[Mesh.ARRAY_TEX_UV] != null:
+			new_surface[Mesh.ARRAY_TEX_UV] += arrays[Mesh.ARRAY_TEX_UV]
 		new_surface[Mesh.ARRAY_NORMAL] += arrays[Mesh.ARRAY_NORMAL]
 		new_surface[Mesh.ARRAY_INDEX] += arrays[Mesh.ARRAY_INDEX]
 

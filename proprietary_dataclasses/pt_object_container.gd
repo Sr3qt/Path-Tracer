@@ -165,8 +165,9 @@ func mesh_to_pttriangles(f_mesh : Mesh) -> Array[PTTriangle]:
 		var vertices : PackedVector3Array = mesh_array[ArrayMesh.ARRAY_VERTEX]
 		var new_tri := PTTriangle.new(vertices[index1], vertices[index2], vertices[index3])
 
-		var uvs : PackedVector2Array = mesh_array[ArrayMesh.ARRAY_TEX_UV]
-		new_tri.set_uvs(uvs[index1], uvs[index2], uvs[index3])
+		if mesh_array[ArrayMesh.ARRAY_TEX_UV] != null:
+			var uvs : PackedVector2Array = mesh_array[ArrayMesh.ARRAY_TEX_UV]
+			new_tri.set_uvs(uvs[index1], uvs[index2], uvs[index3])
 
 		new_traingles.append(new_tri)
 

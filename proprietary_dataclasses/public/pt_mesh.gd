@@ -64,6 +64,19 @@ func _exit_tree() -> void:
 
 func _ready() -> void:
 
+	for child in get_children():
+		if child is MeshInstance3D:
+
+			if PTRendererAuto.is_debug:
+				print("PT: Importing mesh child")
+				print(child)
+
+			mesh = child.mesh
+
+			for triangle in objects.mesh_to_pttriangles(mesh):
+				add_object(triangle)
+				add_child(triangle)
+
 	# Find imported mesh, if it exists
 	var skeleton := get_node_or_null("Armature/Skeleton3D")
 	if PTRendererAuto.is_debug:
@@ -77,6 +90,8 @@ func _ready() -> void:
 		for triangle in objects.mesh_to_pttriangles(mesh):
 			add_object(triangle)
 			add_child(triangle)
+		
+
 
 	var function_name : String = PTBVHTree.enum_to_dict[bvh_type] # UNSTATIC
 	bvh = PTBVHTree.create_bvh_with_function_name(objects, bvh_order, function_name)

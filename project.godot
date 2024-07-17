@@ -13,7 +13,6 @@ config_version=5
 config/name="PathTracer"
 run/main_scene="res://main/main_scene.tscn"
 config/features=PackedStringArray("4.2", "Forward Plus")
-run/max_fps=300
 config/icon="res://icon.svg"
 
 [autoload]
