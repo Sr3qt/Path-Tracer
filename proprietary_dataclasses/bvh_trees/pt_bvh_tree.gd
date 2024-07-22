@@ -86,6 +86,8 @@ var root_node : BVHNode
 var object_to_leaf := {}
 var leaf_nodes : Array[BVHNode]
 
+var object_ids : PackedInt32Array = []
+
 ## Takes in a node gives its index in bvh_list
 var _node_to_index := {}
 
@@ -136,7 +138,7 @@ static func create_bvh_with_function_name(
 
 func node_byte_size() -> int:
 	# Number of child indices times 4 plus aabb 32 bytes
-	return (order + ((order % 4) - 4) * -1) * 4 + 32
+	return (order + ((order % 8) - 8) * -1) * 4 + 32
 
 
 func update_aabb(object : PTObject) -> void:
@@ -669,6 +671,35 @@ func _rebalance_objects(
 	return node_indices_to_update
 
 
+# TODO Make a test
+func is_memory_contiguous() -> bool:
+	if not is_children_contiguous(root_node):
+		return false
+
+	return _recursive_is_contiguous(root_node)
+
+
+func _recursive_is_contiguous(node : BVHNode) -> bool:
+	for child in node.children:
+		if child.is_inner:
+			if not is_children_contiguous(child):
+				return false
+
+	return true
+
+
+func is_children_contiguous(node : BVHNode) -> bool:
+	if node.is_leaf:
+		return false
+
+	var prev_child_index : int = _node_to_index[node.children[0]]
+	for child in node.children:
+		if _node_to_index[child] - prev_child_index in [0, 1]:
+			return false
+
+	return true
+
+
 func size() -> int:
 	"""Returns the total bumber of nodes in the tree"""
 	return inner_count + leaf_count
@@ -689,6 +720,20 @@ func depth() -> int:
 # TODO Implement sah_cost fucntion
 func tree_sah_cost() -> void:
 	"Calculates the SAH cost for the whole tree"
+
+
+func create_object_ids() -> void:
+	assert(is_instance_valid(_scene), "Cannot create_object_ids without a valid set _scene.")
+
+	var index := 0
+	object_ids.resize(object_count)
+
+	for leaf_node in leaf_nodes:
+		leaf_node.object_id_index = index
+		for object in leaf_node.object_list:
+			var id := PTObject.make_object_id(_scene.get_object_index(object), object.get_type())
+			object_ids[index] = id
+			index += 1
 
 
 func to_byte_array() -> PackedByteArray:
@@ -719,6 +764,9 @@ class BVHNode:
 	# Leaf nodes in the tree have no children and have a list pointing to objects
 	#  The object list is no larger than tree.order
 	var object_list : Array[PTObject] = []
+	## Index to the leaf node's start position in the tree's object_ids
+	var object_id_index := 0
+
 	var is_leaf := false
 	var is_inner : bool:
 		get:
@@ -768,6 +816,7 @@ class BVHNode:
 	func update_aabb() -> void:
 		var old_aabb := aabb
 		set_aabb()
+		# TODO SHould be flipped no?
 		if aabb.is_equal_approx(old_aabb):
 			tree.add_node_to_updated_nodes(self)
 			if is_instance_valid(parent):
@@ -789,7 +838,7 @@ class BVHNode:
 		for i in range(MAX_TREE_NESTING):
 			if root_tree.is_sub_tree:
 				root_tree = root_tree.parent_tree
-		
+
 		assert(not root_tree.is_sub_tree, "PT: Max BVHTree nesting limit reached. " +
 				"Please don't nest them more than %s times." % [MAX_TREE_NESTING])
 
@@ -797,6 +846,9 @@ class BVHNode:
 		for child in children:
 			child_indices_array.append(root_tree.get_node_index(child))
 
+		# TODO Object_ids can be packed tightly or with fixed size for potential perf gain, check
+		# if is_leaf:
+		# 	var temp_index  = tree.leaf_nodes.find(self)
 		for object in object_list:
 			var type : int = object.get_type()
 			var _index : int = root_tree._scene.get_object_index(object)
@@ -805,7 +857,7 @@ class BVHNode:
 		# Needed for buffer alignement
 		#child_indices_array.resize(root_tree.order)
 		child_indices_array.resize(root_tree.order +
-								   int((root_tree.order % 4) - 4) * -1)
+								   int((root_tree.order % 8) - 8) * -1)
 
 		var bbox_bytes : PackedByteArray = PTObject.aabb_to_byte_array(aabb)
 		var bytes := PackedInt32Array(child_indices_array).to_byte_array() + bbox_bytes

@@ -58,6 +58,14 @@ var texture : Texture2DRD
 # TODO Maybe consider order of sets
 #  https://stackoverflow.com/a/76655166
 # TODO Report umlaut bug to godot devs
+
+## TO-DO List for creating buffer
+##	- Make buffer set bind
+##	- Make buffer variable
+##	- Make create_buffer fucntion
+##	- Call create_buffer function in create_buffers
+##
+
 ## TO-DO List for creating new uniform set
 ##	- See also instructions for creating buffer (There are none currently)
 ##	- Add set index constant and MAX constant
@@ -86,7 +94,8 @@ const OBJECT_SET_MAX : int = 4
 
 const BVH_SET_INDEX : int = 3
 const BVH_BIND : int = 0
-const BVH_SET_MAX : int = 1
+const OBJECT_ID_BIND : int = 1
+const BVH_SET_MAX : int = 2
 
 const TRIANGLE_SET_INDEX : int = 4
 const TRIANGLE_VERTEX_BIND : int = 0
@@ -118,6 +127,7 @@ var plane_buffer : RID
 var triangle_buffer : RID
 
 var bvh_buffer : RID
+var object_id_buffer: RID
 
 var triangle_vertex_buffer : RID
 var triangle_uv_buffer : RID
@@ -145,9 +155,11 @@ func _init(renderer : PTRenderer, is_local := false) -> void:
 	else:
 		# Holy merge clutch https://github.com/godotengine/godot/pull/79288
 		# RenderingDevice for realtime rendering
+		# TODO Investigate if all wds have the same rd 
 		rd = RenderingServer.get_rendering_device()
 
 
+## Finds the smallest integer multiple of step that is strictly greater than x
 func ceil_snap(x : int, step : int) -> int:
 	@warning_ignore("integer_division")
 	return (x / step + 1) * step
@@ -173,6 +185,7 @@ func create_buffers() -> void:
 	create_sphere_buffer()
 	create_plane_buffer()
 	create_triangle_buffer()
+	create_object_id_buffer()
 	create_bvh_buffer()
 	create_triangle_buffers(_scene.make_mesh_arrays())
 	create_texture_buffers()
@@ -242,6 +255,11 @@ func create_bvh_buffer() -> void:
 	# Contains the BVH tree in the form of a list
 	bvh_buffer = _create_uniform(
 			_create_bvh_byte_array(), BVH_SET_INDEX, BVH_BIND
+	)
+
+func create_object_id_buffer() -> void:
+	object_id_buffer = _create_uniform(
+			_create_object_id_byte_array(), BVH_SET_INDEX, OBJECT_ID_BIND
 	)
 
 # TODO Make checks for sub-arrays existing in, array creation, destruction and here
@@ -732,6 +750,20 @@ func _create_bvh_byte_array() -> PackedByteArray:
 		return _scene.bvh.to_byte_array()
 	else:
 		return PTBVHTree.new().to_byte_array()
+
+
+func _create_object_id_byte_array() -> PackedByteArray:
+	var bytes : PackedByteArray = []
+
+	if _scene.bvh:
+		if _scene.bvh.object_ids.size() > 0:
+			bytes = _scene.bvh.object_ids.to_byte_array()
+		else:
+			bytes = PTObject.empty_byte_array(8)
+	else:
+		bytes = PTObject.empty_byte_array(8)
+
+	return bytes
 
 
 func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:

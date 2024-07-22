@@ -219,6 +219,7 @@ static func type_of(object : Variant) -> ObjectType:
 		return ObjectType.NOT_OBJECT
 
 
+# TODO Move to utils
 ## Create empty byte array with given size in bytes
 static func empty_byte_array(size : int) -> PackedByteArray:
 	var ints : Array[int] = []

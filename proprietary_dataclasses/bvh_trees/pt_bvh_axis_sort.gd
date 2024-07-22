@@ -5,7 +5,9 @@ extends PTBVHTree
 ## Basic implementation of BVHTree
 
 var _index := 0 # Used to keep track of index when creating bvh_list
+var _axis : int = 0
 var _axis_sorts : Array[Callable] = []
+const MAX_DEPTH_LIMIT = 64
 
 
 static func x_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxisSort:
@@ -36,7 +38,7 @@ func create_bvh(objects : PTObjectContainer, f_type := BVHType.XYZ_SORTED) -> vo
 	var start_time := Time.get_ticks_usec()
 
 	assert(f_type in [BVHType.XYZ_SORTED, BVHType.X_SORTED, BVHType.Y_SORTED, BVHType.Z_SORTED],
-			"PT: PTBVHAxisSort cannot create bvh of type: " + str(BVHType.find_key(f_type)))	
+			"PT: PTBVHAxisSort cannot create bvh of type: " + str(BVHType.find_key(f_type)))
 
 	type = f_type
 
@@ -55,7 +57,6 @@ func create_bvh(objects : PTObjectContainer, f_type := BVHType.XYZ_SORTED) -> vo
 					return a.get_global_aabb().get_center()[i] > b.get_global_aabb().get_center()[i])
 
 	# Sort according to given axis
-	var _axis : int = 0
 	match type:
 		BVHType.X_SORTED:
 			_axis = 0
@@ -73,7 +74,10 @@ func create_bvh(objects : PTObjectContainer, f_type := BVHType.XYZ_SORTED) -> vo
 
 	# Indexes tree recursively
 	bvh_list.resize(size())
-	_index_node(root_node)
+	bvh_list[0] = root_node
+	_node_to_index[root_node] = 0
+	_index = 1
+	_index_node2(root_node)
 
 	creation_time = Time.get_ticks_usec() - start_time
 
@@ -89,6 +93,7 @@ func create_bvh(objects : PTObjectContainer, f_type := BVHType.XYZ_SORTED) -> vo
 
 
 func _recursive_split(object_list : Array[PTObject], parent : BVHNode) -> Array[BVHNode]:
+	# SPlitting objects by the middle of the list is very bad i just forgot to improve it
 
 	if type == BVHType.XYZ_SORTED:
 		var longest_axis := find_longest_axis(object_list)
@@ -123,6 +128,104 @@ func _recursive_split(object_list : Array[PTObject], parent : BVHNode) -> Array[
 	return new_children
 
 
+func _recursive_split2(object_list : Array[PTObject], parent : BVHNode, depth : int = 0) -> Array[BVHNode]:
+	# SPlitting objects by the middle of the list is very bad i just forgot to improve it
+	# TODO Add support for all orders
+
+	var left : Array[PTObject] = []
+	var right : Array[PTObject] = []
+
+	var new_children : Array[BVHNode] = []
+	var new_node_right := BVHNode.new(parent, self)
+	var new_node_left := BVHNode.new(parent, self)
+
+	if depth > MAX_DEPTH_LIMIT:
+		#Will distriute objects evenly with first indices having slightly more
+		@warning_ignore("integer_division")
+		var even_division : int = object_list.size() / order
+		var leftover : int = object_list.size() % order
+
+		var start : int = 0
+		var end : int = 0
+		for i in range(order):
+			start = end
+			end += even_division + int(i < leftover)
+			if not (start - end):
+				break # Break if no nodes are left
+			var new_node := BVHNode.new(parent, self)
+			# NOTE: slice returns a new Array and loses the previous arrays type
+			var split_objects := object_list.slice(start, end)
+
+			# If all objects can fit in a single node, do it
+			# if split_objects.size() <= order:
+			_set_leaf(new_node, split_objects)
+			if new_node.size() > 0:
+				new_children.append(new_node)
+			# else:
+
+		return new_children
+
+	var temp := AABB()
+
+	for object in object_list:
+		temp = temp.merge(object.get_global_aabb())
+		# temp = temp.expand(object.get_global_aabb().get_center())
+
+	if type == BVHType.XYZ_SORTED:
+		_axis = temp.get_longest_axis_index()
+	# 	var longest_axis := temp.get_longest_axis_index()
+	# 	object_list.sort_custom(_axis_sorts[longest_axis])
+
+
+	for object in object_list:
+		if object.get_global_aabb().get_center()[_axis] > temp.get_center()[_axis]:
+			left.append(object)
+		else:
+			right.append(object)
+
+	if right.size() <= order:
+		new_children.append(_set_leaf(new_node_right, right))
+	else:
+		new_node_right.add_children(_recursive_split2(right, new_node_right, depth + 1))
+		inner_count += 1
+
+
+	if left.size() <= order:
+		new_children.append(_set_leaf(new_node_left, left))
+	else:
+		new_node_left.add_children(_recursive_split2(left, new_node_left, depth + 1))
+		inner_count += 1
+
+	return [new_node_right, new_node_left]
+
+	# Will distriute objects evenly with first indices having slightly more
+	# @warning_ignore("integer_division")
+	# var even_division : int = object_list.size() / order
+	# var leftover : int = object_list.size() % order
+
+	# var start : int = 0
+	# var end : int = 0
+	# for i in range(order):
+	# 	start = end
+	# 	end += even_division + int(i < leftover)
+	# 	if not (start - end):
+	# 		break # Break if no nodes are left
+	# 	var new_node := BVHNode.new(parent, self)
+	# 	# NOTE: slice returns a new Array and loses the previous arrays type
+	# 	var split_objects := object_list.slice(start, end)
+
+	# 	# If all objects can fit in a single node, do it
+	# 	if split_objects.size() <= order:
+	# 		new_children.append(_set_leaf(new_node, split_objects))
+	# 		continue
+
+	# 	new_node.add_children(_recursive_split(split_objects, new_node))
+	# 	inner_count += 1
+	# 	new_children.append(new_node)
+
+	# return new_children
+
+
 func _set_leaf(node : BVHNode, object_list : Array[PTObject]) -> BVHNode:
 	node.is_leaf = true
 	node.object_list = object_list
@@ -151,10 +254,22 @@ func _index_node(parent : BVHNode) -> void:
 		_index_node(child)
 
 
+func _index_node2(parent : BVHNode) -> void:
+	for child in parent.children:
+		bvh_list[_index] = child
+		_node_to_index[child] = _index # UNSTATIC
+		_index += 1
+
+	for child in parent.children:
+		if child.is_inner:
+			_index_node2(child)
+
+
+
 func find_longest_axis(object_list : Array[PTObject]) -> int:
 	var temp := AABB()
 
 	for object in object_list:
 		temp = temp.merge(object.get_global_aabb())
-	
+
 	return temp.get_longest_axis_index()

@@ -8,6 +8,7 @@ extends Node
 ## to swap scenes.
 
 # TODO WOuld be cool to have custom icons (@icons)
+# TODO Add setting to either load all scenes on start, just one or none. Also add button to load scene
 
 const WindowGui := preload("res://ui_scenes/render_window_gui/render_window_gui.tscn")
 

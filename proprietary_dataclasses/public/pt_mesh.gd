@@ -90,8 +90,6 @@ func _ready() -> void:
 		for triangle in objects.mesh_to_pttriangles(mesh):
 			add_object(triangle)
 			add_child(triangle)
-		
-
 
 	var function_name : String = PTBVHTree.enum_to_dict[bvh_type] # UNSTATIC
 	bvh = PTBVHTree.create_bvh_with_function_name(objects, bvh_order, function_name)

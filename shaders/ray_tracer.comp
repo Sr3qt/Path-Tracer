@@ -246,7 +246,7 @@ int object_hit_count = 0;
 const int order = 2; // Replaced by script preprocessor, do NOT touch this line
 // NOTE: For some weird reason adding unneseccary padding gives a small performance boost
 // TODO Investigate this weird phenomenon
-const int filler_const = -1 * int(mod(order, 4) - 4.); 
+const int filler_const = -1 * int(mod(order, 8) - 8.); 
 
 // Flags
 const int flag_size = 31;
@@ -444,6 +444,10 @@ layout(set = 2, binding = 3, std430) restrict readonly buffer TrainglesBuffer {
 layout(set = 3, binding = 0, std430) restrict readonly buffer BVH_List {
     BVHNode list[];
 } BVH;
+
+layout(set = 3, binding = 1, std430) restrict readonly buffer Object_ID {
+    int list[];
+} object_ids;
 
 layout(set = 4, binding = 0, std430) restrict readonly buffer TriangleVertex {
     float data[];
@@ -1002,10 +1006,11 @@ RayHit check_ray_hit_BVH1(inout Ray ray) {
     int to_visit[max_depth];
     to_visit[0] = 0;
 
-    // float to_visit_t[max_depth];
+    float to_visit_t[max_depth];
 
     // Test if root node is hit by ray
     float tmp = hit_AABB(ray, BVH.list[0].bbox, inv_direction, dir_is_negative);
+    to_visit_t[0] = tmp;
 
     // Index to top of the stack, points to vacant spot ABOVE the stack
     int to_visit_i = (in_range(tmp, ray)) ? 1 : 0;
@@ -1028,10 +1033,10 @@ RayHit check_ray_hit_BVH1(inout Ray ray) {
         All nodes in to_visit should be in sorted order, 
          we can break if the last node is out of range
         NOTE: This is MUCH slower
-        if (!in_range(to_visit_t[to_visit_i], ray)) {
-            continue;
-        }
         */
+        // if (!in_range(to_visit_t[to_visit_i], ray)) {
+        //     break;
+        // }
 
         // If node is leaf node, hit all children
         if (get_object_type(node.children[0]) != is_not_obj) {
@@ -1047,7 +1052,7 @@ RayHit check_ray_hit_BVH1(inout Ray ray) {
             int tochild = node.children[l];
 
             // If anything breaks try toggling this line
-            // if (tochild == 0) {break;}
+            if (tochild == 0) {break;}
 
             float aabb_t = hit_AABB(ray, BVH.list[tochild].bbox, inv_direction, dir_is_negative);
             // xin_range much faster, but has an artifact
@@ -1077,7 +1082,7 @@ RayHit check_ray_hit_BVH1(inout Ray ray) {
             // Zero out the smallest
             temp_ts[smallest_index] = infinity;
             to_visit[to_visit_i - i - 1] = temp_children[smallest_index];
-            // to_visit_t[to_visit_i - i - 1] = smallest_t;
+            to_visit_t[to_visit_i - i - 1] = smallest_t;
         }        
     }
 
