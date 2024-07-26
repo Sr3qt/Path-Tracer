@@ -83,6 +83,23 @@ The first model I used for testing was a GrimChild model by Andre Dudka, reposte
 UV image was from [PostImage](https://postimg.cc/HrxvBss3), but I couldn't find any author.
 
 ## Further reading (for me)
+
 - THe ray tracing for the rest of your life book mentions [Stratification](https://raytracing.github.io/books/RayTracingTheRestOfYourLife.html#asimplemontecarloprogram/stratifiedsamples(jittering)). A technique where you sample from a grid instead of random sampling. We already do this for initial rays, however the book mentions that tecniques for secondary rays exist, but are more complicated.
 
 - How to order [descriptor sets](https://stackoverflow.com/questions/76654239/do-we-and-why-do-we-need-to-arrange-descriptor-sets-slots-in-an-ascending-order)
+
+- Do aabb test before all sphere hit test [because](https://computergraphics.stackexchange.com/questions/10396/bvh-uses-aabb-for-a-sphere-in-ray-tracing-the-next-week?rq=1)
+
+- More info on [animations ](https://computergraphics.stackexchange.com/questions/4441/storing-3d-animations-for-ray-tracing?rq=1)
+
+- Add smooth shading (interpolating normals), but there is a [problem](https://computergraphics.stackexchange.com/questions/4986/ray-tracing-shadows-the-shadow-line-artifact?rq=1)
+
+- 3D textures for smoke
+
+- Implement lod variable. Goes down after ray bounce
+
+- Possible bvh optimization from bvh survey: "When traversing a wide BVH, in
+most cases, the number of intersecting child nodes will be as few
+as 0 to 3, regardless of k. Therefore, one can speed up execution by
+adding a code path to sort a small number of nodes and performing
+full sort only if there are 4 or more hits"

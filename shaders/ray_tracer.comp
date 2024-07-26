@@ -399,14 +399,26 @@ struct AABB {
     // The w value is unused by the aabb, so it can be filled with whatever is useful
     vec4 minimum;
     vec4 maximum;
+    // vec3 minimum;
+    // float smuggle1;
+    // vec3 maximum;
+    // float smuggle2;
 };
 
+
+// #define node_index children[0]
+// #define node_size children[1]
+#define node_node_index floatBitsToInt(node.bbox.minimum.w)
+#define node_node_size floatBitsToInt(node.bbox.maximum.w)
+// #define node_node_index floatBitsToInt(bbox.smuggle1)
+// #define node_node_size floatBitsToInt(node.bbox.smuggle2)
 struct BVHNode {
     // TODO Use macros instead for more compactness
     // A BVHNode is an node in a n-ary tree. They are stored in a global BVH buffer. 
     // Every node points to either child nodes or to objects with object_ids.
-    int children[order];
-    int temp_fill[filler_const];
+    // int children[2];
+    // int temp_fill[6];
+    // NOTE: Remember that AABB stores FLOATS, not ints
     AABB bbox; 
 };
 
@@ -988,6 +1000,8 @@ RayHit check_ray_hit(inout Ray ray) {
 
 #define bvh1 1
 
+#define USE_CONSTANT_BVH_SIZE 1
+
 // TODO If sibling nodes are optimized to be adjacent in memory,
 // and leaf nodes can only have one object type or i have an intermediary object_id array,
 // BVHNodes only need two numbers to work
@@ -1039,13 +1053,40 @@ RayHit check_ray_hit_BVH1(inout Ray ray) {
         // }
 
         // If node is leaf node, hit all children
-        if (get_object_type(node.children[0]) != is_not_obj) {
-            for (int k = 0; k < order; k++) {         
-                hit_object(ray, rayhit, node.children[k]);
+        if (get_object_type(node_node_index) != is_not_obj) {
+
+        #if USE_CONSTANT_BVH_SIZE
+            int index = get_object_index(node_node_index);
+            for (int k = 0; k < node_node_size; k++) {
+                hit_object(ray, rayhit, object_ids.list[index + k]);
             }
+        #else
+            for (int k = 0; k < order; k++) {
+                hit_object(ray, rayhit, node.children[k]);
+        #endif
+
             continue;
         }
 
+        #if USE_CONSTANT_BVH_SIZE
+        // Do hit check on child inner nodes and add them to temp array
+        int number_of_children = node_node_size; // Is the same value as temp_to_visit
+        // int index = node_node_index;
+        for (int l = 0; l < number_of_children; l++) {
+            // int tochild = node.children[l];
+
+            // If anything breaks try toggling this line
+            // if (tochild == 0) {break;}
+
+            float aabb_t = hit_AABB(ray, BVH.list[node_node_index + l].bbox, inv_direction, dir_is_negative);
+            // xin_range much faster, but has an artifact
+            if (in_range(aabb_t, ray)) {
+                temp_ts[l] = aabb_t;
+                temp_children[l] = node_node_index + l;
+            }
+        }
+
+        #else
         // Do hit check on child inner nodes and add them to temp array
         int number_of_children = 0; // Is the same value as temp_to_visit
         for (int l = 0; l < order; l++) {
@@ -1056,6 +1097,7 @@ RayHit check_ray_hit_BVH1(inout Ray ray) {
 
             float aabb_t = hit_AABB(ray, BVH.list[tochild].bbox, inv_direction, dir_is_negative);
             // xin_range much faster, but has an artifact
+            // TODO TRY indexing with l instead of number_of_children
             if (in_range(aabb_t, ray)) {
                 // If tochild is invalid (0), t will be infinite and will not be a problem
                 temp_ts[number_of_children] = aabb_t / sign(tochild);
@@ -1064,7 +1106,8 @@ RayHit check_ray_hit_BVH1(inout Ray ray) {
                 number_of_children += sign(tochild);
             }
         }
-        
+        #endif
+
         // TODO COnsider min heap or insertion sort
         // Add nodes to stack in a sorted order
         to_visit_i += number_of_children;
@@ -1086,10 +1129,12 @@ RayHit check_ray_hit_BVH1(inout Ray ray) {
         }        
     }
 
+    // Move this as well?
     if (!rayhit.hit) {
         rayhit.color = hit_skybox(ray, rayhit);
     }
 
+    // TODO move outside function
     if (show_bvh_depth) {
         float a = show_node_count ? float(node_hit_count) / float(push.node_count_threshold) : 0.0;
         float b = show_object_count ? float(object_hit_count) / float(push.object_count_threshold) : 0.0;
@@ -1131,8 +1176,8 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
         //  ray origin relative to the intersection point
         if (rayhit.hit) {
             new_point = ray_at(ray);
-            vec4 new_min = node.bbox.minimum;
-            vec4 new_max = node.bbox.maximum;
+            vec3 new_min = node.bbox.minimum.xyz;
+            vec3 new_max = node.bbox.maximum.xyz;
 
             small_break = (ray.direction.x > 0.) ? (new_point.x < new_min.x) :
              (new_point.x > new_max.x);
@@ -1151,7 +1196,8 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
             if (in_range(hit_AABB(ray, node.bbox, inv_direction, dir_is_negative), ray)) {
                 // Loop over child indices to add them to stack or do hit check
                 for (int i = 0; i < order; i++) {
-                    int tochild = node.children[i];
+                    // int tochild = node.children[i];
+                    int tochild = 0; // TEMP DELETE FUNCTION
 
                     // If child is invalid, skip
                     if (tochild == 0) {continue;}

@@ -145,11 +145,30 @@ static func vector_to_array(vector : Vector3) -> Array[float]:
 	return [vector.x, vector.y, vector.z]
 
 
-static func aabb_to_byte_array(aabb : AABB) -> PackedByteArray:
+## Turns AABB into bytes, with optional smuggling
+static func aabb_to_byte_array(aabb : AABB, smuggle1 : Variant = 0.0, smuggle2 : Variant = 0.0) -> PackedByteArray:
 	var new_aabb := aabb.abs()
-	var arr := (vector_to_array(new_aabb.position - AABB_PADDING) + [0.0] +
-			vector_to_array(new_aabb.end + AABB_PADDING) + [0.0])
-	return PackedFloat32Array(arr).to_byte_array()
+	var bytes : PackedByteArray = []
+
+	bytes += PackedFloat32Array(vector_to_array(new_aabb.position - AABB_PADDING)).to_byte_array()
+
+	if smuggle1 is float:
+		bytes += PackedFloat32Array([smuggle1]).to_byte_array()
+	elif smuggle1 is int:
+		bytes += PackedInt32Array([smuggle1]).to_byte_array()
+	else:
+		assert(false, "PT: smuggle1 has to be int or float, but was " + str(type_string(type_of(smuggle1))))
+
+	bytes += PackedFloat32Array(vector_to_array(new_aabb.end - AABB_PADDING)).to_byte_array()
+
+	if smuggle2 is float:
+		bytes += PackedFloat32Array([smuggle2]).to_byte_array()
+	elif smuggle2 is int:
+		bytes += PackedInt32Array([smuggle2]).to_byte_array()
+	else:
+		assert(false, "PT: smuggle1 has to be int or float, but was " + str(type_string(type_of(smuggle2))))
+
+	return bytes
 
 
 static func find_scene_ancestor(start_node : Node) -> PTScene:

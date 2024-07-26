@@ -81,6 +81,7 @@ var is_sub_tree : bool:
 ## Only used to get correct obejct indexing when converting to byte array
 var _scene : PTScene
 
+# TODO Give BVHTree aabb property similar to ptobjects to facilitate duck typing.
 var root_node : BVHNode
 
 var object_to_leaf := {}
@@ -138,7 +139,8 @@ static func create_bvh_with_function_name(
 
 func node_byte_size() -> int:
 	# Number of child indices times 4 plus aabb 32 bytes
-	return (order + ((order % 8) - 8) * -1) * 4 + 32
+	# return (order + ((order % 8) - 8) * -1) * 4 + 32
+	return (8) * 4
 
 
 func update_aabb(object : PTObject) -> void:
@@ -725,15 +727,19 @@ func tree_sah_cost() -> void:
 func create_object_ids() -> void:
 	assert(is_instance_valid(_scene), "Cannot create_object_ids without a valid set _scene.")
 
+	# print("Creating object ids")
 	var index := 0
 	object_ids.resize(object_count)
 
 	for leaf_node in leaf_nodes:
 		leaf_node.object_id_index = index
+		# print(index)
 		for object in leaf_node.object_list:
 			var id := PTObject.make_object_id(_scene.get_object_index(object), object.get_type())
 			object_ids[index] = id
 			index += 1
+
+	# print(object_ids)
 
 
 func to_byte_array() -> PackedByteArray:
@@ -843,24 +849,43 @@ class BVHNode:
 				"Please don't nest them more than %s times." % [MAX_TREE_NESTING])
 
 		# Add children nodes and objects to children list
-		for child in children:
-			child_indices_array.append(root_tree.get_node_index(child))
+		# for child in children:
+		# 	child_indices_array.append(root_tree.get_node_index(child))
+
+		var node_index := 0
+		var node_size := 0
+		if is_inner:
+			# FIrst child SHOULD be first index, maybe add assert
+			# print(root_tree.get_node_index(children[0]))
+			child_indices_array.append(root_tree.get_node_index(children[0]))
+			node_index = root_tree.get_node_index(children[0])
+			child_indices_array.append(children.size())
+			node_size  = children.size()
 
 		# TODO Object_ids can be packed tightly or with fixed size for potential perf gain, check
-		# if is_leaf:
-		# 	var temp_index  = tree.leaf_nodes.find(self)
-		for object in object_list:
-			var type : int = object.get_type()
-			var _index : int = root_tree._scene.get_object_index(object)
-			child_indices_array.append(PTObject.make_object_id(_index, type))
+		if is_leaf:
+			child_indices_array.append(PTObject.make_object_id(object_id_index, PTObject.ObjectType.SPHERE))
+			node_index = PTObject.make_object_id(object_id_index, PTObject.ObjectType.SPHERE)
+			child_indices_array.append(object_list.size())
+			node_size = object_list.size()
+
+		# for object in object_list:
+		# 	var type : int = object.get_type()
+		# 	var _index : int = root_tree._scene.get_object_index(object)
+		# 	child_indices_array.append(PTObject.make_object_id(_index, type))
 
 		# Needed for buffer alignement
-		#child_indices_array.resize(root_tree.order)
-		child_indices_array.resize(root_tree.order +
-								   int((root_tree.order % 8) - 8) * -1)
+		child_indices_array.resize(8)
+		# child_indices_array.resize(root_tree.order +
+		# 						   int((root_tree.order % 8) - 8) * -1)
 
-		var bbox_bytes : PackedByteArray = PTObject.aabb_to_byte_array(aabb)
-		var bytes := PackedInt32Array(child_indices_array).to_byte_array() + bbox_bytes
+		# for i in range(child_indices_array.size()):
+		# 	if child_indices_array[i] == null:
+		# 		child_indices_array[i] = -1
+
+		var bbox_bytes : PackedByteArray = PTObject.aabb_to_byte_array(aabb, node_index, node_size)
+		# var bytes := PackedInt32Array(child_indices_array).to_byte_array() + bbox_bytes
+		var bytes := bbox_bytes
 		assert(bytes.size() == tree.node_byte_size(),
 				"Acutal byte size and set byte size do not match. set:" +
 				str(tree.node_byte_size()) +" actual " + str(bytes.size()))
