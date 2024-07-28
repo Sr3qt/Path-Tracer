@@ -2,11 +2,11 @@
 #extension GL_EXT_nonuniform_qualifier : require
 
 // Based on the great tutorial "Ray Tracing in One Weekend Series"
-//  by Peter Shirley, Trevor David Black, Steve Hollasch 
+//  by Peter Shirley, Trevor David Black, Steve Hollasch
 //  https://raytracing.github.io/books/RayTracingInOneWeekend.html
 
 // Noise functions taken from Ray Tracer Demo godot project by HK-SAO
-// https://godotengine.org/asset-library/asset/1550 
+// https://godotengine.org/asset-library/asset/1550
 
 /*
 
@@ -17,18 +17,18 @@ List of features:
             - spheres
 
         2D simples:
-            - triangles  
+            - triangles
 
         - planes
         - meshes (Collection of primitives)
-    
+
     - instancing of objects (spheres so far)
 
     - Material types:
         -diffuse
         -metallic
         -transparent/glass
-    
+
     - Multisampling
 
     - Procedural and sampled textures
@@ -45,30 +45,30 @@ The render image's origin is in the top left. u direction is right and v is down
 
 Index 0 usually points to an empty or intentionally invalid value.
 
-RayHit structs don't determine normals and intersection points on-hit. They 
+RayHit structs don't determine normals and intersection points on-hit. They
 have to have determine_rayhit called on them afterwards to have valid values.
 
 Normals always point outwards from surfaces and are always normalized on creation.
 
 Ray depth starts at 0 and goes up as depth increases.
 
-Materials have something called refraction_depth. A lower number takes priority. 
+Materials have something called refraction_depth. A lower number takes priority.
 See Refraction Tracking in PRE PROCESSOR STUFF
 
-mtl_index and object_index refer to a material and an object in the global material list and 
-object list respectively. There are multiple object lists object_index can point to, which 
-the object_type enum will determine. The object_type and object_index is 
+mtl_index and object_index refer to a material and an object in the global material list and
+object list respectively. There are multiple object lists object_index can point to, which
+the object_type enum will determine. The object_type and object_index is
 encoded in an object_id. object_id is an unique identifier for every object.
 
-texture_index and texture_type, similarly to object_index and object_type, point to a texture 
+texture_index and texture_type, similarly to object_index and object_type, point to a texture
 and specifies what kind of texture it is respectively. Similarly to object_index and object_type,
 texture_index and texture_type is consolidated into a texture_id. texture_type can have the flag
 is_sampled which means the texture is sampled. If not then the texture is procedurally generated.
 
 Procedural textures are single function files which takes in a vec3 position and returns a vec4 color.
-These functions are written in a seperate file and inserted into this file by the preprocessor. 
+These functions are written in a seperate file and inserted into this file by the preprocessor.
 The function's name should be "procedural_texture".
- 
+
 
 LONG TERM GOALS
 ===============
@@ -79,7 +79,7 @@ LONG TERM GOALS
 
     - Add surface textures -- ALMOST --
 
-    - Make set theory functions possible with objects like add and subtract 
+    - Make set theory functions possible with objects like add and subtract
         (can see insides of objects)
 
     - Subfurface scattering
@@ -110,9 +110,9 @@ Different methods to avoid self intersection
          -weird lines on a center circle in the random scene
          -being a little more expensive to run
          -darker colors, although that might be more correct
-    - method 1: Proposed in Ray tracing in a weekend. 
+    - method 1: Proposed in Ray tracing in a weekend.
         Simply sets range for valid t values a little above zero.
-        TODO Preferred method until I get method 0 to work properly     
+        TODO Preferred method until I get method 0 to work properly
 */
 #define self_intersect_method 1
 
@@ -124,14 +124,14 @@ Different methods to avoid self intersection
 
 /*
 // Fun fact, I made it the fuck up
-Refraction tracking is the practice of answering the question, 
+Refraction tracking is the practice of answering the question,
 if I enter 3 transparant objects, when I leave only one, what material am I in.
 Refraction tracking solves this by assigning a refraction depth value to all materials,
 and choosing the material with the lowest depth when leaving an object inside of another/others.
 
 This should, in theory, come with the abiltiy to cut objects with another object that has
 air as its material. It also allows for composite glass objects; Rays will travel through multiple
-transparent objects with the same material as if it was one homogenous mass, 
+transparent objects with the same material as if it was one homogenous mass,
 although at a higher ray depth cost (It might not get out if max_default_depth is low).
 
 Enabling refraction tracking has a small performance impact
@@ -144,25 +144,27 @@ Enabling refraction tracking has a small performance impact
 /*
 This is what will happen. also i think mesh = scene
 1. X  I will make a mesh class inherited from PTScene ( or just use PTScene).
-2. X  I will add support for nested scene like objects. BVHs will be able to be glued together in 
+2. X  I will add support for nested scene like objects. BVHs will be able to be glued together in
 a way that all objects still will be drawn.
 
-3. Yes These meshes will have their own transforms. Meshes store transform_index'es to transforms 
+3. Yes These meshes will have their own transforms. Meshes store transform_index'es to transforms
 in an array. Meshes will probably need to send their own rayhits, then copy over relevant
 information when the ray caster goes up the bvh tree; Points and normals need to be transformed
 back.
 
-Spheres which need to be stretched or rotated are meshes with one object with default values. 
+Spheres which need to be stretched or rotated are meshes with one object with default values.
 
 Spheres will use the old structure.
 
 */
 #define USE_INSTANCING 1
 
+// TODO Add option to give max ray length for first rays and secondary rays for performance
 
 // CONSTANTS
 // =========
 const int int_limit = 2147483647;
+const int uint_limit = 4294967295;
 const int neg_int_limit = -2147483648;
 const int all_ones = -1;
 const float infinity = 1. / 0.;
@@ -174,7 +176,7 @@ const float eps = 1e-6;
 
 // Used by offset_ray function
 const float origin = 1.0 / 32.0;
-const float float_scale = 1.0 / 65536.0; 
+const float float_scale = 1.0 / 65536.0;
 const float int_scale = 256.0;
 
 // object_type enumerator
@@ -194,6 +196,8 @@ const int is_sampled_texture = 1; // For uv sampling from texture buffer
 const int is_no_texture = 4;
 
 const int MAX_TEXTURE_COUNT = 512;
+
+const int MAX_MESH_COUNT = 2048;
 
 // Keeps values of inside_of neatly organized
 struct InsideOf {
@@ -239,7 +243,7 @@ const vec4 default_color = vec4(0);
 bool is_emissive = false;
 #endif
 
-const int max_depth = 64 * 16; // Length of rayhits to visit stack in BVH 
+const int max_depth = 64 * 16; // Length of rayhits to visit stack in BVH
 int refraction_bounces = 0; // Counts the number of times a ray has refracted
 int node_hit_count = 0;
 int object_hit_count = 0;
@@ -289,23 +293,23 @@ struct Ray {
 };
 
 struct Material {
-    // How much of the light between zero and one is reflected for each color, 
+    // How much of the light between zero and one is reflected for each color,
     // zero being black
-    vec3 albedo; 
-    // How much the reflections scatter 
-    float roughness; 
+    vec3 albedo;
+    // How much the reflections scatter
+    float roughness;
     // IDK what this means, metal n stuff, 1 is metal, 0 is dielectric
     float metallic;
 
     // Value between 0 and 1 where 0 is fully opaque and 1 is fully transparent.
-    // Values inbetween determine the energy loss per unit length. 
+    // Values inbetween determine the energy loss per unit length.
     // Non-opaque materials can refract.
     float opacity;
     float reflectivity;
     // Index of refraction
     float IOR;
-    // In cases where a translusent object intersects other objects or contains other translusent 
-    //  objects, the refraction_depth will determine which object's material will take precedence 
+    // In cases where a translusent object intersects other objects or contains other translusent
+    //  objects, the refraction_depth will determine which object's material will take precedence
     //  in the intersection
     int refraction_depth;
     bool is_emissive;
@@ -335,7 +339,7 @@ struct Sphere {
     int texture_id;
     int filler0;
     int filler1;
-    
+
     int filler2;
     int filler3;
     int filler4;
@@ -402,11 +406,12 @@ struct AABB {
 
 
 // node_index and size are hidden inside the aabb struct
-#define NODE_node_index floatBitsToInt(node.bbox.minimum.w)
+#define NODE_node_id floatBitsToInt(node.bbox.minimum.w)
+// #define NODE_node_index get_node_index(floatBitsToInt(node.bbox.minimum.w))
 #define NODE_node_size floatBitsToInt(node.bbox.maximum.w)
 struct BVHNode {
     // NOTE: Remember that AABB stores FLOATS, not ints
-    AABB bbox; 
+    AABB bbox;
 };
 
 
@@ -466,7 +471,7 @@ layout(push_constant, std430) restrict readonly uniform constants {
     Camera camera;
     int flags;
     int image_offset_x; // How many pixels offset should the viewport origin be
-    int image_offset_y; 
+    int image_offset_y;
     int node_count_threshold;
     int object_count_threshold;
     float time;
@@ -507,15 +512,15 @@ float noise(inout Random r) {
     return r.value;
 }
 
-float rand2(vec2 co) { 
+float rand2(vec2 co) {
   return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453);
 }
 
 vec3 rand_vec3(vec3 point) {
     // Creates a normalized vector in a random direction from a point
     vec3 n = vec3(
-        rand(noise(random)) - 0.5, 
-        rand(noise(random)) - 0.5, 
+        rand(noise(random)) - 0.5,
+        rand(noise(random)) - 0.5,
         rand(noise(random)) - 0.5);
 
     return normalize(n);
@@ -610,21 +615,27 @@ void parse_flags() {
 }
 
 int get_object_type(int object_id) {
-    return object_id >> 24;
+    return bitfieldExtract(object_id, 24, 8);
 }
 
 int get_object_index(int object_id) {
-    const int three_last_bytes = int_limit >> 8;
-    return object_id & three_last_bytes;
+    return bitfieldExtract(object_id, 0, 24);
+}
+
+int get_node_index(int node_id) {
+    return bitfieldExtract(node_id, 0, 24);
+}
+
+int get_node_size(int node_id) {
+    return bitfieldExtract(node_id, 24, 7);
 }
 
 int get_texture_type(int texture_id) {
-    return texture_id >> 30;
+    return bitfieldExtract(texture_id, 30, 2);
 }
 
 int get_texture_index(int texture_id) {
-    const int thirty_last_bits = int_limit >> 2;
-    return texture_id & thirty_last_bits;
+    return bitfieldExtract(texture_id, 0, 30);
 }
 
 
@@ -646,12 +657,12 @@ vec2 sphere_get_uv(vec3 pos) {
 vec4 procedural_texture(vec3 pos, int function) {
     // This function will be pre processed and filled procedural texture functions.
     // For sampled textures there is a different implementation (not yet implemented)
-    
+
     // Return white as default function
     if (function == 0) {
         return vec4(1);
     }
-    
+
     // Preprocessor will insert procedural texture functions here
     //procedural_texture_function_call_hook
 
@@ -664,13 +675,13 @@ vec4 get_texture(RayHit rayhit) {
     int texture_type = get_texture_type(rayhit.texture_id);
     int texture_index = get_texture_index(rayhit.texture_id);
     vec3 sampled_point = (texture_type & is_spatial) > 0 ? rayhit.point : vec3(rayhit.uv, 0);
-    
-    // TODO Support for texture_index to work on objects properly 
+
+    // TODO Support for texture_index to work on objects properly
     return texture(Textures[3], rayhit.uv);
     if ((texture_type & is_sampled) > 0) {
         return texture(Textures[3], rayhit.uv);
     }
-    
+
     return procedural_texture(sampled_point, texture_index);
 }
 
@@ -704,7 +715,7 @@ float hit_AABB(Ray ray, AABB bbox, vec3 inv_dir, bvec3 is_dir_neg) {
     // return (ray.start > 0.0) ? ray.start : ray.end; // t value of ray intersecting the bounding box
 }
 
-#if !USE_INSTANCING 
+#if !USE_INSTANCING
 RayHit hit_sphere(inout Ray ray, int object_id, inout RayHit rayhit) {
 
     Sphere sphere = spheres.data[get_object_index(object_id)];
@@ -719,7 +730,7 @@ RayHit hit_sphere(inout Ray ray, int object_id, inout RayHit rayhit) {
     // Early return if ray does not hit
     if (discriminant < 0.) {
         return rayhit;
-    } 
+    }
 
     float sqrtd = sqrt(discriminant);
     float root = (-half_b - sqrtd) / a;
@@ -736,7 +747,7 @@ RayHit hit_sphere(inout Ray ray, int object_id, inout RayHit rayhit) {
     rayhit.hit = true;
     rayhit.object_id = object_id;
     ray.end = root;
-    
+
     rayhit.normal = (ray_at(ray, root) - sphere.center) / sphere.radius;
 
     return rayhit;
@@ -764,7 +775,7 @@ RayHit hit_sphere(inout Ray ray, int object_id, inout RayHit rayhit) {
     // Early return if ray does not hit
     if (discriminant < 0.) {
         return rayhit;
-    } 
+    }
 
     float sqrtd = sqrt(discriminant);
     float root = (-half_b - sqrtd) / a;
@@ -781,7 +792,7 @@ RayHit hit_sphere(inout Ray ray, int object_id, inout RayHit rayhit) {
     rayhit.hit = true;
     rayhit.object_id = object_id;
     ray.end = root;
-    
+
     // NOTE: We don't have to set point here because t values will work both before and after transform
     rayhit.normal = normalize(vec3(vec4(ray_at(temp_ray, root), 0) * matrix) );
 
@@ -798,7 +809,7 @@ RayHit hit_spheres(inout Ray ray, inout RayHit rayhit) {
 }
 
 RayHit hit_plane(inout Ray ray, int object_id, inout RayHit rayhit) {
-    
+
     Plane plane = planes.data[get_object_index(object_id)];
 
     float intersection_t = ((plane.d - dot(ray.origin, plane.normal)) /
@@ -834,7 +845,7 @@ RayHit hit_planes(inout Ray ray, inout RayHit rayhit) {
 // RAY-TRIANGLE INTERSECTION FUNCTIONS
 // ===================================
 
-// TODO Compare branched vs branchless when support for importing meshes 
+// TODO Compare branched vs branchless when support for importing meshes
 bool hit_triangle_MT_branchless(inout Ray ray, int object_id, inout RayHit rayhit) {
     // Implementation of the Moller-Trumbore algorithm made by BrunoLevy, fitted to project
     // https://stackoverflow.com/a/42752998
@@ -876,7 +887,7 @@ bool hit_triangle_MT(inout Ray ray, int object_id, inout RayHit rayhit) {
     vec3 A = triangles.data[triangle_index].point1;
     vec3 B = triangles.data[triangle_index].point2;
     vec3 C = triangles.data[triangle_index].point3;
-    
+
     vec3 E1 = B-A;
     vec3 E2 = C-A;
     vec3 N = cross(E1,E2);
@@ -935,7 +946,7 @@ void hit_object(inout Ray ray, inout RayHit rayhit, int object_id) {
 // ===================
 
 RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
-    // Resolves intersextion point, normal and other information from rayhit 
+    // Resolves intersextion point, normal and other information from rayhit
     rayhit.point = ray_at(ray_in);
 
     int object_type = get_object_type(rayhit.object_id);
@@ -955,7 +966,7 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         rayhit.mtl_index = plane.mtl_index;
         rayhit.texture_id = plane.texture_id;
         rayhit.normal = plane.normal;
-    
+
     // Procedure for hitting triangle
     } else if (object_type == is_triangle) {
         Triangle triangle = triangles.data[object_index];
@@ -991,6 +1002,9 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
     vec3 inv_direction = vec3(1. / ray.direction.x, 1. / ray.direction.y, 1. / ray.direction.z);
     bvec3 dir_is_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
 
+    vec3 transformed_ray_directions[MAX_MESH_COUNT];
+    vec3 transformed_ray_origins[MAX_MESH_COUNT];
+
     // Stack of indices of nodes yet to traverse
     // NOTE: might need to be bigger for larger scenes and/or with higher order trees
     int to_visit[max_depth];
@@ -1014,15 +1028,16 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
     for (int h = 0; h < order; h++) {
         temp_ts[h] = infinity;
     }
-        
+
     while (to_visit_i > 0 && to_visit_i <= max_depth) {
         current_index = to_visit[--to_visit_i];
         BVHNode node = BVH.list[current_index];
-        int node_index = NODE_node_index;
-        int node_size = NODE_node_size;
+        int node_id = NODE_node_id;
+        int node_index = get_node_index(node_id);
+        int node_size = abs(get_node_size(node_id));
 
         /*
-        All nodes in to_visit should be in sorted order, 
+        All nodes in to_visit should be in sorted order,
          we can break if the last node is out of range
         NOTE: This is MUCH slower
         */
@@ -1069,7 +1084,7 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
             temp_ts[smallest_index] = infinity;
             to_visit[to_visit_i - i - 1] = temp_children[smallest_index];
             to_visit_t[to_visit_i - i - 1] = smallest_t;
-        }        
+        }
     }
 
     return rayhit;
@@ -1079,7 +1094,7 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
 // ====================
 Ray reflect_ray(Ray ray_in, RayHit rayhit) {
     // Returns a new reflected ray based on ray_in and rayhit
-    
+
     vec3 new_origin = rayhit.point;
 
     #if self_intersect_method==0
@@ -1092,7 +1107,7 @@ Ray reflect_ray(Ray ray_in, RayHit rayhit) {
     vec3 dir_offset = rand_vec3(rayhit.point) * (1. - metallic);
 
     vec3 ray_dir = reflected_dir + dir_offset;
-    
+
     // Reflects ray if it points into the object
     if (dot(ray_dir, rayhit.normal) < 0.) {
         ray_dir = reflect(ray_dir, rayhit.normal);
@@ -1103,7 +1118,7 @@ Ray reflect_ray(Ray ray_in, RayHit rayhit) {
 
 // TODO Experiment with max heap instead of array
 int get_material(int material_index, int lowest_depth, bool ignore_self) {
-    // Loop over materials that we have entered and not left, 
+    // Loop over materials that we have entered and not left,
     //  pick the one with the lowest refraction_depth, ignore default values if specified
     int current_index = material_index;
     for (int i = 0; i < max_refraction_depth; i++) {
@@ -1141,8 +1156,8 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     // TODO: Add tiny random direction change coupled with color shift, prism, diffraction
     // TODO Add support for meshes to refract
     // TODO: Implement Beer's law:
-    // https://www.flipcode.com/archives/Raytracing_Topics_Techniques-Part_3_Refractions_and_Beers_Law.shtml 
-    
+    // https://www.flipcode.com/archives/Raytracing_Topics_Techniques-Part_3_Refractions_and_Beers_Law.shtml
+
     vec3 new_origin = rayhit.point;
 
     // Whether object is inside the current object
@@ -1176,7 +1191,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
             // If ray was outside and refracted, add to inside_of list
             inside_of[inside_of_count++] = InsideOf(rayhit.mtl_index, material.refraction_depth);
         }
-    
+
         #if self_intersect_method==0
         new_origin = offset_ray(new_origin, -normal);
         #endif
@@ -1207,7 +1222,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
         #if self_intersect_method==1
         return Ray(new_origin, NEW_RAY_START, reflect(normalized_direction, normal), infinity);
         #endif
-    } 
+    }
 
     current_IOR = eta_out;
 
@@ -1227,7 +1242,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
 
     // Add extra available bounces when ray refracts/goes through another object
     if (refraction_bounces < LOD.max_refraction_bounces - 1) {refraction_bounces++;}
-    
+
     return Ray(new_origin, NEW_RAY_START, refract(normalized_direction, normal, eta), infinity);
 }
 
@@ -1324,12 +1339,12 @@ vec4 cast_ray(Ray ray) {
         new_ray = bounce_ray(new_ray, rayhit);
 
         // TODO: implement attenuation based on incident and exiting angles
-        
-        // Rayhit is invalidated if the ray goes through two transparent objects with the same material 
+
+        // Rayhit is invalidated if the ray goes through two transparent objects with the same material
         if (rayhit.hit) {
             new_color *= rayhit.color * tex_col;
         }
-    } 
+    }
 
     return new_color;
 }
@@ -1371,7 +1386,7 @@ void main() {
     // ====
 
     // Create ray with offset
-    vec3 offset = (pixel_delta_u / 2) * (rand(float(push.time)) - 1.) + 
+    vec3 offset = (pixel_delta_u / 2) * (rand(float(push.time)) - 1.) +
                   (pixel_delta_v / 2) * (rand(float(push.time)) - 1.);
     vec3 ray_direction = pixel_center - push.camera.pos + offset;
     Ray ray = Ray(push.camera.pos, NEW_RAY_START, ray_direction, infinity);

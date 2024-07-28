@@ -79,7 +79,8 @@ var is_sub_tree : bool:
 		return is_instance_valid(parent_tree)
 
 ## Only used to get correct obejct indexing when converting to byte array
-var _scene : PTScene
+var scene : PTScene
+var mesh : PTMesh
 
 # TODO Give BVHTree aabb property similar to ptobjects to facilitate duck typing.
 var root_node : BVHNode
@@ -124,6 +125,7 @@ static func create_bvh_with_function_name(
 		objects : PTObjectContainer,
 		_order : int,
 		_name : String,
+		mesh_or_scene_owner : Variant,
 	) -> PTBVHTree:
 
 	if _name not in bvh_functions.keys():
@@ -134,7 +136,23 @@ static func create_bvh_with_function_name(
 	var start_time : int = Time.get_ticks_usec()
 	var bvh : PTBVHTree = tempt.call(objects, _order) # UNSTATIC
 	bvh.creation_time = (Time.get_ticks_usec() - start_time)
+
+	if mesh_or_scene_owner is PTScene:
+		bvh.scene = mesh_or_scene_owner
+	elif mesh_or_scene_owner is PTMesh:
+		bvh.mesh = mesh_or_scene_owner
+	else:
+		assert(false, "mesh_or_scene_owner should be PTMesh or PTScene, but was %s" % [mesh_or_scene_owner])
+
 	return bvh
+
+
+func has_mesh() -> bool:
+	return is_instance_valid(mesh)
+
+
+func has_scene() -> bool:
+	return is_instance_valid(scene)
 
 
 func update_aabb(object : PTObject) -> void:
@@ -719,7 +737,7 @@ func tree_sah_cost() -> void:
 
 
 func create_object_ids() -> void:
-	assert(is_instance_valid(_scene), "Cannot create_object_ids without a valid set _scene.")
+	assert(is_instance_valid(scene), "Cannot create_object_ids without a valid set scene.")
 
 	var index := 0
 	object_ids.resize(object_count)
@@ -727,7 +745,7 @@ func create_object_ids() -> void:
 	for leaf_node in leaf_nodes:
 		leaf_node.object_id_index = index
 		for object in leaf_node.object_list:
-			var id := PTObject.make_object_id(_scene.get_object_index(object), object.get_type())
+			var id := PTObject.make_object_id(scene.get_object_index(object), object.get_type())
 			object_ids[index] = id
 			index += 1
 
@@ -842,11 +860,10 @@ class BVHNode:
 
 		var check_node_index := func() -> bool:
 			var temp : Array[int] = []
-			for i in children: 
+			for i in children:
 				temp.append(root_tree.get_node_index(i))
-			
-			return root_tree.get_node_index(children[0]) == temp.min()
 
+			return root_tree.get_node_index(children[0]) == temp.min()
 
 		var node_index := 0
 		var node_size := 0
@@ -861,7 +878,17 @@ class BVHNode:
 			node_index = -object_id_index
 			node_size = object_list.size()
 
-		var bbox_bytes : PackedByteArray = PTObject.aabb_to_byte_array(aabb, node_index, node_size)
+		assert(node_size <= 128, "BVHNode cannot contain more than 128 nodes/objects.")
+		assert(abs(node_index) <= 16_777_216, "BVHNode cannot have index bigger than 16_777_216")
+		node_index ^= node_size << 24
+
+		var mesh_transform_index := -1
+		# If node is root and tree is owned by mesh, set mesh tranform index
+		# if tree.root_node == self and tree.has_mesh():
+		# 	mesh_transform_index = tree.mesh.scene.get_mesh_index(tree.mesh)
+		# 	assert(mesh_transform_index >= 0, "Mesh was not found in Scenes's meshes")
+
+		var bbox_bytes : PackedByteArray = PTObject.aabb_to_byte_array(aabb, node_index, mesh_transform_index)
 		var bytes := bbox_bytes
 		assert(bytes.size() == tree.node_byte_size(),
 				"Acutal byte size and set byte size do not match. set:" +

@@ -155,7 +155,7 @@ func _init(renderer : PTRenderer, is_local := false) -> void:
 	else:
 		# Holy merge clutch https://github.com/godotengine/godot/pull/79288
 		# RenderingDevice for realtime rendering
-		# TODO Investigate if all wds have the same rd 
+		# TODO Investigate if all wds have the same rd
 		rd = RenderingServer.get_rendering_device()
 
 
@@ -330,7 +330,7 @@ func create_texture_buffers() -> void:
 		tf.texture_type = RenderingDevice.TEXTURE_TYPE_2D
 		tf.width = img.get_width()
 		tf.height = img.get_height()
-		tf.mipmaps = img.get_mipmap_count() + 1 
+		tf.mipmaps = img.get_mipmap_count() + 1
 		tf.usage_bits = usage_bits
 
 		var new_texture_buffer := rd.texture_create(tf, RDTextureView.new(), [img.get_data()])
@@ -755,7 +755,7 @@ func _create_bvh_byte_array() -> PackedByteArray:
 func _create_object_id_byte_array() -> PackedByteArray:
 	var bytes : PackedByteArray = []
 
-	if _scene.bvh and _scene.bvh._scene:
+	if _scene.bvh and _scene.bvh.scene:
 		if _scene.bvh.object_ids.size() == 0:
 			_scene.bvh.create_object_ids()
 		bytes = _scene.bvh.object_ids.to_byte_array()

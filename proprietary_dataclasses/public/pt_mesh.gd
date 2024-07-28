@@ -21,7 +21,7 @@ var objects : PTObjectContainer
 var bvh : PTBVHTree
 
 # The scene this object is part of. This object might also be a part of a mesh.
-var _scene : PTScene
+var scene : PTScene
 var _mesh : PTMesh
 
 #var surface_mesh : ArrayMesh
@@ -38,13 +38,13 @@ func _init() -> void:
 
 func _enter_tree() -> void:
 	# Find scene or mesh when entering tree if scene is not set
-	if not is_instance_valid(_scene) :
+	if not is_instance_valid(scene) :
 		var temp := PTObject.find_scene_or_mesh_ancestor(self)
 		_mesh = temp[1] # UNSTATIC
 		if is_instance_valid(_mesh):
-			_scene = _mesh._scene
+			scene = _mesh.scene
 		else:
-			_scene = temp[0] # UNSTATIC
+			scene = temp[0] # UNSTATIC
 
 	transform_before = Transform3D(transform)
 	set_notify_transform(true)
@@ -92,22 +92,22 @@ func _ready() -> void:
 			add_child(triangle)
 
 	var function_name : String = PTBVHTree.enum_to_dict[bvh_type] # UNSTATIC
-	bvh = PTBVHTree.create_bvh_with_function_name(objects, bvh_order, function_name)
+	bvh = PTBVHTree.create_bvh_with_function_name(objects, bvh_order, function_name, self)
 
 	if _mesh:
 		if PTRendererAuto.is_debug:
 			print("Mesh adds itself to other mesh. mesh: ", self, " other: ", _mesh)
 		_mesh.add_mesh(self)
-	elif _scene:
+	elif scene:
 		if PTRendererAuto.is_debug:
-			print("Mesh adds itself to scene. mesh: ", self, " ", _scene)
-		_scene.add_mesh(self)
+			print("Mesh adds itself to scene. mesh: ", self, " ", scene)
+		scene.add_mesh(self)
 
 
 func _notification(what : int) -> void:
 	match what:
 		NOTIFICATION_TRANSFORM_CHANGED:
-			if _scene and transform != transform_before:
+			if scene and transform != transform_before:
 				transform_changed.emit(self)
 				transform_before = Transform3D(transform)
 
@@ -115,10 +115,10 @@ func _notification(what : int) -> void:
 func add_mesh(other : PTMesh) -> void:
 	# NOTE: Meshes can merge their bvhs before merging with the scenes.
 	#  However, adding mesh to a mesh that is already in scene might require mergin recursivively
-	if _scene:
-		if not other._scene:
-			other._scene = _scene
-		_scene.add_mesh(other)
+	if scene:
+		if not other.scene:
+			other.scene = scene
+		scene.add_mesh(other)
 	else:
 		print("Mesh should have valid scene but hasnt")
 
@@ -135,12 +135,12 @@ func remove_mesh(other : PTMesh) -> void:
 func add_object(object : PTObject) -> void:
 	#if PTRendererAuto.is_debug:
 		#print("Adding object to mesh")
-	object._scene = _scene
+	object._scene = scene
 	object._mesh = self
 	objects.add_object(object)
 	if is_node_ready():
-		if is_instance_valid(_scene) and _scene.has_mesh(self):
-			_scene.add_object(object)
+		if is_instance_valid(scene) and scene.has_mesh(self):
+			scene.add_object(object)
 
 		if bvh:
 			bvh.add_object(object)
@@ -159,8 +159,8 @@ func remove_object(object : PTObject) -> void:
 	objects.remove_object(object)
 	object._mesh = null
 
-	# object._scene and _scene should be equivelant
-	_scene.remove_object(object)
+	# object._scene and scene should be equivelant
+	scene.remove_object(object)
 
 	if is_node_ready():
 		bvh.remove_object(object)

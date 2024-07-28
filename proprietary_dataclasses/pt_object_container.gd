@@ -115,6 +115,10 @@ func _set_object_index(object : PTObject, index : int) -> void:
 	_object_to_object_index[object] = index # UNSTATIC
 
 
+func get_mesh_index(mesh : PTMesh) -> int:
+	return meshes.find(mesh)
+
+
 func add_object(object : PTObject) -> void:
 	var type := object.get_type()
 	var object_array : Array = get_object_array(type)
@@ -157,7 +161,10 @@ func mesh_to_pttriangles(f_mesh : Mesh) -> Array[PTTriangle]:
 	#var surface_mesh = ArrayMesh.new()
 	#surface_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, f_mesh.surface_get_arrays(0))
 	var mesh_array := f_mesh.surface_get_arrays(0)
-	for i in range(0, mesh_array[ArrayMesh.ARRAY_INDEX].size(), 3):
+
+	@warning_ignore("unsafe_method_access")
+	var index_count : int = mesh_array[ArrayMesh.ARRAY_INDEX].size()
+	for i in range(0, index_count, 3):
 		var index1 : int = mesh_array[ArrayMesh.ARRAY_INDEX][i]
 		var index2 : int = mesh_array[ArrayMesh.ARRAY_INDEX][i + 1]
 		var index3 : int = mesh_array[ArrayMesh.ARRAY_INDEX][i + 2]
@@ -195,6 +202,7 @@ func merge(other : PTObjectContainer) -> Array[bool]:
 		added_types[type] = true
 
 		for i in range(new_object_array.size()):
+			@warning_ignore("unsafe_call_argument")
 			_set_object_index(new_object_array[i], last_index + i) # UNSTATIC
 
 		assert(get_object_array(type).size() == last_index + new_object_array.size())
@@ -252,7 +260,7 @@ func _rebalance_objects(
 	# this instance and all new objects are not in this object.
 	# There is still a chance an object has been freed.
 
-	var previous_size = size()
+	var previous_size := size()
 	var object_ids_to_update : Array[int] = []
 
 	for mesh in removed_objects.meshes:

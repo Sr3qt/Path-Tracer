@@ -179,6 +179,10 @@ func get_object_index(object : PTObject) -> int:
 	return unpacked_objects.get_object_index(object)
 
 
+func get_mesh_index(mesh : PTMesh) -> int:
+	return unpacked_objects.get_mesh_index(mesh)
+
+
 func get_material_index(material : PTMaterial) -> int:
 	return _material_to_index[material] # UNSTATIC
 
@@ -711,8 +715,7 @@ func create_BVH(order : int, function_name : String) -> void:
 	if bvh:
 		cached_bvhs.append(bvh)
 
-	bvh = PTBVHTree.create_bvh_with_function_name(scene_objects, order, function_name)
-	bvh._scene = self
+	bvh = PTBVHTree.create_bvh_with_function_name(scene_objects, order, function_name, self)
 
 
 func create_random_scene(_seed : int) -> void:
