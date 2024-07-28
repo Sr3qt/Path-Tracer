@@ -137,12 +137,6 @@ static func create_bvh_with_function_name(
 	return bvh
 
 
-func node_byte_size() -> int:
-	# Number of child indices times 4 plus aabb 32 bytes
-	# return (order + ((order % 8) - 8) * -1) * 4 + 32
-	return (8) * 4
-
-
 func update_aabb(object : PTObject) -> void:
 	assert(has(object), "PT: Cannot update the aabb of an object that is not in BVH.\n" +
 				"object: " + str(object))
@@ -727,19 +721,15 @@ func tree_sah_cost() -> void:
 func create_object_ids() -> void:
 	assert(is_instance_valid(_scene), "Cannot create_object_ids without a valid set _scene.")
 
-	# print("Creating object ids")
 	var index := 0
 	object_ids.resize(object_count)
 
 	for leaf_node in leaf_nodes:
 		leaf_node.object_id_index = index
-		# print(index)
 		for object in leaf_node.object_list:
 			var id := PTObject.make_object_id(_scene.get_object_index(object), object.get_type())
 			object_ids[index] = id
 			index += 1
-
-	# print(object_ids)
 
 
 func to_byte_array() -> PackedByteArray:
@@ -747,6 +737,10 @@ func to_byte_array() -> PackedByteArray:
 	for node in bvh_list:
 		bytes += node.to_byte_array()
 	return bytes
+
+
+func node_byte_size() -> int:
+	return BVHNode.BYTE_SIZE
 
 
 class BVHNode:
@@ -757,7 +751,7 @@ class BVHNode:
 	##
 	## A BVHNode is either an inner node, where the children property point to
 	## other BVHNodes, or a leaf node, where its object_list property point to
-	## objects. Having a mixed node is technically supported, but is unadviced.
+	## objects. Having a mixed node is no longer supported.
 	## Rather, wrap the objects in the mixed node into a new leaf node child.
 
 	const BYTE_SIZE = 32
@@ -838,8 +832,6 @@ class BVHNode:
 
 
 	func to_byte_array() -> PackedByteArray:
-		var child_indices_array := []
-
 		var root_tree := tree
 		for i in range(MAX_TREE_NESTING):
 			if root_tree.is_sub_tree:
@@ -848,43 +840,28 @@ class BVHNode:
 		assert(not root_tree.is_sub_tree, "PT: Max BVHTree nesting limit reached. " +
 				"Please don't nest them more than %s times." % [MAX_TREE_NESTING])
 
-		# Add children nodes and objects to children list
-		# for child in children:
-		# 	child_indices_array.append(root_tree.get_node_index(child))
+		var check_node_index := func() -> bool:
+			var temp : Array[int] = []
+			for i in children: 
+				temp.append(root_tree.get_node_index(i))
+			
+			return root_tree.get_node_index(children[0]) == temp.min()
+
 
 		var node_index := 0
 		var node_size := 0
 		if is_inner:
+			assert(check_node_index.call(), "Node children are not in correct order. First child should be first index.")
 			# FIrst child SHOULD be first index, maybe add assert
-			# print(root_tree.get_node_index(children[0]))
-			child_indices_array.append(root_tree.get_node_index(children[0]))
 			node_index = root_tree.get_node_index(children[0])
-			child_indices_array.append(children.size())
 			node_size  = children.size()
 
 		# TODO Object_ids can be packed tightly or with fixed size for potential perf gain, check
 		if is_leaf:
-			child_indices_array.append(PTObject.make_object_id(object_id_index, PTObject.ObjectType.SPHERE))
-			node_index = PTObject.make_object_id(object_id_index, PTObject.ObjectType.SPHERE)
-			child_indices_array.append(object_list.size())
+			node_index = -object_id_index
 			node_size = object_list.size()
 
-		# for object in object_list:
-		# 	var type : int = object.get_type()
-		# 	var _index : int = root_tree._scene.get_object_index(object)
-		# 	child_indices_array.append(PTObject.make_object_id(_index, type))
-
-		# Needed for buffer alignement
-		child_indices_array.resize(8)
-		# child_indices_array.resize(root_tree.order +
-		# 						   int((root_tree.order % 8) - 8) * -1)
-
-		# for i in range(child_indices_array.size()):
-		# 	if child_indices_array[i] == null:
-		# 		child_indices_array[i] = -1
-
 		var bbox_bytes : PackedByteArray = PTObject.aabb_to_byte_array(aabb, node_index, node_size)
-		# var bytes := PackedInt32Array(child_indices_array).to_byte_array() + bbox_bytes
 		var bytes := bbox_bytes
 		assert(bytes.size() == tree.node_byte_size(),
 				"Acutal byte size and set byte size do not match. set:" +

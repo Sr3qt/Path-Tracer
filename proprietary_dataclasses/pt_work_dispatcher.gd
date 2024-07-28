@@ -755,13 +755,10 @@ func _create_bvh_byte_array() -> PackedByteArray:
 func _create_object_id_byte_array() -> PackedByteArray:
 	var bytes : PackedByteArray = []
 
-	if _scene.bvh:
-		if _scene.bvh.object_ids.size() > 0:
-			bytes = _scene.bvh.object_ids.to_byte_array()
-		else:
+	if _scene.bvh and _scene.bvh._scene:
+		if _scene.bvh.object_ids.size() == 0:
 			_scene.bvh.create_object_ids()
-			bytes = _scene.bvh.object_ids.to_byte_array()
-			# bytes = PTObject.empty_byte_array(8)
+		bytes = _scene.bvh.object_ids.to_byte_array()
 	else:
 		bytes = PTObject.empty_byte_array(8)
 

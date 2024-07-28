@@ -163,6 +163,8 @@ Spheres will use the old structure.
 // CONSTANTS
 // =========
 const int int_limit = 2147483647;
+const int neg_int_limit = -2147483648;
+const int all_ones = -1;
 const float infinity = 1. / 0.;
 const double pi_d = 3.1415926535897932385;
 const float pi = 3.1415926535897932385;
@@ -242,11 +244,8 @@ int refraction_bounces = 0; // Counts the number of times a ray has refracted
 int node_hit_count = 0;
 int object_hit_count = 0;
 
-// Maximum number of children a BVHNode can have
+// Maximum number of inner nodes a BVHNode can have
 const int order = 2; // Replaced by script preprocessor, do NOT touch this line
-// NOTE: For some weird reason adding unneseccary padding gives a small performance boost
-// TODO Investigate this weird phenomenon
-const int filler_const = -1 * int(mod(order, 8) - 8.); 
 
 // Flags
 const int flag_size = 31;
@@ -394,30 +393,18 @@ struct RayHit {
 };
 
 struct AABB {
-    // only xyz used, they are vec4 to fit memory allocation
+    // only xyz is used, they are vec4 to fit memory allocation
     // minimum.x < maximum.x etc. should always be true.
     // The w value is unused by the aabb, so it can be filled with whatever is useful
     vec4 minimum;
     vec4 maximum;
-    // vec3 minimum;
-    // float smuggle1;
-    // vec3 maximum;
-    // float smuggle2;
 };
 
 
-// #define node_index children[0]
-// #define node_size children[1]
-#define node_node_index floatBitsToInt(node.bbox.minimum.w)
-#define node_node_size floatBitsToInt(node.bbox.maximum.w)
-// #define node_node_index floatBitsToInt(bbox.smuggle1)
-// #define node_node_size floatBitsToInt(node.bbox.smuggle2)
+// node_index and size are hidden inside the aabb struct
+#define NODE_node_index floatBitsToInt(node.bbox.minimum.w)
+#define NODE_node_size floatBitsToInt(node.bbox.maximum.w)
 struct BVHNode {
-    // TODO Use macros instead for more compactness
-    // A BVHNode is an node in a n-ary tree. They are stored in a global BVH buffer. 
-    // Every node points to either child nodes or to objects with object_ids.
-    // int children[2];
-    // int temp_fill[6];
     // NOTE: Remember that AABB stores FLOATS, not ints
     AABB bbox; 
 };
@@ -991,21 +978,10 @@ RayHit check_ray_hit(inout Ray ray) {
     hit_triangles(ray, rayhit);
     hit_planes(ray, rayhit);
 
-    if (!rayhit.hit) {
-        rayhit.color = default_color;
-    }
-
     return rayhit;
 }
 
-#define bvh1 1
-
-#define USE_CONSTANT_BVH_SIZE 1
-
-// TODO If sibling nodes are optimized to be adjacent in memory,
-// and leaf nodes can only have one object type or i have an intermediary object_id array,
-// BVHNodes only need two numbers to work
-RayHit check_ray_hit_BVH1(inout Ray ray) {
+RayHit check_ray_hit_BVH(inout Ray ray) {
     RayHit rayhit = empty_rayhit();
 
     // NOTE: Objects that go before bvh can be used as Occluders
@@ -1042,6 +1018,8 @@ RayHit check_ray_hit_BVH1(inout Ray ray) {
     while (to_visit_i > 0 && to_visit_i <= max_depth) {
         current_index = to_visit[--to_visit_i];
         BVHNode node = BVH.list[current_index];
+        int node_index = NODE_node_index;
+        int node_size = NODE_node_size;
 
         /*
         All nodes in to_visit should be in sorted order, 
@@ -1053,65 +1031,30 @@ RayHit check_ray_hit_BVH1(inout Ray ray) {
         // }
 
         // If node is leaf node, hit all children
-        if (get_object_type(node_node_index) != is_not_obj) {
-
-        #if USE_CONSTANT_BVH_SIZE
-            int index = get_object_index(node_node_index);
-            for (int k = 0; k < node_node_size; k++) {
-                hit_object(ray, rayhit, object_ids.list[index + k]);
+        // node_index pointing to nodes should never be zero (root_node)
+        if (node_index <= 0) {
+            for (int k = 0; k < node_size; k++) {
+                hit_object(ray, rayhit, object_ids.list[abs(node_index) + k]);
             }
-        #else
-            for (int k = 0; k < order; k++) {
-                hit_object(ray, rayhit, node.children[k]);
-        #endif
-
             continue;
         }
 
-        #if USE_CONSTANT_BVH_SIZE
+        int added_children = 0;
         // Do hit check on child inner nodes and add them to temp array
-        int number_of_children = node_node_size; // Is the same value as temp_to_visit
-        // int index = node_node_index;
-        for (int l = 0; l < number_of_children; l++) {
-            // int tochild = node.children[l];
-
-            // If anything breaks try toggling this line
-            // if (tochild == 0) {break;}
-
-            float aabb_t = hit_AABB(ray, BVH.list[node_node_index + l].bbox, inv_direction, dir_is_negative);
+        for (int l = 0; l < node_size; l++) {
+            float aabb_t = hit_AABB(ray, BVH.list[node_index + l].bbox, inv_direction, dir_is_negative);
             // xin_range much faster, but has an artifact
             if (in_range(aabb_t, ray)) {
+                added_children++;
                 temp_ts[l] = aabb_t;
-                temp_children[l] = node_node_index + l;
+                temp_children[l] = node_index + l;
             }
         }
-
-        #else
-        // Do hit check on child inner nodes and add them to temp array
-        int number_of_children = 0; // Is the same value as temp_to_visit
-        for (int l = 0; l < order; l++) {
-            int tochild = node.children[l];
-
-            // If anything breaks try toggling this line
-            if (tochild == 0) {break;}
-
-            float aabb_t = hit_AABB(ray, BVH.list[tochild].bbox, inv_direction, dir_is_negative);
-            // xin_range much faster, but has an artifact
-            // TODO TRY indexing with l instead of number_of_children
-            if (in_range(aabb_t, ray)) {
-                // If tochild is invalid (0), t will be infinite and will not be a problem
-                temp_ts[number_of_children] = aabb_t / sign(tochild);
-                temp_children[number_of_children] = tochild;
-                // If child is valid, increment index pointer
-                number_of_children += sign(tochild);
-            }
-        }
-        #endif
 
         // TODO COnsider min heap or insertion sort
         // Add nodes to stack in a sorted order
-        to_visit_i += number_of_children;
-        for (int i = 0; i < number_of_children; i++) { // Looping over constant is not faster here
+        to_visit_i += added_children;
+        for (int i = 0; i < added_children; i++) { // Looping over constant is not faster here
             // Finds smallest t, closest box
             float smallest_t = infinity;
             int smallest_index = order;
@@ -1127,110 +1070,6 @@ RayHit check_ray_hit_BVH1(inout Ray ray) {
             to_visit[to_visit_i - i - 1] = temp_children[smallest_index];
             to_visit_t[to_visit_i - i - 1] = smallest_t;
         }        
-    }
-
-    // Move this as well?
-    if (!rayhit.hit) {
-        rayhit.color = hit_skybox(ray, rayhit);
-    }
-
-    // TODO move outside function
-    if (show_bvh_depth) {
-        float a = show_node_count ? float(node_hit_count) / float(push.node_count_threshold) : 0.0;
-        float b = show_object_count ? float(object_hit_count) / float(push.object_count_threshold) : 0.0;
-        rayhit.color = (max(a, b) > 1.0) ? vec4(1) : vec4(b, 0, a, 0);
-    }
-
-    return rayhit;
-}
-
-
-RayHit check_ray_hit_BVH(inout Ray ray) {
-    // Like check_ray_hit but it checks against a BVH tree instead of each object_list individually
-    RayHit rayhit = empty_rayhit();
-
-    // Stack of indices of nodes yet to traverse
-    // NOTE: might need to be bigger for larger scenes and/or with higher order trees
-    int to_visit[max_depth];
-    // Index to top of the stack, points to vacant spot ABOVE the stack
-    int to_visit_i = 0;
-
-    // Index to current node being processed
-    int current_index = 0;
-
-    bool small_break = false;
-
-    vec3 new_point;
-
-    // Pre-compute values for hit detection
-    vec3 inv_direction = vec3(1. / ray.direction.x, 1. / ray.direction.y, 1. / ray.direction.z);
-    bvec3 dir_is_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
-
-    while (true) {
-        if (current_index >= max_depth) {
-            break;
-        }
-        BVHNode node = BVH.list[current_index];
-
-        // If ray already hit something, ignore aabbs which are not in the same octant as the 
-        //  ray origin relative to the intersection point
-        if (rayhit.hit) {
-            new_point = ray_at(ray);
-            vec3 new_min = node.bbox.minimum.xyz;
-            vec3 new_max = node.bbox.maximum.xyz;
-
-            small_break = (ray.direction.x > 0.) ? (new_point.x < new_min.x) :
-             (new_point.x > new_max.x);
-            if (!small_break) {
-                small_break = (ray.direction.y > 0.) ? (new_point.y < new_min.y) :
-                 (new_point.y > new_max.y);
-
-                if (!small_break) {
-                    small_break = (ray.direction.z > 0.) ? (new_point.z < new_min.z) :
-                     (new_point.z > new_max.z);
-                }
-            }
-        }
-
-        if (!small_break) {
-            if (in_range(hit_AABB(ray, node.bbox, inv_direction, dir_is_negative), ray)) {
-                // Loop over child indices to add them to stack or do hit check
-                for (int i = 0; i < order; i++) {
-                    // int tochild = node.children[i];
-                    int tochild = 0; // TEMP DELETE FUNCTION
-
-                    // If child is invalid, skip
-                    if (tochild == 0) {continue;}
-
-                    if (get_object_type(tochild) == is_not_obj) {
-                        // If children[i] points to inner node, add it to to_visit
-                        to_visit[to_visit_i++] = tochild;
-                    } 
-                    else {
-                        hit_object(ray, rayhit, tochild);
-                    }
-                }
-            }
-        }
-        small_break = false;
-
-        // Break if no more nodes to visit, else go to next node in list
-        if (to_visit_i == 0) {
-            break;
-        }
-        current_index = to_visit[--to_visit_i];
-    }
-    
-    hit_planes(ray, rayhit);
-
-    if (!rayhit.hit) {
-        rayhit.color = hit_skybox(ray, rayhit);
-    }
-
-    if (show_bvh_depth) {
-        float a = show_node_count ? float(node_hit_count) / float(push.node_count_threshold) : 0.0;
-        float b = show_object_count ? float(object_hit_count) / float(push.object_count_threshold) : 0.0;
-        rayhit.color = (max(a, b) > 1.0) ? vec4(1) : vec4(b, 0, a, 0);
     }
 
     return rayhit;
@@ -1447,24 +1286,25 @@ vec4 cast_ray(Ray ray) {
     // MICRO-OPT Having the loop be static/const is slightly faster than with having it dynamic
     for (int i = 0; i < LOD.max_default_depth + refraction_bounces; i++) {
         if (use_bvh) {
-            #if bvh1 
-            rayhit = check_ray_hit_BVH1(new_ray);
-            #else
             rayhit = check_ray_hit_BVH(new_ray);
-            #endif
+
             // Send one ray, skip bouncing
             if (show_bvh_depth) {
+                float a = show_node_count ? float(node_hit_count) / float(push.node_count_threshold) : 0.0;
+                float b = show_object_count ? float(object_hit_count) / float(push.object_count_threshold) : 0.0;
+                rayhit.color = (max(a, b) > 1.0) ? vec4(1) : vec4(b, 0, a, 0);
                 new_color = rayhit.color;
                 break;
             }
         } else {
             rayhit = check_ray_hit(new_ray);
         }
-        
+
         // TODO Try using continues instead
         // Early break if no hit
         if (!rayhit.hit) {
             // Adds sky color as the last rayhit when miss
+            rayhit.color = hit_skybox(ray, rayhit);
             new_color *= rayhit.color;
             break;
         }
@@ -1475,7 +1315,7 @@ vec4 cast_ray(Ray ray) {
         if (is_emissive) {
             new_color *= rayhit.color;
             break;
-        } else {is_emissive = false;}
+        } else {is_emissive = false;} // This never does anything
         #endif
 
         // Get texture color
