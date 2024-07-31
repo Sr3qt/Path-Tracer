@@ -885,10 +885,11 @@ class BVHNode:
 		var mesh_transform_index := -1
 		# If node is root and tree is owned by mesh, set mesh tranform index
 		# if tree.root_node == self and tree.has_mesh():
-		# 	mesh_transform_index = tree.mesh.scene.get_mesh_index(tree.mesh)
-		# 	assert(mesh_transform_index >= 0, "Mesh was not found in Scenes's meshes")
+		if tree.has_mesh():
+			mesh_transform_index = tree.mesh.scene.get_mesh_index(tree.mesh)
+			assert(mesh_transform_index >= 0, "Mesh was not found in Scenes's meshes")
 
-		var bbox_bytes : PackedByteArray = PTObject.aabb_to_byte_array(aabb, node_index, mesh_transform_index)
+		var bbox_bytes : PackedByteArray = PTUtils.aabb_to_byte_array(aabb, node_index, mesh_transform_index)
 		var bytes := bbox_bytes
 		assert(bytes.size() == tree.node_byte_size(),
 				"Acutal byte size and set byte size do not match. set:" +

@@ -141,36 +141,6 @@ static func get_object_byte_size() -> int:
 	return 0
 
 
-static func vector_to_array(vector : Vector3) -> Array[float]:
-	return [vector.x, vector.y, vector.z]
-
-
-## Turns AABB into bytes, with optional smuggling
-static func aabb_to_byte_array(aabb : AABB, smuggle1 : Variant = 0.0, smuggle2 : Variant = 0.0) -> PackedByteArray:
-	var new_aabb := aabb.abs()
-	var bytes : PackedByteArray = []
-
-	bytes += PackedFloat32Array(vector_to_array(new_aabb.position - AABB_PADDING)).to_byte_array()
-
-	if smuggle1 is float:
-		bytes += PackedFloat32Array([smuggle1]).to_byte_array()
-	elif smuggle1 is int:
-		bytes += PackedInt32Array([smuggle1]).to_byte_array()
-	else:
-		assert(false, "PT: smuggle1 has to be int or float, but was " + str(type_string(type_of(smuggle1))))
-
-	bytes += PackedFloat32Array(vector_to_array(new_aabb.end - AABB_PADDING)).to_byte_array()
-
-	if smuggle2 is float:
-		bytes += PackedFloat32Array([smuggle2]).to_byte_array()
-	elif smuggle2 is int:
-		bytes += PackedInt32Array([smuggle2]).to_byte_array()
-	else:
-		assert(false, "PT: smuggle1 has to be int or float, but was " + str(type_string(type_of(smuggle2))))
-
-	return bytes
-
-
 static func find_scene_ancestor(start_node : Node) -> PTScene:
 	var counter : int = 0
 	var current_node : Node = start_node.get_parent()
@@ -238,25 +208,14 @@ static func type_of(object : Variant) -> ObjectType:
 		return ObjectType.NOT_OBJECT
 
 
-# TODO Move to utils
-## Create empty byte array with given size in bytes
-static func empty_byte_array(size : int) -> PackedByteArray:
-	var ints : Array[int] = []
-	@warning_ignore("integer_division")
-	ints.resize(size / 4)
-	ints.fill(0)
-
-	return PackedInt32Array(ints).to_byte_array()
-
-
 static func empty_object_bytes(type : ObjectType) -> PackedByteArray:
 	match type:
 		ObjectType.SPHERE:
-			return empty_byte_array(PTSphere.get_object_byte_size())
+			return PTUtils.empty_byte_array(PTSphere.get_object_byte_size())
 		ObjectType.PLANE:
-			return empty_byte_array(PTPlane.get_object_byte_size())
+			return PTUtils.empty_byte_array(PTPlane.get_object_byte_size())
 		ObjectType.TRIANGLE:
-			return empty_byte_array(PTTriangle.get_object_byte_size())
+			return PTUtils.empty_byte_array(PTTriangle.get_object_byte_size())
 		_:
 			push_error("PT: Object type does not support 'empty_object_bytes' ",
 					"static function in PTObject.")

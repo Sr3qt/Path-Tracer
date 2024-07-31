@@ -76,7 +76,7 @@ func get_global_aabb() -> AABB:
 func to_byte_array() -> PackedByteArray:
 	var bytes : PackedByteArray
 	if not USE_INSTANCING:
-		bytes = (PackedFloat32Array(PTObject.vector_to_array(position) + [radius]).to_byte_array() +
+		bytes = (PackedFloat32Array(PTUtils.vector3_to_array(position) + [radius]).to_byte_array() +
 		_get_property_byte_array()
 		+ PackedInt32Array([0,0,0,0,0,0,0,0]).to_byte_array()
 		)
@@ -85,15 +85,17 @@ func to_byte_array() -> PackedByteArray:
 		# TODO NOTE When adding meshes change to transform
 		var ttransform := global_transform.affine_inverse()
 		bytes = (
-			PackedFloat32Array(PTObject.vector_to_array(ttransform.basis.x)).to_byte_array() +
+			PackedFloat32Array(PTUtils.vector3_to_array(ttransform.basis.x)).to_byte_array() +
 			PackedInt32Array([_scene.get_material_index(material)]).to_byte_array() +
-			PackedFloat32Array(PTObject.vector_to_array(ttransform.basis.y)).to_byte_array() +
+			PackedFloat32Array(PTUtils.vector3_to_array(ttransform.basis.y)).to_byte_array() +
 			PackedInt32Array([_scene.get_texture_id(texture)]).to_byte_array() +
-			PackedFloat32Array(PTObject.vector_to_array(ttransform.basis.z)).to_byte_array() +
+			PackedFloat32Array(PTUtils.vector3_to_array(ttransform.basis.z)).to_byte_array() +
 			PackedInt32Array([0]).to_byte_array() +
-			PackedFloat32Array(PTObject.vector_to_array(ttransform.origin)).to_byte_array() +
+			PackedFloat32Array(PTUtils.vector3_to_array(ttransform.origin)).to_byte_array() +
 			PackedInt32Array([0]).to_byte_array()
 			)
+		# bytes = PTUtils.transform3d_smuggle_to_byte_array(ttransform, _scene.get_material_index(material)
+		
 
 	assert(bytes.size() == PTSphere.get_object_byte_size(),
 			"Acutal byte size and set byte size do not match ")

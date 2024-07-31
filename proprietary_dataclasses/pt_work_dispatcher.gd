@@ -60,9 +60,9 @@ var texture : Texture2DRD
 # TODO Report umlaut bug to godot devs
 
 ## TO-DO List for creating buffer
-##	- Make buffer set bind
+##	- Make set bind index
 ##	- Make buffer variable
-##	- Make create_buffer fucntion
+##	- Make create_buffer function
 ##	- Call create_buffer function in create_buffers
 ##
 
@@ -107,6 +107,10 @@ const TEXTURE_SET_INDEX : int = 5
 const TEXTURE_BIND : int = 0
 const TEXTURE_SET_MAX : int = 1
 
+const TRANSFORM_SET_INDEX : int = 6
+const TRANSFORM_BIND : int = 0
+const TRANSFORM_SET_MAX : int = 1
+
 # Set RIDs
 var image_set : RID
 var camera_set : RID
@@ -114,6 +118,7 @@ var object_set : RID
 var bvh_set : RID
 var triangle_set : RID
 var texture_set : RID
+var transform_set : RID
 
 # Buffer RIDS
 var image_buffer : RID
@@ -132,6 +137,10 @@ var object_id_buffer: RID
 var triangle_vertex_buffer : RID
 var triangle_uv_buffer : RID
 var triangle_index_buffer : RID
+
+# Texture buffers are only kept in rids_to_free
+
+var transform_buffer : RID
 
 # Whether this instance is using a local RenderDevice
 var is_local_renderer := false
@@ -189,6 +198,7 @@ func create_buffers() -> void:
 	create_bvh_buffer()
 	create_triangle_buffers(_scene.make_mesh_arrays())
 	create_texture_buffers()
+	create_transform_buffer()
 
 	bind_sets()
 
@@ -262,12 +272,18 @@ func create_object_id_buffer() -> void:
 			_create_object_id_byte_array(), BVH_SET_INDEX, OBJECT_ID_BIND
 	)
 
+func create_transform_buffer() -> void:
+	transform_buffer = _create_uniform(
+			_create_transform_byte_array(), TRANSFORM_SET_INDEX, TRANSFORM_BIND
+	)
+
+
 # TODO Make checks for sub-arrays existing in, array creation, destruction and here
 func create_triangle_buffers(surface : Array = [null]) -> void:
 
-	var vertex_bytes := PTObject.empty_byte_array(12)
-	var uv_bytes := PTObject.empty_byte_array(12)
-	var index_bytes := PTObject.empty_byte_array(12)
+	var vertex_bytes := PTUtils.empty_byte_array(12)
+	var uv_bytes := PTUtils.empty_byte_array(12)
+	var index_bytes := PTUtils.empty_byte_array(12)
 
 	if surface[0] != null and surface[0].size() != 0:
 		assert(surface.size() == Mesh.ARRAY_MAX)
@@ -421,6 +437,8 @@ func bind_set(index : int) -> void:
 			triangle_set = new_set_rid
 		TEXTURE_SET_INDEX:
 			texture_set = new_set_rid
+		TRANSFORM_SET_INDEX:
+			transform_set = new_set_rid
 
 
 func bind_sets() -> void:
@@ -431,6 +449,7 @@ func bind_sets() -> void:
 	bind_set(BVH_SET_INDEX)
 	bind_set(TRIANGLE_SET_INDEX)
 	bind_set(TEXTURE_SET_INDEX)
+	bind_set(TRANSFORM_SET_INDEX)
 
 
 func load_shader(shader_ : RDShaderSource) -> void:
@@ -497,6 +516,7 @@ func create_compute_list(window : PTRenderWindow = null) -> void:
 	rd.compute_list_bind_uniform_set(compute_list, bvh_set, BVH_SET_INDEX)
 	rd.compute_list_bind_uniform_set(compute_list, triangle_set, TRIANGLE_SET_INDEX)
 	rd.compute_list_bind_uniform_set(compute_list, texture_set, TEXTURE_SET_INDEX)
+	rd.compute_list_bind_uniform_set(compute_list, transform_set, TRANSFORM_SET_INDEX)
 	rd.compute_list_set_push_constant(compute_list, push_bytes, push_bytes.size())
 
 	rd.capture_timestamp(window.render_name)
@@ -760,8 +780,20 @@ func _create_object_id_byte_array() -> PackedByteArray:
 			_scene.bvh.create_object_ids()
 		bytes = _scene.bvh.object_ids.to_byte_array()
 	else:
-		bytes = PTObject.empty_byte_array(8)
+		bytes = PTUtils.empty_byte_array(8)
 
+	return bytes
+
+
+func _create_transform_byte_array() -> PackedByteArray:
+	var bytes : PackedByteArray = []
+	if _scene.objects.meshes.size() > 0:
+		for mesh in _scene.objects.meshes:
+			bytes += PTUtils.transform3d_to_byte_array(Transform3D.IDENTITY)
+
+			# bytes += PTUtils.transform3d_to_byte_array(mesh.global_transform)
+	else:
+		bytes = PTUtils.empty_byte_array(16 * 4)
 	return bytes
 
 
@@ -803,6 +835,7 @@ class UniformStorage:
 	var bvh_set : Array[RDUniform]
 	var triangle_set : Array[RDUniform]
 	var texture_set : Array[RDUniform]
+	var transform_set : Array[RDUniform]
 
 
 	func _init() -> void:
@@ -813,6 +846,7 @@ class UniformStorage:
 		bvh_set.resize(BVH_SET_MAX)
 		triangle_set.resize(TRIANGLE_SET_MAX)
 		texture_set.resize(TEXTURE_SET_MAX)
+		transform_set.resize(TRANSFORM_SET_MAX)
 
 
 	func get_set_uniforms(index : int) -> Array[RDUniform]:
@@ -829,6 +863,8 @@ class UniformStorage:
 				return triangle_set
 			TEXTURE_SET_INDEX:
 				return texture_set
+			TRANSFORM_SET_INDEX:
+				return transform_set
 
 		assert(false, "PT: Uniform index '%S' is invalid." % index)
 		return []

@@ -121,10 +121,10 @@ func to_byte_array() -> PackedByteArray:
 	var bytes := PackedByteArray()
 
 	bytes += PackedFloat32Array(
-		PTObject.vector_to_array(global_transform * vertex1) + [0] +
-		PTObject.vector_to_array(global_transform * vertex2) + [0] +
-		PTObject.vector_to_array(global_transform * vertex3) + [0] +
-		PTObject.vector_to_array((vertex2 - vertex1).cross(vertex3 -  vertex1).normalized()) + [0]
+		PTUtils.vector3_to_array(global_transform * vertex1) + [0] +
+		PTUtils.vector3_to_array(global_transform * vertex2) + [0] +
+		PTUtils.vector3_to_array(global_transform * vertex3) + [0] +
+		PTUtils.vector3_to_array((vertex2 - vertex1).cross(vertex3 -  vertex1).normalized()) + [0]
 	).to_byte_array()
 	bytes += _get_property_byte_array()
 

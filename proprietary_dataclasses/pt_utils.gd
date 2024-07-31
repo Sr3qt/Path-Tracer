@@ -1,6 +1,95 @@
 class_name PTUtils
 extends Node
 
+const EPSILON = 1e-6
+const AABB_PADDING := Vector3(EPSILON, EPSILON, EPSILON)
+
+
+static func vector3_to_array(vector : Vector3) -> Array[float]:
+	return [vector.x, vector.y, vector.z]
+
+
+## Create empty byte array with given size in bytes, rounded down to 4 byte-intervals
+static func empty_byte_array(size : int) -> PackedByteArray:
+	var ints : Array[int] = []
+	@warning_ignore("integer_division")
+	ints.resize(size / 4)
+	ints.fill(0)
+
+	return PackedInt32Array(ints).to_byte_array()
+
+
+static func transform3d_to_byte_array(transform : Transform3D) -> PackedByteArray:
+	var bytes : PackedByteArray = (
+			PackedFloat32Array(PTUtils.vector3_to_array(transform.basis.x)).to_byte_array() +
+			PackedFloat32Array(PTUtils.vector3_to_array(transform.basis.y)).to_byte_array() +
+			PackedFloat32Array(PTUtils.vector3_to_array(transform.basis.z)).to_byte_array() +
+			PackedFloat32Array(PTUtils.vector3_to_array(transform.origin)).to_byte_array()
+	)
+	return bytes
+
+
+static func transform3d_smuggle_to_byte_array(transform : Transform3D, last_row := Vector4.ZERO) -> PackedByteArray:
+	var bytes : PackedByteArray = (
+			PackedFloat32Array(PTUtils.vector3_to_array(transform.basis.x)).to_byte_array() +
+			PackedFloat32Array([last_row.x]).to_byte_array() +
+			PackedFloat32Array(PTUtils.vector3_to_array(transform.basis.y)).to_byte_array() +
+			PackedFloat32Array([last_row.y]).to_byte_array() +
+			PackedFloat32Array(PTUtils.vector3_to_array(transform.basis.z)).to_byte_array() +
+			PackedFloat32Array([last_row.z]).to_byte_array() +
+			PackedFloat32Array(PTUtils.vector3_to_array(transform.origin)).to_byte_array() +
+			PackedFloat32Array([last_row.w]).to_byte_array()
+	)
+	return bytes
+
+
+## Turns AABB into bytes, with optional smuggling
+static func aabb_to_byte_array(aabb : AABB, smuggle1 : Variant = 0.0, smuggle2 : Variant = 0.0) -> PackedByteArray:
+	var new_aabb := aabb.abs()
+	var bytes : PackedByteArray = []
+
+	bytes += PackedFloat32Array(PTUtils.vector3_to_array(new_aabb.position - AABB_PADDING)).to_byte_array()
+
+	if smuggle1 is float:
+		bytes += PackedFloat32Array([smuggle1]).to_byte_array()
+	elif smuggle1 is int:
+		bytes += PackedInt32Array([smuggle1]).to_byte_array()
+	else:
+		assert(false, "PT: smuggle1 has to be int or float, but was " + str(type_string(typeof(smuggle1))))
+
+	bytes += PackedFloat32Array(PTUtils.vector3_to_array(new_aabb.end - AABB_PADDING)).to_byte_array()
+
+	if smuggle2 is float:
+		bytes += PackedFloat32Array([smuggle2]).to_byte_array()
+	elif smuggle2 is int:
+		bytes += PackedInt32Array([smuggle2]).to_byte_array()
+	else:
+		assert(false, "PT: smuggle1 has to be int or float, but was " + str(type_string(typeof(smuggle2))))
+
+	return bytes
+
+
+static func create_canvas() -> MeshInstance3D:
+	# Create canvas that will display rendered image
+	# Prepare canvas shader
+	var mat := ShaderMaterial.new()
+	mat.shader = preload("res://shaders/canvas.gdshader")
+	mat.set_shader_parameter("image_buffer", Texture2DRD.new())
+	mat.set_shader_parameter("is_rendering", not PTRendererAuto.is_rendering_disabled)
+
+	var mesh := QuadMesh.new()
+	mesh.size = Vector2(2, 2)
+	mesh.surface_set_material(0, mat)
+
+	# Create a canvas to which rendered images will be drawn
+	var canvas := MeshInstance3D.new()
+	canvas.position -= Vector3(0,0,1)
+	canvas.set_layer_mask_value(20, true)
+	canvas.set_layer_mask_value(1, false)
+	canvas.mesh = mesh
+
+	return canvas
+
 
 static func create_missing_texture_grid(grid_size : int) -> PackedByteArray:
 	var black := [0, 0, 0, 56]

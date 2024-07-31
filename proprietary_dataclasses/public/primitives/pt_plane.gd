@@ -65,7 +65,7 @@ func translate_with_new_d(new_d : float) -> void:
 
 func to_byte_array() -> PackedByteArray:
 	var bytes := (
-		PackedFloat32Array(PTObject.vector_to_array(normal) +
+		PackedFloat32Array(PTUtils.vector3_to_array(normal) +
 		[distance]).to_byte_array() +
 		_get_property_byte_array()
 	)

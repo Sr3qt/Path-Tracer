@@ -153,7 +153,7 @@ func _ready() -> void:
 		get_window().position -= Vector2i(450, 100)
 
 	if not canvas:
-		canvas = create_canvas()
+		canvas = PTUtils.create_canvas()
 
 	# If the Renderer is running in the editor, a single camera is used
 	#  instead of using each scene's camera
@@ -246,7 +246,7 @@ func _exit_tree() -> void:
 ## It is plugin_control_root's responsibility to call this function
 func _set_plugin_camera(cam : PTCamera) -> void:
 	if not canvas:
-		canvas = create_canvas()
+		canvas = PTUtils.create_canvas()
 
 	has_active_camera = true
 	_pt_editor_camera = cam
@@ -440,7 +440,7 @@ func add_scene(new_ptscene : PTScene) -> void:
 		new_ptscene.bvh = PTBVHTree.new(bvh_order)
 
 	if not canvas:
-		canvas = create_canvas()
+		canvas = PTUtils.create_canvas()
 
 	# Create new WD
 	var new_wd := PTWorkDispatcher.new(self)
@@ -660,30 +660,6 @@ func _plugin_change_scene(scene_root : Node) -> void:
 	change_scene(scene_to_change)
 
 
-# TODO Can be made static, and moved elsewhere
-func create_canvas() -> MeshInstance3D:
-	# Create canvas that will display rendered image
-	# Prepare canvas shader
-	var mat := ShaderMaterial.new()
-	mat.shader = preload("res://shaders/canvas.gdshader")
-	mat.set_shader_parameter("image_buffer", Texture2DRD.new())
-	mat.set_shader_parameter("is_rendering", not is_rendering_disabled)
-
-	var mesh := QuadMesh.new()
-	mesh.size = Vector2(2, 2)
-	mesh.surface_set_material(0, mat)
-
-	# Create a canvas to which rendered images will be drawn
-	@warning_ignore("shadowed_variable")
-	var canvas := MeshInstance3D.new()
-	canvas.position -= Vector3(0,0,1)
-	canvas.set_layer_mask_value(20, true)
-	canvas.set_layer_mask_value(1, false)
-	canvas.mesh = mesh
-
-	return canvas
-
-
 func create_bvh(ptscene : PTScene, _order : int, function_name : String) -> void:
 	# TODO Rework shader to work with different bvh orders without reloading
 	if not is_instance_valid(scene):
@@ -847,7 +823,7 @@ func _update_bvh_buffer(ptscene : PTScene, updated_node_indices : Array[int]) ->
 		# If index is out of range of objects, null out index
 		if node_index >= ptscene.bvh.bvh_list.size():
 			# Empy node
-			bytes = PTObject.empty_byte_array(ptscene.bvh.node_byte_size())
+			bytes = PTUtils.empty_byte_array(ptscene.bvh.node_byte_size())
 		else:
 			bytes = ptscene.bvh.bvh_list[node_index].to_byte_array()
 		scene_wd.rd.buffer_update(buffer, node_index * bytes.size(), bytes.size(), bytes)

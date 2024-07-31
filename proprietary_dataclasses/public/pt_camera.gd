@@ -125,16 +125,12 @@ func set_camera_setting(cam : CameraSetting) -> void:
 	set_viewport_size()
 
 
-func vector_to_array(vector : Vector3) -> Array[float]:
-	return [vector.x, vector.y, vector.z]
-
-
 func to_byte_array() -> PackedByteArray:
 	var camera_array := (
-			vector_to_array(position) + [focal_length] +
-			vector_to_array(right) + [viewport_width] +
-			vector_to_array(up) + [viewport_height] +
-			vector_to_array(forward) + [gamma]
+			PTUtils.vector3_to_array(position) + [focal_length] +
+			PTUtils.vector3_to_array(right) + [viewport_width] +
+			PTUtils.vector3_to_array(up) + [viewport_height] +
+			PTUtils.vector3_to_array(forward) + [gamma]
 	)
 
 	return (PackedFloat32Array(camera_array).to_byte_array())

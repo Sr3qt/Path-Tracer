@@ -180,7 +180,7 @@ func get_object_index(object : PTObject) -> int:
 
 
 func get_mesh_index(mesh : PTMesh) -> int:
-	return unpacked_objects.get_mesh_index(mesh)
+	return scene_objects.get_mesh_index(mesh)
 
 
 func get_material_index(material : PTMaterial) -> int:
