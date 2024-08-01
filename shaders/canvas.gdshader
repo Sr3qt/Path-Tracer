@@ -12,7 +12,7 @@ uniform bool is_rendering = false;
 
 void vertex() {
 	if (is_rendering) {
-		POSITION = vec4(VERTEX, 1);
+		POSITION = vec4(VERTEX.xy, 1, 1);
 	}
 }
 
@@ -24,13 +24,13 @@ void fragment() {
 	// COnvertion from srgb to rgb
 	float gamma = 1.35;
 	float gamma1 = 2.2;
-	
+
 	// If showing default texture, swap with image preview
 	if (is_rendering) {
 		color.rgb = pow(color.rgb, vec3(gamma1, gamma1, gamma1));
 	} else {
 		color.rgb = pow(new_color.rgb, vec3(gamma, gamma, gamma));
-	} 
-	
+	}
+
 	ALBEDO = color.rgb;
 }
