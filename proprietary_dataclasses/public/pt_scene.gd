@@ -50,10 +50,6 @@ var scene_objects : PTObjectContainer
 ## All PTScene objects and objects in PTScene's meshes
 var unpacked_objects : PTObjectContainer
 
-# Objects owned by the scene and objects owned by meshes
-## TODO DEPRECATE
-var objects : PTObjectContainer
-
 ## NOTE: Because of refraction tracking in the shader, a material index is reserved
 ## for the IOR of air. Currently index 0 is reserved.
 var materials : Array[PTMaterial] = [null]
@@ -107,7 +103,7 @@ var procedural_texture_removed := false
 var _to_add : PTObjectContainer
 var _to_remove : PTObjectContainer
 
-var _can_reindex : bool:
+var can_reindex : bool:
 	get:
 		return not (_to_add.is_empty() and _to_remove.is_empty())
 
@@ -123,7 +119,6 @@ var _enter_tree_time : int
 func _init() -> void:
 	_init_time = Time.get_ticks_usec()
 	added_types.resize(ObjectType.MAX)
-	objects = PTObjectContainer.new()
 	scene_objects = PTObjectContainer.new()
 	unpacked_objects = PTObjectContainer.new()
 	_to_add = PTObjectContainer.new()
@@ -616,6 +611,20 @@ func remove_objects() -> void:
 	objects_to_remove.clear()
 
 
+## Reset all frame dependant scene flags, eg. scene_changed
+func reset_frame_flags() -> void:
+	added_object = false
+	added_types.fill(false)
+	procedural_texture_added = false
+	procedural_texture_removed = false
+	material_added = false
+	material_removed = false
+	scene_changed = false
+
+	if camera:
+		camera.camera_changed = false
+
+
 ## Called after all have objects and meshes have been removed, added and updated.
 ## Almost definitely a result of premature optimization
 func _re_index() -> void:
@@ -658,7 +667,7 @@ func _re_index() -> void:
 
 	## Actual functions
 	# Re-index objects
-	var updated_object_ids := objects._rebalance_objects(unpacked_to_add, unpacked_to_remove)
+	var updated_object_ids := unpacked_objects._rebalance_objects(unpacked_to_add, unpacked_to_remove)
 	if PTRendererAuto.is_debug:
 		print(updated_object_ids)
 

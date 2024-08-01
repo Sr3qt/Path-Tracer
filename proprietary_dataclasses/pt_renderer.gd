@@ -618,19 +618,7 @@ func _update_scenes() -> void:
 			if is_debug:
 				print("Reloaded shader")
 
-		# Reset frame based flags
-		# TODO Turn into public ptscene func
-		ptscene.added_object = false
-		ptscene.added_types.fill(false)
-
-		ptscene.procedural_texture_added = false
-		ptscene.procedural_texture_removed = false
-		ptscene.material_added = false
-		ptscene.material_removed = false
-		ptscene.scene_changed = false
-
-		if ptscene.camera:
-			ptscene.camera.camera_changed = false
+		ptscene.reset_frame_flags()
 
 	if Engine.is_editor_hint():
 		_pt_editor_camera.camera_changed = false
@@ -784,7 +772,7 @@ func _update(ptscene : PTScene, updated_object_ids : Array[int], updated_node_in
 
 func _re_index_scenes() -> void:
 	for ptscene in scenes:
-		if ptscene._can_reindex:
+		if ptscene.can_reindex:
 			if is_debug:
 				print("Re-indexing scene now. ", ptscene)
 			ptscene._re_index()
@@ -803,10 +791,12 @@ func _update_object_buffers(ptscene : PTScene, updated_object_ids : Array[int]) 
 
 		var bytes : PackedByteArray
 		# If index is out of range of objects, null out index
-		if index >= ptscene.objects.get_object_array(type).size():
+		@warning_ignore("unsafe_method_access", "unsafe_property_access")
+		var object_array : Array = ptscene.objects.get_object_array(type)
+		if index >= object_array.size():
 			bytes = PTObject.empty_object_bytes(type)
 		else:
-			@warning_ignore("unsafe_method_access")
+			@warning_ignore("unsafe_method_access", "unsafe_property_access")
 			bytes = ptscene.objects.get_object_array(type)[index].to_byte_array()
 		print(bytes)
 		print(type)
