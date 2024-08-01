@@ -99,6 +99,7 @@ func _enter_tree() -> void:
 				#print("Object adds itself to mesh. object: ", self, " ", _mesh)
 			_mesh.add_object(self)
 
+	# TODO Only objects withouth a mesh needs this
 	transform_before = Transform3D(transform)
 	set_notify_transform(true)
 

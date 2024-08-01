@@ -1,5 +1,9 @@
 Performance on random_scene with book_ex camera settings
 
+Added mesh transforms, 10 with mesh transform, 66 without
+
+BVHnode compression,  67
+
 BVH traversal optimization, 72, 103
 
 before Packed range into ray, 54, 51, same after
