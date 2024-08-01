@@ -51,6 +51,7 @@ var scene_objects : PTObjectContainer
 var unpacked_objects : PTObjectContainer
 
 # Objects owned by the scene and objects owned by meshes
+## TODO DEPRECATE
 var objects : PTObjectContainer
 
 ## NOTE: Because of refraction tracking in the shader, a material index is reserved

@@ -95,7 +95,6 @@ func to_byte_array() -> PackedByteArray:
 			PackedInt32Array([0]).to_byte_array()
 			)
 		# bytes = PTUtils.transform3d_smuggle_to_byte_array(ttransform, _scene.get_material_index(material)
-		
 
 	assert(bytes.size() == PTSphere.get_object_byte_size(),
 			"Acutal byte size and set byte size do not match ")

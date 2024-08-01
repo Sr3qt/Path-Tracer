@@ -787,11 +787,10 @@ func _create_object_id_byte_array() -> PackedByteArray:
 
 func _create_transform_byte_array() -> PackedByteArray:
 	var bytes : PackedByteArray = []
-	if _scene.objects.meshes.size() > 0:
-		for mesh in _scene.objects.meshes:
-			bytes += PTUtils.transform3d_to_byte_array(Transform3D.IDENTITY)
-
-			# bytes += PTUtils.transform3d_to_byte_array(mesh.global_transform)
+	if _scene.scene_objects.meshes.size() > 0:
+		print("Creating transforms")
+		for mesh in _scene.scene_objects.meshes:
+			bytes += PTUtils.transform3d_smuggle_to_byte_array(mesh.global_transform.affine_inverse(), Vector4(0,0,0,1))
 	else:
 		bytes = PTUtils.empty_byte_array(16 * 4)
 	return bytes

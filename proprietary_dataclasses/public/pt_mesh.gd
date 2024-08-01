@@ -30,6 +30,9 @@ var mesh : Mesh
 var transform_before : Transform3D
 
 # TODO Be able to see and edit meshes while they are instatiated
+# TODO Changing mesh transform currently double rotates the mesh
+# TODO Grimchild mesh has a loose triangle when rotated
+# TODO Make renderer update transform buffer
 
 
 func _init() -> void:
