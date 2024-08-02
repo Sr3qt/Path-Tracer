@@ -174,7 +174,7 @@ func has(object : PTObject) -> bool:
 
 func _add_object_to_tree(object : PTObject) -> Array[BVHNode]:
 	# TODO Change to local aabb when using meshes + transforms
-	var fitting_node := find_aabb_spot(object.get_global_aabb())
+	var fitting_node := find_aabb_spot(object.get_bvh_aabb())
 	var new_nodes : Array[BVHNode] = []
 
 	if fitting_node == null:
@@ -185,7 +185,7 @@ func _add_object_to_tree(object : PTObject) -> Array[BVHNode]:
 		if PTRendererAuto.is_debug:
 			print("No vacant leaf node to add new object. Splitting node in two.")
 		new_nodes.append_array(_split_node(fitting_node))
-		fitting_node = find_aabb_spot(object.get_global_aabb(), fitting_node)
+		fitting_node = find_aabb_spot(object.get_bvh_aabb(), fitting_node)
 		if fitting_node == null:
 			fitting_node = root_node
 
@@ -587,8 +587,8 @@ func _rebalance_objects(
 	## Removing
 	var removed_nodes : Array[BVHNode] = []
 	# Remove meshes from tree
-	for mesh in removed_objects.meshes:
-		var node := mesh.bvh.root_node
+	for _mesh in removed_objects.meshes:
+		var node := _mesh.bvh.root_node
 		removed_nodes.append_array(get_subnodes(node))
 		node.parent.children.erase(node)
 
@@ -629,8 +629,8 @@ func _rebalance_objects(
 	## Adding
 	var added_nodes : Array[BVHNode] = []
 	# Add meshes to tree
-	for mesh in added_objects.meshes:
-		added_nodes.append_array(_merge_with(mesh.bvh))
+	for _mesh in added_objects.meshes:
+		added_nodes.append_array(_merge_with(_mesh.bvh))
 
 	# Add objects to tree, updated nodes are appended to updated_nodes
 	for _type : PTObject.ObjectType in PTObject.ObjectType.values():
@@ -714,13 +714,13 @@ func is_children_contiguous(node : BVHNode) -> bool:
 	return true
 
 
+## Returns the total bumber of nodes in the tree
 func size() -> int:
-	"""Returns the total bumber of nodes in the tree"""
 	return inner_count + leaf_count
 
 
-func depth() -> int:
-	"""Returns the length of the longest path from the root to a leaf node"""
+## Returns the length of the longest path from the root to a leaf node
+func get_depth() -> int:
 	var counter : int = 0
 	var current_node := root_node
 	# The default tree is created in a way in which the longest path will be
@@ -810,46 +810,50 @@ class BVHNode:
 		tree = p_tree
 
 
+	## Returns number of children and number of references to objects
 	func size() -> int:
-		"""Returns number of children and number of references to objects"""
 		return children.size() + object_list.size()
 
 
 	func set_aabb() -> void:
 		if is_leaf and not object_list.is_empty():
-			aabb = object_list[0].get_global_aabb()
+			aabb = object_list[0].get_bvh_aabb()
 			for object in object_list:
-				aabb = aabb.merge(object.get_global_aabb())
+				aabb = aabb.merge(object.get_bvh_aabb())
+			assert(aabb != null and aabb.size != Vector3.ZERO,
+					"PT: Leaf node did not create aabb correctly")
 			return
 
 		if not children.is_empty():
 			aabb = children[0].aabb
 			for child in children:
-				if child.aabb:
-					aabb = aabb.merge(child.aabb)
-				else:
-					push_warning("Warning: Child node %s does not have aabb" % child)
+				assert(aabb != null and aabb.size != Vector3.ZERO,
+						"PT: Child node %s does not have aabb" % child)
+				aabb = aabb.merge(child.aabb)
 
 
 	func update_aabb() -> void:
 		var old_aabb := aabb
 		set_aabb()
-		# TODO SHould be flipped no?
-		if aabb.is_equal_approx(old_aabb):
+		if not aabb.is_equal_approx(old_aabb):
 			tree.add_node_to_updated_nodes(self)
 			if is_instance_valid(parent):
 				parent.update_aabb()
 
 
 	func add_children(new_children : Array[BVHNode]) -> void:
+		assert(is_inner, "Cannot give inner node objects.")
 		if size() + new_children.size() <= tree.order:
 			children += new_children
-			set_aabb() # Update aabb
+			set_aabb()
 		else:
 			push_warning("Warning: Cannot fit child BVHNode(s) to node: ", self)
 
 
 	func to_byte_array() -> PackedByteArray:
+		assert(size() > 0,
+			"PT: Node does not have any children or objects and should be culled")
+
 		var root_tree := tree
 		for i in range(MAX_TREE_NESTING):
 			if root_tree.is_sub_tree:
@@ -896,5 +900,3 @@ class BVHNode:
 				str(tree.node_byte_size()) +" actual " + str(bytes.size()))
 
 		return bytes
-
-

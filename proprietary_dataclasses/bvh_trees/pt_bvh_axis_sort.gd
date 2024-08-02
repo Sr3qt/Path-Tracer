@@ -54,7 +54,7 @@ func create_bvh(objects : PTObjectContainer, f_type := BVHType.XYZ_SORTED) -> vo
 	for i in range(3):
 		_axis_sorts.append(
 				func(a : PTObject, b : PTObject) -> bool:
-					return a.get_global_aabb().get_center()[i] > b.get_global_aabb().get_center()[i])
+					return a.get_bvh_aabb().get_center()[i] > b.get_bvh_aabb().get_center()[i])
 
 	# Sort according to given axis
 	match type:
@@ -82,9 +82,9 @@ func create_bvh(objects : PTObjectContainer, f_type := BVHType.XYZ_SORTED) -> vo
 	creation_time = Time.get_ticks_usec() - start_time
 
 	if objects.meshes.size() > 0:
-		for mesh in objects.meshes:
-			if mesh.bvh:
-				merge_with(mesh.bvh)
+		for _mesh in objects.meshes:
+			if _mesh.bvh:
+				merge_with(_mesh.bvh)
 
 	if PTRendererAuto.is_debug:
 		print(("Finished creating %s BVH tree with %s inner nodes, " +
@@ -168,8 +168,8 @@ func _recursive_split2(object_list : Array[PTObject], parent : BVHNode, depth : 
 	var temp := AABB()
 
 	for object in object_list:
-		temp = temp.merge(object.get_global_aabb())
-		# temp = temp.expand(object.get_global_aabb().get_center())
+		temp = temp.merge(object.get_bvh_aabb())
+		# temp = temp.expand(object.get_bvh_aabb().get_center())
 
 	if type == BVHType.XYZ_SORTED:
 		_axis = temp.get_longest_axis_index()
@@ -178,7 +178,7 @@ func _recursive_split2(object_list : Array[PTObject], parent : BVHNode, depth : 
 
 
 	for object in object_list:
-		if object.get_global_aabb().get_center()[_axis] > temp.get_center()[_axis]:
+		if object.get_bvh_aabb().get_center()[_axis] > temp.get_center()[_axis]:
 			left.append(object)
 		else:
 			right.append(object)
@@ -270,6 +270,6 @@ func find_longest_axis(object_list : Array[PTObject]) -> int:
 	var temp := AABB()
 
 	for object in object_list:
-		temp = temp.merge(object.get_global_aabb())
+		temp = temp.merge(object.get_bvh_aabb())
 
 	return temp.get_longest_axis_index()

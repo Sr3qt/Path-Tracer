@@ -78,6 +78,7 @@ var is_meshlet : bool:
 
 var transform_before : Transform3D
 
+# TODO Make test to ensure an object has implemented all necessary functions
 
 func _enter_tree() -> void:
 	# Find scene when entering tree if scene is not set
@@ -100,8 +101,14 @@ func _enter_tree() -> void:
 			_mesh.add_object(self)
 
 	# TODO Only objects withouth a mesh needs this
-	transform_before = Transform3D(transform)
-	set_notify_transform(true)
+	if not is_meshlet:
+		transform_before = Transform3D(global_transform)
+		set_notify_transform(true)
+		set_notify_local_transform(false)
+	else:
+		transform_before = Transform3D(transform)
+		set_notify_transform(false)
+		set_notify_local_transform(true)
 
 
 func _exit_tree() -> void:
@@ -119,6 +126,11 @@ func _exit_tree() -> void:
 func _notification(what : int) -> void:
 	match what:
 		NOTIFICATION_TRANSFORM_CHANGED:
+			if _scene and global_transform != transform_before:
+				object_changed.emit(self)
+				transform_before = Transform3D(global_transform)
+
+		NOTIFICATION_LOCAL_TRANSFORM_CHANGED:
 			if _scene and transform != transform_before:
 				object_changed.emit(self)
 				transform_before = Transform3D(transform)
@@ -240,9 +252,19 @@ func has_aabb() -> bool:
 	return true
 
 
+func _get_aabb() -> AABB:
+	return get_aabb()
+
+## Returns the objects aabb in world coordinates
 func get_global_aabb() -> AABB:
-	"""Returns the objects aabb in world coordinates"""
-	return global_transform * get_aabb()
+	return global_transform * _get_aabb()
+
+
+## Return the aabb used by the BVH
+func get_bvh_aabb() -> AABB:
+	if is_meshlet:
+		return transform * _get_aabb()
+	return global_transform * _get_aabb()
 
 
 func _get_property_byte_array() -> PackedByteArray:
@@ -266,4 +288,3 @@ func to_byte_array() -> PackedByteArray:
 	push_error("No 'to_byte_array' function set for object " + str(self) + ". \
 	A default function will be used instead.")
 	return PackedInt32Array([0,0,0,0,0,0,0,0]).to_byte_array()
-

@@ -30,9 +30,8 @@ var mesh : Mesh
 var transform_before : Transform3D
 
 # TODO Be able to see and edit meshes while they are instatiated
-# TODO Changing mesh transform currently double rotates the mesh
-# TODO Grimchild mesh has a loose triangle when rotated
-# TODO Make renderer update transform buffer
+# TODO Grimchild mesh has a loose triangle when rotated.
+# This traingle is actually only seen when looking through th red spheres aabb
 
 
 func _init() -> void:
@@ -49,7 +48,7 @@ func _enter_tree() -> void:
 		else:
 			scene = temp[0] # UNSTATIC
 
-	transform_before = Transform3D(transform)
+	transform_before = Transform3D(global_transform)
 	set_notify_transform(true)
 
 
@@ -74,7 +73,7 @@ func _ready() -> void:
 				print("PT: Importing mesh child")
 				print(child)
 
-			mesh = child.mesh
+			mesh = (child as MeshInstance3D).mesh
 
 			for triangle in objects.mesh_to_pttriangles(mesh):
 				add_object(triangle)
@@ -110,9 +109,9 @@ func _ready() -> void:
 func _notification(what : int) -> void:
 	match what:
 		NOTIFICATION_TRANSFORM_CHANGED:
-			if scene and transform != transform_before:
+			if scene and global_transform != transform_before:
 				transform_changed.emit(self)
-				transform_before = Transform3D(transform)
+				transform_before = Transform3D(global_transform)
 
 
 func add_mesh(other : PTMesh) -> void:
@@ -168,4 +167,9 @@ func remove_object(object : PTObject) -> void:
 	if is_node_ready():
 		bvh.remove_object(object)
 
+
+## Returns the mesh's global transform in a byte array
+func to_byte_array() -> PackedByteArray:
+	return PTUtils.transform3d_smuggle_to_byte_array(
+		global_transform.affine_inverse(), Vector4(0, 0, 0, 1))
 

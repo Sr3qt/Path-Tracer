@@ -1000,7 +1000,7 @@ RayHit check_ray_hit(inout Ray ray) {
     return rayhit;
 }
 
-#define use_mesh_transform 0
+#define use_mesh_transform 1
 
 #if use_mesh_transform
 Ray transformed_ray[MAX_MESH_COUNT];

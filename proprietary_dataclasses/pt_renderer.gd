@@ -694,14 +694,22 @@ func update_bvh_nodes(ptscene : PTScene) -> void:
 func update_material(ptscene : PTScene, material : PTMaterial) -> void:
 	# Find right wd based on ptscene
 	var scene_wd := get_scene_wd(ptscene)
-	if scene_wd.material_buffer_size < ptscene.materials.size():
-		push_error("PT: Cannot update material as index is out of range for buffer.")
-		# If material is out of index do nothing
-		return
+	assert(scene_wd.material_buffer_size >= ptscene.materials.size(),
+		"PT: Cannot update material as index is out of range for buffer."
+	)
 
 	var buffer : RID = scene_wd.material_buffer
 	var bytes : PackedByteArray = material.to_byte_array()
 	var offset : int = ptscene.get_material_index(material) * bytes.size()
+	scene_wd.rd.buffer_update(buffer, offset, bytes.size(), bytes)
+
+
+func update_mesh_transform(ptscene : PTScene, mesh : PTMesh) -> void:
+
+	var scene_wd := get_scene_wd(ptscene)
+	var buffer : RID = scene_wd.transform_buffer
+	var bytes : PackedByteArray = mesh.to_byte_array()
+	var offset : int = ptscene.get_mesh_index(mesh) * bytes.size()
 	scene_wd.rd.buffer_update(buffer, offset, bytes.size(), bytes)
 
 

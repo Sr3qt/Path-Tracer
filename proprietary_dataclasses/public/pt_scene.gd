@@ -282,10 +282,11 @@ func remove_mesh(mesh : PTMesh) -> void:
 		bvh.remove_subtree(mesh.bvh.root_node)
 
 
-@warning_ignore("unused_parameter")
 func _update_mesh(mesh : PTMesh) -> void:
-	# TODO Update mesh and sub-meshes transform in buffer, update bvh aabbs
-	pass
+	# TODO Update bvh aabbs
+	PTRendererAuto.update_mesh_transform(self, mesh)
+
+	scene_changed = true
 
 
 ## Returns material index of added material. used_by_object refers to whether or

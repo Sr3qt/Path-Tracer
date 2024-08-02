@@ -437,7 +437,6 @@ _data = {
 }
 
 [node name="HN_GrimmChild_Anim_final_LP_96frames_baked" type="Node3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.106643, 0)
 script = ExtResource("2_upt1j")
 
 [node name="Camera" type="Camera3D" parent="."]

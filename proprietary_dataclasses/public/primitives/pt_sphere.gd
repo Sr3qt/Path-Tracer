@@ -62,15 +62,9 @@ func get_type() -> ObjectType:
 
 
 func _get_aabb() -> AABB:
-	return AABB(-Vector3.ONE, Vector3.ONE * 2)
-
-
-func get_global_aabb() -> AABB:
-	"""Returns the objects aabb in world coordinates"""
 	if USE_INSTANCING:
-		return global_transform * _get_aabb()
-
-	return global_transform * get_aabb()
+		return AABB(-Vector3.ONE, Vector3.ONE * 2)
+	return get_aabb()
 
 
 func to_byte_array() -> PackedByteArray:
@@ -100,8 +94,3 @@ func to_byte_array() -> PackedByteArray:
 			"Acutal byte size and set byte size do not match ")
 
 	return bytes
-
-
-
-
-

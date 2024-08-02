@@ -205,6 +205,7 @@ func create_buffers() -> void:
 	# Get texture RID for Canvas
 	var material := _renderer.canvas.get_mesh().surface_get_material(0) as ShaderMaterial
 	# NOTE: get_shader_parameter literally returns variant; get fgucked. UNSTATIC
+	@warning_ignore("unsafe_cast")
 	texture = material.get_shader_parameter("image_buffer") as Texture2DRD
 
 	if _scene.get_size() != 0 and PTRendererAuto.is_debug:
@@ -777,6 +778,7 @@ func _create_object_id_byte_array() -> PackedByteArray:
 
 	if _scene.bvh and _scene.bvh.scene:
 		if _scene.bvh.object_ids.size() == 0:
+			# TODO Find a beter place to create object_ids, shouldn't be here atleast
 			_scene.bvh.create_object_ids()
 		bytes = _scene.bvh.object_ids.to_byte_array()
 	else:
@@ -789,9 +791,7 @@ func _create_transform_byte_array() -> PackedByteArray:
 	var bytes : PackedByteArray = []
 	if _scene.scene_objects.meshes.size() > 0:
 		for mesh in _scene.scene_objects.meshes:
-			bytes += PTUtils.transform3d_smuggle_to_byte_array(
-				mesh.global_transform.affine_inverse(), Vector4(0,0,0,1)
-			)
+			bytes += mesh.to_byte_array()
 	else:
 		bytes = PTUtils.empty_byte_array(16 * 4)
 	return bytes

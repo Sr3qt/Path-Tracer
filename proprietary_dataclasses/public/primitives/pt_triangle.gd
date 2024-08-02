@@ -105,12 +105,6 @@ func _get_aabb() -> AABB:
 	return aabb
 
 
-func get_global_aabb() -> AABB:
-	#if not is_inside_tree():
-		#return _get_aabb()
-	return global_transform * _get_aabb()
-
-
 func set_uvs(uv1 : Vector2, uv2 : Vector2, uv3 : Vector2) -> void:
 	uv_pos1 = uv1
 	uv_pos2 = uv2
@@ -120,10 +114,14 @@ func set_uvs(uv1 : Vector2, uv2 : Vector2, uv3 : Vector2) -> void:
 func to_byte_array() -> PackedByteArray:
 	var bytes := PackedByteArray()
 
+	var temp_transform := global_transform
+	if is_meshlet:
+		temp_transform = transform
+
 	bytes += PackedFloat32Array(
-		PTUtils.vector3_to_array(global_transform * vertex1) + [0] +
-		PTUtils.vector3_to_array(global_transform * vertex2) + [0] +
-		PTUtils.vector3_to_array(global_transform * vertex3) + [0] +
+		PTUtils.vector3_to_array(temp_transform * vertex1) + [0] +
+		PTUtils.vector3_to_array(temp_transform * vertex2) + [0] +
+		PTUtils.vector3_to_array(temp_transform * vertex3) + [0] +
 		PTUtils.vector3_to_array((vertex2 - vertex1).cross(vertex3 -  vertex1).normalized()) + [0]
 	).to_byte_array()
 	bytes += _get_property_byte_array()
