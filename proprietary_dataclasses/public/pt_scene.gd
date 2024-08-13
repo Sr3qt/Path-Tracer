@@ -227,7 +227,7 @@ func add_mesh(mesh : PTMesh) -> void:
 	# NOTE: Should scene also add any sub-meshes that have not already been added?
 
 	var new_added_types := unpacked_objects.merge(mesh.objects)
-#
+
 	## Update object update flags
 	for i in range(new_added_types.size()):
 		added_types[i] = added_types[i] or new_added_types[i]

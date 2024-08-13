@@ -1000,9 +1000,16 @@ RayHit check_ray_hit(inout Ray ray) {
     return rayhit;
 }
 
-#define use_mesh_transform 1
 
-#if use_mesh_transform
+/*
+Whether to allow meshes to do transformations, currently works but performs very poorly.
+    1 is old implementation
+    2 is new implementation, currently only works when not loading editor
+    0 is no implementation
+*/
+#define use_mesh_transform 0
+
+#if use_mesh_transform == 1
 Ray transformed_ray[MAX_MESH_COUNT];
 vec3 transformed_inv_directions[MAX_MESH_COUNT];
 bvec3 transformed_is_negative[MAX_MESH_COUNT];
@@ -1010,6 +1017,7 @@ bool is_ray_created[MAX_MESH_COUNT];
 #endif
 
 RayHit check_ray_hit_BVH(inout Ray ray) {
+    // TODO Maybe the inout ray shouldnt be the one i constantly change
     RayHit rayhit = empty_rayhit();
 
     // NOTE: Objects that go before bvh can be used as Occluders
@@ -1017,12 +1025,16 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
 
     // Pre-compute values for hit detection
     vec3 inv_direction = vec3(1) / ray.direction;
-    bvec3 dir_is_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
+    bvec3 is_dir_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
 
-    #if use_mesh_transform
+    #if use_mesh_transform == 1
     for (int i = 0; i < MAX_MESH_COUNT; i++) {
         is_ray_created[i] = false;
     }
+    #elif use_mesh_transform == 2
+    const Ray stored_ray = ray;
+    const vec3 stored_inv_dir = inv_direction;
+    const bvec3 stored_is_neg = is_dir_negative;
     #endif
 
     // TODO PERFORMANCE IS CRITICALLY NEEDED
@@ -1058,7 +1070,7 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
 
     // TODO Make policy that scene bvh root cannot have transform
     // Test if root node is hit by ray
-    float root_hit = hit_AABB(ray, BVH.list[0].bbox, inv_direction, dir_is_negative);
+    float root_hit = hit_AABB(ray, BVH.list[0].bbox, inv_direction, is_dir_negative);
 
     // Index to top of the stack, points to vacant spot ABOVE the stack
     int to_visit_i = (in_range(root_hit, ray)) ? 1 : 0;
@@ -1078,7 +1090,25 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
 
     while (to_visit_i > 0 && to_visit_i <= max_depth) {
         current_index = to_visit[--to_visit_i];
-        BVHNode node = BVH.list[current_index];
+
+        // TODO Not very expensive but might be better to make  zero width object hit check instead
+        // First implementation will be empty negative index, second will try negating existing index.
+
+        #if use_mesh_transform == 2
+        if (current_index < 0) {
+            float temp_t = ray.end;
+            ray = stored_ray;
+            ray.end = temp_t;
+
+            // stored_ray.end = ray.end;
+            // ray = stored_ray;
+
+            inv_direction = stored_inv_dir;
+            is_dir_negative = stored_is_neg;
+        }
+        #endif
+
+        BVHNode node = BVH.list[abs(current_index)];
         int node_id = NODE_node_id;
         int node_index = get_node_index(node_id);
         int node_size = abs(get_node_size(node_id));
@@ -1096,7 +1126,7 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
         // node_index pointing to nodes should never be zero (root_node)
         if (node_index <= 0) {
 
-            #if use_mesh_transform
+            #if use_mesh_transform == 1
             BVHNode child = node;
             int transform_index = CHILD_node_transform;
             Transform mesh = transforms.data[transform_index];
@@ -1115,6 +1145,10 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
                     hit_object(ray, rayhit, object_ids.list[abs(node_index) + k]);
                 }
             }
+            #elif use_mesh_transform == 2
+            for (int k = 0; k < node_size; k++) {
+                hit_object(ray, rayhit, object_ids.list[abs(node_index) + k]);
+            }
             #else
             for (int k = 0; k < node_size; k++) {
                 hit_object(ray, rayhit, object_ids.list[abs(node_index) + k]);
@@ -1128,11 +1162,11 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
         for (int l = 0; l < node_size; l++) {
             BVHNode child = BVH.list[node_index + l];
 
+            #if use_mesh_transform == 1
             Ray temp_ray = ray;
             vec3 temp_inv = inv_direction;
-            bvec3 temp_neg = dir_is_negative;
+            bvec3 temp_neg = is_dir_negative;
 
-            #if use_mesh_transform
             int transform_index = CHILD_node_transform;
             Transform transform = transforms.data[transform_index];
             if (transform_index >= 0) {
@@ -1155,6 +1189,8 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
                     transformed_inv_directions[transform_index] = temp_inv;
                     transformed_is_negative[transform_index] = temp_neg;
                     is_ray_created[transform_index] = true;
+                    // Make empty bvh index to know that a mesh has been completed
+                    to_visit[to_visit_i++] = -1;
                 }
                 else {
                     temp_ray = transformed_ray[transform_index];
@@ -1162,9 +1198,35 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
                     temp_neg = transformed_is_negative[transform_index];
                 }
             }
+            float aabb_t = hit_AABB(temp_ray, child.bbox, temp_inv, temp_neg);
+            #elif use_mesh_transform == 2
+            // TODO Can be moved out of loop since we know its only one node
+            int transform_index = CHILD_node_transform;
+            Transform transform = transforms.data[transform_index];
+            if (transform_index >= 0) {
+
+                // The big performance drop is caused by this indexing and array access
+
+                // DO MATREIX CALC
+                mat4 matrix = transform.matrix;
+
+                ray = Ray(vec3(matrix * vec4(ray.origin, 1)), ray.start,
+                                (matrix * vec4(ray.direction, 0)).xyz, ray.end);
+                inv_direction = vec3(1) / ray.direction;
+                is_dir_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
+
+                // Flip bvh index to know that a mesh has been completed
+                to_visit[to_visit_i - 1] *= -1;
+
+                // temp_ray = ray;
+                // temp_inv = inv_direction;
+                // temp_neg = is_dir_negative;
+            }
+            float aabb_t = hit_AABB(ray, child.bbox, inv_direction, is_dir_negative);
+            #else
+            float aabb_t = hit_AABB(ray, child.bbox, inv_direction, is_dir_negative);
             #endif
 
-            float aabb_t = hit_AABB(temp_ray, child.bbox, temp_inv, temp_neg);
             // xin_range much faster, but has an artifact
             if (in_range(aabb_t, ray)) {
                 added_children++;

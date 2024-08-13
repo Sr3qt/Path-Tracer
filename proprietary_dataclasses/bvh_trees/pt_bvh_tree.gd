@@ -23,8 +23,12 @@ extends RefCounted
 ## If there is a function both with and without an underscore, the one with underscore
 ## probably doesn't handle bvh_list indexing.
 ##
-## PTBVHTrees can have sub-trees within them, visible by the root node of the sub-tree's
-## tree property. Each PTBVHTree object has ownership of their sub-tree and they
+## PTBVHTrees can have sub-trees within them, seen by the root node of the sub-tree having
+## a different tree property. These root nodes will have only one child node which contains
+## the rest of the tree.
+## Will probably change policy so that only scene bvh can have sub-trees.
+##
+## Each PTBVHTree object has ownership of their sub-tree and they
 ## should control changes to their own branches and nodes. The super-trees will
 ## still have indices to nodes in the sub-trees and can only use get functions on them.
 
@@ -67,9 +71,7 @@ const objects_to_exclude : Array[PTObject.ObjectType] = [
 	PTObject.ObjectType.MAX,
 ]
 
-# TODO Implement transforms for bvhnodes
-
-# TODO Fix support for multi order trees
+# TODO Fix support for multi order trees, now it crashes the whole program
 var order : int
 
 # BVHTrees can merge, parent_tree is the BVH this tree was merged with
@@ -79,8 +81,14 @@ var is_sub_tree : bool:
 		return is_instance_valid(parent_tree)
 
 ## Only used to get correct obejct indexing when converting to byte array
-var scene : PTScene
-var mesh : PTMesh
+var scene : PTScene:
+	set(value):
+		assert(not is_instance_valid(mesh), "Cannot set property 'scene' on BVH with set mesh")
+		scene = value
+var mesh : PTMesh:
+	set(value):
+		assert(not is_instance_valid(scene), "Cannot set property 'mesh' on BVH with set scene")
+		mesh = value
 
 # TODO Give BVHTree aabb property similar to ptobjects to facilitate duck typing.
 var root_node : BVHNode
@@ -103,13 +111,19 @@ var object_count : int # Counts the number of objects stored in leaf nodes
 # NOTE: how to handle meshes with different types
 var type : BVHType
 var creation_time : int # In usecs
-var SAH_cost : float
+var sah_cost : float
 
 # TODO Instead make a list of indices that needs to be updated
 var updated_nodes : Array[BVHNode] = [] # Nodes that need to update their buffer
+var updated_indices : Array[int] = []
+
 # TODO MAke BVHBUffer abler to expand + have empty space
 
 # TODO Make a check for loops existing
+
+## TEMP Only valid for scene bvh. Whether the bvh buffer needs to be rebuilt.
+var tree_reindexing_needed := false
+var needs_buffer_reset := false
 
 
 func _init(_order := 2) -> void:
@@ -147,11 +161,11 @@ static func create_bvh_with_function_name(
 	return bvh
 
 
-func has_mesh() -> bool:
+func is_mesh_owned() -> bool:
 	return is_instance_valid(mesh)
 
 
-func has_scene() -> bool:
+func is_scene_owned() -> bool:
 	return is_instance_valid(scene)
 
 
@@ -166,6 +180,12 @@ func update_aabb(object : PTObject) -> void:
 func add_node_to_updated_nodes(node : BVHNode) -> void:
 	if not node in updated_nodes:
 		updated_nodes.append(node)
+
+
+## Appends a node_index that needs to be updated in buffer
+func append_updated_node_index(index : int) -> void:
+	if index not in updated_indices:
+		updated_indices.append(index)
 
 
 func has(object : PTObject) -> bool:
@@ -282,6 +302,7 @@ func get_subnodes(node : BVHNode, indices : Array[BVHNode] = []) -> Array[BVHNod
 
 ## Sets tree indices of tree for newly created node
 func index_node(node : BVHNode) -> void:
+	# I don't like this function
 	# TODO Change to recursive indexing if we have nested sub-trees
 	#assert(node.tree == self, "The given node is not a part of this tree or is in" +
 			#"a sub-tree. Please use the sub-tree's methods instead.")
@@ -308,8 +329,11 @@ func index_node(node : BVHNode) -> void:
 			parent_tree.bvh_list.append(node)
 
 
-## Sets the required indexes required for the BVHTree to work with the engine
+## Sets the required indexes for the BVHTree to work with the engine
 func index_tree() -> void:
+	# NOTE: Should be used as little as possible for best performance
+	print("bvhtree re-indexed")
+	var start_time := Time.get_ticks_usec()
 	bvh_list = []
 	leaf_nodes = []
 	object_to_leaf = {}
@@ -318,32 +342,32 @@ func index_tree() -> void:
 	leaf_count = 0
 	object_count = 0
 
-	__index_node(root_node)
+	_node_to_index[root_node] = bvh_list.size() # UNSTATIC
+	bvh_list.append(root_node)
+	inner_count += 1
+
+	_index_node(root_node)
+	print("Time taken: ", ((Time.get_ticks_usec() - start_time) / 1000.0), "ms")
 
 
 ## Recursively index whole tree/sub-tree under given node
-func __index_node(node : BVHNode) -> void:
-	# TODO Make function comply with new sub-tree policy
-	#assert(node.tree == self, "The given node is not a part of this tree or is in" +
-			#"a sub-tree. Please use the sub-tree's methods instead.")
-	_node_to_index[node] = bvh_list.size() # UNSTATIC
-	bvh_list.append(node)
-	inner_count += 1
-
+func _index_node(node : BVHNode) -> void:
 	for child in node.children:
-		if child.is_leaf:
-			_node_to_index[child] = bvh_list.size()  # UNSTATIC
-			bvh_list.append(child)
-			leaf_nodes.append(child)
+		_node_to_index[child] = bvh_list.size() # UNSTATIC
+		bvh_list.append(child)
 
+		if child.is_leaf:
+			leaf_nodes.append(child)
 			leaf_count += 1
 			object_count += child.object_list.size()
 			for object in child.object_list:
 				object_to_leaf[object] = child # UNSTATIC
-			continue
+		else:
+			inner_count += 1
 
-		#if child
-		__index_node(child)
+	for child in node.children:
+		if child.is_inner:
+			_index_node(child)
 
 
 ## Finds a non-full inner node recursively
@@ -383,8 +407,10 @@ func node_cleanup(node : BVHNode, cleaned_nodes : Array[BVHNode] = []) -> Array[
 
 
 ## Splits a node in two, dividing its children/objects evenly among two new nodes.
+## If the given node is a leaf node so are the new nodes, else they are also inner nodes.
 ## Returns these new nodes.
 func _split_node(node : BVHNode) -> Array[BVHNode]:
+	# TODO Needs a lot of cleanup to work with new bvhnode continuity stuff
 	assert(node.tree == self, "The given node is not a part of this tree or is in" +
 			"a sub-tree. Please use the sub-tree's methods instead.")
 	var new_node_left := BVHNode.new(node, self)
@@ -471,7 +497,7 @@ func find_aabb_spot(aabb : AABB, node := root_node) -> BVHNode:
 func _merge_with(other : PTBVHTree, root := root_node) -> Array[BVHNode]:
 	# Find inner node to place other
 	var fitting_node := find_aabb_spot(other.root_node.aabb, root)
-	var new_nodes : Array[BVHNode] = []
+	var new_nodes : Array[BVHNode] = other.bvh_list.duplicate()
 
 	if fitting_node == null:
 		fitting_node = root_node
@@ -487,14 +513,25 @@ func _merge_with(other : PTBVHTree, root := root_node) -> Array[BVHNode]:
 		if fitting_node == null:
 			fitting_node = root_node
 
-	new_nodes.append_array(other.bvh_list.duplicate())
+	# Mesh socket is a special node that only has a subtree as a child
+	var mesh_socket := BVHNode.new(fitting_node, self)
+	mesh_socket.is_mesh_socket = true
+	_node_to_index[mesh_socket] = bvh_list.size()
+	bvh_list.append(mesh_socket)
+	mesh_socket.is_inner = true
+	inner_count += 1
+	fitting_node.add_children([mesh_socket])
+
+	# new_nodes.append_array(other.bvh_list.duplicate())
 
 	# "Glue the seam"
-	fitting_node.add_children([other.root_node])
-	fitting_node.update_aabb()
-	add_node_to_updated_nodes(fitting_node)
-	other.root_node.parent = fitting_node
+	mesh_socket.add_children([other.root_node])
+	mesh_socket.update_aabb()
+	append_updated_node_index(get_node_index(fitting_node))
+	append_updated_node_index(get_node_index(mesh_socket))
+	other.root_node.parent = mesh_socket
 
+	# Update indices
 	object_to_leaf.merge(other.object_to_leaf)
 	leaf_nodes.append_array(other.leaf_nodes)
 	# TODO FIX NOTE THis gets reindexed correctly in the public function
@@ -514,6 +551,9 @@ func _merge_with(other : PTBVHTree, root := root_node) -> Array[BVHNode]:
 ## An optional argument root can be given, the insertion will
 ##  happen to one of its children
 func merge_with(other : PTBVHTree, root := root_node) -> void:
+	assert(not is_mesh_owned(), "A mesh BVH cannot merge with another BVH.")
+	assert(other.is_mesh_owned(), "A scene BVH cannot merge with another scene BVH.")
+
 	if order < other.order:
 		push_error("PT: BVH order ", order, " of scene does not ",
 		"allow for BVH order ", other.order, " of mesh.")
@@ -533,7 +573,6 @@ func merge_with(other : PTBVHTree, root := root_node) -> void:
 	# Reindexing
 	for node : BVHNode in new_nodes:
 		_node_to_index[node] += index_offset # UNSTATIC
-
 
 
 func _remove_node(node : BVHNode) -> void:
@@ -768,7 +807,7 @@ class BVHNode:
 	## intention is to hold information.
 	##
 	## A BVHNode is either an inner node, where the children property point to
-	## other BVHNodes, or a leaf node, where its object_list property point to
+	## other BVHNodes or is empty, or a leaf node, where its object_list property point to
 	## objects. Having a mixed node is no longer supported.
 	## Rather, wrap the objects in the mixed node into a new leaf node child.
 
@@ -779,20 +818,25 @@ class BVHNode:
 	var children : Array[BVHNode] # Reference to child BVHNodes
 	var aabb : AABB
 
+	# A mesh socket is a special node that only has a subtree as a child.
+	# It has special rules for its aabb
+	var is_mesh_socket := false
+
 	# Leaf nodes in the tree have no children and have a list pointing to objects
 	#  The object list is no larger than tree.order
 	var object_list : Array[PTObject] = []
 	## Index to the leaf node's start position in the tree's object_ids
 	var object_id_index := 0
 
-	var is_leaf := false
-	var is_inner : bool:
+	var is_inner := true
+	var is_leaf : bool:
 		get:
-			return not is_leaf
+			return not is_inner
 		set(value):
-			is_inner = value
-			is_leaf = not value
+			is_leaf = value
+			is_inner = not value
 
+	# TODO Make into function
 	var is_full : bool:
 		get:
 			if is_inner:
@@ -816,6 +860,11 @@ class BVHNode:
 
 
 	func set_aabb() -> void:
+		if is_mesh_socket:
+			assert(children[0].aabb != null and children[0].aabb.size != Vector3.ZERO)
+			aabb =  children[0].tree.mesh.transform * children[0].aabb
+			return
+
 		if is_leaf and not object_list.is_empty():
 			aabb = object_list[0].get_bvh_aabb()
 			for object in object_list:
@@ -888,8 +937,10 @@ class BVHNode:
 
 		var mesh_transform_index := -1
 		# If node is root and tree is owned by mesh, set mesh tranform index
-		# if tree.root_node == self and tree.has_mesh():
-		if tree.has_mesh():
+		# if tree.root_node == self and tree.is_mesh_owned():
+		# Only give mesh root_node a transform_index
+		# if tree.is_mesh_owned() and parent.is_mesh_socket:
+		if tree.is_mesh_owned():
 			mesh_transform_index = tree.mesh.scene.get_mesh_index(tree.mesh)
 			assert(mesh_transform_index >= 0, "Mesh was not found in Scenes's meshes")
 

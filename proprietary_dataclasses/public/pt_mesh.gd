@@ -2,7 +2,9 @@
 class_name PTMesh
 extends Node3D
 
-## A simple class to hold PTObjects
+## A simple class to hold PTObjects with their own transform and BVH
+##
+## PTMeshes in same PTScene can be instantiated and save memory. * COMING SOON *
 
 @export var bvh_type := PTBVHTree.BVHType.X_SORTED
 @export var bvh_order : int = 8
@@ -22,7 +24,7 @@ var bvh : PTBVHTree
 
 # The scene this object is part of. This object might also be a part of a mesh.
 var scene : PTScene
-var _mesh : PTMesh
+# var _mesh : PTMesh # TODO DEPRECATED
 
 #var surface_mesh : ArrayMesh
 var mesh : Mesh
@@ -33,6 +35,10 @@ var transform_before : Transform3D
 # TODO Grimchild mesh has a loose triangle when rotated.
 # This traingle is actually only seen when looking through th red spheres aabb
 
+# TODO Actually just make more like objects. They talk only with their scene.
+# They have no responsibility for nested meshes. Nested meshes in bvh is just a mesh.
+# mess*
+
 
 func _init() -> void:
 	objects = PTObjectContainer.new()
@@ -41,12 +47,7 @@ func _init() -> void:
 func _enter_tree() -> void:
 	# Find scene or mesh when entering tree if scene is not set
 	if not is_instance_valid(scene) :
-		var temp := PTObject.find_scene_or_mesh_ancestor(self)
-		_mesh = temp[1] # UNSTATIC
-		if is_instance_valid(_mesh):
-			scene = _mesh.scene
-		else:
-			scene = temp[0] # UNSTATIC
+		scene = PTObject.find_scene_ancestor(self)
 
 	transform_before = Transform3D(global_transform)
 	set_notify_transform(true)
@@ -96,11 +97,7 @@ func _ready() -> void:
 	var function_name : String = PTBVHTree.enum_to_dict[bvh_type] # UNSTATIC
 	bvh = PTBVHTree.create_bvh_with_function_name(objects, bvh_order, function_name, self)
 
-	if _mesh:
-		if PTRendererAuto.is_debug:
-			print("Mesh adds itself to other mesh. mesh: ", self, " other: ", _mesh)
-		_mesh.add_mesh(self)
-	elif scene:
+	if scene:
 		if PTRendererAuto.is_debug:
 			print("Mesh adds itself to scene. mesh: ", self, " ", scene)
 		scene.add_mesh(self)
@@ -112,26 +109,6 @@ func _notification(what : int) -> void:
 			if scene and global_transform != transform_before:
 				transform_changed.emit(self)
 				transform_before = Transform3D(global_transform)
-
-
-func add_mesh(other : PTMesh) -> void:
-	# NOTE: Meshes can merge their bvhs before merging with the scenes.
-	#  However, adding mesh to a mesh that is already in scene might require mergin recursivively
-	if scene:
-		if not other.scene:
-			other.scene = scene
-		scene.add_mesh(other)
-	else:
-		print("Mesh should have valid scene but hasnt")
-
-	objects.add_mesh(other)
-
-	# TODO Adding mesh gives core/variant/variant_utility.cpp:1111 -
-	# Warning: Child node <RefCounted#-9223369183218032947> does not have aabb
-
-
-func remove_mesh(other : PTMesh) -> void:
-	objects.remove_mesh(other)
 
 
 func add_object(object : PTObject) -> void:

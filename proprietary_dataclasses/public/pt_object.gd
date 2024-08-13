@@ -4,6 +4,8 @@ extends MeshInstance3D
 
 ## Base class for all visual objects
 
+# TODO Optimize by making PTObject inherit Node3D and spawning meshinstance in editor
+
 # TODO Add support for lines and add abilitiy to visualize traced rays
 # TODO Add instancing only to meshes?
 # NOTE: Exporting can exclude meshes
@@ -136,18 +138,9 @@ func _notification(what : int) -> void:
 				transform_before = Transform3D(transform)
 
 
-func _get_property_list() -> Array:
-	# TODO Overriding previous classes export might be possible in godot 4.3
-	var properties := []
-	properties.append({
-		"name": "mesh",
-		"type": TYPE_RID,
-		"usage": PROPERTY_USAGE_NO_EDITOR,
-		"hint": PROPERTY_HINT_RESOURCE_TYPE,
-		"hint_string": "Don't change the mesh"
-	})
-
-	return properties
+func _validate_property(property: Dictionary) -> void:
+	if property.name == "mesh":
+		property.usage = PROPERTY_USAGE_NO_EDITOR
 
 
 static func get_object_byte_size() -> int:

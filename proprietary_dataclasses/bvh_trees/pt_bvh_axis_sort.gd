@@ -79,12 +79,14 @@ func create_bvh(objects : PTObjectContainer, f_type := BVHType.XYZ_SORTED) -> vo
 	_index = 1
 	_index_node2(root_node)
 
-	creation_time = Time.get_ticks_usec() - start_time
-
 	if objects.meshes.size() > 0:
 		for _mesh in objects.meshes:
 			if _mesh.bvh:
 				merge_with(_mesh.bvh)
+
+	index_tree()
+
+	creation_time = Time.get_ticks_usec() - start_time
 
 	if PTRendererAuto.is_debug:
 		print(("Finished creating %s BVH tree with %s inner nodes, " +
@@ -239,21 +241,6 @@ func _set_leaf(node : BVHNode, object_list : Array[PTObject]) -> BVHNode:
 	return node
 
 
-func _index_node(parent : BVHNode) -> void:
-	bvh_list[_index] = parent
-	_node_to_index[parent] = _index # UNSTATIC
-
-	_index += 1
-	for child in parent.children:
-		if child.is_leaf:
-			bvh_list[_index] = child
-			_node_to_index[child] = _index # UNSTATIC
-			_index += 1
-			continue
-
-		_index_node(child)
-
-
 func _index_node2(parent : BVHNode) -> void:
 	for child in parent.children:
 		bvh_list[_index] = child
@@ -263,7 +250,6 @@ func _index_node2(parent : BVHNode) -> void:
 	for child in parent.children:
 		if child.is_inner:
 			_index_node2(child)
-
 
 
 func find_longest_axis(object_list : Array[PTObject]) -> int:
