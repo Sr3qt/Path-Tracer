@@ -599,10 +599,6 @@ func _update_scenes() -> void:
 			#scenes_to_remove.append(ptscene)
 			continue
 
-		# Update BVHNodes in bvh buffer
-		#if ptscene.bvh and not ptscene.bvh.updated_nodes.is_empty():
-			#update_bvh_nodes(ptscene)
-
 		# Just debug
 		if (ptscene.material_added or ptscene.procedural_texture_added) and is_debug:
 			print()
@@ -674,23 +670,6 @@ func create_bvh(ptscene : PTScene, _order : int, function_name : String) -> void
 	scene_wd.rd.free_rid(scene_wd.bvh_buffer)
 	scene_wd.create_bvh_buffer()
 	scene_wd.bind_set(scene_wd.BVH_SET_INDEX)
-
-
-# CAN BE DEPRECATED
-# We have function which takes in an array of indices that does the same
-func update_bvh_nodes(ptscene : PTScene) -> void:
-	if ptscene.bvh:
-		for node in ptscene.bvh.updated_nodes:
-			var scene_wd := get_scene_wd(ptscene)
-			var bvh_bytes : PackedByteArray = node.to_byte_array()
-			scene_wd.rd.buffer_update(
-					scene_wd.bvh_buffer,
-					ptscene.bvh.get_node_index(node)  * bvh_bytes.size(),
-					bvh_bytes.size(),
-					bvh_bytes
-			)
-	else:
-		push_warning("PT: Cannot update BVH of scene with no BVH.")
 
 
 ## Will not update materials with index bigger than the scenes material buffer size
@@ -815,17 +794,26 @@ func _update_object_buffers(ptscene : PTScene, updated_object_ids : Array[int]) 
 		scene_wd.rd.buffer_update(buffer, index * bytes.size(), bytes.size(), bytes)
 
 
+func update_bvh_nodes(ptscene : PTScene) -> void:
+	if ptscene.bvh:
+		_update_bvh_buffer(ptscene, ptscene.bvh.updated_indices)
+	else:
+		push_warning("PT: Cannot update BVH of scene with no BVH.")
+
+
 func _update_bvh_buffer(ptscene : PTScene, updated_node_indices : Array[int]) -> void:
 	var scene_wd := get_scene_wd(ptscene)
 	var buffer := scene_wd.bvh_buffer
 
 	for node_index in updated_node_indices:
+		if node_index > scene_wd.bvh_buffer_size:
+			continue
 
 		var bytes : PackedByteArray
 		# If index is out of range of objects, null out index
 		if node_index >= ptscene.bvh.bvh_list.size():
 			# Empy node
-			bytes = PTUtils.empty_byte_array(ptscene.bvh.node_byte_size())
+			bytes = PTUtils.empty_byte_array(PTBVHTree.NODE_BYTE_SIZE)
 		else:
 			bytes = ptscene.bvh.bvh_list[node_index].to_byte_array()
 		scene_wd.rd.buffer_update(buffer, node_index * bytes.size(), bytes.size(), bytes)

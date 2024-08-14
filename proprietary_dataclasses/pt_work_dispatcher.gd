@@ -7,15 +7,15 @@ extends RefCounted
 ## This is an arbitrary value, but must match the number in the shader.
 const MAX_TEXTURE_COUNT := 512
 
-# How many objects can be added without needing to update any buffers.
-# This means that the buffers' sizes are divisible by the step count.
-#  Mostly useful for plugin, but might be important for runtime as well.
+## How many objects can be added without needing to update any buffers.
+## This means that the buffers' sizes are divisible by the step count.
+##  Mostly useful for plugin, but might be important for runtime as well.
 const SPHERE_COUNT_STEP = 64
 const PLANE_COUNT_STEP = 16
 const TRIANGLE_COUNT_STEP = 16
-# How many materials can be added without needing to update any buffers
+## How many materials can be added without needing to update any buffers
 const MATERIAL_COUNT_STEP = 16
-
+## How many nodes can be added without needing to update any buffers
 const BVH_COUNT_STEP = 64
 
 # How many objects can fit in each buffer
@@ -40,7 +40,6 @@ var object_buffer_sizes : Array[int] = []
 
 var material_buffer_size : int = 0
 
-# TODO implement size check and expansion func
 var bvh_buffer_size : int = 0
 
 var uniforms : UniformStorage
@@ -766,12 +765,28 @@ func _create_triangles_byte_array() -> PackedByteArray:
 
 
 func _create_bvh_byte_array() -> PackedByteArray:
-	# TODO Use bvh_buffer_size to pad
+	var bytes : PackedByteArray
+	var size : int
 	if _scene.bvh:
+		size = _scene.bvh.size()
 		_scene.bvh.index_tree()
-		return _scene.bvh.to_byte_array()
+		bytes = _scene.bvh.to_byte_array()
 	else:
-		return PTBVHTree.new().to_byte_array()
+		size = 1
+		bytes = PTBVHTree.new().to_byte_array()
+
+	# Fill rest of bytes with empty
+	if bvh_buffer_size == 0:
+		bvh_buffer_size = ceil_snap(size, BVH_COUNT_STEP)
+
+	@warning_ignore("integer_division")
+	assert(bytes.size() / PTBVHTree.NODE_BYTE_SIZE <= bvh_buffer_size,
+			"Actual BVH buffer size should be smaller or equal to max buffer size")
+
+	for i in range(bvh_buffer_size - size):
+		bytes += PTUtils.empty_byte_array(PTBVHTree.NODE_BYTE_SIZE)
+
+	return bytes
 
 
 func _create_object_id_byte_array() -> PackedByteArray:

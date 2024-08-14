@@ -32,7 +32,7 @@ extends RefCounted
 ## should control changes to their own branches and nodes. The super-trees will
 ## still have indices to nodes in the sub-trees and can only use get functions on them.
 
-const MAX_TREE_NESTING = 20
+const NODE_BYTE_SIZE = 32
 
 ## Enum of different possible BVH algorithms, should be updated as more algortithms
 ##  are added. Only positive numbers (and zero) are allowed as values.
@@ -76,9 +76,6 @@ var order : int
 
 # BVHTrees can merge, parent_tree is the BVH this tree was merged with
 var parent_tree : PTBVHTree
-var is_sub_tree : bool:
-	get:
-		return is_instance_valid(parent_tree)
 
 ## The object that owns this bvh. Can be either PTScene, PTMesh or null
 var bvh_owner : Variant:
@@ -115,7 +112,6 @@ var sah_cost : float
 # TODO Currently functions do not clean up the tree to work with engine. They have to run a full re-index.
 # 	TODO Make all functions self contained.
 # TODO Instead make a list of indices that needs to be updated, DEPRECATED updated_nodes
-var updated_nodes : Array[BVHNode] = [] # Nodes that need to update their buffer
 var updated_indices : Array[int] = []
 
 # TODO MAke BVHBUffer abler to expand + have empty space
@@ -187,6 +183,10 @@ func get_scene() -> PTScene:
 	return null
 
 
+func is_sub_tree() -> bool:
+	return is_instance_valid(parent_tree)
+
+
 func update_aabb(object : PTObject) -> void:
 	assert(has(object), "PT: Cannot update the aabb of an object that is not in BVH.\n" +
 				"object: " + str(object))
@@ -230,11 +230,6 @@ func create_mesh_socket(parent : BVHNode, mesh_tree : PTBVHTree) -> BVHNode:
 	return mesh_socket
 
 
-func add_node_to_updated_nodes(node : BVHNode) -> void:
-	if not node in updated_nodes:
-		updated_nodes.append(node)
-
-
 ## Appends a node_index that needs to be updated in buffer
 func append_updated_node_index(index : int) -> void:
 	if index not in updated_indices:
@@ -246,7 +241,6 @@ func has(object : PTObject) -> bool:
 
 
 func _add_object_to_tree(object : PTObject) -> Array[BVHNode]:
-	# TODO Change to local aabb when using meshes + transforms
 	var fitting_node := find_aabb_spot(object.get_bvh_aabb())
 	var new_nodes : Array[BVHNode] = []
 
@@ -273,7 +267,7 @@ func _add_object_to_tree(object : PTObject) -> Array[BVHNode]:
 	else:
 		fitting_node.object_list.append(object)
 		object_to_leaf[object] = fitting_node # UNSTATIC
-		if is_sub_tree:
+		if is_sub_tree():
 			parent_tree.object_to_leaf[object] = fitting_node # UNSTATIC
 
 	fitting_node.update_aabb()
@@ -365,19 +359,19 @@ func index_node(node : BVHNode) -> void:
 	else:
 		for object in node.object_list:
 			object_to_leaf[object] = node # UNSTATIC
-			if is_sub_tree:
+			if is_sub_tree():
 				parent_tree.object_to_leaf[object] = node # UNSTATIC
 
 		if not node in leaf_nodes:
 			leaf_nodes.append(node)
-			if is_sub_tree:
+			if is_sub_tree():
 				parent_tree.leaf_nodes.append(node)
 
 	if not node in _node_to_index:
 		_node_to_index[node] = bvh_list.size() # UNSTATIC
 		bvh_list.append(node)
 
-		if is_sub_tree:
+		if is_sub_tree():
 			parent_tree._node_to_index[node] = parent_tree.bvh_list.size() # UNSTATIC
 			parent_tree.bvh_list.append(node)
 
@@ -490,7 +484,7 @@ func _split_node(node : BVHNode) -> Array[BVHNode]:
 		# Remove leaf node references in node
 		node.object_list.clear()
 		leaf_nodes.erase(node)
-		if is_sub_tree:
+		if is_sub_tree():
 			parent_tree.leaf_nodes.erase(node)
 		node.is_inner = true
 
@@ -498,7 +492,7 @@ func _split_node(node : BVHNode) -> Array[BVHNode]:
 		leaf_count += 1
 
 	node.add_children([new_node_left, new_node_right])
-	add_node_to_updated_nodes(node)
+	append_updated_node_index(get_node_index(node))
 
 	return [new_node_left, new_node_right]
 
@@ -508,9 +502,9 @@ func _split_node_index(nodes : Array[BVHNode]) -> Array[BVHNode]:
 	var left := nodes[0]
 	var right := nodes[1]
 
-	add_node_to_updated_nodes(left)
+	append_updated_node_index(get_node_index(left))
 	left.set_aabb()
-	right.update_aabb() # Also calls updated_nodes.append
+	right.update_aabb()
 
 	index_node(left)
 	index_node(right)
@@ -748,15 +742,14 @@ func _rebalance_objects(
 			node_indices_to_update.append(index)
 
 	# TODO Rework Update_nodes to use indexing
-	for node in updated_nodes:
-		#assert(not get_node_index(node) in node_indices_to_update,
-				#"Node index is already in node_indices_to_update.")
-		if not get_node_index(node) in node_indices_to_update:
-			node_indices_to_update.append(get_node_index(node))
+	# for node in updated_nodes:
+	# 	#assert(not get_node_index(node) in node_indices_to_update,
+	# 			#"Node index is already in node_indices_to_update.")
+	# 	if not get_node_index(node) in node_indices_to_update:
+	# 		node_indices_to_update.append(get_node_index(node))
 
 	if PTRendererAuto.is_debug:
 		print(bvh_list)
-		print(updated_nodes)
 		print(root_node.aabb)
 
 	return node_indices_to_update
@@ -834,10 +827,6 @@ func to_byte_array() -> PackedByteArray:
 	return bytes
 
 
-func node_byte_size() -> int:
-	return BVHNode.BYTE_SIZE
-
-
 class BVHNode:
 	## This class represents a Node in a bvh tree.
 	##
@@ -848,8 +837,6 @@ class BVHNode:
 	## other BVHNodes or is empty, or a leaf node, where its object_list property point to
 	## objects. Having a mixed node is no longer supported.
 	## Rather, wrap the objects in the mixed node into a new leaf node child.
-
-	const BYTE_SIZE = 32
 
 	var tree : PTBVHTree # Reference to the tree this node is a part of
 	var parent : BVHNode # Reference to parent BVHNode
@@ -922,7 +909,6 @@ class BVHNode:
 		var old_aabb := aabb
 		set_aabb()
 		if not aabb.is_equal_approx(old_aabb):
-			tree.add_node_to_updated_nodes(self)
 			tree.append_updated_node_index(tree.get_node_index(self))
 			if is_instance_valid(parent):
 				parent.update_aabb()
@@ -942,12 +928,9 @@ class BVHNode:
 			"PT: Node does not have any children or objects and should be culled")
 
 		var root_tree := tree
-		for i in range(MAX_TREE_NESTING):
-			if root_tree.is_sub_tree:
-				root_tree = root_tree.parent_tree
 
-		assert(not root_tree.is_sub_tree, "PT: Max BVHTree nesting limit reached. " +
-				"Please don't nest them more than %s times." % [MAX_TREE_NESTING])
+		if root_tree.is_sub_tree():
+			root_tree = root_tree.parent_tree
 
 		var check_node_index := func() -> bool:
 			var temp : Array[int] = []
@@ -981,8 +964,8 @@ class BVHNode:
 
 		var bbox_bytes : PackedByteArray = PTUtils.aabb_to_byte_array(aabb, node_index, mesh_transform_index)
 		var bytes := bbox_bytes
-		assert(bytes.size() == tree.node_byte_size(),
+		assert(bytes.size() == PTBVHTree.NODE_BYTE_SIZE,
 				"Acutal byte size and set byte size do not match. set:" +
-				str(tree.node_byte_size()) +" actual " + str(bytes.size()))
+				str(PTBVHTree.NODE_BYTE_SIZE) +" actual " + str(bytes.size()))
 
 		return bytes
