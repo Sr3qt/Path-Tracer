@@ -2,19 +2,13 @@
 class_name PTSphere
 extends PTObject
 
-const USE_INSTANCING = true
-
 @export var radius : float = 1.0:
 	set(value):
 		if mesh is SphereMesh:
 			(mesh as SphereMesh).radius = value
 			(mesh as SphereMesh).height = value * 2
 		radius = value
-		if USE_INSTANCING:
-			scale = Vector3(radius, radius, radius)
-		else:
-			scale = Vector3.ONE
-		if _scene and is_node_ready():
+		if is_node_ready():
 			object_changed.emit(self)
 
 
@@ -41,18 +35,8 @@ func _init(
 		material = p_material
 
 
-func _set(property : StringName, _value : Variant) -> bool:
-	if _scene:
-		# NOTE: Set position is for transform property in the editor,
-		#  while transform notification is for moving objects in 3D
-		if property == "position":
-			object_changed.emit(self)
-
-	return false
-
-
 static func get_object_byte_size() -> int:
-	return 64
+	return 32
 
 
 ## Every PTObject defines this function with their own ObjectType.
@@ -62,33 +46,18 @@ func get_type() -> ObjectType:
 
 
 func _get_aabb() -> AABB:
-	if USE_INSTANCING:
-		return AABB(-Vector3.ONE, Vector3.ONE * 2)
-	return get_aabb()
+	var radius_vector := Vector3(radius, radius, radius)
+	return AABB(position - radius_vector, radius_vector * 2).abs()
+
+
+## Return the aabb used by the BVH
+func get_bvh_aabb() -> AABB:
+	return _get_aabb()
 
 
 func to_byte_array() -> PackedByteArray:
-	var bytes : PackedByteArray
-	if not USE_INSTANCING:
-		bytes = (PackedFloat32Array(PTUtils.vector3_to_array(position) + [radius]).to_byte_array() +
-		_get_property_byte_array()
-		+ PackedInt32Array([0,0,0,0,0,0,0,0]).to_byte_array()
-		)
-
-	else:
-		# TODO NOTE When adding meshes change to transform
-		var ttransform := global_transform.affine_inverse()
-		bytes = (
-			PackedFloat32Array(PTUtils.vector3_to_array(ttransform.basis.x)).to_byte_array() +
-			PackedInt32Array([_scene.get_material_index(material)]).to_byte_array() +
-			PackedFloat32Array(PTUtils.vector3_to_array(ttransform.basis.y)).to_byte_array() +
-			PackedInt32Array([_scene.get_texture_id(texture)]).to_byte_array() +
-			PackedFloat32Array(PTUtils.vector3_to_array(ttransform.basis.z)).to_byte_array() +
-			PackedInt32Array([0]).to_byte_array() +
-			PackedFloat32Array(PTUtils.vector3_to_array(ttransform.origin)).to_byte_array() +
-			PackedInt32Array([0]).to_byte_array()
-			)
-		# bytes = PTUtils.transform3d_smuggle_to_byte_array(ttransform, _scene.get_material_index(material)
+	var bytes := (PackedFloat32Array(PTUtils.vector3_to_array(position) + [radius]).to_byte_array())
+	bytes += _get_property_byte_array()
 
 	assert(bytes.size() == PTSphere.get_object_byte_size(),
 			"Acutal byte size and set byte size do not match ")

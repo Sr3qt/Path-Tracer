@@ -69,6 +69,10 @@ Procedural textures are single function files which takes in a vec3 position and
 These functions are written in a seperate file and inserted into this file by the preprocessor.
 The function's name should be "procedural_texture".
 
+Meshes that are instantiated will have a "mesh-socket" BVHNode as its parent in the global BVH tree.
+This node is identifiable by having only one child node and having its transform index be positive.
+The transform index should apply to all nodes and objects under the mesh-socket.
+
 
 LONG TERM GOALS
 ===============
@@ -142,22 +146,14 @@ Enabling refraction tracking has a small performance impact
 #define USE_EMISSION 0
 
 /*
-This is what will happen. also i think mesh = scene
-1. X  I will make a mesh class inherited from PTScene ( or just use PTScene).
-2. X  I will add support for nested scene like objects. BVHs will be able to be glued together in
-a way that all objects still will be drawn.
-
-3. Yes These meshes will have their own transforms. Meshes store transform_index'es to transforms
-in an array. Meshes will probably need to send their own rayhits, then copy over relevant
-information when the ray caster goes up the bvh tree; Points and normals need to be transformed
-back.
-
-Spheres which need to be stretched or rotated are meshes with one object with default values.
-
-Spheres will use the old structure.
-TODO Deprecate this
+Whether to allow meshes to do transformations, now works with slight performance drop
+    2 is new implementation, best version
+    0 is no implementation
 */
-#define USE_INSTANCING 1
+#define use_mesh_transform 2
+
+#define use_early_t_break 0
+
 
 // TODO Add option to give max ray length for first rays and secondary rays for performance
 
@@ -323,6 +319,8 @@ struct Material {
     int temp31;
 };
 
+// TODO Move properties to its own array and make global indices that point to object_ids
+
 // The materials stored in objects are indices to a global material array
 struct Plane {
     vec3 normal;
@@ -333,7 +331,6 @@ struct Plane {
     int filler1;
 };
 
-#if !USE_INSTANCING
 struct Sphere {
     vec3 center;
     float radius;
@@ -341,31 +338,7 @@ struct Sphere {
     int texture_id;
     int filler0;
     int filler1;
-
-    int filler2;
-    int filler3;
-    int filler4;
-    int filler5;
-    int filler11;
-    int filler12;
-    int filler13;
-    int filler14;
 };
-#endif
-
-#if USE_INSTANCING
-struct Sphere {
-    vec3 col0;
-    int mtl_index;
-    vec3 col1;
-    int texture_id;
-    vec3 col2;
-    int filler0;
-    vec3 col3;
-
-    int filler1;
-};
-#endif
 
 struct Triangle {
     // TODO SO MUCH SPACE OPTIMIZATION
@@ -724,7 +697,6 @@ float hit_AABB(Ray ray, AABB bbox, vec3 inv_dir, bvec3 is_dir_neg) {
     // return (ray.start > 0.0) ? ray.start : ray.end; // t value of ray intersecting the bounding box
 }
 
-#if !USE_INSTANCING
 RayHit hit_sphere(inout Ray ray, int object_id, inout RayHit rayhit) {
 
     Sphere sphere = spheres.data[get_object_index(object_id)];
@@ -761,53 +733,6 @@ RayHit hit_sphere(inout Ray ray, int object_id, inout RayHit rayhit) {
 
     return rayhit;
 }
-#endif
-
-#if USE_INSTANCING
-RayHit hit_sphere(inout Ray ray, int object_id, inout RayHit rayhit) {
-
-    Sphere sphere = spheres.data[get_object_index(object_id)];
-
-    // DO MATREIX CALC
-    mat4 matrix = mat4(sphere.col0, 0, sphere.col1, 0, sphere.col2, 0, sphere.col3, 1);
-
-    Ray temp_ray = Ray(vec3(matrix * vec4(ray.origin, 1)), ray.start, vec3(matrix * vec4(ray.direction, 0)), ray.end);
-
-    // Calculate the determinant of quadratic formula
-    vec3 oc = temp_ray.origin;
-    float a = dot(temp_ray.direction, temp_ray.direction);
-    float half_b = dot(oc, temp_ray.direction);
-    float c = dot(oc, oc) - 1.0;
-
-    float discriminant = half_b * half_b - a*c;
-
-    // Early return if ray does not hit
-    if (discriminant < 0.) {
-        return rayhit;
-    }
-
-    float sqrtd = sqrt(discriminant);
-    float root = (-half_b - sqrtd) / a;
-
-    // If root is within a valid t range of ray and less than previous rayhit
-    if (!in_range(root, ray)) {
-        root = (-half_b + sqrtd) / a;
-        if (!in_range(root, ray)) {
-            return rayhit;
-        }
-    }
-
-    // Set rayhit variables
-    rayhit.hit = true;
-    rayhit.object_id = object_id;
-    ray.end = root;
-
-    // NOTE: We don't have to set point here because t values will work both before and after transform
-    rayhit.normal = normalize(vec3(vec4(ray_at(temp_ray, root), 0) * matrix) );
-
-    return rayhit;
-}
-#endif
 
 RayHit hit_spheres(inout Ray ray, inout RayHit rayhit) {
     // Uses global scope sphere array to bypass function parameter limitations
@@ -1001,17 +926,6 @@ RayHit check_ray_hit(inout Ray ray) {
     return rayhit;
 }
 
-
-/*
-Whether to allow meshes to do transformations, currently works but performs very poorly.
-    1 is old implementation
-    2 is new implementation, best version
-    0 is no implementation
-*/
-#define use_mesh_transform 2
-
-#define use_early_t_break 0
-
 RayHit check_ray_hit_BVH(inout Ray ray) {
     // TODO Maybe the inout ray shouldnt be the one i constantly change
     RayHit rayhit = empty_rayhit();
@@ -1054,7 +968,6 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
     int temp_children[order];
     float temp_ts[order];
 
-    // TODO Make this with a macro
     for (int h = 0; h < order; h++) {
         temp_ts[h] = infinity;
     }

@@ -230,6 +230,10 @@ func create_mesh_socket(parent : BVHNode, mesh_tree : PTBVHTree) -> BVHNode:
 	return mesh_socket
 
 
+func queue_node_update(node : BVHNode) -> void:
+	append_updated_node_index(get_node_index(node))
+
+
 ## Appends a node_index that needs to be updated in buffer
 func append_updated_node_index(index : int) -> void:
 	if index not in updated_indices:
@@ -909,7 +913,10 @@ class BVHNode:
 		var old_aabb := aabb
 		set_aabb()
 		if not aabb.is_equal_approx(old_aabb):
-			tree.append_updated_node_index(tree.get_node_index(self))
+			if tree.is_sub_tree():
+				tree.parent_tree.queue_node_update(self)
+			else:
+				tree.queue_node_update(self)
 			if is_instance_valid(parent):
 				parent.update_aabb()
 

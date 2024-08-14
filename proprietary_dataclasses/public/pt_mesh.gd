@@ -68,7 +68,7 @@ func _exit_tree() -> void:
 func _ready() -> void:
 
 	for child in get_children():
-		if child is MeshInstance3D:
+		if child is MeshInstance3D and not child is PTObject:
 
 			if PTRendererAuto.is_debug:
 				print("PT: Importing mesh child")
@@ -117,12 +117,19 @@ func add_object(object : PTObject) -> void:
 	object._scene = scene
 	object._mesh = self
 	objects.add_object(object)
-	if is_node_ready():
-		if is_instance_valid(scene) and scene.has_mesh(self):
-			scene.add_object(object)
 
-		if bvh:
-			bvh.add_object(object)
+	object.connect("object_changed", update_object)
+
+	if is_instance_valid(scene):
+		scene.add_object(object)
+
+	if bvh:
+		bvh.add_object(object)
+
+
+func update_object(object : PTObject) -> void:
+	if bvh:
+		bvh.update_aabb(object)
 
 
 # Incomplete
@@ -149,4 +156,3 @@ func remove_object(object : PTObject) -> void:
 func to_byte_array() -> PackedByteArray:
 	return PTUtils.transform3d_smuggle_to_byte_array(
 		global_transform.affine_inverse(), Vector4(0, 0, 0, 1))
-

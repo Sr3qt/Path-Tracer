@@ -191,6 +191,10 @@ func has_mesh(mesh : PTMesh) -> bool:
 	return scene_objects.meshes.has(mesh)
 
 
+func has_object(object : PTObject) -> bool:
+	return scene_objects.has(object)
+
+
 func add_camera(f_camera : PTCamera) -> void:
 	cameras.append(f_camera)
 	if cameras.size() == 1:
@@ -479,14 +483,14 @@ func add_object(object : PTObject) -> void:
 
 	scene_changed = true
 
+	# Even though mesh materials are already they are counted.
+	# If this is still neccessary i don't know
 	if object.is_meshlet and object._mesh.override_material:
 		_add_material(object._mesh.override_material, true)
 	elif object.is_meshlet and object._mesh.default_material and not object.material:
 		_add_material(object._mesh.default_material, true)
 	else:
 		_add_material(object.material, true)
-
-
 
 	# Connect signals
 	_add_texture(object.texture)
@@ -559,7 +563,7 @@ func remove_object(object : PTObject) -> void:
 func update_object(object : PTObject) -> void:
 	## Called by an object when its properties changed
 	# Send request to update bvh if object is in it
-	if bvh and not object.get_type() in PTBVHTree.objects_to_exclude:
+	if bvh and has_object(object) and not object.get_type() in PTBVHTree.objects_to_exclude:
 		bvh.update_aabb(object)
 
 	# Send request to update buffer
