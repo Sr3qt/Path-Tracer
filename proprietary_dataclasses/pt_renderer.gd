@@ -11,7 +11,8 @@ extends Node
 # TODO Add setting to either load all scenes on start, just one or none. Also add button to load scene
 # TODO Add memory usage estimate?
 
-# TODO Using a selction box in 3D editor crashes editor, FIX
+# Using a selction box in 3D editor crashes editor, FIX
+# NOTE: NOPE not my problem
 
 const WindowGui := preload("res://ui_scenes/render_window_gui/render_window_gui.tscn")
 

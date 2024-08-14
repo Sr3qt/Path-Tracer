@@ -105,3 +105,6 @@ adding a code path to sort a small number of nodes and performing
 full sort only if there are 4 or more hits"
 
 - Double my buffers, let the cpu and gpu work on seperate buffers, then swap https://community.khronos.org/t/dynamic-memory-allocation-at-runtime/105347/4
+
+- Use blue noise for converging earlier
+https://blogs.autodesk.com/media-and-entertainment/wp-content/uploads/sites/162/dither_abstract.pdf 

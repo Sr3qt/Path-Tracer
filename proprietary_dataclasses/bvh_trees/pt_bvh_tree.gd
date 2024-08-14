@@ -80,15 +80,12 @@ var is_sub_tree : bool:
 	get:
 		return is_instance_valid(parent_tree)
 
-## Only used to get correct obejct indexing when converting to byte array
-var scene : PTScene:
+## The object that owns this bvh. Can be either PTScene, PTMesh or null
+var bvh_owner : Variant:
 	set(value):
-		assert(not is_instance_valid(mesh), "Cannot set property 'scene' on BVH with set mesh")
-		scene = value
-var mesh : PTMesh:
-	set(value):
-		assert(not is_instance_valid(scene), "Cannot set property 'mesh' on BVH with set scene")
-		mesh = value
+		assert(value is PTMesh or value is PTScene or value == null,
+				"bvh_owner can only be of type PTMesh, PTScene, or null; not " + str(value))
+		bvh_owner = value
 
 # TODO Give BVHTree aabb property similar to ptobjects to facilitate duck typing.
 var root_node : BVHNode
@@ -100,6 +97,8 @@ var object_ids : PackedInt32Array = []
 
 ## Takes in a node gives its index in bvh_list
 var _node_to_index := {}
+
+var _mesh_to_mesh_socket := {}
 
 # TODO Add bvh constructor with bvh_list as argument
 var bvh_list : Array[BVHNode] = []
@@ -113,7 +112,9 @@ var type : BVHType
 var creation_time : int # In usecs
 var sah_cost : float
 
-# TODO Instead make a list of indices that needs to be updated
+# TODO Currently functions do not clean up the tree to work with engine. They have to run a full re-index.
+# 	TODO Make all functions self contained.
+# TODO Instead make a list of indices that needs to be updated, DEPRECATED updated_nodes
 var updated_nodes : Array[BVHNode] = [] # Nodes that need to update their buffer
 var updated_indices : Array[int] = []
 
@@ -148,28 +149,42 @@ static func create_bvh_with_function_name(
 
 	assert(_order > 1, "BVH order has to be >= 2")
 
+	assert(mesh_or_scene_owner is PTScene or mesh_or_scene_owner is PTMesh,
+			"mesh_or_scene_owner should be PTMesh or PTScene, but was %s" % [mesh_or_scene_owner])
+
 	@warning_ignore("unsafe_cast")
 	var tempt := bvh_functions[_name] as Callable # UNSTATIC
 	var start_time : int = Time.get_ticks_usec()
 	var bvh : PTBVHTree = tempt.call(objects, _order) # UNSTATIC
 	bvh.creation_time = (Time.get_ticks_usec() - start_time)
 
-	if mesh_or_scene_owner is PTScene:
-		bvh.scene = mesh_or_scene_owner
-	elif mesh_or_scene_owner is PTMesh:
-		bvh.mesh = mesh_or_scene_owner
-	else:
-		assert(false, "mesh_or_scene_owner should be PTMesh or PTScene, but was %s" % [mesh_or_scene_owner])
+	bvh.bvh_owner = mesh_or_scene_owner
 
 	return bvh
 
 
+## Returns true if bvh_owner is a valid PTSMesh instance
 func is_mesh_owned() -> bool:
-	return is_instance_valid(mesh)
+	return is_instance_valid(bvh_owner) and bvh_owner is PTMesh
 
 
+## Returns this bvhs valid mesh owner if it exists, otherwise return null
+func get_mesh() -> PTMesh:
+	if is_mesh_owned():
+		return bvh_owner
+	return null
+
+
+## Returns true if bvh_owner is a valid PTScene instance
 func is_scene_owned() -> bool:
-	return is_instance_valid(scene)
+	return is_instance_valid(bvh_owner) and bvh_owner is PTScene
+
+
+## Returns this bvhs valid scene owner if it exists, otherwise return null
+func get_scene() -> PTScene:
+	if is_scene_owned():
+		return bvh_owner
+	return null
 
 
 func update_aabb(object : PTObject) -> void:
@@ -178,6 +193,41 @@ func update_aabb(object : PTObject) -> void:
 
 	var node : BVHNode = object_to_leaf[object] # UNSTATIC
 	node.update_aabb()
+
+
+## Updates the aabb of the mesh socket of a given mesh
+func update_mesh_socket_aabb(mesh : PTMesh) -> void:
+	assert(_mesh_to_mesh_socket.has(mesh),
+			"Given mesh is not found in _mesh_to_mesh_socket. Is it even a part of the tree?")
+
+	var node : BVHNode = _mesh_to_mesh_socket[mesh] # UNSTATIC
+	node.update_aabb()
+
+
+## Mesh socket is a special node that only has a mesh subtree as a child
+func create_mesh_socket(parent : BVHNode, mesh_tree : PTBVHTree) -> BVHNode:
+	assert(not parent.is_full(), "Cannot create mesh socket on full node.")
+	assert(parent.is_inner, "Cannto create mesh socket on leaf node.")
+	assert(mesh_tree.is_mesh_owned(), "Cannot create mesh socket on non-mesh owned BVH tree")
+
+	var mesh_socket := BVHNode.new(parent, self)
+	mesh_socket.is_mesh_socket = true
+	mesh_socket.is_inner = true
+	inner_count += 1
+	_mesh_to_mesh_socket[mesh_tree.get_mesh()] = mesh_socket
+	_node_to_index[mesh_socket] = bvh_list.size()
+	bvh_list.append(mesh_socket)
+
+	parent.add_children([mesh_socket])
+	mesh_socket.add_children([mesh_tree.root_node])
+	mesh_socket.update_aabb()
+
+	# Redundant bc of update_aabb?
+	append_updated_node_index(get_node_index(parent))
+	append_updated_node_index(get_node_index(mesh_socket))
+	mesh_tree.root_node.parent = mesh_socket
+
+	return mesh_socket
 
 
 func add_node_to_updated_nodes(node : BVHNode) -> void:
@@ -204,7 +254,7 @@ func _add_object_to_tree(object : PTObject) -> Array[BVHNode]:
 		fitting_node = root_node
 
 	# If node is full, split and get non-full fitting node
-	if fitting_node.is_full:
+	if fitting_node.is_full():
 		if PTRendererAuto.is_debug:
 			print("No vacant leaf node to add new object. Splitting node in two.")
 		new_nodes.append_array(_split_node(fitting_node))
@@ -506,7 +556,7 @@ func _merge_with(other : PTBVHTree, root := root_node) -> Array[BVHNode]:
 		fitting_node = root_node
 
 	# If node is full or a leaf, split and get non-full fitting node
-	if fitting_node.is_full or fitting_node.is_leaf:
+	if fitting_node.is_full() or fitting_node.is_leaf:
 		if PTRendererAuto.is_debug:
 			print("No vacant leaf node to add new object. Splitting node in two.")
 		#new_nodes.append_array(_split_node(fitting_node))
@@ -516,23 +566,7 @@ func _merge_with(other : PTBVHTree, root := root_node) -> Array[BVHNode]:
 		if fitting_node == null:
 			fitting_node = root_node
 
-	# Mesh socket is a special node that only has a subtree as a child
-	var mesh_socket := BVHNode.new(fitting_node, self)
-	mesh_socket.is_mesh_socket = true
-	_node_to_index[mesh_socket] = bvh_list.size()
-	bvh_list.append(mesh_socket)
-	mesh_socket.is_inner = true
-	inner_count += 1
-	fitting_node.add_children([mesh_socket])
-
-	# new_nodes.append_array(other.bvh_list.duplicate())
-
-	# "Glue the seam"
-	mesh_socket.add_children([other.root_node])
-	mesh_socket.update_aabb()
-	append_updated_node_index(get_node_index(fitting_node))
-	append_updated_node_index(get_node_index(mesh_socket))
-	other.root_node.parent = mesh_socket
+	create_mesh_socket(fitting_node, other)
 
 	# Update indices
 	object_to_leaf.merge(other.object_to_leaf)
@@ -553,6 +587,7 @@ func _merge_with(other : PTBVHTree, root := root_node) -> Array[BVHNode]:
 ## Inserts another tree at a node in the bvh.
 ## An optional argument root can be given, the insertion will
 ##  happen to one of its children
+## Only a scene bvh can merge mesh bvhs. Scene bvhs cannot merge.
 func merge_with(other : PTBVHTree, root := root_node) -> void:
 	assert(not is_mesh_owned(), "A mesh BVH cannot merge with another BVH.")
 	assert(other.is_mesh_owned(), "A scene BVH cannot merge with another scene BVH.")
@@ -779,7 +814,7 @@ func tree_sah_cost() -> void:
 
 
 func create_object_ids() -> void:
-	assert(is_instance_valid(scene), "Cannot create_object_ids without a valid set scene.")
+	assert(is_scene_owned(), "Cannot create_object_ids without a valid set scene.")
 
 	var index := 0
 	object_ids.resize(object_count)
@@ -787,7 +822,7 @@ func create_object_ids() -> void:
 	for leaf_node in leaf_nodes:
 		leaf_node.object_id_index = index
 		for object in leaf_node.object_list:
-			var id := PTObject.make_object_id(scene.get_object_index(object), object.get_type())
+			var id := PTObject.make_object_id(get_scene().get_object_index(object), object.get_type())
 			object_ids[index] = id
 			index += 1
 
@@ -839,18 +874,6 @@ class BVHNode:
 			is_leaf = value
 			is_inner = not value
 
-	# TODO Make into function
-	var is_full : bool:
-		get:
-			if is_inner:
-				assert(children.size() <= tree.order,
-						"BVHNode has more children than tree.order allows.")
-				return children.size() == tree.order
-
-			assert(object_list.size() <= tree.order,
-						"BVHNode has more children than tree.order allows.")
-			return object_list.size() == tree.order
-
 
 	func _init(p_parent : BVHNode, p_tree : PTBVHTree) -> void:
 		parent = p_parent
@@ -862,10 +885,21 @@ class BVHNode:
 		return children.size() + object_list.size()
 
 
+	func is_full() -> bool:
+		if is_inner:
+			assert(children.size() <= tree.order,
+					"BVHNode has more children than tree.order allows.")
+			return children.size() == tree.order
+
+		assert(object_list.size() <= tree.order,
+					"BVHNode has more children than tree.order allows.")
+		return object_list.size() == tree.order
+
+
 	func set_aabb() -> void:
 		if is_mesh_socket:
 			assert(children[0].aabb != null and children[0].aabb.size != Vector3.ZERO)
-			aabb =  children[0].tree.mesh.transform * children[0].aabb
+			aabb =  children[0].tree.get_mesh().transform * children[0].aabb
 			return
 
 		if is_leaf and not object_list.is_empty():
@@ -889,6 +923,7 @@ class BVHNode:
 		set_aabb()
 		if not aabb.is_equal_approx(old_aabb):
 			tree.add_node_to_updated_nodes(self)
+			tree.append_updated_node_index(tree.get_node_index(self))
 			if is_instance_valid(parent):
 				parent.update_aabb()
 
@@ -939,16 +974,9 @@ class BVHNode:
 		node_index ^= node_size << 24
 
 		var mesh_transform_index := -1
-		# If node is root and tree is owned by mesh, set mesh tranform index
-		# if tree.root_node == self and tree.is_mesh_owned():
-		# Only give mesh root_node a transform_index
-		# if tree.is_mesh_owned() and parent.is_mesh_socket:
-		# # if tree.is_mesh_owned():
-		# 	mesh_transform_index = tree.mesh.scene.get_mesh_index(tree.mesh)
-		# 	assert(mesh_transform_index >= 0, "Mesh was not found in Scenes's meshes")
-
 		if is_mesh_socket:
-			mesh_transform_index = children[0].tree.mesh.scene.get_mesh_index(children[0].tree.mesh)
+			var mesh := children[0].tree.get_mesh()
+			mesh_transform_index = mesh.scene.get_mesh_index(mesh)
 			assert(mesh_transform_index >= 0, "Mesh was not found in Scenes's meshes")
 
 		var bbox_bytes : PackedByteArray = PTUtils.aabb_to_byte_array(aabb, node_index, mesh_transform_index)

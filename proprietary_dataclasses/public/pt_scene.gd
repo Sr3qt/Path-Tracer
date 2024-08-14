@@ -283,8 +283,8 @@ func remove_mesh(mesh : PTMesh) -> void:
 
 
 func _update_mesh(mesh : PTMesh) -> void:
-	# TODO Update bvh aabbs
 	PTRendererAuto.update_mesh_transform(self, mesh)
+	bvh.update_mesh_socket_aabb(mesh)
 
 	scene_changed = true
 

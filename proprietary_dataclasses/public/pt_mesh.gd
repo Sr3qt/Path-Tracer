@@ -106,7 +106,7 @@ func _ready() -> void:
 func _notification(what : int) -> void:
 	match what:
 		NOTIFICATION_TRANSFORM_CHANGED:
-			if scene and global_transform != transform_before:
+			if global_transform != transform_before:
 				transform_changed.emit(self)
 				transform_before = Transform3D(global_transform)
 
