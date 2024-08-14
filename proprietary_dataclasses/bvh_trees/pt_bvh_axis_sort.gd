@@ -40,6 +40,8 @@ func create_bvh(objects : PTObjectContainer, f_type := BVHType.XYZ_SORTED) -> vo
 	assert(f_type in [BVHType.XYZ_SORTED, BVHType.X_SORTED, BVHType.Y_SORTED, BVHType.Z_SORTED],
 			"PT: PTBVHAxisSort cannot create bvh of type: " + str(BVHType.find_key(f_type)))
 
+	assert(order >= 2, "BVH cannot be created with less than 2 in order.")
+
 	type = f_type
 
 	var flat_object_list : Array[PTObject] = []

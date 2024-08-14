@@ -145,6 +145,9 @@ static func create_bvh_with_function_name(
 	if _name not in bvh_functions.keys():
 		print("Name: %s, not in list of callable bvh functions" % _name)
 		return
+
+	assert(_order > 1, "BVH order has to be >= 2")
+
 	@warning_ignore("unsafe_cast")
 	var tempt := bvh_functions[_name] as Callable # UNSTATIC
 	var start_time : int = Time.get_ticks_usec()
@@ -940,8 +943,12 @@ class BVHNode:
 		# if tree.root_node == self and tree.is_mesh_owned():
 		# Only give mesh root_node a transform_index
 		# if tree.is_mesh_owned() and parent.is_mesh_socket:
-		if tree.is_mesh_owned():
-			mesh_transform_index = tree.mesh.scene.get_mesh_index(tree.mesh)
+		# # if tree.is_mesh_owned():
+		# 	mesh_transform_index = tree.mesh.scene.get_mesh_index(tree.mesh)
+		# 	assert(mesh_transform_index >= 0, "Mesh was not found in Scenes's meshes")
+
+		if is_mesh_socket:
+			mesh_transform_index = children[0].tree.mesh.scene.get_mesh_index(children[0].tree.mesh)
 			assert(mesh_transform_index >= 0, "Mesh was not found in Scenes's meshes")
 
 		var bbox_bytes : PackedByteArray = PTUtils.aabb_to_byte_array(aabb, node_index, mesh_transform_index)
