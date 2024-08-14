@@ -1007,7 +1007,7 @@ Whether to allow meshes to do transformations, currently works but performs very
     2 is new implementation, currently only works when not loading editor
     0 is no implementation
 */
-#define use_mesh_transform 0
+#define use_mesh_transform 2
 
 #if use_mesh_transform == 1
 Ray transformed_ray[MAX_MESH_COUNT];
@@ -1105,6 +1105,7 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
 
             inv_direction = stored_inv_dir;
             is_dir_negative = stored_is_neg;
+            continue;
         }
         #endif
 
@@ -1216,7 +1217,8 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
                 is_dir_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
 
                 // Flip bvh index to know that a mesh has been completed
-                to_visit[to_visit_i - 1] *= -1;
+                // to_visit[to_visit_i - 1] *= -1;
+                to_visit[to_visit_i++] = -1;
 
                 // temp_ray = ray;
                 // temp_inv = inv_direction;

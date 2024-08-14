@@ -768,6 +768,7 @@ func _create_triangles_byte_array() -> PackedByteArray:
 func _create_bvh_byte_array() -> PackedByteArray:
 	# TODO Use bvh_buffer_size to pad
 	if _scene.bvh:
+		_scene.bvh.index_tree()
 		return _scene.bvh.to_byte_array()
 	else:
 		return PTBVHTree.new().to_byte_array()
