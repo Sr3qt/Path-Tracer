@@ -1,5 +1,7 @@
 Performance on random_scene with book_ex camera settings
 
+Mesh transform improvement attempt, 44 fps with grimchild, 67 fps spheres
+
 Added mesh transforms, 10 with mesh transform, 66 without
 
 BVHnode compression,  67

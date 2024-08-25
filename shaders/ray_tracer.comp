@@ -147,10 +147,12 @@ Enabling refraction tracking has a small performance impact
 
 /*
 Whether to allow meshes to do transformations, now works with slight performance drop
+TODO Still need to transform normals on determine_rayhit.
     2 is new implementation, best version
+    1 is newer implementation, similar to 2, slightly better
     0 is no implementation
 */
-#define use_mesh_transform 2
+#define use_mesh_transform 1
 
 #define use_early_t_break 0
 
@@ -385,7 +387,6 @@ struct Transform {
 
 // node_index and size are hidden inside the aabb struct
 #define NODE_node_id floatBitsToInt(node.bbox.minimum.w)
-#define CHILD_node_transform floatBitsToInt(child.bbox.maximum.w)
 #define NODE_node_transform floatBitsToInt(node.bbox.maximum.w)
 struct BVHNode {
     // NOTE: Remember that AABB stores FLOATS, not ints
@@ -926,73 +927,38 @@ RayHit check_ray_hit(inout Ray ray) {
     return rayhit;
 }
 
-RayHit check_ray_hit_BVH(inout Ray ray) {
-    // TODO Maybe the inout ray shouldnt be the one i constantly change
-    RayHit rayhit = empty_rayhit();
+// Stack of indices of nodes yet to traverse
+// NOTE: might need to be bigger for larger scenes and/or with higher order trees
+int to_visit[max_depth];
+int to_visit_i;
 
-    // NOTE: Objects that go before bvh can be used as Occluders
-    hit_planes(ray, rayhit);
+int temp_children[order];
+float temp_ts[order];
+
+#if use_early_t_break
+float to_visit_t[max_depth];
+#endif
+
+#if use_mesh_transform == 1
+float check_ray_hit_BVH2(Ray ray, inout RayHit rayhit) {
 
     // Pre-compute values for hit detection
     vec3 inv_direction = vec3(1) / ray.direction;
     bvec3 is_dir_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
 
-    #if use_mesh_transform == 2
-    const Ray stored_ray = ray;
-    const vec3 stored_inv_dir = inv_direction;
-    const bvec3 stored_is_neg = is_dir_negative;
-    #endif
-
-    // TODO Another improvement might be to precompute all rays for every mesh per trace call
-
-    // Stack of indices of nodes yet to traverse
-    // NOTE: might need to be bigger for larger scenes and/or with higher order trees
-    int to_visit[max_depth];
-    to_visit[0] = 0;
-
-    // TODO Make policy that scene bvh root cannot have transform
-    // Test if root node is hit by ray
-    float root_hit = hit_AABB(ray, BVH.list[0].bbox, inv_direction, is_dir_negative);
-
-    // Index to top of the stack, points to vacant spot ABOVE the stack
-    int to_visit_i = (in_range(root_hit, ray)) ? 1 : 0;
-
-    #if use_early_t_break
-    float to_visit_t[max_depth];
-    to_visit_t[0] = root_hit;
-    #endif
-
     // Index to current node being processed
-    int current_index = 0;
+    int current_index;
+    int start_index = to_visit_i;
 
-    int temp_children[order];
-    float temp_ts[order];
-
-    for (int h = 0; h < order; h++) {
-        temp_ts[h] = infinity;
-    }
-
-    while (to_visit_i > 0 && to_visit_i <= max_depth) {
+    while (to_visit_i >= start_index && to_visit_i <= max_depth) {
         current_index = to_visit[--to_visit_i];
 
-        #if use_mesh_transform == 2
-        if (current_index < 0) {
-            float temp_t = ray.end;
-            ray = stored_ray;
-            ray.end = temp_t;
-
-            inv_direction = stored_inv_dir;
-            is_dir_negative = stored_is_neg;
-        }
-        #endif
-
-        BVHNode node = BVH.list[abs(current_index)];
+        BVHNode node = BVH.list[current_index];
         int node_id = NODE_node_id;
         int node_index = get_node_index(node_id);
         int node_size = abs(get_node_size(node_id));
 
-        /*
-        All nodes in to_visit should be in sorted order,
+        /* All nodes in to_visit should be in sorted order,
          we can break if the last node is out of range
         NOTE: This is slow for first rays, but seem comparable for secondary rays.
         TODO Make toggle to use this for secondary rays
@@ -1012,38 +978,175 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
             continue;
         }
 
-        #if use_mesh_transform == 2
-        int transform_index = NODE_node_transform;
-        if (transform_index >= 0) {
-            Transform transform = transforms.data[transform_index];
+        int added_children = 0;
+        // Do hit check on child inner nodes and add them to temp array
+        for (int l = 0; l < node_size; l++) {
+            BVHNode child = BVH.list[node_index + l];
 
-            // DO MATREIX CALC
-            mat4 matrix = transform.matrix;
-
-            ray = Ray(vec3(matrix * vec4(ray.origin, 1)), ray.start,
-                            (matrix * vec4(ray.direction, 0)).xyz, ray.end);
-            inv_direction = vec3(1) / ray.direction;
-            is_dir_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
-
-            // Flip bvh index to know that a mesh has been completed
-            if (to_visit_i > 0) {
-                to_visit[to_visit_i - 1] *= -1;
-            }
-
-            // Seems like no significant difference between exiting early and continuing
-            BVHNode child = BVH.list[node_index];
             float aabb_t = hit_AABB(ray, child.bbox, inv_direction, is_dir_negative);
 
             // xin_range much faster, but has an artifact
             if (in_range(aabb_t, ray)) {
-                #if use_early_t_break
-                to_visit_t[to_visit_i] = aabb_t;
-                #endif
-                to_visit[to_visit_i++] = node_index;
+                added_children++;
+                temp_ts[l] = aabb_t;
+                temp_children[l] = node_index + l;
             }
+        }
+
+        // TODO COnsider min heap or insertion sort
+        // Add nodes to stack in a sorted order
+        to_visit_i += added_children;
+        for (int i = 0; i < added_children; i++) { // Looping over constant is not faster here
+            // Finds smallest t, closest box
+            float smallest_t = infinity;
+            int smallest_index = order;
+            for (int j = 0; j < order; j++) { // Looping over constant is faster here
+                if (temp_ts[j] < smallest_t ) {
+                    smallest_t = temp_ts[j];
+                    smallest_index = j;
+                }
+            }
+
+            // Zero out the smallest
+            temp_ts[smallest_index] = infinity;
+            to_visit[to_visit_i - i - 1] = temp_children[smallest_index];
+            #if use_early_t_break
+            to_visit_t[to_visit_i - i - 1] = smallest_t;
+            #endif
+        }
+    }
+    
+    return ray.end;
+}
+#endif
+
+RayHit check_ray_hit_BVH(inout Ray ray, inout Ray ray_out) {
+    // TODO Maybe the inout ray shouldnt be the one i constantly change
+    RayHit rayhit = empty_rayhit();
+
+    // NOTE: Objects that go before bvh can be used as Occluders
+    hit_planes(ray, rayhit);
+
+    // Pre-compute values for hit detection
+    vec3 inv_direction = vec3(1) / ray.direction;
+    bvec3 is_dir_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
+
+    #if use_mesh_transform == 2
+    Ray stored_ray = ray;
+    const vec3 stored_inv_dir = inv_direction;
+    const bvec3 stored_is_neg = is_dir_negative;
+
+    int reset_ray_index = -1;
+    int last_transform_index = -1;
+    #endif
+
+    // TODO Another improvement might be to precompute all rays for every mesh per trace call
+
+    // Test if root node is hit by ray
+    float root_hit = hit_AABB(ray, BVH.list[0].bbox, inv_direction, is_dir_negative);
+
+    // Index to top of the stack, points to vacant spot ABOVE the stack
+    to_visit_i = (in_range(root_hit, ray)) ? 1 : 0;
+    to_visit[0] = 0;
+
+    #if use_early_t_break
+    to_visit_t[0] = root_hit;
+    #endif
+
+    // Index to current node being processed
+    int current_index;
+
+    for (int h = 0; h < order; h++) {
+        temp_ts[h] = infinity;
+    }
+
+    while (to_visit_i > 0 && to_visit_i <= max_depth) {
+        current_index = to_visit[--to_visit_i];
+
+        BVHNode node = BVH.list[current_index];
+        int node_id = NODE_node_id;
+        int node_index = get_node_index(node_id);
+        int node_size = abs(get_node_size(node_id));
+
+        /* All nodes in to_visit should be in sorted order,
+         we can break if the last node is out of range
+        NOTE: This is slow for first rays, but seem comparable for secondary rays.
+        TODO Make toggle to use this for secondary rays
+        */
+        #if use_early_t_break
+        if (!in_range(to_visit_t[to_visit_i], ray)) {
+            break;
+        }
+        #endif
+
+        // TODO transform hit normals back?
+        #if use_mesh_transform == 2
+        if (to_visit_i == reset_ray_index) {
+            // ray.direction = stored_ray.direction;
+            // ray.origin = stored_ray.origin;
+            // inv_direction = stored_inv_dir;
+            // is_dir_negative = stored_is_neg;
+
+            mat4 matrix = inverse(transforms.data[last_transform_index].matrix);
+            ray.direction = (matrix * vec4(ray.direction, 0)).xyz;
+            ray.origin = (matrix * vec4(ray.origin, 1)).xyz;
+            inv_direction = vec3(1) / ray.direction;
+            is_dir_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
+
+            reset_ray_index = -1;
+            last_transform_index = -1;
+        }
+        #endif
+
+        #if use_mesh_transform == 2
+        int transform_index = NODE_node_transform;
+        if (transform_index >= 0) {
+            // DO MATREIX CALC
+            mat4 matrix = transforms.data[transform_index].matrix;
+
+            ray.direction = (matrix * vec4(ray.direction, 0)).xyz;
+            ray.origin = (matrix * vec4(ray.origin, 1)).xyz;
+            inv_direction = vec3(1) / ray.direction;
+            is_dir_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
+
+            // Mark the index after the last index with transrormed ray
+            reset_ray_index = to_visit_i - 1;
+            last_transform_index = transform_index;
+
+        }
+        #endif
+
+        #if use_mesh_transform == 1
+        int transform_index = NODE_node_transform;
+        if (transform_index >= 0) {
+
+            mat4 matrix = transforms.data[transform_index].matrix;
+
+            Ray new_ray = ray;
+            new_ray.direction = (matrix * vec4(ray.direction, 0)).xyz;
+            new_ray.origin = (matrix * vec4(ray.origin, 1)).xyz;
+
+            #if use_early_t_break
+            BVHNode child = BVH.list[node_index];
+            float aabb_t = hit_AABB(ray, child.bbox, inv_direction, is_dir_negative);
+            to_visit_t[to_visit_i] = aabb_t;
+            #endif
+            to_visit[to_visit_i++] = node_index;
+
+            ray.end = check_ray_hit_BVH2(new_ray, rayhit);
+
             continue;
         }
         #endif
+
+        // If node is leaf node, hit all children
+        // node_index pointing to nodes should never be zero (root_node)
+        if (node_index <= 0) {
+            for (int k = 0; k < node_size; k++) {
+                hit_object(ray, rayhit, object_ids.list[abs(node_index) + k]);
+            }
+            continue;
+        }
 
         int added_children = 0;
         // Do hit check on child inner nodes and add them to temp array
@@ -1297,7 +1400,9 @@ vec4 cast_ray(Ray ray) {
     // MICRO-OPT Having the loop be static/const is slightly faster than with having it dynamic
     for (int i = 0; i < LOD.max_default_depth + refraction_bounces; i++) {
         if (use_bvh) {
-            rayhit = check_ray_hit_BVH(new_ray);
+            Ray temp_ray = new_ray;
+            rayhit = check_ray_hit_BVH(new_ray, temp_ray);
+            // new_ray = temp_ray;
 
             // Send one ray, skip bouncing
             if (show_bvh_depth) {

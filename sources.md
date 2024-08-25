@@ -107,4 +107,7 @@ full sort only if there are 4 or more hits"
 - Double my buffers, let the cpu and gpu work on seperate buffers, then swap https://community.khronos.org/t/dynamic-memory-allocation-at-runtime/105347/4
 
 - Use blue noise for converging earlier
-https://blogs.autodesk.com/media-and-entertainment/wp-content/uploads/sites/162/dither_abstract.pdf 
+https://blogs.autodesk.com/media-and-entertainment/wp-content/uploads/sites/162/dither_abstract.pdf
+
+- Spir-V Branching has adjustable weights. See if i can manually optimize them.
+https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#OpBranchConditional
