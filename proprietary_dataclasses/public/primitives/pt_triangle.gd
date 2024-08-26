@@ -2,9 +2,7 @@
 class_name PTTriangle
 extends PTPrimitive3D
 
-# TODO Ther's still a noise issue wioth triangles, can be seen in editor
-#  There is a visible line cutting through the triangle
-
+## TODO FIX Cornell box, triangles are invisible when bvh is on
 
 # The triangles vertices relative to itself, not in local coordinates
 # Used for defining the shape of the triangle
@@ -122,7 +120,8 @@ func to_byte_array() -> PackedByteArray:
 		PTUtils.vector3_to_array(temp_transform * vertex1) + [0] +
 		PTUtils.vector3_to_array(temp_transform * vertex2) + [0] +
 		PTUtils.vector3_to_array(temp_transform * vertex3) + [0] +
-		PTUtils.vector3_to_array((vertex2 - vertex1).cross(vertex3 -  vertex1).normalized()) + [0]
+		# This might change based on winding order
+		PTUtils.vector3_to_array((vertex3 - vertex1).cross(vertex2 -  vertex1).normalized()) + [0]
 	).to_byte_array()
 	bytes += _get_property_byte_array()
 

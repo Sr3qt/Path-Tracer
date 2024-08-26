@@ -249,6 +249,8 @@ int object_hit_count = 0;
 // Maximum number of inner nodes a BVHNode can have
 const int order = 2; // Replaced by script preprocessor, do NOT touch this line
 
+int current_transform_index = -1;
+
 // Flags
 const int flag_size = 31;
 const int starting_bit = int(pow(2, flag_size - 1));
@@ -258,6 +260,7 @@ bool use_bvh;
 bool show_bvh_depth;
 bool show_node_count;
 bool show_object_count;
+bool show_normal_view;
 
 bool multisample;
 
@@ -363,6 +366,7 @@ struct RayHit {
     // Stored on-hit
     bool hit;
     int object_id;
+    int transform_index;
 
     // Retrieved later
     vec2 uv;
@@ -466,7 +470,7 @@ layout(push_constant, std430) restrict readonly uniform constants {
 // =================
 
 RayHit empty_rayhit() {
-    return RayHit(false, 0, vec2(0), vec3(0), 0, vec3(0), 0, vec4(0));
+    return RayHit(false, 0, -1, vec2(0), vec3(0), 0, vec3(0), 0, vec4(0));
 }
 
 float atan2(float y, float x) {
@@ -595,6 +599,7 @@ void parse_flags() {
     multisample = flags[2];
     show_node_count = flags[3];
     show_object_count = flags[4];
+    show_normal_view = flags[5];
 }
 
 int get_object_type(int object_id) {
@@ -728,9 +733,8 @@ RayHit hit_sphere(inout Ray ray, int object_id, inout RayHit rayhit) {
     // Set rayhit variables
     rayhit.hit = true;
     rayhit.object_id = object_id;
+    rayhit.transform_index = current_transform_index;
     ray.end = root;
-
-    rayhit.normal = (ray_at(ray, root) - sphere.center) / sphere.radius;
 
     return rayhit;
 }
@@ -763,6 +767,7 @@ RayHit hit_plane(inout Ray ray, int object_id, inout RayHit rayhit) {
     // Set rayhit variables
     rayhit.hit = true;
     rayhit.object_id = object_id;
+    rayhit.transform_index = current_transform_index; // Not really relevant to planes
     ray.end = intersection_t;
 
     return rayhit;
@@ -806,6 +811,7 @@ bool hit_triangle_MT_branchless(inout Ray ray, int object_id, inout RayHit rayhi
     if ((det >= 1e-6 && in_range(t, ray) && u >= 0.0 && v >= 0.0 && (u+v) <= 1.0)) {
         rayhit.hit = true;
         rayhit.object_id = object_id;
+        rayhit.transform_index = current_transform_index;
         ray.end = t;
         return true;
     }
@@ -849,6 +855,7 @@ bool hit_triangle_MT(inout Ray ray, int object_id, inout RayHit rayhit) {
     if (u >= 0.0 && v >= 0.0 && (u+v) <= 1.0) {
         rayhit.hit = true;
         rayhit.object_id = object_id;
+        rayhit.transform_index = current_transform_index;
         ray.end = t;
         return true;
     }
@@ -872,6 +879,7 @@ void hit_object(inout Ray ray, inout RayHit rayhit, int object_id) {
     if (object_type == is_sphere) {
         hit_sphere(ray, object_id, rayhit);
     } else if (object_type == is_triangle) {
+        // TODO compare with branchless
         hit_triangle_MT(ray, object_id, rayhit);
     }
 }
@@ -892,8 +900,25 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         Sphere sphere = spheres.data[object_index];
         rayhit.mtl_index = sphere.mtl_index;
         rayhit.texture_id = sphere.texture_id;
-        // TODO NOTE For rotated spheres we would use the normal prior to the world space transformation
-        rayhit.uv = sphere_get_uv(rayhit.normal);
+
+        if (rayhit.transform_index >= 0) {
+            mat4 matrix = inverse(transforms.data[rayhit.transform_index].matrix);
+
+            Ray transformed_ray = ray_in;
+            transformed_ray.direction = (vec4(ray_in.direction, 0) * matrix).xyz;
+            transformed_ray.origin = (vec4(ray_in.origin, 1) * matrix).xyz;
+
+            // Normal in object space
+            rayhit.normal = (ray_at(transformed_ray) - sphere.center) / sphere.radius;
+            // Setting uvs early gives them the rotation of the sphere.
+            rayhit.uv = sphere_get_uv(rayhit.normal);
+
+            // Normal in world space
+            rayhit.normal = normalize((vec4(rayhit.normal, 0) * inverse(matrix)).xyz);
+        } else {
+            rayhit.normal = (rayhit.point - sphere.center) / sphere.radius;
+            rayhit.uv = sphere_get_uv(rayhit.normal);
+        }
 
     // Procedure for hitting plane
     } else if (object_type == is_plane) {
@@ -907,8 +932,18 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         Triangle triangle = triangles.data[object_index];
         rayhit.mtl_index = triangle.mtl_index;
         rayhit.texture_id = triangle.texture_id;
-        rayhit.normal = dot(triangle.normal, ray_in.direction) > 0 ? -triangle.normal : triangle.normal;
+
+        // TODO NOTE Depending on whether triangles should double faced or not, their normals need to be flipped
+        // rayhit.normal = dot(triangle.normal, ray_in.direction) > 0 ? -triangle.normal : triangle.normal;
+
+        rayhit.normal = triangle.normal;
+        if (rayhit.transform_index >= 0) {
+            mat4 matrix = inverse(transforms.data[rayhit.transform_index].matrix);
+
+            rayhit.normal = normalize((matrix * vec4(rayhit.normal, 0)).xyz);
+        }
     }
+
 
     rayhit.color = vec4(materials.data[rayhit.mtl_index].albedo, 1);
     #if USE_EMISSION
@@ -1015,7 +1050,7 @@ float check_ray_hit_BVH2(Ray ray, inout RayHit rayhit) {
             #endif
         }
     }
-    
+
     return ray.end;
 }
 #endif
@@ -1037,8 +1072,11 @@ RayHit check_ray_hit_BVH(inout Ray ray, inout Ray ray_out) {
     const bvec3 stored_is_neg = is_dir_negative;
 
     int reset_ray_index = -1;
-    int last_transform_index = -1;
     #endif
+
+    // TODO FIX One object of a mesh is also visible in its non transformed position
+    //  through another objects bvhnode
+    // TODO FIX mesh_transform == 2 you can see bvhnodes inside the sphere mesh
 
     // TODO Another improvement might be to precompute all rays for every mesh per trace call
 
@@ -1087,14 +1125,14 @@ RayHit check_ray_hit_BVH(inout Ray ray, inout Ray ray_out) {
             // inv_direction = stored_inv_dir;
             // is_dir_negative = stored_is_neg;
 
-            mat4 matrix = inverse(transforms.data[last_transform_index].matrix);
+            mat4 matrix = inverse(transforms.data[current_transform_index].matrix);
             ray.direction = (matrix * vec4(ray.direction, 0)).xyz;
             ray.origin = (matrix * vec4(ray.origin, 1)).xyz;
             inv_direction = vec3(1) / ray.direction;
             is_dir_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
 
             reset_ray_index = -1;
-            last_transform_index = -1;
+            current_transform_index = -1;
         }
         #endif
 
@@ -1111,7 +1149,7 @@ RayHit check_ray_hit_BVH(inout Ray ray, inout Ray ray_out) {
 
             // Mark the index after the last index with transrormed ray
             reset_ray_index = to_visit_i - 1;
-            last_transform_index = transform_index;
+            current_transform_index = transform_index;
 
         }
         #endif
@@ -1133,7 +1171,9 @@ RayHit check_ray_hit_BVH(inout Ray ray, inout Ray ray_out) {
             #endif
             to_visit[to_visit_i++] = node_index;
 
+            current_transform_index = transform_index;
             ray.end = check_ray_hit_BVH2(new_ray, rayhit);
+            current_transform_index = -1;
 
             continue;
         }
@@ -1426,6 +1466,10 @@ vec4 cast_ray(Ray ray) {
         }
 
         determine_rayhit(new_ray, rayhit);
+
+        if (show_normal_view) {
+            return vec4((rayhit.normal + vec3(1)) / 2.0, 1);
+        }
 
         #if USE_EMISSION
         if (is_emissive) {

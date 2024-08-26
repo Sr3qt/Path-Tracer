@@ -28,6 +28,7 @@ var create_bvh : PTButton
 var clear_samples : PTButton
 
 var ray_bounces : PTSpinBox
+var normal_view : PTCheckBox
 
 # For BVHType option button
 var bvh_function_names : Array[String]
@@ -59,6 +60,7 @@ func _ready() -> void:
 	clear_samples = %ClearSamples as PTButton
 
 	ray_bounces = %RayBounces as PTSpinBox
+	normal_view = %NormalViewButton as PTCheckBox
 
 	# Initialize bvh dropdown menu
 	bvh_function_names.assign(PTBVHTree.enum_to_dict.values())
@@ -115,6 +117,12 @@ func _ready() -> void:
 	#  Also fix those labels' background being wrong in the editor
 
 
+# Shouldnt work withouth no_signal, but it does, so no change needed
+func toggle_all_render_mode_buttons(toggle : bool) -> void:
+	show_bvh_depth.button_pressed = toggle
+	normal_view.button_pressed = toggle
+
+
 func _on_use_bvh_button_toggled(toggled_on : bool) -> void:
 	pt_window.use_bvh = toggled_on
 
@@ -125,7 +133,9 @@ func _on_use_bvh_button_toggled(toggled_on : bool) -> void:
 
 
 func _on_show_bvh_depth_button_toggled(toggled_on : bool) -> void:
-	pt_window.show_bvh_depth = toggled_on
+	toggle_all_render_mode_buttons(false)
+	show_bvh_depth.set_pressed_no_signal(toggled_on)
+	pt_window.set_render_mode(pt_window.RenderMode.BVH_DEPTH, toggled_on)
 
 	node_count_threshold.visible = toggled_on
 	object_count_threshold.visible = toggled_on
@@ -181,24 +191,24 @@ func _on_screenshot_button_pressed() -> void:
 	PTRendererAuto.take_screenshot()
 
 
-func _on_show_node_button_toggled(toggled_on: bool) -> void:
+func _on_show_node_button_toggled(toggled_on : bool) -> void:
 	pt_window.display_node_count = toggled_on
 
 	node_count_threshold.set_disable(not toggled_on)
 
 
-func _on_show_object_button_toggled(toggled_on: bool) -> void:
+func _on_show_object_button_toggled(toggled_on : bool) -> void:
 	pt_window.display_object_count = toggled_on
 
 	object_count_threshold.set_disable(not toggled_on)
 
 
-func _on_node_count_threshold_value_changed(value: float) -> void:
+func _on_node_count_threshold_value_changed(value : float) -> void:
 	pt_window.node_display_threshold = int(node_count_threshold.value)
 	node_count_threshold.previous_value = node_count_threshold.value
 
 
-func _on_object_count_threshold_value_changed(value: float) -> void:
+func _on_object_count_threshold_value_changed(value : float) -> void:
 	pt_window.object_display_threshold = int(object_count_threshold.value)
 	object_count_threshold.previous_value = object_count_threshold.value
 
@@ -206,3 +216,9 @@ func _on_object_count_threshold_value_changed(value: float) -> void:
 func _on_ray_bounces_value_changed(value : int) -> void:
 	PTRendererAuto.max_default_depth = value
 	ray_bounces.previous_value = value
+
+
+func _on_normal_view_button_toggled(toggled_on : bool) -> void:
+	toggle_all_render_mode_buttons(false)
+	normal_view.set_pressed_no_signal(toggled_on)
+	pt_window.set_render_mode(pt_window.RenderMode.NORMAL_VIEW, toggled_on)

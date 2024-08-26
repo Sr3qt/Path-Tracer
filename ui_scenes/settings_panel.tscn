@@ -416,7 +416,7 @@ layout_mode = 2
 size_flags_vertical = 3
 columns = 2
 
-[node name="Label" type="Label" parent="MarginContainer/AllSettings/Other/GridContainer"]
+[node name="RayBouncesLabel" type="Label" parent="MarginContainer/AllSettings/Other/GridContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "    Ray bounces"
@@ -429,6 +429,15 @@ min_value = 1.0
 max_value = 128.0
 value = 1.0
 script = ExtResource("5_v8pkx")
+
+[node name="NormalViewLabel" type="Label" parent="MarginContainer/AllSettings/Other/GridContainer"]
+layout_mode = 2
+text = "Show Normal Vew"
+
+[node name="NormalViewButton" type="CheckBox" parent="MarginContainer/AllSettings/Other/GridContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("3_g0amw")
 
 [connection signal="toggled" from="MarginContainer/AllSettings/DisableRenderButton" to="MarginContainer/ButtonController" method="_on_disable_render_button_toggled"]
 [connection signal="toggled" from="MarginContainer/AllSettings/LinkCameraButton" to="MarginContainer/ButtonController" method="_on_link_camera_button_toggled"]
@@ -445,3 +454,4 @@ script = ExtResource("5_v8pkx")
 [connection signal="focus_exited" from="MarginContainer/AllSettings/SamplingContainer/SamplingOptions/MaxSamplesButton" to="MarginContainer/ButtonController" method="_on_max_samples_button_focus_exited"]
 [connection signal="pressed" from="MarginContainer/AllSettings/SamplingContainer/ClearSamples" to="MarginContainer/ButtonController" method="_on_clear_samples_pressed"]
 [connection signal="value_changed" from="MarginContainer/AllSettings/Other/GridContainer/RayBounces" to="MarginContainer/ButtonController" method="_on_ray_bounces_value_changed"]
+[connection signal="toggled" from="MarginContainer/AllSettings/Other/GridContainer/NormalViewButton" to="MarginContainer/ButtonController" method="_on_normal_view_button_toggled"]

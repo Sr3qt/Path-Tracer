@@ -11,3 +11,5 @@ export_presets.cfg
 .mono/
 data_*/
 /temps
+shaders/comp - no ray reset.spv
+shaders/comp.spv

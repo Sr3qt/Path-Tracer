@@ -11,6 +11,13 @@ enum RenderFlagsBits {
 	MULTISAMPLE = 4,
 	SHOW_NODE_COUNT = 8,
 	SHOW_OBJECT_COUNT = 16,
+	SHOW_NORMAL_VIEW = 32
+}
+
+enum RenderMode {
+	DEFAULT,
+	BVH_DEPTH,
+	NORMAL_VIEW,
 }
 
 ## GPU RENDER FLAGS
@@ -23,28 +30,23 @@ var flags : int = 0
 #  if every object should be checked for ray hit
 var use_bvh := true:
 	set(value):
-		_set_flag_bit(RenderFlagsBits.USE_BVH, int(value))
+		_set_flag_bit(RenderFlagsBits.USE_BVH, value)
+		frame = frame if use_bvh == value else 0
 		use_bvh = value
 
 # If a bvh heat map of of most expensive traversals are shown
 #  Also disables multisampling while on
-var show_bvh_depth := false:
-	set(value):
-		_set_flag_bit(RenderFlagsBits.SHOW_BVH_DEPTH, int(value))
-		_disable_multisample = value
-		_multisample = not value and enable_multisampling and not _disable_multisample
-		render_mode_changed = true
-		show_bvh_depth = value
-		frame = 0
+var show_bvh_depth := false
 
 var display_node_count := true:
 	set(value):
-		_set_flag_bit(RenderFlagsBits.SHOW_NODE_COUNT, int(value))
+		_set_flag_bit(RenderFlagsBits.SHOW_NODE_COUNT, value)
 		render_mode_changed = true
 		display_node_count = value
+
 var display_object_count := false:
 	set(value):
-		_set_flag_bit(RenderFlagsBits.SHOW_OBJECT_COUNT, int(value))
+		_set_flag_bit(RenderFlagsBits.SHOW_OBJECT_COUNT, value)
 		render_mode_changed = true
 		display_object_count = value
 
@@ -63,10 +65,12 @@ var node_display_threshold := 50:
 # Whether the shader will sample from previous draw call or not
 var _multisample := true:
 	set(value):
-		_set_flag_bit(RenderFlagsBits.MULTISAMPLE, int(value))
+		_set_flag_bit(RenderFlagsBits.MULTISAMPLE, value)
 		_multisample = value
 
-# TODO Add normal-view render mode
+var show_normal_view := false
+
+var _current_render_mode : RenderMode
 
 ## OTHER RENDER FLAGS
 ## Flags that dont go to the gpu
@@ -74,13 +78,13 @@ var _multisample := true:
 # Whether multisampling is enabled by the user or not
 var enable_multisampling := true:
 	set(value):
-		_multisample = not value and enable_multisampling and not _disable_multisample
+		_multisample = not value and can_multisample()
 		enable_multisampling = value
 
 # Updated whenever the camera or an object is moved
 var scene_changed := false:
 	set(value):
-		_multisample = not value and enable_multisampling and not _disable_multisample
+		_multisample = not value and can_multisample()
 		scene_changed = value
 
 # If rendering should stop when frame is larger than max_samples
@@ -89,7 +93,7 @@ var stop_rendering_on_max_samples := true
 # Whether any flags that control *what* is rendered i.e. show_bvh_depth
 var render_mode_changed := false
 
-# An override for various render modes that cannot utilize multisampling
+# A disable override for render modes that cannot utilize multisampling
 var _disable_multisample := false
 
 # Whether this window was rendered in the last renderer draw call
@@ -160,6 +164,74 @@ func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 
 	set_position(Vector2(x_offset, y_offset))
 
 
+func can_multisample() -> bool:
+	return enable_multisampling and not _disable_multisample
+
+
+## Sets the given render mode to true or false.
+## Only one render mode can be true at the same time.
+## Disabling a render mode will change the render mode to DEFUALT.
+func set_render_mode(render_mode : RenderMode, enable : bool) -> void:
+	if not enable:
+		_disable_render_mode(render_mode)
+		return
+
+	# Trying to enable the current active render mode
+	if _current_render_mode == render_mode:
+		return
+
+	if _current_render_mode != RenderMode.DEFAULT:
+		_disable_render_mode(_current_render_mode)
+
+	_current_render_mode = render_mode
+
+	match render_mode:
+		RenderMode.DEFAULT:
+			return
+
+		RenderMode.BVH_DEPTH:
+			_set_flag_bit(RenderFlagsBits.SHOW_BVH_DEPTH, true)
+			show_bvh_depth = true
+
+		RenderMode.NORMAL_VIEW:
+			_set_flag_bit(RenderFlagsBits.SHOW_NORMAL_VIEW, true)
+			show_normal_view = false
+
+	_disable_multisample = true
+	_multisample = can_multisample()
+	render_mode_changed = true
+
+
+func get_render_mode() -> RenderMode:
+	return _current_render_mode
+
+
+func _disable_render_mode(render_mode : RenderMode) -> void:
+	assert(render_mode != RenderMode.DEFAULT,
+		"Cannot disable the defualt render mode.")
+
+	if _current_render_mode != render_mode:
+		return
+
+	_current_render_mode = RenderMode.DEFAULT
+
+	match render_mode:
+		RenderMode.DEFAULT:
+			return
+
+		RenderMode.BVH_DEPTH:
+			_set_flag_bit(RenderFlagsBits.SHOW_BVH_DEPTH, false)
+			show_bvh_depth = false
+
+		RenderMode.NORMAL_VIEW:
+			_set_flag_bit(RenderFlagsBits.SHOW_NORMAL_VIEW, false)
+			show_normal_view = false
+
+	_disable_multisample = false
+	_multisample = can_multisample()
+	render_mode_changed = true
+	frame = 0
+
 func flags_to_byte_array() -> PackedByteArray:
 	return PackedInt32Array([flags]).to_byte_array()
 
@@ -171,7 +243,8 @@ func _set_flags() -> void:
 		RenderFlagsBits.SHOW_BVH_DEPTH * int(show_bvh_depth) +
 		RenderFlagsBits.MULTISAMPLE * int(_multisample) +
 		RenderFlagsBits.SHOW_NODE_COUNT * int(display_node_count) +
-		RenderFlagsBits.SHOW_OBJECT_COUNT * int(display_object_count)
+		RenderFlagsBits.SHOW_OBJECT_COUNT * int(display_object_count) +
+		RenderFlagsBits.SHOW_NORMAL_VIEW * int(show_normal_view)
 	)
 
 func _set_flag_bit(bit : int, boolean : bool) -> void:
