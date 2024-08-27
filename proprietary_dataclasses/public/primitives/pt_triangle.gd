@@ -2,8 +2,6 @@
 class_name PTTriangle
 extends PTPrimitive3D
 
-## TODO FIX Cornell box, triangles are invisible when bvh is on
-
 # The triangles vertices relative to itself, not in local coordinates
 # Used for defining the shape of the triangle
 @export var vertex1 := Vector3.LEFT:

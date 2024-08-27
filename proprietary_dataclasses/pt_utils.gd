@@ -57,7 +57,7 @@ static func aabb_to_byte_array(aabb : AABB, smuggle1 : Variant = 0.0, smuggle2 :
 	else:
 		assert(false, "PT: smuggle1 has to be int or float, but was " + str(type_string(typeof(smuggle1))))
 
-	bytes += PackedFloat32Array(PTUtils.vector3_to_array(new_aabb.end - AABB_PADDING)).to_byte_array()
+	bytes += PackedFloat32Array(PTUtils.vector3_to_array(new_aabb.end + AABB_PADDING)).to_byte_array()
 
 	if smuggle2 is float:
 		bytes += PackedFloat32Array([smuggle2]).to_byte_array()

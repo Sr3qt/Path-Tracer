@@ -887,6 +887,11 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
     int object_type = get_object_type(rayhit.object_id);
     int object_index = get_object_index(rayhit.object_id);
 
+    // TODO texture_id should also be an index to data with the following:
+    //  vec3 offset
+    //  vec3 scale
+    //  bool ignore_albedo
+
     // Procedure for hitting sphere
     if (object_type == is_sphere) {
         Sphere sphere = spheres.data[object_index];
