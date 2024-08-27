@@ -323,7 +323,7 @@ struct Plane {
     vec3 normal;
     float d;
     int mtl_index;
-    int texture_id;
+    uint texture_id;
     int filler0;
     int filler1;
 };
@@ -332,7 +332,7 @@ struct Sphere {
     vec3 center;
     float radius;
     int mtl_index;
-    int texture_id;
+    uint texture_id;
     int filler0;
     int filler1;
 };
@@ -349,7 +349,7 @@ struct Triangle {
     float filler4;
 
     int mtl_index;
-    int texture_id;
+    uint texture_id;
     int filler0;
     int filler5;
 };
@@ -365,7 +365,7 @@ struct RayHit {
     vec3 point;
     int mtl_index;
     vec3 normal;
-    int texture_id;
+    uint texture_id;
     vec4 color;
 };
 
@@ -610,11 +610,11 @@ int get_node_size(int node_id) {
     return abs(bitfieldExtract(node_id, 24, 8));
 }
 
-int get_texture_type(int texture_id) {
+uint get_texture_type(uint texture_id) {
     return bitfieldExtract(texture_id, 30, 2);
 }
 
-int get_texture_index(int texture_id) {
+uint get_texture_index(uint texture_id) {
     return bitfieldExtract(texture_id, 0, 30);
 }
 
@@ -634,7 +634,7 @@ vec2 sphere_get_uv(vec3 pos) {
 // Preprocessor will place procedural function definitions here
 //procedural_texture_function_definition_hook
 
-vec4 procedural_texture(vec3 pos, int function) {
+vec4 procedural_texture(vec3 pos, uint function) {
     // This function will be pre processed and filled procedural texture functions.
     // For sampled textures there is a different implementation (not yet implemented)
 
@@ -652,14 +652,13 @@ vec4 procedural_texture(vec3 pos, int function) {
 
 
 vec4 get_texture(RayHit rayhit) {
-    int texture_type = get_texture_type(rayhit.texture_id);
-    int texture_index = get_texture_index(rayhit.texture_id);
+    uint texture_type = get_texture_type(rayhit.texture_id);
+    uint texture_index = get_texture_index(rayhit.texture_id);
     vec3 sampled_point = (texture_type & is_spatial) > 0 ? rayhit.point : vec3(rayhit.uv, 0);
 
     // TODO Support for texture_index to work on objects properly
-    return texture(Textures[3], rayhit.uv);
     if ((texture_type & is_sampled) > 0) {
-        return texture(Textures[3], rayhit.uv);
+        return texture(Textures[texture_index], rayhit.uv);
     }
 
     return procedural_texture(sampled_point, texture_index);

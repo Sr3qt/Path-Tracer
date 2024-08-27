@@ -312,15 +312,8 @@ func create_triangle_buffers(surface : Array = [null]) -> void:
 	)
 
 func create_texture_buffers() -> void:
-	# TODO Measure texture load time
 	# # TODO REPORT GOOFY AH BUG
 	# # https://forum.godotengine.org/t/retrieving-image-data-from-noisetexture2d-returns-null/55303/4
-
-	var placeholder := load("res://assets/C4-D-UV-Grid-1024x1024.jpg")
-	var texture1 := load("res://test_models/grimchild/GrimmchildTexture.png")
-	var texture2 := load("res://assets/earthmap.jpg")
-
-	var textures : Array[CompressedTexture2D] = [placeholder, texture1, texture2]
 
 	var uniform := RDUniform.new()
 	uniform.binding = TEXTURE_BIND
@@ -335,9 +328,17 @@ func create_texture_buffers() -> void:
 
 	var sample_state := RDSamplerState.new()
 	var sampler := rd.sampler_create(sample_state)
-	for tex in textures:
+	for pt_texture in _scene.sampled_textures:
+
 		# TODO Find a way to use the compressed textures
-		var img := tex.get_image()
+		assert(pt_texture != null)
+
+		if pt_texture.texture == null:
+			uniform.add_id(sampler)
+			uniform.add_id(fill_texture)
+			continue
+
+		var img := pt_texture.texture.get_image()
 		img.decompress()
 		img.convert(Image.FORMAT_RGBAF)
 
@@ -355,7 +356,7 @@ func create_texture_buffers() -> void:
 		uniform.add_id(sampler)
 		uniform.add_id(new_texture_buffer)
 
-	var fill := MAX_TEXTURE_COUNT - textures.size()
+	var fill := MAX_TEXTURE_COUNT - _scene.sampled_textures.size()
 	for i in range(fill):
 		uniform.add_id(sampler)
 		uniform.add_id(fill_texture)

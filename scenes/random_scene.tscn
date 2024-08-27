@@ -1,4 +1,4 @@
-[gd_scene load_steps=498 format=3 uid="uid://d2apulkojbvfc"]
+[gd_scene load_steps=497 format=3 uid="uid://d2apulkojbvfc"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_66lth"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_8wgmd"]
@@ -7,9 +7,6 @@
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_sphere.gd" id="5_7ufyn"]
 [ext_resource type="Resource" uid="uid://d26oqh6e47y3v" path="res://scenes/textures/checker_board_flat.tres" id="5_nikp3"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_procedural_texture.gd" id="7_6dhbo"]
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_rvm40"]
-size = Vector2(1000, 1000)
 
 [sub_resource type="Resource" id="Resource_2pcqp"]
 script = ExtResource("4_7y0c5")
@@ -5396,7 +5393,6 @@ move_speed = 7.0
 
 [node name="@MeshInstance3D@21098" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
-mesh = SubResource("PlaneMesh_rvm40")
 script = ExtResource("3_itbio")
 distance = -1.0
 material = SubResource("Resource_2pcqp")
@@ -5420,2905 +5416,2905 @@ material = SubResource("Resource_ilwqr")
 texture = SubResource("Resource_h4n1g")
 
 [node name="@MeshInstance3D@21102" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.818, 0.2, -10.8872)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.818, 0.2, -10.8872)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_xiomk")
 
 [node name="@MeshInstance3D@21103" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.3621, 0.2, -9.53348)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.3621, 0.2, -9.53348)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_kjc1c")
 
 [node name="@MeshInstance3D@21104" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.4266, 0.2, -8.40333)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.4266, 0.2, -8.40333)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_582ct")
 
 [node name="@MeshInstance3D@21105" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.4118, 0.2, -7.28347)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.4118, 0.2, -7.28347)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_k0x0a")
 
 [node name="@MeshInstance3D@21106" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.9322, 0.2, -6.88004)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.9322, 0.2, -6.88004)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_oohye")
 
 [node name="@MeshInstance3D@21107" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.6005, 0.2, -5.71854)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.6005, 0.2, -5.71854)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_v0fcs")
 
 [node name="@MeshInstance3D@21108" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.3782, 0.2, -4.46933)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.3782, 0.2, -4.46933)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_qrtpb")
 
 [node name="@MeshInstance3D@21109" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.1571, 0.2, -3.22838)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.1571, 0.2, -3.22838)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_hr3ql")
 
 [node name="@MeshInstance3D@21110" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.9488, 0.2, -2.75732)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.9488, 0.2, -2.75732)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_7x0q5")
 
 [node name="@MeshInstance3D@21111" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.1146, 0.2, -1.47879)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.1146, 0.2, -1.47879)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_uvdq0")
 
 [node name="@MeshInstance3D@21112" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.714, 0.2, -0.706204)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.714, 0.2, -0.706204)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_1prm3")
 
 [node name="@MeshInstance3D@21113" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.2994, 0.2, 0.469088)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.2994, 0.2, 0.469088)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_blag0")
 
 [node name="@MeshInstance3D@21114" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.3507, 0.2, 1.72633)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.3507, 0.2, 1.72633)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_0hpjd")
 
 [node name="@MeshInstance3D@21115" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.5097, 0.2, 2.15938)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5097, 0.2, 2.15938)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_q8v3o")
 
 [node name="@MeshInstance3D@21116" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.6596, 0.2, 3.63798)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.6596, 0.2, 3.63798)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_xwg1b")
 
 [node name="@MeshInstance3D@21117" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.6239, 0.2, 4.23281)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.6239, 0.2, 4.23281)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_jn20a")
 
 [node name="@MeshInstance3D@21118" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.5723, 0.2, 5.23599)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5723, 0.2, 5.23599)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_5lfom")
 
 [node name="@MeshInstance3D@21119" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.4162, 0.2, 6.50827)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.4162, 0.2, 6.50827)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_bi0j8")
 
 [node name="@MeshInstance3D@21120" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.2626, 0.2, 7.80756)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.2626, 0.2, 7.80756)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_sjsak")
 
 [node name="@MeshInstance3D@21121" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.2497, 0.2, 8.84876)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.2497, 0.2, 8.84876)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_wrr4h")
 
 [node name="@MeshInstance3D@21122" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.4908, 0.2, 9.24511)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.4908, 0.2, 9.24511)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_45e5f")
 
 [node name="@MeshInstance3D@21123" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -10.613, 0.2, 10.5771)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.613, 0.2, 10.5771)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_tsold")
 
 [node name="@MeshInstance3D@21124" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.16544, 0.2, -10.7213)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.16544, 0.2, -10.7213)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_8pwhi")
 
 [node name="@MeshInstance3D@21125" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.30045, 0.2, -9.43534)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.30045, 0.2, -9.43534)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ep6ok")
 
 [node name="@MeshInstance3D@21126" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.20151, 0.2, -8.67393)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.20151, 0.2, -8.67393)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_7bkir")
 
 [node name="@MeshInstance3D@21127" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.99625, 0.2, -7.74113)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.99625, 0.2, -7.74113)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_amhjj")
 
 [node name="@MeshInstance3D@21128" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.54716, 0.2, -6.20972)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.54716, 0.2, -6.20972)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_2wxt4")
 
 [node name="@MeshInstance3D@21129" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.57635, 0.2, -5.98072)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.57635, 0.2, -5.98072)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_vr1k2")
 
 [node name="@MeshInstance3D@21130" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.87011, 0.2, -4.34953)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.87011, 0.2, -4.34953)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_5a6wy")
 
 [node name="@MeshInstance3D@21131" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.9647, 0.2, -3.92824)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.9647, 0.2, -3.92824)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_0yn3i")
 
 [node name="@MeshInstance3D@21132" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.16934, 0.2, -2.21019)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.16934, 0.2, -2.21019)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_4608t")
 
 [node name="@MeshInstance3D@21133" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.8998, 0.2, -1.24197)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.8998, 0.2, -1.24197)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_et6hm")
 
 [node name="@MeshInstance3D@21134" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.22894, 0.2, -0.165813)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.22894, 0.2, -0.165813)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_l7awj")
 
 [node name="@MeshInstance3D@21135" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.53471, 0.2, 0.654955)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.53471, 0.2, 0.654955)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_4vmre")
 
 [node name="@MeshInstance3D@21136" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.68427, 0.2, 1.43886)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.68427, 0.2, 1.43886)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_jbcsc")
 
 [node name="@MeshInstance3D@21137" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.24089, 0.2, 2.35318)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.24089, 0.2, 2.35318)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_rbd7t")
 
 [node name="@MeshInstance3D@21138" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.40162, 0.2, 3.05299)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.40162, 0.2, 3.05299)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_1t6sx")
 
 [node name="@MeshInstance3D@21139" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.97898, 0.2, 4.7242)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.97898, 0.2, 4.7242)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_oc24c")
 
 [node name="@MeshInstance3D@21140" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.43734, 0.2, 5.19124)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.43734, 0.2, 5.19124)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_puml7")
 
 [node name="@MeshInstance3D@21141" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.27632, 0.2, 6.46637)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.27632, 0.2, 6.46637)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_eheoj")
 
 [node name="@MeshInstance3D@21142" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.16979, 0.2, 7.19592)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.16979, 0.2, 7.19592)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_cgkwb")
 
 [node name="@MeshInstance3D@21143" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.95949, 0.2, 8.73427)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.95949, 0.2, 8.73427)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_7p5oc")
 
 [node name="@MeshInstance3D@21144" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.23735, 0.2, 9.58073)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.23735, 0.2, 9.58073)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_oxx7b")
 
 [node name="@MeshInstance3D@21145" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -9.89445, 0.2, 10.4988)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.89445, 0.2, 10.4988)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_einqf")
 
 [node name="@MeshInstance3D@21146" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.78086, 0.2, -10.8817)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.78086, 0.2, -10.8817)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_c51nu")
 
 [node name="@MeshInstance3D@21147" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.10043, 0.2, -9.29649)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.10043, 0.2, -9.29649)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ufaky")
 
 [node name="@MeshInstance3D@21148" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.57652, 0.2, -8.32251)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.57652, 0.2, -8.32251)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_srn2d")
 
 [node name="@MeshInstance3D@21149" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.62475, 0.2, -7.96652)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.62475, 0.2, -7.96652)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_txwu5")
 
 [node name="@MeshInstance3D@21150" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.95302, 0.2, -6.59824)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.95302, 0.2, -6.59824)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_uu27m")
 
 [node name="@MeshInstance3D@21151" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.21498, 0.2, -5.45907)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.21498, 0.2, -5.45907)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_mum6r")
 
 [node name="@MeshInstance3D@21152" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.23513, 0.2, -4.46592)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.23513, 0.2, -4.46592)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_mq3ga")
 
 [node name="@MeshInstance3D@21153" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.41042, 0.2, -3.44602)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.41042, 0.2, -3.44602)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ma5ay")
 
 [node name="@MeshInstance3D@21154" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.2192, 0.2, -2.31451)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.2192, 0.2, -2.31451)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_2nio5")
 
 [node name="@MeshInstance3D@21155" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.70688, 0.2, -1.48163)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.70688, 0.2, -1.48163)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_c4or0")
 
 [node name="@MeshInstance3D@21156" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.54324, 0.2, -0.488201)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.54324, 0.2, -0.488201)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_pf3im")
 
 [node name="@MeshInstance3D@21157" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.89961, 0.2, 0.475646)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.89961, 0.2, 0.475646)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_rmmw4")
 
 [node name="@MeshInstance3D@21158" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.79514, 0.2, 1.35822)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.79514, 0.2, 1.35822)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_pxotp")
 
 [node name="@MeshInstance3D@21159" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.48911, 0.2, 2.11758)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.48911, 0.2, 2.11758)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_800lo")
 
 [node name="@MeshInstance3D@21160" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.70616, 0.2, 3.80355)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.70616, 0.2, 3.80355)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_hulor")
 
 [node name="@MeshInstance3D@21161" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.80462, 0.2, 4.60342)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.80462, 0.2, 4.60342)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_fdp85")
 
 [node name="@MeshInstance3D@21162" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.85694, 0.2, 5.01589)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.85694, 0.2, 5.01589)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_6c4ba")
 
 [node name="@MeshInstance3D@21163" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.38361, 0.2, 6.3212)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.38361, 0.2, 6.3212)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ho3fy")
 
 [node name="@MeshInstance3D@21164" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.97471, 0.2, 7.89692)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.97471, 0.2, 7.89692)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_to4ol")
 
 [node name="@MeshInstance3D@21165" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.62825, 0.2, 8.66318)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.62825, 0.2, 8.66318)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_j417p")
 
 [node name="@MeshInstance3D@21166" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.23734, 0.2, 9.30428)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.23734, 0.2, 9.30428)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_jcy3t")
 
 [node name="@MeshInstance3D@21167" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.40514, 0.2, 10.1735)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.40514, 0.2, 10.1735)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_x5rfb")
 
 [node name="@MeshInstance3D@21168" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.41705, 0.2, -10.1617)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.41705, 0.2, -10.1617)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_n7brj")
 
 [node name="@MeshInstance3D@21169" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.29327, 0.2, -9.60191)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.29327, 0.2, -9.60191)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_sr0fl")
 
 [node name="@MeshInstance3D@21170" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.72019, 0.2, -8.98292)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.72019, 0.2, -8.98292)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_gj17t")
 
 [node name="@MeshInstance3D@21171" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.26687, 0.2, -7.85805)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.26687, 0.2, -7.85805)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_p5jrl")
 
 [node name="@MeshInstance3D@21172" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.27651, 0.2, -6.73614)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.27651, 0.2, -6.73614)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_m7j6b")
 
 [node name="@MeshInstance3D@21173" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.60935, 0.2, -5.92191)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.60935, 0.2, -5.92191)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_tkc8r")
 
 [node name="@MeshInstance3D@21174" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.47623, 0.2, -4.23282)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.47623, 0.2, -4.23282)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_kqfx0")
 
 [node name="@MeshInstance3D@21175" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.85723, 0.2, -3.99667)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.85723, 0.2, -3.99667)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_3p33k")
 
 [node name="@MeshInstance3D@21176" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.99299, 0.2, -2.23091)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.99299, 0.2, -2.23091)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_oo5iw")
 
 [node name="@MeshInstance3D@21177" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.15638, 0.2, -1.21406)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.15638, 0.2, -1.21406)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_owt2y")
 
 [node name="@MeshInstance3D@21178" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.80285, 0.2, -0.782603)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.80285, 0.2, -0.782603)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_yxtlr")
 
 [node name="@MeshInstance3D@21179" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.67411, 0.2, 0.12217)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.67411, 0.2, 0.12217)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_aq808")
 
 [node name="@MeshInstance3D@21180" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.61797, 0.2, 1.70815)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.61797, 0.2, 1.70815)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_dvtq7")
 
 [node name="@MeshInstance3D@21181" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.85287, 0.2, 2.52065)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.85287, 0.2, 2.52065)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_u8ll8")
 
 [node name="@MeshInstance3D@21182" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.16221, 0.2, 3.70254)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.16221, 0.2, 3.70254)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_vu6fx")
 
 [node name="@MeshInstance3D@21183" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.56996, 0.2, 4.26394)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.56996, 0.2, 4.26394)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_4tu7h")
 
 [node name="@MeshInstance3D@21184" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.96722, 0.2, 5.3732)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.96722, 0.2, 5.3732)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_gut55")
 
 [node name="@MeshInstance3D@21185" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.37207, 0.2, 6.19928)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.37207, 0.2, 6.19928)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_7tjsj")
 
 [node name="@MeshInstance3D@21186" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.69727, 0.2, 7.23641)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.69727, 0.2, 7.23641)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_rai5h")
 
 [node name="@MeshInstance3D@21187" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.64917, 0.2, 8.7459)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.64917, 0.2, 8.7459)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ntkt6")
 
 [node name="@MeshInstance3D@21188" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.12736, 0.2, 9.31364)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.12736, 0.2, 9.31364)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_3srki")
 
 [node name="@MeshInstance3D@21189" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -7.58001, 0.2, 10.7297)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.58001, 0.2, 10.7297)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ftqby")
 
 [node name="@MeshInstance3D@21190" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.96295, 0.2, -10.6083)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.96295, 0.2, -10.6083)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_v2een")
 
 [node name="@MeshInstance3D@21191" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.63913, 0.2, -9.3154)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.63913, 0.2, -9.3154)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_d6bex")
 
 [node name="@MeshInstance3D@21192" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.53844, 0.2, -8.14101)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.53844, 0.2, -8.14101)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_emn5h")
 
 [node name="@MeshInstance3D@21193" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.45743, 0.2, -7.70588)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.45743, 0.2, -7.70588)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_rcrfu")
 
 [node name="@MeshInstance3D@21194" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.45206, 0.2, -6.63401)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.45206, 0.2, -6.63401)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_poeal")
 
 [node name="@MeshInstance3D@21195" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.76192, 0.2, -5.17626)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.76192, 0.2, -5.17626)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_4yjer")
 
 [node name="@MeshInstance3D@21196" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.34605, 0.2, -4.90172)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.34605, 0.2, -4.90172)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_02aj5")
 
 [node name="@MeshInstance3D@21197" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.11146, 0.2, -3.52128)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.11146, 0.2, -3.52128)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_jiega")
 
 [node name="@MeshInstance3D@21198" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.70695, 0.2, -2.70368)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.70695, 0.2, -2.70368)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_q3syw")
 
 [node name="@MeshInstance3D@21199" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.23557, 0.2, -1.21098)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.23557, 0.2, -1.21098)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_7f4hu")
 
 [node name="@MeshInstance3D@21200" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.87691, 0.2, -0.315766)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.87691, 0.2, -0.315766)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_yfm3x")
 
 [node name="@MeshInstance3D@21201" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.86828, 0.2, 0.55601)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.86828, 0.2, 0.55601)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ukdkm")
 
 [node name="@MeshInstance3D@21202" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.1922, 0.2, 1.21814)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.1922, 0.2, 1.21814)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_smk1b")
 
 [node name="@MeshInstance3D@21203" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.73245, 0.2, 2.74173)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.73245, 0.2, 2.74173)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_6n8cp")
 
 [node name="@MeshInstance3D@21204" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.18091, 0.2, 3.05124)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.18091, 0.2, 3.05124)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_5s0hc")
 
 [node name="@MeshInstance3D@21205" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.86119, 0.2, 4.44004)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.86119, 0.2, 4.44004)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ik4rj")
 
 [node name="@MeshInstance3D@21206" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.32929, 0.2, 5.86635)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.32929, 0.2, 5.86635)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_t0htg")
 
 [node name="@MeshInstance3D@21207" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.81498, 0.2, 6.76849)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.81498, 0.2, 6.76849)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_rcupk")
 
 [node name="@MeshInstance3D@21208" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.39828, 0.2, 7.34534)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.39828, 0.2, 7.34534)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_wsr8e")
 
 [node name="@MeshInstance3D@21209" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.90431, 0.2, 8.73932)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.90431, 0.2, 8.73932)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_macgg")
 
 [node name="@MeshInstance3D@21210" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.36013, 0.2, 9.77448)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.36013, 0.2, 9.77448)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_yys2h")
 
 [node name="@MeshInstance3D@21211" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -6.29103, 0.2, 10.0919)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.29103, 0.2, 10.0919)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_p2mm3")
 
 [node name="@MeshInstance3D@21212" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.24376, 0.2, -10.9852)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.24376, 0.2, -10.9852)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_e7jjr")
 
 [node name="@MeshInstance3D@21213" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.35054, 0.2, -9.1973)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.35054, 0.2, -9.1973)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_unjlc")
 
 [node name="@MeshInstance3D@21214" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.76989, 0.2, -8.22763)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.76989, 0.2, -8.22763)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_123g0")
 
 [node name="@MeshInstance3D@21215" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.60836, 0.2, -7.7672)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.60836, 0.2, -7.7672)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_2hiph")
 
 [node name="@MeshInstance3D@21216" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.52578, 0.2, -6.71168)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.52578, 0.2, -6.71168)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_swtm5")
 
 [node name="@MeshInstance3D@21217" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.65758, 0.2, -5.55839)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.65758, 0.2, -5.55839)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_m245a")
 
 [node name="@MeshInstance3D@21218" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.25475, 0.2, -4.79175)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.25475, 0.2, -4.79175)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_5rscb")
 
 [node name="@MeshInstance3D@21219" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.28279, 0.2, -3.99494)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.28279, 0.2, -3.99494)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_wu3tx")
 
 [node name="@MeshInstance3D@21220" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.6416, 0.2, -2.63783)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.6416, 0.2, -2.63783)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_bxoq4")
 
 [node name="@MeshInstance3D@21221" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.40173, 0.2, -1.40227)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.40173, 0.2, -1.40227)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_f02dy")
 
 [node name="@MeshInstance3D@21222" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.63302, 0.2, -0.532943)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.63302, 0.2, -0.532943)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_m4rvs")
 
 [node name="@MeshInstance3D@21223" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.69346, 0.2, 0.142894)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.69346, 0.2, 0.142894)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_kwk2k")
 
 [node name="@MeshInstance3D@21224" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.56565, 0.2, 1.7168)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.56565, 0.2, 1.7168)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_oalrh")
 
 [node name="@MeshInstance3D@21225" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.89933, 0.2, 2.08214)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.89933, 0.2, 2.08214)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_fip5v")
 
 [node name="@MeshInstance3D@21226" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.96361, 0.2, 3.12047)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.96361, 0.2, 3.12047)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_uw1xj")
 
 [node name="@MeshInstance3D@21227" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.71371, 0.2, 4.65691)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.71371, 0.2, 4.65691)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_jcs3l")
 
 [node name="@MeshInstance3D@21228" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.55431, 0.2, 5.77626)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.55431, 0.2, 5.77626)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_lr1xm")
 
 [node name="@MeshInstance3D@21229" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.4459, 0.2, 6.50214)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.4459, 0.2, 6.50214)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_0ru0i")
 
 [node name="@MeshInstance3D@21230" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.7857, 0.2, 7.4839)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.7857, 0.2, 7.4839)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_2k0u2")
 
 [node name="@MeshInstance3D@21231" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.69452, 0.2, 8.24431)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.69452, 0.2, 8.24431)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_jtq1c")
 
 [node name="@MeshInstance3D@21232" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.69568, 0.2, 9.72031)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.69568, 0.2, 9.72031)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_h7qe0")
 
 [node name="@MeshInstance3D@21233" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -5.99359, 0.2, 10.1236)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.99359, 0.2, 10.1236)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_xvoms")
 
 [node name="@MeshInstance3D@21234" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.31163, 0.2, -10.4605)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.31163, 0.2, -10.4605)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_884fg")
 
 [node name="@MeshInstance3D@21235" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.98391, 0.2, -9.34521)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.98391, 0.2, -9.34521)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_udfym")
 
 [node name="@MeshInstance3D@21236" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.4022, 0.2, -8.10821)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.4022, 0.2, -8.10821)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_i8yl4")
 
 [node name="@MeshInstance3D@21237" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.65528, 0.2, -7.12287)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.65528, 0.2, -7.12287)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_rid1k")
 
 [node name="@MeshInstance3D@21238" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.42102, 0.2, -6.63804)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.42102, 0.2, -6.63804)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_takr7")
 
 [node name="@MeshInstance3D@21239" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.26371, 0.2, -5.9593)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.26371, 0.2, -5.9593)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_me36f")
 
 [node name="@MeshInstance3D@21240" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.55971, 0.2, -4.64282)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.55971, 0.2, -4.64282)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_k7r6m")
 
 [node name="@MeshInstance3D@21241" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.58577, 0.2, -3.12859)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.58577, 0.2, -3.12859)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_k3yvr")
 
 [node name="@MeshInstance3D@21242" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.23269, 0.2, -2.69425)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.23269, 0.2, -2.69425)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_wvaem")
 
 [node name="@MeshInstance3D@21243" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.54593, 0.2, -1.10532)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.54593, 0.2, -1.10532)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_70lgp")
 
 [node name="@MeshInstance3D@21244" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.29612, 0.2, -0.853134)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.29612, 0.2, -0.853134)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_1hepx")
 
 [node name="@MeshInstance3D@21245" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.58256, 0.2, 0.107082)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.58256, 0.2, 0.107082)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_i863s")
 
 [node name="@MeshInstance3D@21246" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.12276, 0.2, 1.46895)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.12276, 0.2, 1.46895)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_6ympu")
 
 [node name="@MeshInstance3D@21247" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.35575, 0.2, 2.45714)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.35575, 0.2, 2.45714)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_gt33c")
 
 [node name="@MeshInstance3D@21248" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.4949, 0.2, 3.34607)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.4949, 0.2, 3.34607)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_2nbeb")
 
 [node name="@MeshInstance3D@21249" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.65063, 0.2, 4.75756)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.65063, 0.2, 4.75756)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ki3q8")
 
 [node name="@MeshInstance3D@21250" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.43442, 0.2, 5.79046)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.43442, 0.2, 5.79046)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_gbm2y")
 
 [node name="@MeshInstance3D@21251" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.99094, 0.2, 6.15041)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.99094, 0.2, 6.15041)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_gu2s0")
 
 [node name="@MeshInstance3D@21252" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.47382, 0.2, 7.32256)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.47382, 0.2, 7.32256)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_4iva3")
 
 [node name="@MeshInstance3D@21253" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.39035, 0.2, 8.32297)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.39035, 0.2, 8.32297)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_2noa2")
 
 [node name="@MeshInstance3D@21254" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.56364, 0.2, 9.14302)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.56364, 0.2, 9.14302)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_n38fb")
 
 [node name="@MeshInstance3D@21255" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -4.48734, 0.2, 10.8658)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.48734, 0.2, 10.8658)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_2cxaw")
 
 [node name="@MeshInstance3D@21256" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.84739, 0.2, -10.6695)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.84739, 0.2, -10.6695)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_0vliy")
 
 [node name="@MeshInstance3D@21257" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.36437, 0.2, -9.28574)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.36437, 0.2, -9.28574)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_gayum")
 
 [node name="@MeshInstance3D@21258" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.59514, 0.2, -8.94005)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.59514, 0.2, -8.94005)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ne2j0")
 
 [node name="@MeshInstance3D@21259" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.99585, 0.2, -7.79703)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.99585, 0.2, -7.79703)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_abyl0")
 
 [node name="@MeshInstance3D@21260" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.8525, 0.2, -6.74329)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.8525, 0.2, -6.74329)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_vwa0q")
 
 [node name="@MeshInstance3D@21261" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.99317, 0.2, -5.33059)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.99317, 0.2, -5.33059)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_38n48")
 
 [node name="@MeshInstance3D@21262" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.95047, 0.2, -4.40368)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.95047, 0.2, -4.40368)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_k3u5g")
 
 [node name="@MeshInstance3D@21263" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.52143, 0.2, -3.21191)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.52143, 0.2, -3.21191)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_u4r73")
 
 [node name="@MeshInstance3D@21264" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.18023, 0.2, -2.84613)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.18023, 0.2, -2.84613)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_vwkxa")
 
 [node name="@MeshInstance3D@21265" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.73734, 0.2, -1.58714)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.73734, 0.2, -1.58714)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_eucuw")
 
 [node name="@MeshInstance3D@21266" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.19397, 0.2, -0.568686)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.19397, 0.2, -0.568686)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_prwx6")
 
 [node name="@MeshInstance3D@21267" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.35493, 0.2, 0.796784)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.35493, 0.2, 0.796784)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_pfl43")
 
 [node name="@MeshInstance3D@21268" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.8789, 0.2, 1.57458)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.8789, 0.2, 1.57458)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_d7mda")
 
 [node name="@MeshInstance3D@21269" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.75484, 0.2, 2.68313)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75484, 0.2, 2.68313)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_rxfjs")
 
 [node name="@MeshInstance3D@21270" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.15997, 0.2, 3.43537)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.15997, 0.2, 3.43537)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_njred")
 
 [node name="@MeshInstance3D@21271" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.55041, 0.2, 4.86591)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.55041, 0.2, 4.86591)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_34iqs")
 
 [node name="@MeshInstance3D@21272" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.68283, 0.2, 5.58246)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.68283, 0.2, 5.58246)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_3ef4k")
 
 [node name="@MeshInstance3D@21273" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.30685, 0.2, 6.34144)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.30685, 0.2, 6.34144)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_e37ru")
 
 [node name="@MeshInstance3D@21274" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.11104, 0.2, 7.43427)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.11104, 0.2, 7.43427)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_gahqb")
 
 [node name="@MeshInstance3D@21275" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.17071, 0.2, 8.68492)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.17071, 0.2, 8.68492)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_56xt6")
 
 [node name="@MeshInstance3D@21276" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.66289, 0.2, 9.69483)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.66289, 0.2, 9.69483)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_o67fr")
 
 [node name="@MeshInstance3D@21277" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.95619, 0.2, 10.1778)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.95619, 0.2, 10.1778)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_8vyif")
 
 [node name="@MeshInstance3D@21278" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.6524, 0.2, -10.6209)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6524, 0.2, -10.6209)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_nsgyi")
 
 [node name="@MeshInstance3D@21279" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.68596, 0.2, -9.35574)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.68596, 0.2, -9.35574)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_oiqqh")
 
 [node name="@MeshInstance3D@21280" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.59315, 0.2, -8.61303)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.59315, 0.2, -8.61303)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_4jurm")
 
 [node name="@MeshInstance3D@21281" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.99338, 0.2, -7.88002)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.99338, 0.2, -7.88002)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_0fvyx")
 
 [node name="@MeshInstance3D@21282" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.70618, 0.2, -6.88293)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.70618, 0.2, -6.88293)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_aqbw3")
 
 [node name="@MeshInstance3D@21283" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.61477, 0.2, -5.71351)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.61477, 0.2, -5.71351)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_5fajr")
 
 [node name="@MeshInstance3D@21284" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.99524, 0.2, -4.54492)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.99524, 0.2, -4.54492)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_2q1ol")
 
 [node name="@MeshInstance3D@21285" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.73712, 0.2, -3.93939)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.73712, 0.2, -3.93939)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_hfl7b")
 
 [node name="@MeshInstance3D@21286" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.12802, 0.2, -2.73878)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.12802, 0.2, -2.73878)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_s32g2")
 
 [node name="@MeshInstance3D@21287" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.67408, 0.2, -1.51272)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.67408, 0.2, -1.51272)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_jlbxe")
 
 [node name="@MeshInstance3D@21288" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.59899, 0.2, -0.98229)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.59899, 0.2, -0.98229)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_8g5h4")
 
 [node name="@MeshInstance3D@21289" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.83731, 0.2, 0.750742)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.83731, 0.2, 0.750742)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_d08vp")
 
 [node name="@MeshInstance3D@21290" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.86595, 0.2, 1.83956)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.86595, 0.2, 1.83956)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_se8j2")
 
 [node name="@MeshInstance3D@21291" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.74191, 0.2, 2.16875)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.74191, 0.2, 2.16875)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_i7a7c")
 
 [node name="@MeshInstance3D@21292" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.64441, 0.2, 3.61882)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.64441, 0.2, 3.61882)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_vs4g2")
 
 [node name="@MeshInstance3D@21293" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.43986, 0.2, 4.23117)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.43986, 0.2, 4.23117)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_spvlh")
 
 [node name="@MeshInstance3D@21294" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.12236, 0.2, 5.65863)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.12236, 0.2, 5.65863)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_o3f2s")
 
 [node name="@MeshInstance3D@21295" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.57855, 0.2, 6.09037)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.57855, 0.2, 6.09037)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_kau2x")
 
 [node name="@MeshInstance3D@21296" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.406, 0.2, 7.73751)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.406, 0.2, 7.73751)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_0ocux")
 
 [node name="@MeshInstance3D@21297" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.3751, 0.2, 8.06766)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.3751, 0.2, 8.06766)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_q1wir")
 
 [node name="@MeshInstance3D@21298" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.45366, 0.2, 9.35917)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.45366, 0.2, 9.35917)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_mhyee")
 
 [node name="@MeshInstance3D@21299" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -2.56052, 0.2, 10.0396)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.56052, 0.2, 10.0396)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_htayg")
 
 [node name="@MeshInstance3D@21300" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.14084, 0.2, -10.9677)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.14084, 0.2, -10.9677)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_auar0")
 
 [node name="@MeshInstance3D@21301" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.93828, 0.2, -9.11224)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.93828, 0.2, -9.11224)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_664d2")
 
 [node name="@MeshInstance3D@21302" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.95294, 0.2, -8.19405)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.95294, 0.2, -8.19405)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_0prfi")
 
 [node name="@MeshInstance3D@21303" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.9753, 0.2, -7.57872)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9753, 0.2, -7.57872)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ortv4")
 
 [node name="@MeshInstance3D@21304" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.41555, 0.2, -6.39721)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.41555, 0.2, -6.39721)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_mxtfb")
 
 [node name="@MeshInstance3D@21305" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.97301, 0.2, -5.79706)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.97301, 0.2, -5.79706)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_vt665")
 
 [node name="@MeshInstance3D@21306" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.84494, 0.2, -4.97435)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.84494, 0.2, -4.97435)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_8em8v")
 
 [node name="@MeshInstance3D@21307" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.65729, 0.2, -3.21294)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.65729, 0.2, -3.21294)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ym545")
 
 [node name="@MeshInstance3D@21308" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.48428, 0.2, -2.68171)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.48428, 0.2, -2.68171)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_15sge")
 
 [node name="@MeshInstance3D@21309" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.98743, 0.2, -1.10451)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.98743, 0.2, -1.10451)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_0g4x8")
 
 [node name="@MeshInstance3D@21310" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.9494, 0.2, -0.305259)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9494, 0.2, -0.305259)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_m106h")
 
 [node name="@MeshInstance3D@21311" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.25239, 0.2, 0.565925)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25239, 0.2, 0.565925)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_dkw8x")
 
 [node name="@MeshInstance3D@21312" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.57973, 0.2, 1.69272)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.57973, 0.2, 1.69272)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_8yvth")
 
 [node name="@MeshInstance3D@21313" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.22658, 0.2, 2.53453)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.22658, 0.2, 2.53453)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_di1y2")
 
 [node name="@MeshInstance3D@21314" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.33622, 0.2, 3.39862)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.33622, 0.2, 3.39862)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_rcj2q")
 
 [node name="@MeshInstance3D@21315" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.13092, 0.2, 4.31114)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.13092, 0.2, 4.31114)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_p8v23")
 
 [node name="@MeshInstance3D@21316" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.6978, 0.2, 5.78407)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6978, 0.2, 5.78407)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_kr75t")
 
 [node name="@MeshInstance3D@21317" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.24274, 0.2, 6.76393)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.24274, 0.2, 6.76393)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_s3e22")
 
 [node name="@MeshInstance3D@21318" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.58557, 0.2, 7.88434)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.58557, 0.2, 7.88434)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_y26y0")
 
 [node name="@MeshInstance3D@21319" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.78852, 0.2, 8.08098)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.78852, 0.2, 8.08098)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_kswg0")
 
 [node name="@MeshInstance3D@21320" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.76497, 0.2, 9.17925)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.76497, 0.2, 9.17925)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_rf18s")
 
 [node name="@MeshInstance3D@21321" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -1.84537, 0.2, 10.8673)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.84537, 0.2, 10.8673)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_6n12u")
 
 [node name="@MeshInstance3D@21322" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.342355, 0.2, -10.1411)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.342355, 0.2, -10.1411)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_fyst0")
 
 [node name="@MeshInstance3D@21323" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.771199, 0.2, -9.68852)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.771199, 0.2, -9.68852)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_4tgk3")
 
 [node name="@MeshInstance3D@21324" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.223118, 0.2, -8.87712)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.223118, 0.2, -8.87712)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_6iy0t")
 
 [node name="@MeshInstance3D@21325" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.197777, 0.2, -7.54182)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.197777, 0.2, -7.54182)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_2ayv7")
 
 [node name="@MeshInstance3D@21326" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.829989, 0.2, -6.42355)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.829989, 0.2, -6.42355)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_pas3t")
 
 [node name="@MeshInstance3D@21327" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.99437, 0.2, -5.23547)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.99437, 0.2, -5.23547)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_rum7y")
 
 [node name="@MeshInstance3D@21328" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.464072, 0.2, -4.86373)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.464072, 0.2, -4.86373)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_na6wk")
 
 [node name="@MeshInstance3D@21329" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.950303, 0.2, -3.74751)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.950303, 0.2, -3.74751)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_bdul1")
 
 [node name="@MeshInstance3D@21330" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.40352, 0.2, -2.18021)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.40352, 0.2, -2.18021)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_nvnp8")
 
 [node name="@MeshInstance3D@21331" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.98472, 0.2, -1.93877)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.98472, 0.2, -1.93877)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_aali8")
 
 [node name="@MeshInstance3D@21332" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.196255, 0.2, -0.26409)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.196255, 0.2, -0.26409)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_7ve4f")
 
 [node name="@MeshInstance3D@21333" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.913052, 0.2, 0.570609)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.913052, 0.2, 0.570609)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ja1qw")
 
 [node name="@MeshInstance3D@21334" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.834243, 0.2, 1.12241)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.834243, 0.2, 1.12241)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_q8cnb")
 
 [node name="@MeshInstance3D@21335" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.685199, 0.2, 2.3441)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.685199, 0.2, 2.3441)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_36xuw")
 
 [node name="@MeshInstance3D@21336" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.359737, 0.2, 3.10675)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.359737, 0.2, 3.10675)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_tgrjt")
 
 [node name="@MeshInstance3D@21337" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.804522, 0.2, 4.74828)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.804522, 0.2, 4.74828)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_a4a61")
 
 [node name="@MeshInstance3D@21338" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.4523, 0.2, 5.74019)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4523, 0.2, 5.74019)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_gr0d4")
 
 [node name="@MeshInstance3D@21339" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.411083, 0.2, 6.66437)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.411083, 0.2, 6.66437)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_8ebxm")
 
 [node name="@MeshInstance3D@21340" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.743602, 0.2, 7.54265)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.743602, 0.2, 7.54265)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_3qoe5")
 
 [node name="@MeshInstance3D@21341" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.564414, 0.2, 8.76938)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.564414, 0.2, 8.76938)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_jjrr5")
 
 [node name="@MeshInstance3D@21342" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.403665, 0.2, 9.01411)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.403665, 0.2, 9.01411)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_awb00")
 
 [node name="@MeshInstance3D@21343" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -0.800974, 0.2, 10.5662)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.800974, 0.2, 10.5662)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_e8hy3")
 
 [node name="@MeshInstance3D@21344" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.272549, 0.2, -10.4637)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.272549, 0.2, -10.4637)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_iw56o")
 
 [node name="@MeshInstance3D@21345" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.46191, 0.2, -9.30401)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.46191, 0.2, -9.30401)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_qnycs")
 
 [node name="@MeshInstance3D@21346" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.336459, 0.2, -8.93333)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.336459, 0.2, -8.93333)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_pp0te")
 
 [node name="@MeshInstance3D@21347" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.0576961, 0.2, -7.72516)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0576961, 0.2, -7.72516)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_x0too")
 
 [node name="@MeshInstance3D@21348" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.243184, 0.2, -6.58146)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.243184, 0.2, -6.58146)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ixr8f")
 
 [node name="@MeshInstance3D@21349" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.291786, 0.2, -5.11143)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.291786, 0.2, -5.11143)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_mgy7p")
 
 [node name="@MeshInstance3D@21350" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.319015, 0.2, -4.625)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.319015, 0.2, -4.625)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_cw24u")
 
 [node name="@MeshInstance3D@21351" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.133101, 0.2, -3.41279)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.133101, 0.2, -3.41279)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_bog0h")
 
 [node name="@MeshInstance3D@21352" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.045902, 0.2, -2.99938)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.045902, 0.2, -2.99938)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_266fk")
 
 [node name="@MeshInstance3D@21353" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.509658, 0.2, -1.52594)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.509658, 0.2, -1.52594)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_84p5p")
 
 [node name="@MeshInstance3D@21354" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.200147, 0.2, -0.30506)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.200147, 0.2, -0.30506)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_trenk")
 
 [node name="@MeshInstance3D@21355" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.898274, 0.2, 0.235233)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.898274, 0.2, 0.235233)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_vebkn")
 
 [node name="@MeshInstance3D@21356" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.699311, 0.2, 1.87641)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.699311, 0.2, 1.87641)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_necby")
 
 [node name="@MeshInstance3D@21357" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.0961099, 0.2, 2.03814)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0961099, 0.2, 2.03814)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_sthek")
 
 [node name="@MeshInstance3D@21358" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.404636, 0.2, 3.38004)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.404636, 0.2, 3.38004)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_15rqr")
 
 [node name="@MeshInstance3D@21359" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.228372, 0.2, 4.11175)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.228372, 0.2, 4.11175)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_faku0")
 
 [node name="@MeshInstance3D@21360" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.476656, 0.2, 5.18133)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.476656, 0.2, 5.18133)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_p0hbt")
 
 [node name="@MeshInstance3D@21361" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.686266, 0.2, 6.86227)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.686266, 0.2, 6.86227)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_l1ff3")
 
 [node name="@MeshInstance3D@21362" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.680446, 0.2, 7.11456)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.680446, 0.2, 7.11456)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_tps10")
 
 [node name="@MeshInstance3D@21363" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.725616, 0.2, 8.0788)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.725616, 0.2, 8.0788)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_pu583")
 
 [node name="@MeshInstance3D@21364" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.144964, 0.2, 9.04611)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.144964, 0.2, 9.04611)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_b22y0")
 
 [node name="@MeshInstance3D@21365" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.565127, 0.2, 10.4482)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.565127, 0.2, 10.4482)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_s6jm7")
 
 [node name="@MeshInstance3D@21366" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.55552, 0.2, -10.8528)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55552, 0.2, -10.8528)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_0227a")
 
 [node name="@MeshInstance3D@21367" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.85485, 0.2, -9.22733)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.85485, 0.2, -9.22733)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_qvc7s")
 
 [node name="@MeshInstance3D@21368" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.7954, 0.2, -8.33151)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.7954, 0.2, -8.33151)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_t7gxl")
 
 [node name="@MeshInstance3D@21369" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.87395, 0.2, -7.78316)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.87395, 0.2, -7.78316)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_4jl48")
 
 [node name="@MeshInstance3D@21370" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.60199, 0.2, -6.56348)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.60199, 0.2, -6.56348)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_hahy2")
 
 [node name="@MeshInstance3D@21371" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.50459, 0.2, -5.95486)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.50459, 0.2, -5.95486)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_waqfq")
 
 [node name="@MeshInstance3D@21372" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.33697, 0.2, -4.80649)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.33697, 0.2, -4.80649)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_3fvww")
 
 [node name="@MeshInstance3D@21373" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.13289, 0.2, -3.72988)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.13289, 0.2, -3.72988)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_86ysc")
 
 [node name="@MeshInstance3D@21374" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.74669, 0.2, -2.11777)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.74669, 0.2, -2.11777)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_dw673")
 
 [node name="@MeshInstance3D@21375" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.28305, 0.2, -1.46731)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.28305, 0.2, -1.46731)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_camf0")
 
 [node name="@MeshInstance3D@21376" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.42505, 0.2, -0.104098)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.42505, 0.2, -0.104098)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_avjvo")
 
 [node name="@MeshInstance3D@21377" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.55746, 0.2, 0.511013)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55746, 0.2, 0.511013)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_xf07g")
 
 [node name="@MeshInstance3D@21378" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.39497, 0.2, 1.5331)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.39497, 0.2, 1.5331)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_th0wx")
 
 [node name="@MeshInstance3D@21379" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.65896, 0.2, 2.7552)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.65896, 0.2, 2.7552)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_6wtk3")
 
 [node name="@MeshInstance3D@21380" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.13832, 0.2, 3.71956)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.13832, 0.2, 3.71956)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_hyoji")
 
 [node name="@MeshInstance3D@21381" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.01157, 0.2, 4.21447)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.01157, 0.2, 4.21447)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_lp81s")
 
 [node name="@MeshInstance3D@21382" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.65508, 0.2, 5.65227)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.65508, 0.2, 5.65227)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_jw7lu")
 
 [node name="@MeshInstance3D@21383" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.06812, 0.2, 6.26616)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.06812, 0.2, 6.26616)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_xg374")
 
 [node name="@MeshInstance3D@21384" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.38544, 0.2, 7.0117)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.38544, 0.2, 7.0117)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_tx1t6")
 
 [node name="@MeshInstance3D@21385" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.36455, 0.2, 8.44063)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.36455, 0.2, 8.44063)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_55o48")
 
 [node name="@MeshInstance3D@21386" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.78681, 0.2, 9.70202)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.78681, 0.2, 9.70202)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_buj3g")
 
 [node name="@MeshInstance3D@21387" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 1.12075, 0.2, 10.3993)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.12075, 0.2, 10.3993)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_b8x72")
 
 [node name="@MeshInstance3D@21388" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.51974, 0.2, -10.9792)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.51974, 0.2, -10.9792)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_d3ih8")
 
 [node name="@MeshInstance3D@21389" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.69574, 0.2, -9.50943)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.69574, 0.2, -9.50943)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_shsn8")
 
 [node name="@MeshInstance3D@21390" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.40325, 0.2, -8.45431)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.40325, 0.2, -8.45431)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_xq8ot")
 
 [node name="@MeshInstance3D@21391" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.49614, 0.2, -7.3299)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.49614, 0.2, -7.3299)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_0rk2l")
 
 [node name="@MeshInstance3D@21392" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.01127, 0.2, -6.89069)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.01127, 0.2, -6.89069)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_qeiph")
 
 [node name="@MeshInstance3D@21393" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.65359, 0.2, -5.11559)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.65359, 0.2, -5.11559)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_jqh21")
 
 [node name="@MeshInstance3D@21394" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.45349, 0.2, -4.64368)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.45349, 0.2, -4.64368)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_f5qcr")
 
 [node name="@MeshInstance3D@21395" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.23252, 0.2, -3.71051)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.23252, 0.2, -3.71051)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ly7f5")
 
 [node name="@MeshInstance3D@21396" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.78705, 0.2, -2.12251)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.78705, 0.2, -2.12251)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_khpjb")
 
 [node name="@MeshInstance3D@21397" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.22978, 0.2, -1.35678)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.22978, 0.2, -1.35678)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_sr2hu")
 
 [node name="@MeshInstance3D@21398" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.58295, 0.2, -0.880432)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.58295, 0.2, -0.880432)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_v6v6w")
 
 [node name="@MeshInstance3D@21399" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.03243, 0.2, 0.758752)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.03243, 0.2, 0.758752)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_3g2jg")
 
 [node name="@MeshInstance3D@21400" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.70884, 0.2, 1.60461)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.70884, 0.2, 1.60461)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_2xufd")
 
 [node name="@MeshInstance3D@21401" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.39607, 0.2, 2.80785)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.39607, 0.2, 2.80785)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_rq2ej")
 
 [node name="@MeshInstance3D@21402" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.81073, 0.2, 3.54195)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.81073, 0.2, 3.54195)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_7b364")
 
 [node name="@MeshInstance3D@21403" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.41379, 0.2, 4.66457)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.41379, 0.2, 4.66457)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_lycb1")
 
 [node name="@MeshInstance3D@21404" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.02218, 0.2, 5.29222)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.02218, 0.2, 5.29222)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_v887d")
 
 [node name="@MeshInstance3D@21405" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.54225, 0.2, 6.60438)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.54225, 0.2, 6.60438)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_j2er5")
 
 [node name="@MeshInstance3D@21406" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.44873, 0.2, 7.03538)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.44873, 0.2, 7.03538)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_mkenu")
 
 [node name="@MeshInstance3D@21407" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.115, 0.2, 8.41205)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.115, 0.2, 8.41205)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_tqxbh")
 
 [node name="@MeshInstance3D@21408" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.28605, 0.2, 9.47381)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.28605, 0.2, 9.47381)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_iifs4")
 
 [node name="@MeshInstance3D@21409" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 2.16167, 0.2, 10.8937)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.16167, 0.2, 10.8937)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_1u7te")
 
 [node name="@MeshInstance3D@21410" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.47426, 0.2, -10.2493)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.47426, 0.2, -10.2493)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_kwkqh")
 
 [node name="@MeshInstance3D@21411" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.29527, 0.2, -9.80281)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.29527, 0.2, -9.80281)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_tx15d")
 
 [node name="@MeshInstance3D@21412" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.11849, 0.2, -8.16844)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.11849, 0.2, -8.16844)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_xkb2y")
 
 [node name="@MeshInstance3D@21413" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.78852, 0.2, -7.38098)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.78852, 0.2, -7.38098)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_gof8g")
 
 [node name="@MeshInstance3D@21414" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.23637, 0.2, -6.91881)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.23637, 0.2, -6.91881)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_oujfj")
 
 [node name="@MeshInstance3D@21415" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.12557, 0.2, -5.43968)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.12557, 0.2, -5.43968)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_fkhaq")
 
 [node name="@MeshInstance3D@21416" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.19026, 0.2, -4.66273)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.19026, 0.2, -4.66273)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_tmqqo")
 
 [node name="@MeshInstance3D@21417" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.41742, 0.2, -3.31749)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.41742, 0.2, -3.31749)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_wbsmx")
 
 [node name="@MeshInstance3D@21418" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.62302, 0.2, -2.16305)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.62302, 0.2, -2.16305)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_htwe4")
 
 [node name="@MeshInstance3D@21419" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.74901, 0.2, -1.11533)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.74901, 0.2, -1.11533)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_jt6pk")
 
 [node name="@MeshInstance3D@21420" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.078, 0.2, -0.434221)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.078, 0.2, -0.434221)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_wrpq4")
 
 [node name="@MeshInstance3D@21421" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.35849, 0.2, 0.617087)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.35849, 0.2, 0.617087)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_tb7dj")
 
 [node name="@MeshInstance3D@21422" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.78802, 0.2, 1.37747)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.78802, 0.2, 1.37747)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_0ipnq")
 
 [node name="@MeshInstance3D@21423" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.62151, 0.2, 2.14658)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.62151, 0.2, 2.14658)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_7cbhp")
 
 [node name="@MeshInstance3D@21424" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.48573, 0.2, 3.18271)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.48573, 0.2, 3.18271)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_vdjcq")
 
 [node name="@MeshInstance3D@21425" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.44315, 0.2, 4.25959)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.44315, 0.2, 4.25959)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_i0cmi")
 
 [node name="@MeshInstance3D@21426" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.53664, 0.2, 5.52736)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.53664, 0.2, 5.52736)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_pu0bf")
 
 [node name="@MeshInstance3D@21427" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.39234, 0.2, 6.85841)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.39234, 0.2, 6.85841)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_qudm6")
 
 [node name="@MeshInstance3D@21428" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.88143, 0.2, 7.7026)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.88143, 0.2, 7.7026)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_u31v0")
 
 [node name="@MeshInstance3D@21429" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.29103, 0.2, 8.82682)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.29103, 0.2, 8.82682)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_skucq")
 
 [node name="@MeshInstance3D@21430" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.78782, 0.2, 9.70759)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.78782, 0.2, 9.70759)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_lfoud")
 
 [node name="@MeshInstance3D@21431" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 3.25875, 0.2, 10.0639)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.25875, 0.2, 10.0639)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_njp1s")
 
 [node name="@MeshInstance3D@21432" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.1288, 0.2, -10.8626)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.1288, 0.2, -10.8626)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_l53r3")
 
 [node name="@MeshInstance3D@21433" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.3216, 0.2, -9.81916)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.3216, 0.2, -9.81916)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_lwvuc")
 
 [node name="@MeshInstance3D@21434" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.13495, 0.2, -8.43904)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.13495, 0.2, -8.43904)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_3w4wt")
 
 [node name="@MeshInstance3D@21435" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.85157, 0.2, -7.80018)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.85157, 0.2, -7.80018)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_xfqtc")
 
 [node name="@MeshInstance3D@21436" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.64883, 0.2, -6.71688)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.64883, 0.2, -6.71688)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_0qvsm")
 
 [node name="@MeshInstance3D@21437" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.51022, 0.2, -5.22589)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.51022, 0.2, -5.22589)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_8s3qt")
 
 [node name="@MeshInstance3D@21438" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.08479, 0.2, -4.19768)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.08479, 0.2, -4.19768)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_8o4yt")
 
 [node name="@MeshInstance3D@21439" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.13687, 0.2, -3.78651)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.13687, 0.2, -3.78651)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_i2ccy")
 
 [node name="@MeshInstance3D@21440" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.53239, 0.2, -2.65865)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.53239, 0.2, -2.65865)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_2eniy")
 
 [node name="@MeshInstance3D@21441" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.47582, 0.2, -1.46118)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.47582, 0.2, -1.46118)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_pqppo")
 
 [node name="@MeshInstance3D@21442" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.25286, 0.2, -0.750582)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.25286, 0.2, -0.750582)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_wityp")
 
 [node name="@MeshInstance3D@21443" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.44331, 0.2, 0.349415)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.44331, 0.2, 0.349415)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ovfe2")
 
 [node name="@MeshInstance3D@21444" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.05159, 0.2, 1.30633)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.05159, 0.2, 1.30633)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_6g23x")
 
 [node name="@MeshInstance3D@21445" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.84696, 0.2, 2.46719)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.84696, 0.2, 2.46719)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_2qt4w")
 
 [node name="@MeshInstance3D@21446" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.20945, 0.2, 3.36385)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.20945, 0.2, 3.36385)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_lyyew")
 
 [node name="@MeshInstance3D@21447" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.35585, 0.2, 4.503)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.35585, 0.2, 4.503)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_homhq")
 
 [node name="@MeshInstance3D@21448" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.55356, 0.2, 5.72691)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.55356, 0.2, 5.72691)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_med2j")
 
 [node name="@MeshInstance3D@21449" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.81336, 0.2, 6.25746)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.81336, 0.2, 6.25746)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_h5ali")
 
 [node name="@MeshInstance3D@21450" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.01833, 0.2, 7.80144)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.01833, 0.2, 7.80144)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_pc3oo")
 
 [node name="@MeshInstance3D@21451" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.60758, 0.2, 8.02234)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.60758, 0.2, 8.02234)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_s8j1h")
 
 [node name="@MeshInstance3D@21452" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.27118, 0.2, 9.04304)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.27118, 0.2, 9.04304)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_o17m3")
 
 [node name="@MeshInstance3D@21453" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 4.25466, 0.2, 10.6662)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.25466, 0.2, 10.6662)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_xlxq1")
 
 [node name="@MeshInstance3D@21454" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.44463, 0.2, -10.577)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.44463, 0.2, -10.577)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_tidtp")
 
 [node name="@MeshInstance3D@21455" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.58129, 0.2, -9.86961)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.58129, 0.2, -9.86961)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_fbrsi")
 
 [node name="@MeshInstance3D@21456" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.70803, 0.2, -8.96889)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.70803, 0.2, -8.96889)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_mdc1u")
 
 [node name="@MeshInstance3D@21457" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.68223, 0.2, -7.98301)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.68223, 0.2, -7.98301)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_erba2")
 
 [node name="@MeshInstance3D@21458" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.86564, 0.2, -6.6778)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.86564, 0.2, -6.6778)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_fb3un")
 
 [node name="@MeshInstance3D@21459" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.24263, 0.2, -5.69216)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.24263, 0.2, -5.69216)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_t2fyl")
 
 [node name="@MeshInstance3D@21460" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.57316, 0.2, -4.28376)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.57316, 0.2, -4.28376)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_vyif3")
 
 [node name="@MeshInstance3D@21461" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.83216, 0.2, -3.74035)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.83216, 0.2, -3.74035)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_easbt")
 
 [node name="@MeshInstance3D@21462" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.56406, 0.2, -2.90724)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.56406, 0.2, -2.90724)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_us5r2")
 
 [node name="@MeshInstance3D@21463" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.49614, 0.2, -1.89244)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.49614, 0.2, -1.89244)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_h0lfs")
 
 [node name="@MeshInstance3D@21464" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.558, 0.2, -0.799439)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.558, 0.2, -0.799439)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_7cgyo")
 
 [node name="@MeshInstance3D@21465" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.5303, 0.2, 0.4106)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5303, 0.2, 0.4106)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_xje74")
 
 [node name="@MeshInstance3D@21466" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.68105, 0.2, 1.35048)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.68105, 0.2, 1.35048)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_d4asf")
 
 [node name="@MeshInstance3D@21467" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.71604, 0.2, 2.53118)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.71604, 0.2, 2.53118)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_pqd36")
 
 [node name="@MeshInstance3D@21468" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.44907, 0.2, 3.89039)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.44907, 0.2, 3.89039)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ghdu1")
 
 [node name="@MeshInstance3D@21469" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.77362, 0.2, 4.78883)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.77362, 0.2, 4.78883)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_4iho5")
 
 [node name="@MeshInstance3D@21470" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.57608, 0.2, 5.0826)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.57608, 0.2, 5.0826)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_xlv08")
 
 [node name="@MeshInstance3D@21471" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.66655, 0.2, 6.17418)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.66655, 0.2, 6.17418)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_5yqb2")
 
 [node name="@MeshInstance3D@21472" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.48643, 0.2, 7.52361)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.48643, 0.2, 7.52361)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_sctkp")
 
 [node name="@MeshInstance3D@21473" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.56419, 0.2, 8.82045)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.56419, 0.2, 8.82045)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_b1o10")
 
 [node name="@MeshInstance3D@21474" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.56247, 0.2, 9.01382)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.56247, 0.2, 9.01382)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_chthd")
 
 [node name="@MeshInstance3D@21475" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 5.18935, 0.2, 10.2356)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.18935, 0.2, 10.2356)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_yjcfc")
 
 [node name="@MeshInstance3D@21476" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.52083, 0.2, -10.5318)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.52083, 0.2, -10.5318)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_j2xms")
 
 [node name="@MeshInstance3D@21477" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.16229, 0.2, -9.14428)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.16229, 0.2, -9.14428)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_7hq6w")
 
 [node name="@MeshInstance3D@21478" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.65866, 0.2, -8.92012)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.65866, 0.2, -8.92012)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_71okk")
 
 [node name="@MeshInstance3D@21479" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.31236, 0.2, -7.12181)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.31236, 0.2, -7.12181)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_feni8")
 
 [node name="@MeshInstance3D@21480" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.06861, 0.2, -6.57744)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.06861, 0.2, -6.57744)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ru7lo")
 
 [node name="@MeshInstance3D@21481" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.71805, 0.2, -5.50271)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.71805, 0.2, -5.50271)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_pstp5")
 
 [node name="@MeshInstance3D@21482" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.45063, 0.2, -4.62151)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.45063, 0.2, -4.62151)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_66aoe")
 
 [node name="@MeshInstance3D@21483" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.78399, 0.2, -3.9724)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.78399, 0.2, -3.9724)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_lyoad")
 
 [node name="@MeshInstance3D@21484" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.3878, 0.2, -2.63099)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.3878, 0.2, -2.63099)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_4hqs5")
 
 [node name="@MeshInstance3D@21485" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.49678, 0.2, -1.31869)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.49678, 0.2, -1.31869)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_6btxb")
 
 [node name="@MeshInstance3D@21486" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.35258, 0.2, -0.969327)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.35258, 0.2, -0.969327)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_cnhii")
 
 [node name="@MeshInstance3D@21487" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.60812, 0.2, 0.237627)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.60812, 0.2, 0.237627)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_qby6x")
 
 [node name="@MeshInstance3D@21488" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.7509, 0.2, 1.75703)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.7509, 0.2, 1.75703)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_s2jwe")
 
 [node name="@MeshInstance3D@21489" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.87478, 0.2, 2.8667)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.87478, 0.2, 2.8667)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_dc1rb")
 
 [node name="@MeshInstance3D@21490" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.71507, 0.2, 3.74032)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.71507, 0.2, 3.74032)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_hlmay")
 
 [node name="@MeshInstance3D@21491" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.31976, 0.2, 4.01683)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.31976, 0.2, 4.01683)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_tv055")
 
 [node name="@MeshInstance3D@21492" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.44117, 0.2, 5.40231)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.44117, 0.2, 5.40231)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ie1li")
 
 [node name="@MeshInstance3D@21493" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.13026, 0.2, 6.87706)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.13026, 0.2, 6.87706)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_4a33h")
 
 [node name="@MeshInstance3D@21494" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.20742, 0.2, 7.47487)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.20742, 0.2, 7.47487)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ax7w7")
 
 [node name="@MeshInstance3D@21495" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.35939, 0.2, 8.87914)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.35939, 0.2, 8.87914)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_x18l5")
 
 [node name="@MeshInstance3D@21496" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.78824, 0.2, 9.72554)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.78824, 0.2, 9.72554)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ct05x")
 
 [node name="@MeshInstance3D@21497" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 6.49503, 0.2, 10.5462)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.49503, 0.2, 10.5462)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_8rkvm")
 
 [node name="@MeshInstance3D@21498" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.1563, 0.2, -10.7969)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.1563, 0.2, -10.7969)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_1o4ry")
 
 [node name="@MeshInstance3D@21499" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.12807, 0.2, -9.27691)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.12807, 0.2, -9.27691)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_gpjlp")
 
 [node name="@MeshInstance3D@21500" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.65236, 0.2, -8.92403)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.65236, 0.2, -8.92403)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_qe615")
 
 [node name="@MeshInstance3D@21501" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.39326, 0.2, -7.45377)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.39326, 0.2, -7.45377)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_frmo2")
 
 [node name="@MeshInstance3D@21502" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.80547, 0.2, -6.80763)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.80547, 0.2, -6.80763)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_s6ix7")
 
 [node name="@MeshInstance3D@21503" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.40411, 0.2, -5.97791)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.40411, 0.2, -5.97791)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_h6s4i")
 
 [node name="@MeshInstance3D@21504" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.82066, 0.2, -4.30765)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.82066, 0.2, -4.30765)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_3ra6b")
 
 [node name="@MeshInstance3D@21505" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.35371, 0.2, -3.32088)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.35371, 0.2, -3.32088)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_oc0qb")
 
 [node name="@MeshInstance3D@21506" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.46409, 0.2, -2.52533)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.46409, 0.2, -2.52533)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_sgsan")
 
 [node name="@MeshInstance3D@21507" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.56171, 0.2, -1.5867)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.56171, 0.2, -1.5867)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_wnt6h")
 
 [node name="@MeshInstance3D@21508" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.70083, 0.2, -0.623736)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.70083, 0.2, -0.623736)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_jed5q")
 
 [node name="@MeshInstance3D@21509" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.36571, 0.2, 0.0120253)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.36571, 0.2, 0.0120253)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_bvjcg")
 
 [node name="@MeshInstance3D@21510" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.73485, 0.2, 1.03585)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.73485, 0.2, 1.03585)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_tc074")
 
 [node name="@MeshInstance3D@21511" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.07108, 0.2, 2.81569)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.07108, 0.2, 2.81569)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_kb8if")
 
 [node name="@MeshInstance3D@21512" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.40936, 0.2, 3.64093)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.40936, 0.2, 3.64093)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_03axb")
 
 [node name="@MeshInstance3D@21513" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.13776, 0.2, 4.12119)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.13776, 0.2, 4.12119)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_kffpc")
 
 [node name="@MeshInstance3D@21514" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.17549, 0.2, 5.62078)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.17549, 0.2, 5.62078)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ticxk")
 
 [node name="@MeshInstance3D@21515" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.81187, 0.2, 6.7738)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.81187, 0.2, 6.7738)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_04ixc")
 
 [node name="@MeshInstance3D@21516" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.18521, 0.2, 7.7273)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.18521, 0.2, 7.7273)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_cl88y")
 
 [node name="@MeshInstance3D@21517" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.34515, 0.2, 8.50308)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.34515, 0.2, 8.50308)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_cp5rs")
 
 [node name="@MeshInstance3D@21518" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.61796, 0.2, 9.01588)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.61796, 0.2, 9.01588)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_3q52h")
 
 [node name="@MeshInstance3D@21519" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 7.16238, 0.2, 10.8519)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.16238, 0.2, 10.8519)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ddd5f")
 
 [node name="@MeshInstance3D@21520" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.50788, 0.2, -10.9275)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.50788, 0.2, -10.9275)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_nowof")
 
 [node name="@MeshInstance3D@21521" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.1751, 0.2, -9.33698)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.1751, 0.2, -9.33698)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_tuki6")
 
 [node name="@MeshInstance3D@21522" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.01099, 0.2, -8.67367)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.01099, 0.2, -8.67367)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_sc7h5")
 
 [node name="@MeshInstance3D@21523" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.89176, 0.2, -7.23467)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.89176, 0.2, -7.23467)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_25qh0")
 
 [node name="@MeshInstance3D@21524" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.75599, 0.2, -6.43765)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.75599, 0.2, -6.43765)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_vxffm")
 
 [node name="@MeshInstance3D@21525" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.56076, 0.2, -5.53878)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.56076, 0.2, -5.53878)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_5ivqd")
 
 [node name="@MeshInstance3D@21526" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.22558, 0.2, -4.4046)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.22558, 0.2, -4.4046)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_a676g")
 
 [node name="@MeshInstance3D@21527" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.25036, 0.2, -3.15245)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.25036, 0.2, -3.15245)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_u430f")
 
 [node name="@MeshInstance3D@21528" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.83409, 0.2, -2.45472)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.83409, 0.2, -2.45472)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_o320f")
 
 [node name="@MeshInstance3D@21529" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.24176, 0.2, -1.74234)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.24176, 0.2, -1.74234)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_nycq4")
 
 [node name="@MeshInstance3D@21530" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.16138, 0.2, -0.402474)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.16138, 0.2, -0.402474)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_mw8vv")
 
 [node name="@MeshInstance3D@21531" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.7292, 0.2, 0.785936)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.7292, 0.2, 0.785936)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_3bja0")
 
 [node name="@MeshInstance3D@21532" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.65335, 0.2, 1.01825)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.65335, 0.2, 1.01825)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ulu8j")
 
 [node name="@MeshInstance3D@21533" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.5681, 0.2, 2.29956)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5681, 0.2, 2.29956)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_yxu4i")
 
 [node name="@MeshInstance3D@21534" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.76206, 0.2, 3.73662)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.76206, 0.2, 3.73662)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_1ag8y")
 
 [node name="@MeshInstance3D@21535" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.34621, 0.2, 4.30272)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.34621, 0.2, 4.30272)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_s5n8i")
 
 [node name="@MeshInstance3D@21536" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.18038, 0.2, 5.1634)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.18038, 0.2, 5.1634)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_tddm1")
 
 [node name="@MeshInstance3D@21537" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.24211, 0.2, 6.37237)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.24211, 0.2, 6.37237)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_xwm0u")
 
 [node name="@MeshInstance3D@21538" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.86298, 0.2, 7.22303)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.86298, 0.2, 7.22303)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_5f2ub")
 
 [node name="@MeshInstance3D@21539" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.34635, 0.2, 8.88478)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.34635, 0.2, 8.88478)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_t83ay")
 
 [node name="@MeshInstance3D@21540" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.23768, 0.2, 9.69373)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.23768, 0.2, 9.69373)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_tpkul")
 
 [node name="@MeshInstance3D@21541" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 8.67043, 0.2, 10.7526)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.67043, 0.2, 10.7526)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_7yfvd")
 
 [node name="@MeshInstance3D@21542" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.25402, 0.2, -10.1914)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.25402, 0.2, -10.1914)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_vkfxl")
 
 [node name="@MeshInstance3D@21543" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.21399, 0.2, -9.73677)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.21399, 0.2, -9.73677)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_m46wf")
 
 [node name="@MeshInstance3D@21544" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.7849, 0.2, -8.53605)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.7849, 0.2, -8.53605)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_kb2fm")
 
 [node name="@MeshInstance3D@21545" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.41731, 0.2, -7.12217)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.41731, 0.2, -7.12217)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_1xt7h")
 
 [node name="@MeshInstance3D@21546" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.47376, 0.2, -6.60276)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.47376, 0.2, -6.60276)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_jsc64")
 
 [node name="@MeshInstance3D@21547" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.64822, 0.2, -5.44826)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.64822, 0.2, -5.44826)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_f5rri")
 
 [node name="@MeshInstance3D@21548" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.80447, 0.2, -4.17604)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.80447, 0.2, -4.17604)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_lm6lq")
 
 [node name="@MeshInstance3D@21549" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.71236, 0.2, -3.554)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.71236, 0.2, -3.554)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_kq6tx")
 
 [node name="@MeshInstance3D@21550" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.65765, 0.2, -2.56814)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.65765, 0.2, -2.56814)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_fgpsx")
 
 [node name="@MeshInstance3D@21551" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.83383, 0.2, -1.28624)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.83383, 0.2, -1.28624)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_p01dh")
 
 [node name="@MeshInstance3D@21552" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.75789, 0.2, -0.880174)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.75789, 0.2, -0.880174)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_1if1q")
 
 [node name="@MeshInstance3D@21553" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.54231, 0.2, 0.750064)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.54231, 0.2, 0.750064)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_yduh3")
 
 [node name="@MeshInstance3D@21554" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.09291, 0.2, 1.42151)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.09291, 0.2, 1.42151)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_s2hbp")
 
 [node name="@MeshInstance3D@21555" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.79466, 0.2, 2.86227)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.79466, 0.2, 2.86227)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_njogt")
 
 [node name="@MeshInstance3D@21556" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.65408, 0.2, 3.27285)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.65408, 0.2, 3.27285)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_a1glo")
 
 [node name="@MeshInstance3D@21557" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.07757, 0.2, 4.47749)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.07757, 0.2, 4.47749)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_bk6qi")
 
 [node name="@MeshInstance3D@21558" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.76195, 0.2, 5.48177)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.76195, 0.2, 5.48177)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_xgpeo")
 
 [node name="@MeshInstance3D@21559" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.85066, 0.2, 6.35961)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.85066, 0.2, 6.35961)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_4svuk")
 
 [node name="@MeshInstance3D@21560" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.87517, 0.2, 7.09793)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.87517, 0.2, 7.09793)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_fnalf")
 
 [node name="@MeshInstance3D@21561" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.0459, 0.2, 8.49357)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.0459, 0.2, 8.49357)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_h3qca")
 
 [node name="@MeshInstance3D@21562" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.4863, 0.2, 9.73271)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.4863, 0.2, 9.73271)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_q5jf7")
 
 [node name="@MeshInstance3D@21563" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 9.5116, 0.2, 10.1712)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5116, 0.2, 10.1712)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_57pm7")
 
 [node name="@MeshInstance3D@21564" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.4661, 0.2, -10.8353)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.4661, 0.2, -10.8353)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_iylq5")
 
 [node name="@MeshInstance3D@21565" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.5496, 0.2, -9.9549)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5496, 0.2, -9.9549)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_jdxe0")
 
 [node name="@MeshInstance3D@21566" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.8425, 0.2, -8.32225)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.8425, 0.2, -8.32225)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_r7ukt")
 
 [node name="@MeshInstance3D@21567" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.1032, 0.2, -7.66286)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.1032, 0.2, -7.66286)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_ju61a")
 
 [node name="@MeshInstance3D@21568" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.7291, 0.2, -6.1197)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.7291, 0.2, -6.1197)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_fyekj")
 
 [node name="@MeshInstance3D@21569" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.3276, 0.2, -5.34487)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.3276, 0.2, -5.34487)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_rwyyp")
 
 [node name="@MeshInstance3D@21570" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.6052, 0.2, -4.62696)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.6052, 0.2, -4.62696)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_dlx6q")
 
 [node name="@MeshInstance3D@21571" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.13, 0.2, -3.32853)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.13, 0.2, -3.32853)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_5k735")
 
 [node name="@MeshInstance3D@21572" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.8808, 0.2, -2.43994)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.8808, 0.2, -2.43994)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_3uws0")
 
 [node name="@MeshInstance3D@21573" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.6978, 0.2, -1.10137)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.6978, 0.2, -1.10137)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_kd06n")
 
 [node name="@MeshInstance3D@21574" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.277, 0.2, -0.624272)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.277, 0.2, -0.624272)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_psfo8")
 
 [node name="@MeshInstance3D@21575" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.1796, 0.2, 0.00604051)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.1796, 0.2, 0.00604051)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_2eihh")
 
 [node name="@MeshInstance3D@21576" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.1105, 0.2, 1.22842)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.1105, 0.2, 1.22842)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_fsppu")
 
 [node name="@MeshInstance3D@21577" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.0061, 0.2, 2.10894)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.0061, 0.2, 2.10894)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_lljcw")
 
 [node name="@MeshInstance3D@21578" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.7505, 0.2, 3.74319)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.7505, 0.2, 3.74319)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_7mmri")
 
 [node name="@MeshInstance3D@21579" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.4345, 0.2, 4.48745)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.4345, 0.2, 4.48745)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_kbyfa")
 
 [node name="@MeshInstance3D@21580" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.7089, 0.2, 5.18752)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.7089, 0.2, 5.18752)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_wvyng")
 
 [node name="@MeshInstance3D@21581" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.3639, 0.2, 6.02667)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.3639, 0.2, 6.02667)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_x4aws")
 
 [node name="@MeshInstance3D@21582" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.3862, 0.2, 7.68569)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.3862, 0.2, 7.68569)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_qefqa")
 
 [node name="@MeshInstance3D@21583" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.4716, 0.2, 8.76407)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.4716, 0.2, 8.76407)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_f536w")
 
 [node name="@MeshInstance3D@21584" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.5446, 0.2, 9.43524)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5446, 0.2, 9.43524)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_qfrcf")
 
 [node name="@MeshInstance3D@21585" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 10.5361, 0.2, 10.6522)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5361, 0.2, 10.6522)
 script = ExtResource("5_7ufyn")
 radius = 0.2
 material = SubResource("Resource_2vdtb")

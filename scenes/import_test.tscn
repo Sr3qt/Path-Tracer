@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://chfcv0we7p7gx"]
+[gd_scene load_steps=11 format=3 uid="uid://chfcv0we7p7gx"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_fxs5i"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_370bu"]
@@ -7,9 +7,6 @@
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_mesh.gd" id="5_mfldx"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_plane.gd" id="6_es863"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_material.gd" id="6_helh2"]
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_6yu2x"]
-size = Vector2(1000, 1000)
 
 [sub_resource type="Resource" id="Resource_y4bi6"]
 script = ExtResource("6_helh2")
@@ -54,7 +51,6 @@ script = ExtResource("2_370bu")
 
 [node name="PTPlane" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.21, 0)
-mesh = SubResource("PlaneMesh_6yu2x")
 script = ExtResource("6_es863")
 distance = -0.21
 

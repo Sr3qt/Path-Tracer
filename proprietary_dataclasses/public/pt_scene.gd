@@ -61,7 +61,11 @@ var material_ref_count := {null : 0}
 ##  is created. New materials will prioritize filling these holes.
 var materials_holes : Array[int]
 
-var textures : Array[PTTexture] = [null]
+# Null is the default procedural texture
+var textures : Array[PTTextureAbstract] = [null]
+var sampled_textures : Array[PTSampledTexture] = []
+var procedural_textures : Array[PTProceduralTexture] = [null]
+
 # Convert a texture into an id used by shader
 var _texture_to_texture_id := {null : 0}
 var texture_ref_count := {null : 0}
@@ -183,7 +187,7 @@ func get_material_index(material : PTMaterial) -> int:
 	return _material_to_index[material] # UNSTATIC
 
 
-func get_texture_id(texture : PTTexture) -> int:
+func get_texture_id(texture : PTTextureAbstract) -> int:
 	return _texture_to_texture_id[texture] # UNSTATIC
 
 
@@ -413,13 +417,23 @@ func make_mesh_arrays() -> Array:
 
 
 ## Returns the texture id
-func _add_texture(texture : PTTexture) -> int:
+func _add_texture(texture : PTTextureAbstract) -> int:
 	# Add object texture to textures if applicable
 	# Check for object reference in array
 	var texture_index : int = textures.find(texture)
 	if texture_index == -1:
+
+		if texture is PTSampledTexture:
+			texture_index = sampled_textures.size()
+			sampled_textures.append(texture)
+		elif texture is PTProceduralTexture:
+			texture_index = procedural_textures.size()
+			procedural_textures.append(texture)
+		else:
+			assert(false, "Texture is not valid type. Do not use PTTextureAbstract.")
+			texture_index = textures.size()
+
 		# Add to list if not already in it
-		texture_index = textures.size()
 		textures.append(texture)
 
 		_texture_to_texture_id[texture] = texture.get_texture_id(texture_index) # UNSTATIC
@@ -438,8 +452,8 @@ func _add_texture(texture : PTTexture) -> int:
 @warning_ignore("unused_parameter")
 func _texture_changed(
 		object : PTObject,
-		prev_texture : PTTexture,
-		new_texture : PTTexture
+		prev_texture : PTTextureAbstract,
+		new_texture : PTTextureAbstract
 	) -> void:
 
 	if prev_texture == new_texture:

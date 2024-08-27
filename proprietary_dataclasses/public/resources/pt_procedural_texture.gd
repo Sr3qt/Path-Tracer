@@ -1,11 +1,8 @@
 @tool
 class_name PTProceduralTexture
-extends PTTexture
+extends PTTextureAbstract
 
-
+## Holds texture that is calculated at runtime
 
 @export_file("*.comp", "*.glsl") var texture_path : String
-## Whether the texture function uses the 3D coordinates found by ray-hit, or
-## to use the converted uv coordinates instead.
-
 

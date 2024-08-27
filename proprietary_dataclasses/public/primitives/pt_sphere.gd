@@ -22,8 +22,6 @@ func _init(
 		mesh = SphereMesh.new()
 		(mesh as SphereMesh).radius = p_radius
 		(mesh as SphereMesh).height = p_radius * 2
-	else:
-		mesh = null
 
 	if p_center != Vector3.ZERO:
 		position = p_center

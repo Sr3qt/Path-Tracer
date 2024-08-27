@@ -48,8 +48,8 @@ signal material_changed(
 
 signal texture_changed(
 	object : PTObject,
-	prev_texture : PTTexture,
-	new_texture : PTTexture
+	prev_texture : PTTextureAbstract,
+	new_texture : PTTextureAbstract
 )
 
 @export var material : PTMaterial = null:
@@ -62,7 +62,7 @@ signal texture_changed(
 		var prev_value := material
 		material = value
 		material_changed.emit(self, prev_value, material)
-@export var texture : PTTexture:
+@export var texture : PTTextureAbstract:
 	set(value):
 		print("texture swapped")
 		texture_changed.emit(self, texture, value)
@@ -140,7 +140,7 @@ func _notification(what : int) -> void:
 
 func _validate_property(property: Dictionary) -> void:
 	if property.name == "mesh":
-		property.usage = PROPERTY_USAGE_NO_EDITOR
+		property.usage = PROPERTY_USAGE_NONE
 
 
 static func get_object_byte_size() -> int:

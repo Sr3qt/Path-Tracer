@@ -126,8 +126,8 @@ static func load_shader(ptscene : PTScene) -> RDShaderSource:
 	var i : int = 1
 	var function_definitons := ""
 	var function_calls := ""
-	for _texture in ptscene.textures:
-		if not _texture is PTProceduralTexture:
+	for _texture in ptscene.procedural_textures:
+		if _texture == null:
 			continue
 		var texture := _texture as PTProceduralTexture
 		var path : String = texture.texture_path

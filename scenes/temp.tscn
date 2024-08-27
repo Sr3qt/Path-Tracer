@@ -1,13 +1,15 @@
-[gd_scene load_steps=15 format=3 uid="uid://c8qptlvl2wmde"]
+[gd_scene load_steps=18 format=3 uid="uid://c8qptlvl2wmde"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_4n3re"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_1oi20"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_sphere.gd" id="3_8wdme"]
 [ext_resource type="Resource" uid="uid://cxexu78qhbeqx" path="res://scenes/materials/mat.tres" id="4_5ktls"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_material.gd" id="6_677ub"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_mesh.gd" id="7_60idy"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_triangle.gd" id="7_qmtfy"]
-
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_mi7v8"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_sampled_texture.gd" id="8_omjtt"]
+[ext_resource type="Texture2D" uid="uid://bt8pld3q335nw" path="res://assets/earthmap.jpg" id="9_e6w8t"]
+[ext_resource type="Texture2D" uid="uid://his15bceolpe" path="res://assets/C4-D-UV-Grid-1024x1024.jpg" id="10_1312y"]
 
 [sub_resource type="Resource" id="Resource_r8b3q"]
 script = ExtResource("6_677ub")
@@ -19,8 +21,6 @@ reflectivity = 1.0
 IOR = 1.0
 refraction_depth = 0
 is_emissive = false
-
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_yb0o7"]
 
 [sub_resource type="Resource" id="Resource_3e08u"]
 script = ExtResource("6_677ub")
@@ -55,8 +55,6 @@ IOR = 1.0
 refraction_depth = 0
 is_emissive = false
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_opu0y"]
-
 [sub_resource type="Resource" id="Resource_j8qno"]
 script = ExtResource("6_677ub")
 albedo = Color(1, 1, 0.101961, 1)
@@ -68,7 +66,17 @@ IOR = 1.0
 refraction_depth = 0
 is_emissive = false
 
-[node name="PTScene" type="Node"]
+[sub_resource type="Resource" id="Resource_pf614"]
+script = ExtResource("8_omjtt")
+texture = ExtResource("9_e6w8t")
+is_spatial = false
+
+[sub_resource type="Resource" id="Resource_3mkey"]
+script = ExtResource("8_omjtt")
+texture = ExtResource("10_1312y")
+is_spatial = false
+
+[node name="PTScene2" type="Node"]
 script = ExtResource("1_4n3re")
 
 [node name="PTCameraFPS" type="Camera3D" parent="."]
@@ -76,14 +84,13 @@ transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 3, 0, 
 script = ExtResource("2_1oi20")
 
 [node name="PTSphere" type="MeshInstance3D" parent="."]
-transform = Transform3D(1.395, 0, 0, 0, 0.152499, -1.38664, 0, 1.38664, 0.152499, -3.96523, 1.76679, 1.132)
+transform = Transform3D(1, 0, 0, 0, 0.109318, -0.994007, 0, 0.994007, 0.109318, -3.96523, 1.76679, 5.58572)
 script = ExtResource("3_8wdme")
 radius = 1.395
 material = ExtResource("4_5ktls")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("ImmediateMesh_mi7v8")
 script = ExtResource("7_qmtfy")
 vertex1 = Vector3(-1, -1, 0)
 vertex3 = Vector3(1, 1, 0)
@@ -91,7 +98,6 @@ material = SubResource("Resource_r8b3q")
 
 [node name="PTTriangle" type="MeshInstance3D" parent="."]
 transform = Transform3D(0.855537, 1.70591, 0.508483, -0.819451, -0.123398, 1.79274, 1.58025, -0.987558, 0.654348, 0.901246, 1.6992, 2.28665)
-mesh = SubResource("ImmediateMesh_yb0o7")
 script = ExtResource("7_qmtfy")
 vertex1 = Vector3(0, 1, -0.742)
 vertex2 = Vector3(2.0827, 0, 0.813851)
@@ -107,13 +113,23 @@ material = SubResource("Resource_31vpg")
 script = ExtResource("3_8wdme")
 material = SubResource("Resource_bvoeq")
 
-[node name="PTSphere4" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.815518, 1.905)
-script = ExtResource("3_8wdme")
-material = SubResource("Resource_bvoeq")
-
 [node name="PTTriangle2" type="MeshInstance3D" parent="."]
 transform = Transform3D(-0.999998, 0.00179768, 0, -0.00179768, -0.999998, 0, 0, 0, 1, 0, 2.7543, -0.284441)
-mesh = SubResource("ImmediateMesh_opu0y")
 script = ExtResource("7_qmtfy")
 material = SubResource("Resource_j8qno")
+
+[node name="PTMesh" type="Node3D" parent="."]
+transform = Transform3D(1.91069e-15, 4.37114e-08, 1, 1, -4.37114e-08, -3.59989e-21, 4.37114e-08, 1, -4.37114e-08, 0, 0, 0)
+script = ExtResource("7_60idy")
+
+[node name="PTSphere4" type="MeshInstance3D" parent="PTMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.815518, 1.905)
+skeleton = NodePath("../..")
+script = ExtResource("3_8wdme")
+material = SubResource("Resource_bvoeq")
+texture = SubResource("Resource_pf614")
+
+[node name="PTSphere" type="MeshInstance3D" parent="PTMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.59247e-08, 2.1945, -9.59247e-08)
+script = ExtResource("3_8wdme")
+texture = SubResource("Resource_3mkey")
