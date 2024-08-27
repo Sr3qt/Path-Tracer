@@ -1,5 +1,7 @@
 Performance on random_scene with book_ex camera settings
 
+Duplicate objects bug fix, 48 fps with grimchild with and withouth mesh transform.
+
 Mesh transform improvement attempt, 44 fps with grimchild, 67 fps spheres
 
 Added mesh transforms, 10 with mesh transform, 66 without

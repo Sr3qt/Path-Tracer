@@ -854,6 +854,9 @@ class BVHNode:
 	# Leaf nodes in the tree have no children and have a list pointing to objects
 	#  The object list is no larger than tree.order
 	var object_list : Array[PTObject] = []
+
+	## NOTE TODO This information should not be stored on node. It should be gotten
+	## from tree / from parent tree. Or maybe it's fine. Just to remember to update.
 	## Index to the leaf node's start position in the tree's object_ids
 	var object_id_index := 0
 
@@ -949,6 +952,7 @@ class BVHNode:
 		var node_index := 0
 		var node_size := 0
 		if is_inner:
+			# TODO FIX This shouldn't update every frame but it does
 			assert(check_node_index.call(), "Node children are not in correct order. First child should be first index.")
 			# FIrst child SHOULD be first index, maybe add assert
 			node_index = root_tree.get_node_index(children[0])
@@ -956,8 +960,9 @@ class BVHNode:
 
 		# TODO Object_ids can be packed tightly or with fixed size for potential perf gain, check
 		if is_leaf:
-			node_index = -object_id_index
-			node_size = object_list.size()
+			# minus one to guarantee negative number because bit manip stuff
+			node_index = -object_id_index - 1
+			node_size = object_list.size() - 1
 
 		assert(node_size <= 128, "BVHNode cannot contain more than 128 nodes/objects.")
 		assert(abs(node_index) <= 16_777_216, "BVHNode cannot have index bigger than 16_777_216")

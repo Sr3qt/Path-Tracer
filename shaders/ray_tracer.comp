@@ -147,8 +147,7 @@ Enabling refraction tracking has a small performance impact
 
 /*
 Whether to allow meshes to do transformations, now works with slight performance drop
-TODO Still need to transform normals on determine_rayhit.
-    2 is new implementation, best version
+    2 is new implementation, okay version, buggy, DEPRECATE probably
     1 is newer implementation, similar to 2, slightly better
     0 is no implementation
 */
@@ -615,7 +614,7 @@ int get_node_index(int node_id) {
 }
 
 int get_node_size(int node_id) {
-    return bitfieldExtract(node_id, 24, 7);
+    return abs(bitfieldExtract(node_id, 24, 8));
 }
 
 int get_texture_type(int texture_id) {
@@ -991,7 +990,7 @@ float check_ray_hit_BVH2(Ray ray, inout RayHit rayhit) {
         BVHNode node = BVH.list[current_index];
         int node_id = NODE_node_id;
         int node_index = get_node_index(node_id);
-        int node_size = abs(get_node_size(node_id));
+        int node_size = get_node_size(node_id);
 
         /* All nodes in to_visit should be in sorted order,
          we can break if the last node is out of range
@@ -1008,7 +1007,7 @@ float check_ray_hit_BVH2(Ray ray, inout RayHit rayhit) {
         // node_index pointing to nodes should never be zero (root_node)
         if (node_index <= 0) {
             for (int k = 0; k < node_size; k++) {
-                hit_object(ray, rayhit, object_ids.list[abs(node_index) + k]);
+                hit_object(ray, rayhit, object_ids.list[abs(node_index) + k - 1]);
             }
             continue;
         }
@@ -1055,8 +1054,7 @@ float check_ray_hit_BVH2(Ray ray, inout RayHit rayhit) {
 }
 #endif
 
-RayHit check_ray_hit_BVH(inout Ray ray, inout Ray ray_out) {
-    // TODO Maybe the inout ray shouldnt be the one i constantly change
+RayHit check_ray_hit_BVH(inout Ray ray) {
     RayHit rayhit = empty_rayhit();
 
     // NOTE: Objects that go before bvh can be used as Occluders
@@ -1074,8 +1072,6 @@ RayHit check_ray_hit_BVH(inout Ray ray, inout Ray ray_out) {
     int reset_ray_index = -1;
     #endif
 
-    // TODO FIX One object of a mesh is also visible in its non transformed position
-    //  through another objects bvhnode
     // TODO FIX mesh_transform == 2 you can see bvhnodes inside the sphere mesh
 
     // TODO Another improvement might be to precompute all rays for every mesh per trace call
@@ -1104,7 +1100,7 @@ RayHit check_ray_hit_BVH(inout Ray ray, inout Ray ray_out) {
         BVHNode node = BVH.list[current_index];
         int node_id = NODE_node_id;
         int node_index = get_node_index(node_id);
-        int node_size = abs(get_node_size(node_id));
+        int node_size = get_node_size(node_id);
 
         /* All nodes in to_visit should be in sorted order,
          we can break if the last node is out of range
@@ -1117,7 +1113,6 @@ RayHit check_ray_hit_BVH(inout Ray ray, inout Ray ray_out) {
         }
         #endif
 
-        // TODO transform hit normals back?
         #if use_mesh_transform == 2
         if (to_visit_i == reset_ray_index) {
             // ray.direction = stored_ray.direction;
@@ -1181,9 +1176,10 @@ RayHit check_ray_hit_BVH(inout Ray ray, inout Ray ray_out) {
 
         // If node is leaf node, hit all children
         // node_index pointing to nodes should never be zero (root_node)
-        if (node_index <= 0) {
+        // node_index should always be negative for bit manip consistency
+        if (node_index < 0) {
             for (int k = 0; k < node_size; k++) {
-                hit_object(ray, rayhit, object_ids.list[abs(node_index) + k]);
+                hit_object(ray, rayhit, object_ids.list[abs(node_index) + k - 1]);
             }
             continue;
         }
@@ -1440,9 +1436,7 @@ vec4 cast_ray(Ray ray) {
     // MICRO-OPT Having the loop be static/const is slightly faster than with having it dynamic
     for (int i = 0; i < LOD.max_default_depth + refraction_bounces; i++) {
         if (use_bvh) {
-            Ray temp_ray = new_ray;
-            rayhit = check_ray_hit_BVH(new_ray, temp_ray);
-            // new_ray = temp_ray;
+            rayhit = check_ray_hit_BVH(new_ray);
 
             // Send one ray, skip bouncing
             if (show_bvh_depth) {
