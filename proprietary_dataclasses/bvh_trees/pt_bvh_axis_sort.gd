@@ -10,6 +10,12 @@ var _axis_sorts : Array[Callable] = []
 const MAX_DEPTH_LIMIT = 64
 
 
+## TODO FIX This should not be neccessary but godot thinks that for some reason
+## the inherited _init called on PTBVHAxisSort should need 2 arguments instead of one.
+func _init(_order : int = 2) -> void:
+	super._init(_order)
+
+
 static func x_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxisSort:
 	var temp := PTBVHAxisSort.new(_order)
 	temp.create_bvh(objects, BVHType.X_SORTED)
