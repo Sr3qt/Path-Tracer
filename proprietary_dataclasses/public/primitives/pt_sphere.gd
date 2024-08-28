@@ -2,8 +2,6 @@
 class_name PTSphere
 extends PTObject
 
-## TODO on temp, two spheres with textures are pixelated/swap texture sampled when overlapping
-
 @export var radius : float = 1.0:
 	set(value):
 		if mesh is SphereMesh:

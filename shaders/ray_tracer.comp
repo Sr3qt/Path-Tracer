@@ -658,7 +658,7 @@ vec4 get_texture(RayHit rayhit) {
 
     // TODO Support for texture_index to work on objects properly
     if ((texture_type & is_sampled) > 0) {
-        return texture(Textures[texture_index], rayhit.uv);
+        return texture(nonuniformEXT(Textures[texture_index]), rayhit.uv);
     }
 
     return procedural_texture(sampled_point, texture_index);
