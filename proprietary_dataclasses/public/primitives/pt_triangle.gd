@@ -114,12 +114,18 @@ func to_byte_array() -> PackedByteArray:
 	if is_meshlet:
 		temp_transform = transform
 
+	var point1 := temp_transform * vertex1
+	var point2 := temp_transform * vertex2
+	var point3 := temp_transform * vertex3
+
+	var normal := (point3 - point1).cross(point2 - point1).normalized()
+
 	bytes += PackedFloat32Array(
-		PTUtils.vector3_to_array(temp_transform * vertex1) + [0] +
-		PTUtils.vector3_to_array(temp_transform * vertex2) + [0] +
-		PTUtils.vector3_to_array(temp_transform * vertex3) + [0] +
+		PTUtils.vector3_to_array(point1) + [0] +
+		PTUtils.vector3_to_array(point2) + [0] +
+		PTUtils.vector3_to_array(point3) + [0] +
 		# This might change based on winding order
-		PTUtils.vector3_to_array((vertex3 - vertex1).cross(vertex2 -  vertex1).normalized()) + [0]
+		PTUtils.vector3_to_array(normal) + [0]
 	).to_byte_array()
 	bytes += _get_property_byte_array()
 

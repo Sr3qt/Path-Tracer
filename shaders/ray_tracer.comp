@@ -929,14 +929,14 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         rayhit.mtl_index = triangle.mtl_index;
         rayhit.texture_id = triangle.texture_id;
 
-        // TODO NOTE Depending on whether triangles should double faced or not, their normals need to be flipped
-        // rayhit.normal = dot(triangle.normal, ray_in.direction) > 0 ? -triangle.normal : triangle.normal;
-
         rayhit.normal = triangle.normal;
         if (rayhit.transform_index >= 0) {
             mat4 matrix = inverse(transforms.data[rayhit.transform_index].matrix);
 
             rayhit.normal = normalize((matrix * vec4(rayhit.normal, 0)).xyz);
+        }
+        if (dot(rayhit.normal, ray_in.direction) > 0) {
+            rayhit.normal *= -1;
         }
     }
 
