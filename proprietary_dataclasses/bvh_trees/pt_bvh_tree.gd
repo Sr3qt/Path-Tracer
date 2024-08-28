@@ -111,7 +111,6 @@ var sah_cost : float
 
 # TODO Currently functions do not clean up the tree to work with engine. They have to run a full re-index.
 # 	TODO Make all functions self contained.
-# TODO Instead make a list of indices that needs to be updated, DEPRECATED updated_nodes
 var updated_indices : Array[int] = []
 
 # TODO MAke BVHBUffer abler to expand + have empty space
@@ -645,118 +644,6 @@ func remove_subtree(node : BVHNode) -> void:
 	# Reindex all nodes from index to end of bvh_list
 	for i in range(index, bvh_list.size()):
 		_node_to_index[bvh_list[i]] = i # UNTSTATIC
-
-
-## Adds and removes requested objects and meshes. Only called by PTScene.
-## Returns an array of indices of nodes that needs buffer updating.
-func _rebalance_objects(
-		added_objects : PTObjectContainer,
-		removed_objects : PTObjectContainer
-	) -> Array[int]:
-
-	# This should only be called by PTScene, max once per frame.
-	# It will ensure that all objects added/removed are not part of any potential meshes
-
-	var node_indices_to_update : Array[int] = []
-
-	## Removing
-	var removed_nodes : Array[BVHNode] = []
-	# Remove meshes from tree
-	for _mesh in removed_objects.meshes:
-		var node := _mesh.bvh.root_node
-		removed_nodes.append_array(get_subnodes(node))
-		node.parent.children.erase(node)
-
-	# Remove scene objects from tree
-	for _type : PTObject.ObjectType in PTObject.ObjectType.values(): # UNSTATIC
-		if (_type == PTObject.ObjectType.NOT_OBJECT or _type == PTObject.ObjectType.MAX):
-			continue
-		for object : PTObject in removed_objects.get_object_array(_type): # UNSTATIC
-			var node : BVHNode = object_to_leaf[object] # UNSTATIC
-			object_to_leaf.erase(object)
-			node.object_list.erase(object)
-
-			# If node has no more objects delete it, also check parents for emptiness
-			if node.object_list.is_empty():
-				removed_nodes.append_array(node_cleanup(node))
-
-	# Sort nodes based on index in bvh_list, highest index first
-	removed_nodes.sort_custom(
-		func(a : BVHNode, b : BVHNode) -> bool:
-			return get_node_index(a) > get_node_index(b)
-	)
-
-	var removed_nodes_indices : Array[int] = []
-
-	# Remove references to removed nodes
-	for node in removed_nodes:
-		removed_nodes_indices.append(get_node_index(node))
-		_node_to_index.erase(node)
-		if node.is_inner:
-			inner_count -= 1
-		else:
-			leaf_nodes.erase(node)
-			for object in node.object_list:
-				object_to_leaf.erase(object)
-				object_count -= 1
-			leaf_count -= 1
-
-	## Adding
-	var added_nodes : Array[BVHNode] = []
-	# Add meshes to tree
-	for _mesh in added_objects.meshes:
-		added_nodes.append_array(_merge_with(_mesh.bvh))
-
-	# Add objects to tree, updated nodes are appended to updated_nodes
-	for _type : PTObject.ObjectType in PTObject.ObjectType.values():
-		if (_type == PTObject.ObjectType.NOT_OBJECT or _type == PTObject.ObjectType.MAX):
-			continue
-		for object : PTObject in added_objects.get_object_array(_type): # UNSTATIC
-			print("Adding object ", object)
-			added_nodes.append_array(_add_object_to_tree(object))
-
-	# Fit new objects into holes created by removed nodes (if any)
-	for node in added_nodes:
-		var index := bvh_list.size()
-		if not removed_nodes_indices.is_empty():
-			index = removed_nodes_indices.pop_back() # UNSTATIC
-			assert(index < bvh_list.size(), "Node marked as removed was prematuraly removed from bvh_list")
-			bvh_list[index] = node
-			_node_to_index[node] = index # UNSTATIC
-			node_indices_to_update.append(index)
-			continue
-
-		# If no more holes to fill, simply append the back
-		bvh_list.append(node)
-		_node_to_index[node] = index # UNSTATIC
-		node_indices_to_update.append(index)
-
-	# If more nodes were removed than added move the ones at the back into the holes
-	if not removed_nodes_indices.is_empty():
-		for index in removed_nodes_indices:
-			var last_index := bvh_list.size() - 1
-			if index == last_index:
-				bvh_list.pop_back()
-				continue
-
-			var node := bvh_list[last_index]
-			_node_to_index[node] = index # UNSTATIC
-			bvh_list[index] = node
-
-			node_indices_to_update.append(index)
-
-	# TODO Rework Update_nodes to use indexing
-	# for node in updated_nodes:
-	# 	#assert(not get_node_index(node) in node_indices_to_update,
-	# 			#"Node index is already in node_indices_to_update.")
-	# 	if not get_node_index(node) in node_indices_to_update:
-	# 		node_indices_to_update.append(get_node_index(node))
-
-	if PTRendererAuto.is_debug:
-		print(bvh_list)
-		print(root_node.aabb)
-
-	return node_indices_to_update
 
 
 # TODO Make a test

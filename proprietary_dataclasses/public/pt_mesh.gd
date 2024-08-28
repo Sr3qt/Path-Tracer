@@ -24,7 +24,6 @@ var bvh : PTBVHTree
 
 # The scene this object is part of. This object might also be a part of a mesh.
 var scene : PTScene
-# var _mesh : PTMesh # TODO DEPRECATED
 
 #var surface_mesh : ArrayMesh
 var mesh : Mesh
@@ -32,8 +31,6 @@ var mesh : Mesh
 var transform_before : Transform3D
 
 # TODO Be able to see and edit meshes while they are instatiated
-# TODO Grimchild mesh has a loose triangle when rotated.
-# This traingle is actually only seen when looking through th red spheres aabb
 
 # TODO Actually just make more like objects. They talk only with their scene.
 # They have no responsibility for nested meshes. Nested meshes in bvh is just a mesh.

@@ -199,9 +199,6 @@ func _process(_delta : float) -> void:
 	_remove_queued_scenes()
 	_object_queue_remove()
 
-	#if not Engine.is_editor_hint():
-	#_re_index_scenes()
-
 	# Make sure the rendering scene has up to date bvh buffer
 	if scene and scene.bvh:
 		update_bvh_nodes(scene)
@@ -745,27 +742,6 @@ func _object_queue_remove() -> void:
 						"so no object removal will occur.")
 
 	scenes_to_remove_objects.clear()
-
-
-# TEMP FUCNTION
-func _update(ptscene : PTScene, updated_object_ids : Array[int], updated_node_indices : Array[int]) -> void:
-	var scene_wd := get_scene_wd(ptscene)
-
-	scene_wd.check_object_buffer_size()
-	if ptscene.bvh:
-		print("excpanding bvh buffer")
-		scene_wd.expand_bvh_buffer()
-
-	_update_object_buffers(ptscene, updated_object_ids)
-	_update_bvh_buffer(ptscene, updated_node_indices)
-
-
-func _re_index_scenes() -> void:
-	for ptscene in scenes:
-		if ptscene.can_reindex:
-			if is_debug:
-				print("Re-indexing scene now. ", ptscene)
-			ptscene._re_index()
 
 
 func _update_object_buffers(ptscene : PTScene, updated_object_ids : Array[int]) -> void:
