@@ -839,7 +839,6 @@ class BVHNode:
 		var node_index := 0
 		var node_size := 0
 		if is_inner:
-			# TODO FIX This shouldn't update every frame but it does
 			assert(check_node_index.call(), "Node children are not in correct order. First child should be first index.")
 			# FIrst child SHOULD be first index, maybe add assert
 			node_index = root_tree.get_node_index(children[0])

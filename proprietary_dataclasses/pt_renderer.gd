@@ -793,3 +793,5 @@ func _update_bvh_buffer(ptscene : PTScene, updated_node_indices : Array[int]) ->
 		else:
 			bytes = ptscene.bvh.bvh_list[node_index].to_byte_array()
 		scene_wd.rd.buffer_update(buffer, node_index * bytes.size(), bytes.size(), bytes)
+
+	updated_node_indices.clear()
