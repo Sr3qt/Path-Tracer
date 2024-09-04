@@ -111,3 +111,6 @@ https://blogs.autodesk.com/media-and-entertainment/wp-content/uploads/sites/162/
 
 - Spir-V Branching has adjustable weights. See if i can manually optimize them.
 https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#OpBranchConditional
+
+- These cool dithering algorithms are way too good
+https://en.wikipedia.org/wiki/Dither#Algorithms

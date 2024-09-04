@@ -94,15 +94,21 @@ var object_ids : PackedInt32Array = []
 
 ## Takes in a node gives its index in bvh_list
 var _node_to_index := {}
+var _node_to_object_id_index := {}
 
 var _mesh_to_mesh_socket := {}
 
 # TODO Add bvh constructor with bvh_list as argument
 var bvh_list : Array[BVHNode] = []
 
-var leaf_count : int # Counts nodes with no child nodes
-var inner_count : int # Counts nodes with child nodes, including root node
-var object_count : int # Counts the number of objects stored in leaf nodes
+## Counts the number of nodes with no child nodes
+var leaf_count : int
+## Counts the number of nodes with child nodes, including root node
+var inner_count : int
+## Counts the number of objects stored in leaf nodes not owned by another mesh
+var object_count : int
+## Counts the number of objects stored in leaf nodes owned by another mesh
+var mesh_object_count : int
 
 # NOTE: how to handle meshes with different types
 var type : BVHType
@@ -121,6 +127,31 @@ var updated_indices : Array[int] = []
 var tree_reindexing_needed := false
 var needs_buffer_reset := false
 
+
+## Node indexing check list:
+
+##	If is inner_node:
+## 	- Set is_inner
+##	- Increment inner_count
+##		If is_mesh_socket:
+##		- Set is_mesh_socket and add to mesh_object_count
+##		- Set _mesh_to_mesh_socket
+##		- Set mesh.bvh.parent_tree
+##
+##	If is leaf_node:
+##	- Set is_leaf
+## 	- Increment is_leaf and object_count
+##	- Add to leaf_nodes
+##	- For each object, set object_to_leaf
+##	- If is_scene_bvh: Add object's object_ids to object_ids
+##	- If is_scene_bvh: Set node's object_id_index
+##
+##	- Add to bvhlist next to sibling nodes
+##	- Set _node_to_node_index
+##	- Set node's parent
+##	- Update nodes aabb and ancestors'
+##	- If not in creation: append to updated_indices
+##
 
 func _init(_order := 2) -> void:
 	order = _order
@@ -279,6 +310,7 @@ func _add_object_to_tree(object : PTObject) -> Array[BVHNode]:
 
 
 func add_object(object : PTObject) -> void:
+	# TODO Because of needing to update object_ids this function is out of date
 	if object.get_type() in objects_to_exclude:
 		push_warning("PT: Cannot add object to BVH as it is explicitly excluded.\n",
 				"object: ", object, "\ntype: ", object.get_type_name())
@@ -351,32 +383,35 @@ func get_subnodes(node : BVHNode, indices : Array[BVHNode] = []) -> Array[BVHNod
 
 
 ## Sets tree indices of tree for newly created node
-func index_node(node : BVHNode) -> void:
-	# I don't like this function
-	# TODO Change to recursive indexing if we have nested sub-trees
-	#assert(node.tree == self, "The given node is not a part of this tree or is in" +
-			#"a sub-tree. Please use the sub-tree's methods instead.")
-	if node.is_inner:
-		for child in node.children:
-			child.parent = node
-	else:
+## Can give optional parameter to count node and node objects
+func index_node(node : BVHNode, count := false) -> void:
+	if node.is_inner and count:
+		inner_count += 1
+	elif node.is_leaf:
+		if count:
+			leaf_count += 1
+			object_count += node.object_list.size()
+
+		if is_scene_owned():
+			_node_to_object_id_index[node] = object_ids.size()
+
 		for object in node.object_list:
+			if is_scene_owned():
+				object_ids.append(object.get_object_id())
 			object_to_leaf[object] = node # UNSTATIC
-			if is_sub_tree():
-				parent_tree.object_to_leaf[object] = node # UNSTATIC
 
-		if not node in leaf_nodes:
-			leaf_nodes.append(node)
-			if is_sub_tree():
-				parent_tree.leaf_nodes.append(node)
+		assert(not node in leaf_nodes, "Node is already partially indexed: leaf_nodes")
+		leaf_nodes.append(node)
 
-	if not node in _node_to_index:
-		_node_to_index[node] = bvh_list.size() # UNSTATIC
-		bvh_list.append(node)
+	assert(not node in _node_to_index, "Node is already partially indexed: _node_to_index")
+	_node_to_index[node] = bvh_list.size() # UNSTATIC
+	bvh_list.append(node)
 
-		if is_sub_tree():
-			parent_tree._node_to_index[node] = parent_tree.bvh_list.size() # UNSTATIC
-			parent_tree.bvh_list.append(node)
+	if is_sub_tree():
+		parent_tree.index_node(node)
+	else:
+		# Will always be run by top level bvh tree
+		node.set_aabb()
 
 
 ## Sets the required indexes for the BVHTree to work with the engine
@@ -700,8 +735,9 @@ func tree_sah_cost() -> void:
 func create_object_ids() -> void:
 	assert(is_scene_owned(), "Cannot create_object_ids without a valid set scene.")
 
+	# TODO Add object_id merging to new
 	var index := 0
-	object_ids.resize(object_count)
+	object_ids.resize(object_count + mesh_object_count)
 
 	for leaf_node in leaf_nodes:
 		leaf_node.object_id_index = index
@@ -744,6 +780,7 @@ class BVHNode:
 
 	## NOTE TODO This information should not be stored on node. It should be gotten
 	## from tree / from parent tree. Or maybe it's fine. Just to remember to update.
+	## TODO DEPRECATED
 	## Index to the leaf node's start position in the tree's object_ids
 	var object_id_index := 0
 
@@ -780,10 +817,10 @@ class BVHNode:
 	func set_aabb() -> void:
 		if is_mesh_socket:
 			assert(children[0].aabb != null and children[0].aabb.size != Vector3.ZERO)
-			aabb =  children[0].tree.get_mesh().transform * children[0].aabb
+			aabb = children[0].tree.get_mesh().transform * children[0].aabb
 			return
 
-		if is_leaf and not object_list.is_empty():
+		if not object_list.is_empty():
 			aabb = object_list[0].get_bvh_aabb()
 			for object in object_list:
 				aabb = aabb.merge(object.get_bvh_aabb())
@@ -797,7 +834,9 @@ class BVHNode:
 				assert(aabb != null and aabb.size != Vector3.ZERO,
 						"PT: Child node %s does not have aabb" % child)
 				aabb = aabb.merge(child.aabb)
+			return
 
+		assert(false, "PT: Node exited set_aabb with no aabb.")
 
 	func update_aabb() -> void:
 		var old_aabb := aabb

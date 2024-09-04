@@ -229,6 +229,15 @@ static func empty_object_bytes(type : ObjectType) -> PackedByteArray:
 	return PackedByteArray([])
 
 
+func has_scene() -> bool:
+	return _scene != null and is_instance_valid(_scene)
+
+
+func get_object_id() -> int:
+	assert(has_scene(), "cannot get object_id of object without valid scene.")
+	return PTObject.make_object_id(_scene.get_object_index(self), get_type())
+
+
 ## Every PTObject defines this function with their own ObjectType.
 ## PTObject returns MAX.
 func get_type() -> ObjectType:

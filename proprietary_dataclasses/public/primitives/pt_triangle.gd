@@ -7,14 +7,23 @@ extends PTPrimitive3D
 @export var vertex1 := Vector3.LEFT:
 	set(value):
 		vertex1 = value
+		if is_degenerate():
+			vertex1 += Vector3(0.00001, 0.00001, 0.00001)
+			print("PT: DEGENERATE TRIANGLE DETECTED, ", self)
 		_update()
 @export var vertex2 := Vector3.FORWARD:
 	set(value):
 		vertex2 = value
+		if is_degenerate():
+			vertex1 += Vector3(0.00001, 0.00001, 0.00001)
+			print("PT: DEGENERATE TRIANGLE DETECTED, ", self)
 		_update()
 @export var vertex3 := Vector3.ZERO:
 	set(value):
 		vertex3 = value
+		if is_degenerate():
+			vertex1 += Vector3(0.00001, 0.00001, 0.00001)
+			print("PT: DEGENERATE TRIANGLE DETECTED, ", self)
 		_update()
 
 var uv_pos1 := Vector2.ZERO
@@ -72,6 +81,10 @@ func _ready() -> void:
 		create_triangle_mesh()
 
 
+func is_degenerate() -> bool:
+	return vertex1 == vertex2 and vertex2 == vertex3
+
+
 func create_triangle_mesh() -> void:
 	if mesh:
 		(mesh as ImmediateMesh).clear_surfaces()
@@ -91,10 +104,11 @@ func get_type() -> ObjectType:
 
 
 func set_aabb() -> void:
-	var temp := AABB()
+	var temp := AABB(vertex1, vertex2 - vertex1).abs()
+	# var temp := AABB()
 	temp = temp.expand(vertex1)
 	temp = temp.expand(vertex2)
-	aabb = temp.expand(vertex3)
+	aabb = temp.expand(vertex3).abs()
 
 
 func _get_aabb() -> AABB:
