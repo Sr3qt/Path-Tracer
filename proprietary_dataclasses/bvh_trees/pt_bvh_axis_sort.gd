@@ -7,7 +7,11 @@ extends PTBVHTree
 var _index := 0 # Used to keep track of index when creating bvh_list
 var _axis : int = 0
 var _axis_sorts : Array[Callable] = []
-const MAX_DEPTH_LIMIT = 64
+const MAX_DEPTH_LIMIT = 32
+
+# Leave new method a little unfinished, work on SAH method next
+# New method is slightly faster on dragon test, slower on import_test and spheres
+const use_old_method = !true
 
 ## TODO sort_custom does not keep order. Try using stable sorting algorithm.
 
@@ -20,27 +24,37 @@ func _init(_order : int = 2) -> void:
 
 static func x_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxisSort:
 	var temp := PTBVHAxisSort.new(_order)
-	temp.create_bvh(objects, BVHType.X_SORTED)
-	# temp.create_bvh_node_list(objects, BVHType.X_SORTED)
+	if use_old_method:
+		temp.create_bvh(objects, BVHType.X_SORTED)
+	else:
+		temp.create_bvh_node_list(objects, BVHType.X_SORTED)
 	return temp
 
 
 static func y_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxisSort:
 	var temp := PTBVHAxisSort.new(_order)
-	temp.create_bvh(objects, BVHType.Y_SORTED)
+	if use_old_method:
+		temp.create_bvh(objects, BVHType.Y_SORTED)
+	else:
+		temp.create_bvh_node_list(objects, BVHType.Y_SORTED)
 	return temp
 
 
 static func z_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxisSort:
 	var temp := PTBVHAxisSort.new(_order)
-	temp.create_bvh(objects, BVHType.Z_SORTED)
+	if use_old_method:
+		temp.create_bvh(objects, BVHType.Z_SORTED)
+	else:
+		temp.create_bvh_node_list(objects, BVHType.Z_SORTED)
 	return temp
 
 
 static func longest_axis_sort(objects : PTObjectContainer, _order : int) -> PTBVHAxisSort:
 	var temp := PTBVHAxisSort.new(_order)
-	temp.create_bvh(objects, BVHType.XYZ_SORTED)
-	# temp.create_bvh_node_list(objects, BVHType.XYZ_SORTED)
+	if use_old_method:
+		temp.create_bvh(objects, BVHType.XYZ_SORTED)
+	else:
+		temp.create_bvh_node_list(objects, BVHType.XYZ_SORTED)
 	return temp
 
 
@@ -54,8 +68,7 @@ func create_disconnected_node_list(objects : PTObjectContainer) -> Array[BVHNode
 		for object : PTObject in objects.get_object_array(object_type):
 			var new_node := BVHNode.new(null, self)
 			new_node.is_leaf = true
-			new_node.object_list = [object]
-			new_node.set_aabb()
+			new_node.add_object(object, true)
 			flat_node_list.append(new_node)
 
 	for mesh in objects.meshes:
@@ -63,9 +76,8 @@ func create_disconnected_node_list(objects : PTObjectContainer) -> Array[BVHNode
 		new_node.is_mesh_socket = true
 		new_node.is_inner = true
 		_mesh_to_mesh_socket[mesh] = new_node
-		new_node.add_children([mesh.bvh.root_node])
-		new_node.set_aabb()
 		mesh.bvh.root_node.parent = new_node
+		new_node.add_child(mesh.bvh.root_node, true)
 		flat_node_list.append(new_node)
 
 	return flat_node_list
@@ -76,6 +88,8 @@ func create_bvh(objects : PTObjectContainer, f_type := BVHType.XYZ_SORTED) -> vo
 		# Spheres - 487 objects in 7.829 ms.
 		# Import mesh - 3168 objects in 132.713 ms -- 3171 objects in 1.616 ms.
 	var start_time := Time.get_ticks_usec()
+
+	assert(not objects.is_empty(), "Cannot create bvh without objects or meshes")
 
 	assert(f_type in [BVHType.XYZ_SORTED, BVHType.X_SORTED, BVHType.Y_SORTED, BVHType.Z_SORTED],
 			"PT: PTBVHAxisSort cannot create bvh of type: " + str(BVHType.find_key(f_type)))
@@ -98,30 +112,29 @@ func create_bvh(objects : PTObjectContainer, f_type := BVHType.XYZ_SORTED) -> vo
 				func(a : PTObject, b : PTObject) -> bool:
 					return a.get_bvh_aabb().get_center()[i] > b.get_bvh_aabb().get_center()[i])
 
-	assert(not flat_object_list.is_empty())
+	if not flat_object_list.is_empty():
+		# Sort according to given axis
+		match type:
+			BVHType.X_SORTED:
+				_axis = 0
+			BVHType.Y_SORTED:
+				_axis = 1
+			BVHType.Z_SORTED:
+				_axis = 2
 
-	# Sort according to given axis
-	match type:
-		BVHType.X_SORTED:
-			_axis = 0
-		BVHType.Y_SORTED:
-			_axis = 1
-		BVHType.Z_SORTED:
-			_axis = 2
+		# MAKE XYZ
+		if type != BVHType.XYZ_SORTED:
+			flat_object_list.sort_custom(_axis_sorts[_axis])
 
-	# MAKE XYZ
-	if type != BVHType.XYZ_SORTED:
-		flat_object_list.sort_custom(_axis_sorts[_axis])
+		# Creates tree recursively
+		root_node.add_children(_recursive_split(flat_object_list, root_node), true)
 
-	# Creates tree recursively
-	root_node.add_children(_recursive_split(flat_object_list, root_node))
-
-	# Indexes tree recursively
-	bvh_list.resize(size())
-	bvh_list[0] = root_node
-	_node_to_index[root_node] = 0
-	_index = 1
-	_index_node2(root_node)
+		# Indexes tree recursively
+		bvh_list.resize(size())
+		bvh_list[0] = root_node
+		_node_to_index[root_node] = 0
+		_index = 1
+		_index_node2(root_node)
 
 	if objects.meshes.size() > 0:
 		for _mesh in objects.meshes:
@@ -144,11 +157,13 @@ func create_bvh_node_list(objects : PTObjectContainer, f_type := BVHType.XYZ_SOR
 		# Spheres - 487 objects in 7.829 ms.
 		# Import mesh - 3168 objects in 132.713 ms -- 3171 objects in 1.616 ms.
 
+	var start_time := Time.get_ticks_usec()
+
 	print("NEW METHOD")
 
 	assert(not is_sub_tree(), "PT: Only merge a tree AFTER creating the sub tree.")
 
-	var start_time := Time.get_ticks_usec()
+	assert(not objects.is_empty(), "Cannot create bvh without objects or meshes.")
 
 	assert(f_type in [BVHType.XYZ_SORTED, BVHType.X_SORTED, BVHType.Y_SORTED, BVHType.Z_SORTED],
 			"PT: PTBVHAxisSort cannot create bvh of type: " + str(BVHType.find_key(f_type)))
@@ -183,7 +198,7 @@ func create_bvh_node_list(objects : PTObjectContainer, f_type := BVHType.XYZ_SOR
 	inner_count = 1
 
 	# Creates tree recursively
-	root_node.add_children(_recursive_split_nodes(node_list, root_node))
+	root_node.add_children(_recursive_split_nodes(node_list, root_node), true)
 
 	## TODO index mesh_sockets
 	# TODO Merge object ids
@@ -243,7 +258,7 @@ func _recursive_split(object_list : Array[PTObject], parent : BVHNode) -> Array[
 			new_children.append(_set_leaf(new_node, split_objects))
 			continue
 
-		new_node.add_children(_recursive_split(split_objects, new_node))
+		new_node.add_children(_recursive_split(split_objects, new_node), true)
 		inner_count += 1
 		new_children.append(new_node)
 
@@ -259,13 +274,9 @@ func _recursive_split_nodes(node_list : Array[BVHNode], parent : BVHNode, depth 
 	var new_nodes : Array[BVHNode] = []
 
 	var segment_count := order
-	var node_list_aabb := get_array_center_aabb(node_list).abs().grow(0.00001)
+	var node_list_aabb := get_array_aabb(node_list).abs()
 
 	if type == BVHType.XYZ_SORTED:
-		# if _axis == node_list_aabb.get_longest_axis_index():
-		# 	_axis = (node_list_aabb.get_longest_axis_index() + 1) % 3
-		# 	node_list.sort_custom(_axis_sorts[_axis])
-		# else:
 		_axis = node_list_aabb.get_longest_axis_index()
 		node_list.sort_custom(_axis_sorts[_axis])
 
@@ -283,9 +294,6 @@ func _recursive_split_nodes(node_list : Array[BVHNode], parent : BVHNode, depth 
 		elif mesh_count > 0:
 			# TODO Make sure this terminates
 			segment_count = order - mesh_count
-
-		# else: TODO
-
 
 	if depth >= MAX_DEPTH_LIMIT + 5:
 		assert(false, "too much depth")
@@ -311,7 +319,9 @@ func _recursive_split_nodes(node_list : Array[BVHNode], parent : BVHNode, depth 
 		else:
 			first_non_empty = nodes
 	if empty_sections == segment_count - 1:
+		@warning_ignore("integer_division")
 		var left : Array = first_non_empty.slice(0, first_non_empty.size() / 2)
+		@warning_ignore("integer_division")
 		var right : Array = first_non_empty.slice(first_non_empty.size() / 2)
 
 		new_nodes_children = [left, right]
@@ -325,8 +335,8 @@ func _recursive_split_nodes(node_list : Array[BVHNode], parent : BVHNode, depth 
 		var new_node := BVHNode.new(parent, self)
 		new_node.is_inner = true
 		# Remaining nodes are still to many, split them into new nodes.
-		if nodes.size() > order:
-			new_node.add_children(_recursive_split_nodes(nodes, new_node, depth + 1))
+		if nodes.size() > order and depth < MAX_DEPTH_LIMIT:
+			new_node.add_children(_recursive_split_nodes(nodes, new_node, depth + 1), true)
 			new_nodes.append(new_node)
 			continue
 
@@ -334,9 +344,9 @@ func _recursive_split_nodes(node_list : Array[BVHNode], parent : BVHNode, depth 
 		if mesh_count == 0:
 			new_node.is_leaf = true
 			for leaf_node in nodes:
-				assert(leaf_node.object_list.size() == 1)
-				new_node.object_list.append(leaf_node.object_list[0])
-
+				assert(leaf_node.is_leaf)
+				assert(leaf_node.size() == 1)
+				new_node.add_object(leaf_node.object_list[0])
 		# order or less objects or meshes, put objects in child leaf
 		else:
 			var new_leaf := BVHNode.new(new_node, self)
@@ -345,20 +355,20 @@ func _recursive_split_nodes(node_list : Array[BVHNode], parent : BVHNode, depth 
 			for node in nodes:
 				if node.is_leaf:
 					# Append object to child leaf
-					assert(node.object_list.size() == 1)
-					new_leaf.object_list.append(node.object_list[0])
+					assert(node.size() == 1)
+					new_leaf.add_object(node.object_list[0])
 				else:
 					# Append mesh socket
 					assert(node.is_mesh_socket)
 					node.parent = new_node
-					new_node.add_children([node])
+					new_node.add_child(node)
 					# Mesh tree will be fully indexed later
 					index_node(node)
 
 			# Children of new_node will be fully indexed
 			if new_leaf.size() > 0:
 				index_node(new_leaf, true)
-				new_node.add_children([new_leaf])
+				new_node.add_child(new_leaf)
 
 		new_nodes.append(new_node)
 
@@ -425,14 +435,14 @@ func _recursive_split2(object_list : Array[PTObject], parent : BVHNode, depth : 
 	if right.size() <= order:
 		new_children.append(_set_leaf(new_node_right, right))
 	else:
-		new_node_right.add_children(_recursive_split2(right, new_node_right, depth + 1))
+		new_node_right.add_children(_recursive_split2(right, new_node_right, depth + 1), true)
 		inner_count += 1
 
 
 	if left.size() <= order:
 		new_children.append(_set_leaf(new_node_left, left))
 	else:
-		new_node_left.add_children(_recursive_split2(left, new_node_left, depth + 1))
+		new_node_left.add_children(_recursive_split2(left, new_node_left, depth + 1), true)
 		inner_count += 1
 
 	return [new_node_right, new_node_left]
@@ -513,10 +523,3 @@ func get_array_aabb(nodes : Array[BVHNode]) -> AABB:
 		aabb = aabb.merge(node.aabb)
 	return aabb
 
-func get_array_center_aabb(nodes : Array[BVHNode]) -> AABB:
-	if nodes.size() == 1:
-		return nodes[0].aabb
-	var aabb := AABB(nodes[0].aabb.get_center(), nodes[1].aabb.get_center()).abs()
-	for node in nodes:
-		aabb = aabb.expand(node.aabb.get_center())
-	return aabb

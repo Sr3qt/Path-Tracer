@@ -1,5 +1,9 @@
 Performance on random_scene with book_ex camera settings
 
+Improved node appending syntax/AABB bug fix,
+	135 fps with grimchild, 70 fps spheres old x-sort, 103 with old xyz-sort
+	54 fps with new x-sort, 100 with new xyz-sort. 525 fps with dragon 1 bounce
+
 Duplicate objects bug fix, 48 fps with grimchild with and withouth mesh transform.
 
 Mesh transform improvement attempt, 44 fps with grimchild, 67 fps spheres

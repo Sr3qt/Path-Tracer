@@ -4,6 +4,7 @@ extends PTPrimitive3D
 
 # The triangles vertices relative to itself, not in local coordinates
 # Used for defining the shape of the triangle
+# TODO FInd solid way of handling degenerate triangles
 @export var vertex1 := Vector3.LEFT:
 	set(value):
 		vertex1 = value

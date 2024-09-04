@@ -94,7 +94,7 @@ var object_ids : PackedInt32Array = []
 
 ## Takes in a node gives its index in bvh_list
 var _node_to_index := {}
-var _node_to_object_id_index := {}
+var _node_to_object_id_index := {} # TODO REMOVE equivelant from node
 
 var _mesh_to_mesh_socket := {}
 
@@ -243,14 +243,12 @@ func create_mesh_socket(parent : BVHNode, mesh_tree : PTBVHTree) -> BVHNode:
 	var mesh_socket := BVHNode.new(parent, self)
 	mesh_socket.is_mesh_socket = true
 	mesh_socket.is_inner = true
-	inner_count += 1
 	_mesh_to_mesh_socket[mesh_tree.get_mesh()] = mesh_socket
-	_node_to_index[mesh_socket] = bvh_list.size()
-	bvh_list.append(mesh_socket)
+	mesh_socket.add_children([mesh_tree.root_node])
+	index_node(mesh_socket, true)
 
 	parent.add_children([mesh_socket])
-	mesh_socket.add_children([mesh_tree.root_node])
-	mesh_socket.update_aabb()
+	parent.update_aabb()
 
 	# Redundant bc of update_aabb?
 	append_updated_node_index(get_node_index(parent))
@@ -294,12 +292,11 @@ func _add_object_to_tree(object : PTObject) -> Array[BVHNode]:
 	if fitting_node.is_inner:
 		var new_node := BVHNode.new(fitting_node, self)
 		new_node.is_leaf = true
-		new_node.object_list.append(object)
-		new_node.set_aabb()
-		fitting_node.add_children([new_node])
+		new_node.add_object(object, true)
+		fitting_node.add_child(new_node)
 		new_nodes.append(new_node)
 	else:
-		fitting_node.object_list.append(object)
+		fitting_node.add_object(object)
 		object_to_leaf[object] = fitting_node # UNSTATIC
 		if is_sub_tree():
 			parent_tree.object_to_leaf[object] = fitting_node # UNSTATIC
@@ -390,7 +387,7 @@ func index_node(node : BVHNode, count := false) -> void:
 	elif node.is_leaf:
 		if count:
 			leaf_count += 1
-			object_count += node.object_list.size()
+			object_count += node.size()
 
 		if is_scene_owned():
 			_node_to_object_id_index[node] = object_ids.size()
@@ -444,7 +441,7 @@ func _index_node(node : BVHNode) -> void:
 		if child.is_leaf:
 			leaf_nodes.append(child)
 			leaf_count += 1
-			object_count += child.object_list.size()
+			object_count += child.size()
 			for object in child.object_list:
 				object_to_leaf[object] = child # UNSTATIC
 		else:
@@ -507,17 +504,17 @@ func _split_node(node : BVHNode) -> Array[BVHNode]:
 	if node.is_inner:
 		@warning_ignore("integer_division")
 		var halfway := node.children.size() / 2
-		new_node_left.add_children(node.children.slice(0, halfway))
-		new_node_right.add_children(node.children.slice(halfway))
+		new_node_left.add_children(node.children.slice(0, halfway), true)
+		new_node_right.add_children(node.children.slice(halfway), true)
 
 		node.children.clear()
 
 		inner_count += 2
 	else:
 		@warning_ignore("integer_division")
-		var halfway := node.object_list.size() / 2
-		new_node_left.object_list.append_array(node.object_list.slice(0, halfway))
-		new_node_left.object_list.append_array(node.object_list.slice(halfway))
+		var halfway := node.size() / 2
+		new_node_left.add_objects(node.object_list.slice(0, halfway), true)
+		new_node_left.add_objects(node.object_list.slice(halfway), true)
 
 		# Remove leaf node references in node
 		node.object_list.clear()
@@ -529,7 +526,7 @@ func _split_node(node : BVHNode) -> Array[BVHNode]:
 		inner_count += 1
 		leaf_count += 1
 
-	node.add_children([new_node_left, new_node_right])
+	node.add_children([new_node_left, new_node_right], true)
 	append_updated_node_index(get_node_index(node))
 
 	return [new_node_left, new_node_right]
@@ -815,8 +812,10 @@ class BVHNode:
 
 
 	func set_aabb() -> void:
+		assert(size() > 0, "Cannot set aabb of node with no objects/child nodes.")
 		if is_mesh_socket:
-			assert(children[0].aabb != null and children[0].aabb.size != Vector3.ZERO)
+			assert(children[0].aabb != null and children[0].aabb.size != Vector3.ZERO,
+					"PT: Mesh socket's child does not have an aabb.")
 			aabb = children[0].tree.get_mesh().transform * children[0].aabb
 			return
 
@@ -836,7 +835,9 @@ class BVHNode:
 				aabb = aabb.merge(child.aabb)
 			return
 
+		# in theory should never trigger
 		assert(false, "PT: Node exited set_aabb with no aabb.")
+
 
 	func update_aabb() -> void:
 		var old_aabb := aabb
@@ -850,13 +851,26 @@ class BVHNode:
 				parent.update_aabb()
 
 
-	func add_children(new_children : Array[BVHNode]) -> void:
-		assert(is_inner, "Cannot give inner node objects.")
-		if size() + new_children.size() <= tree.order:
-			children += new_children
+	func add_children(new_children : Array[BVHNode], f_set_aabb := false) -> void:
+		assert(is_inner, "Cannot give child node(s) to leaf node.")
+		assert(size() + new_children.size() <= tree.order,
+				"PT: Cannot fit child BVHNode(s) to node: " + str(self))
+		children.append_array(new_children)
+		if f_set_aabb:
 			set_aabb()
-		else:
-			push_warning("Warning: Cannot fit child BVHNode(s) to node: ", self)
+
+
+	func add_child(new_child : BVHNode, f_set_aabb := false) -> void:
+		add_children([new_child], f_set_aabb)
+
+
+	func add_objects(new_objects : Array[PTObject], f_set_aabb := false) -> void:
+		assert(is_leaf, "Cannot give objects to inner node.")
+		object_list.append_array(new_objects)
+		if f_set_aabb:
+			set_aabb()
+	func add_object(new_object : PTObject, f_set_aabb := false) -> void:
+		add_objects([new_object], f_set_aabb)
 
 
 	func to_byte_array() -> PackedByteArray:
