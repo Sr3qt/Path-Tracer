@@ -274,7 +274,7 @@ func _recursive_split_nodes(node_list : Array[BVHNode], parent : BVHNode, depth 
 	var new_nodes : Array[BVHNode] = []
 
 	var segment_count := order
-	var node_list_aabb := get_array_aabb(node_list).abs()
+	var node_list_aabb := get_array_aabb(node_list).abs().grow(0.000001)
 
 	if type == BVHType.XYZ_SORTED:
 		_axis = node_list_aabb.get_longest_axis_index()

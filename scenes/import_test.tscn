@@ -56,7 +56,7 @@ distance = -0.21
 
 [node name="HN_GrimmChild_Anim_final_LP_96frames_baked" parent="." instance=ExtResource("4_cbihy")]
 script = ExtResource("5_mfldx")
-bvh_type = 3
+bvh_type = 4
 override_material = SubResource("Resource_y4bi6")
 
 [node name="PTSphere" type="MeshInstance3D" parent="."]

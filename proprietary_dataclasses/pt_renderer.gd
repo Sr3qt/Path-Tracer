@@ -24,6 +24,7 @@ const compute_invocation_depth : int = 1
 
 const _MAX_OWNER_SEARCH_DEPTH = 30
 
+# TODO Make toggle in editor. Maybe save value in config file
 ## Whether the plugin should print internal debug messages
 var is_debug := true
 
@@ -177,6 +178,7 @@ func _ready() -> void:
 		# Show canvas to editor camera if is_camera_linked
 		editor_camera.set_cull_mask_value(20, is_camera_linked)
 
+	# TODO Only trigger when PTScene is present and when debug is enabled
 	if not Engine.is_editor_hint():
 		var x := ceili(1920. / 8.)
 		var y := ceili(1080. / 8.)

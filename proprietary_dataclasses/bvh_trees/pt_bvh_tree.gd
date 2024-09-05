@@ -37,6 +37,7 @@ const NODE_BYTE_SIZE = 32
 ## Enum of different possible BVH algorithms, should be updated as more algortithms
 ##  are added. Only positive numbers (and zero) are allowed as values.
 enum BVHType {
+	EMPTY,
 	X_SORTED,
 	Y_SORTED,
 	Z_SORTED,
@@ -44,6 +45,7 @@ enum BVHType {
 }
 
 const enum_to_dict := {
+	BVHType.EMPTY : "EMPTY",
 	BVHType.X_SORTED : "X-Axis Sorted",
 	BVHType.Y_SORTED : "Y-Axis Sorted",
 	BVHType.Z_SORTED : "Z-Axis Sorted",
@@ -51,12 +53,14 @@ const enum_to_dict := {
 }
 
 static var built_in_bvh_functions := {
+	"EMPTY" : PTBVHTree.empty,
 	"X-Axis Sorted" : PTBVHAxisSort.x_axis_sorted,
 	"Y-Axis Sorted" : PTBVHAxisSort.y_axis_sorted,
 	"Z-Axis Sorted" : PTBVHAxisSort.z_axis_sorted,
 	"XYZ-Axis Sorted" : PTBVHAxisSort.longest_axis_sort,
 }
 
+# TODO Scrap the entire user created bvh algos, use only enum and enum to func
 # TODO Should add config file where the user can specify functions and names
 #  And they will be added to enum/dict either here or from a Autoload
 ## The user can add their of own bvh functions to the bvh_functions dict. The only
@@ -78,13 +82,8 @@ var order : int
 var parent_tree : PTBVHTree
 
 ## The object that owns this bvh. Can be either PTScene, PTMesh or null
-var bvh_owner : Variant:
-	set(value):
-		assert(value is PTMesh or value is PTScene or value == null,
-				"bvh_owner can only be of type PTMesh, PTScene, or null; not " + str(value))
-		bvh_owner = value
+var _bvh_owner : Variant
 
-# TODO Give BVHTree aabb property similar to ptobjects to facilitate duck typing.
 var root_node : BVHNode
 
 var object_to_leaf := {}
@@ -101,6 +100,8 @@ var _mesh_to_mesh_socket := {}
 # TODO Add bvh constructor with bvh_list as argument
 var bvh_list : Array[BVHNode] = []
 
+# TODO Maybe inner_count should be bvh_list.size() - leaf_nodes.size()
+# and maybe object count should go up when add_object(s) is called
 ## Counts the number of nodes with no child nodes
 var leaf_count : int
 ## Counts the number of nodes with child nodes, including root node
@@ -144,10 +145,11 @@ var needs_buffer_reset := false
 ##	- Add to leaf_nodes
 ##	- For each object, set object_to_leaf
 ##	- If is_scene_bvh: Add object's object_ids to object_ids
-##	- If is_scene_bvh: Set node's object_id_index
+##	- If is_scene_bvh: Set node's object_id_index  DEPRECATED
+##	- If is_scene_bvh: Set _node_to_object_id_index
 ##
 ##	- Add to bvhlist next to sibling nodes
-##	- Set _node_to_node_index
+##	- Set _node_to_index
 ##	- Set node's parent
 ##	- Update nodes aabb and ancestors'
 ##	- If not in creation: append to updated_indices
@@ -160,6 +162,10 @@ func _init(_order := 2) -> void:
 	inner_count += 1
 
 	bvh_list = [root_node]
+
+
+static func empty(_objects : PTObjectContainer, p_order : int) -> PTBVHTree:
+	return PTBVHTree.new(p_order)
 
 
 static func create_bvh_with_function_name(
@@ -184,33 +190,67 @@ static func create_bvh_with_function_name(
 	var bvh : PTBVHTree = tempt.call(objects, _order) # UNSTATIC
 	bvh.creation_time = (Time.get_ticks_usec() - start_time)
 
-	bvh.bvh_owner = mesh_or_scene_owner
+	bvh.set_bvh_owner(mesh_or_scene_owner)
 
 	return bvh
 
 
-## Returns true if bvh_owner is a valid PTSMesh instance
+#region Ownership
+
+## Returns true if BVH owner is a valid PTSMesh instance
 func is_mesh_owned() -> bool:
-	return is_instance_valid(bvh_owner) and bvh_owner is PTMesh
+	return is_instance_valid(_bvh_owner) and _bvh_owner is PTMesh
 
 
-## Returns this bvhs valid mesh owner if it exists, otherwise return null
+## Returns this BVHs valid mesh owner if it exists, otherwise return null
 func get_mesh() -> PTMesh:
 	if is_mesh_owned():
-		return bvh_owner
+		return _bvh_owner
 	return null
 
 
-## Returns true if bvh_owner is a valid PTScene instance
+func set_mesh_as_owner(mesh : PTMesh) -> void:
+	assert(_bvh_owner == null, "PT: A BVH cannot change owner.")
+	_bvh_owner = mesh
+
+
+## Returns true if BVH owner is a valid PTScene instance
 func is_scene_owned() -> bool:
-	return is_instance_valid(bvh_owner) and bvh_owner is PTScene
+	return is_instance_valid(_bvh_owner) and _bvh_owner is PTScene
 
 
 ## Returns this bvhs valid scene owner if it exists, otherwise return null
 func get_scene() -> PTScene:
 	if is_scene_owned():
-		return bvh_owner
+		return _bvh_owner
 	return null
+
+
+func set_scene_as_owner(scene : PTScene) -> void:
+	assert(_bvh_owner == null, "PT: A BVH cannot change owner.")
+
+	_bvh_owner = scene
+	create_object_ids()
+
+
+## The owner of the bvh is immutable and can only be set once
+func set_bvh_owner(new_owner : Variant) -> void:
+	assert(new_owner is PTMesh or new_owner is PTScene,
+			"BVH owner can only be of type PTMesh, PTScene, or null; not " +
+			str(new_owner))
+
+	if new_owner is PTScene:
+		@warning_ignore("unsafe_call_argument")
+		set_scene_as_owner(new_owner)
+	else:
+		@warning_ignore("unsafe_call_argument")
+		set_mesh_as_owner(new_owner)
+
+
+func get_bvh_owner() -> Variant:
+	return _bvh_owner
+
+#endregion
 
 
 func is_sub_tree() -> bool:
@@ -678,35 +718,6 @@ func remove_subtree(node : BVHNode) -> void:
 		_node_to_index[bvh_list[i]] = i # UNTSTATIC
 
 
-# TODO Make a test
-func is_memory_contiguous() -> bool:
-	if not is_children_contiguous(root_node):
-		return false
-
-	return _recursive_is_contiguous(root_node)
-
-
-func _recursive_is_contiguous(node : BVHNode) -> bool:
-	for child in node.children:
-		if child.is_inner:
-			if not is_children_contiguous(child):
-				return false
-
-	return true
-
-
-func is_children_contiguous(node : BVHNode) -> bool:
-	if node.is_leaf:
-		return false
-
-	var prev_child_index : int = _node_to_index[node.children[0]]
-	for child in node.children:
-		if _node_to_index[child] - prev_child_index in [0, 1]:
-			return false
-
-	return true
-
-
 ## Returns the total bumber of nodes in the tree
 func size() -> int:
 	return inner_count + leaf_count
@@ -772,7 +783,7 @@ class BVHNode:
 	var is_mesh_socket := false
 
 	# Leaf nodes in the tree have no children and have a list pointing to objects
-	#  The object list is no larger than tree.order
+	#  The object list is can be larger than tree.order
 	var object_list : Array[PTObject] = []
 
 	## NOTE TODO This information should not be stored on node. It should be gotten
@@ -869,13 +880,18 @@ class BVHNode:
 		object_list.append_array(new_objects)
 		if f_set_aabb:
 			set_aabb()
+
+
 	func add_object(new_object : PTObject, f_set_aabb := false) -> void:
 		add_objects([new_object], f_set_aabb)
 
 
 	func to_byte_array() -> PackedByteArray:
-		assert(size() > 0,
+		assert(tree.root_node == self or size() > 0,
 			"PT: Node does not have any children or objects and should be culled")
+
+		if tree.root_node == self and size() == 0:
+			return PTUtils.empty_byte_array(PTBVHTree.NODE_BYTE_SIZE)
 
 		var root_tree := tree
 

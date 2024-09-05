@@ -211,6 +211,7 @@ func merge(other : PTObjectContainer) -> Array[bool]:
 	return added_types
 
 
+# TODO Move to test_helper_object_contianer
 ## Checks if any object is a part of any mesh.
 func check_no_object_is_meshlet() -> bool:
 	for type : ObjectType in ObjectType.values():

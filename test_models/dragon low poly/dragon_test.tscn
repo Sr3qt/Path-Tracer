@@ -13,4 +13,4 @@ script = ExtResource("2_3x2xy")
 
 [node name="untitled" parent="." instance=ExtResource("3_ndbym")]
 transform = Transform3D(-4.37114e-08, 1, -4.37114e-08, 0, -4.37114e-08, -1, -1, -4.37114e-08, 1.91069e-15, 0, 0, 0)
-bvh_type = 3
+bvh_type = 4

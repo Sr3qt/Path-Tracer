@@ -1,0 +1,50 @@
+[gd_scene load_steps=6 format=3 uid="uid://vtb263h5ob68"]
+
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_qw87b"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_triangle.gd" id="2_njt0j"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_sphere.gd" id="3_vfjd2"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_plane.gd" id="4_uef7u"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="5_s488b"]
+
+[node name="TestSceneBvhA" type="Node"]
+script = ExtResource("1_qw87b")
+default_bvh = 0
+bvh_order = 2
+
+[node name="PTTriangle" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 1, 0, 0)
+script = ExtResource("2_njt0j")
+vertex3 = Vector3(1, 0, 0)
+
+[node name="PTSphere" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+script = ExtResource("3_vfjd2")
+radius = 1.2
+
+[node name="PTPlane" type="MeshInstance3D" parent="."]
+script = ExtResource("4_uef7u")
+
+[node name="PTSphere2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
+script = ExtResource("3_vfjd2")
+radius = 0.5
+
+[node name="PTTriangle2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 0)
+script = ExtResource("2_njt0j")
+vertex1 = Vector3(1, 0, 0)
+vertex2 = Vector3(1, 0, 1)
+vertex3 = Vector3(0, 1, 0)
+
+[node name="PTSphere3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0, 0.5)
+script = ExtResource("3_vfjd2")
+radius = 0.75
+
+[node name="PTCameraFPS" type="Camera3D" parent="."]
+script = ExtResource("5_s488b")
+
+[node name="PTSphere4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -1)
+script = ExtResource("3_vfjd2")
+radius = 0.25

@@ -793,7 +793,7 @@ func _create_bvh_byte_array() -> PackedByteArray:
 func _create_object_id_byte_array() -> PackedByteArray:
 	var bytes : PackedByteArray = []
 
-	if _scene.bvh and _scene.bvh.is_scene_owned():
+	if _scene.bvh and _scene.bvh.is_scene_owned() and _scene.bvh.type != PTBVHTree.BVHType.EMPTY:
 		if _scene.bvh.object_ids.size() == 0:
 			# TODO Find a beter place to create object_ids, shouldn't be here atleast
 			_scene.bvh.create_object_ids()
