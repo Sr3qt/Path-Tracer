@@ -25,7 +25,7 @@ func _init(_order : int = 2) -> void:
 static func x_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxisSort:
 	var temp := PTBVHAxisSort.new(_order)
 	if use_old_method:
-		temp.create_bvh(objects, BVHType.X_SORTED)
+		temp.create_bvh_tree(objects, BVHType.X_SORTED)
 	else:
 		temp.create_bvh_node_list(objects, BVHType.X_SORTED)
 	return temp
@@ -34,7 +34,7 @@ static func x_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxi
 static func y_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxisSort:
 	var temp := PTBVHAxisSort.new(_order)
 	if use_old_method:
-		temp.create_bvh(objects, BVHType.Y_SORTED)
+		temp.create_bvh_tree(objects, BVHType.Y_SORTED)
 	else:
 		temp.create_bvh_node_list(objects, BVHType.Y_SORTED)
 	return temp
@@ -43,7 +43,7 @@ static func y_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxi
 static func z_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxisSort:
 	var temp := PTBVHAxisSort.new(_order)
 	if use_old_method:
-		temp.create_bvh(objects, BVHType.Z_SORTED)
+		temp.create_bvh_tree(objects, BVHType.Z_SORTED)
 	else:
 		temp.create_bvh_node_list(objects, BVHType.Z_SORTED)
 	return temp
@@ -52,7 +52,7 @@ static func z_axis_sorted(objects : PTObjectContainer, _order : int) -> PTBVHAxi
 static func longest_axis_sort(objects : PTObjectContainer, _order : int) -> PTBVHAxisSort:
 	var temp := PTBVHAxisSort.new(_order)
 	if use_old_method:
-		temp.create_bvh(objects, BVHType.XYZ_SORTED)
+		temp.create_bvh_tree(objects, BVHType.XYZ_SORTED)
 	else:
 		temp.create_bvh_node_list(objects, BVHType.XYZ_SORTED)
 	return temp
@@ -83,7 +83,7 @@ func create_disconnected_node_list(objects : PTObjectContainer) -> Array[BVHNode
 	return flat_node_list
 
 
-func create_bvh(objects : PTObjectContainer, f_type := BVHType.XYZ_SORTED) -> void:
+func create_bvh_tree(objects : PTObjectContainer, f_type := BVHType.XYZ_SORTED) -> void:
 	# benchmark before:
 		# Spheres - 487 objects in 7.829 ms.
 		# Import mesh - 3168 objects in 132.713 ms -- 3171 objects in 1.616 ms.

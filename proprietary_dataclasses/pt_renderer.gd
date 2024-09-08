@@ -437,8 +437,7 @@ func add_scene(new_ptscene : PTScene) -> void:
 		print(new_ptscene.owner, " Root node, ", new_ptscene, " PTScene node")
 
 	if new_ptscene.get_size() > 0:
-		var function_name : String = PTBVHTree.enum_to_dict[new_ptscene.default_bvh] # UNSTATIC
-		new_ptscene.create_BVH(bvh_order, function_name)
+		new_ptscene.create_BVH(bvh_order, new_ptscene.default_bvh)
 	else:
 		new_ptscene.bvh = PTBVHTree.new(bvh_order)
 
@@ -647,7 +646,7 @@ func _plugin_change_scene(scene_root : Node) -> void:
 	change_scene(scene_to_change)
 
 
-func create_bvh(ptscene : PTScene, _order : int, function_name : String) -> void:
+func create_bvh(ptscene : PTScene, _order : int, type : PTBVHTree.BVHType) -> void:
 	# TODO Rework shader to work with different bvh orders without reloading
 	if not is_instance_valid(scene):
 		push_warning("PT: Cannot create bvh as there is no set scene.")
@@ -659,7 +658,7 @@ func create_bvh(ptscene : PTScene, _order : int, function_name : String) -> void
 	var prev_max : int = bvh_order
 	bvh_order = _order
 
-	ptscene.create_BVH(bvh_order, function_name)
+	ptscene.create_BVH(bvh_order, type)
 
 	if prev_max != bvh_order:
 		PTUtils.load_shader(ptscene)

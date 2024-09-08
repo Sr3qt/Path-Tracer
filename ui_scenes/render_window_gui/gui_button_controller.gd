@@ -2,7 +2,7 @@
 class_name PTButtonController
 extends Node
 
-""" Controls all gui button connections """
+## Controls all gui button connections
 
 const DISABLED_COLOR = Color(160, 0, 0, 0.4)
 const CHANGED_VALUE_COLOR = Color(220, 165, 0, 0.6)
@@ -32,7 +32,6 @@ var normal_view : PTCheckBox
 
 # For BVHType option button
 var bvh_function_names : Array[String]
-# TODO Update this and BVHType option button when new bvh added
 
 var _is_plugin_instance := false
 
@@ -63,7 +62,7 @@ func _ready() -> void:
 	normal_view = %NormalViewButton as PTCheckBox
 
 	# Initialize bvh dropdown menu
-	bvh_function_names.assign(PTBVHTree.enum_to_dict.values())
+	bvh_function_names.assign(PTBVHTree.bvh_function_names)
 	for i in range(bvh_function_names.size()):
 		bvh_type.add_item(bvh_function_names[i].capitalize(), i)
 
@@ -85,11 +84,6 @@ func _ready() -> void:
 	# TODO use scene values
 	bvh_order.value = PTRendererAuto.bvh_order
 	bvh_order.previous_value = PTRendererAuto.bvh_order
-
-	# Set default values for option button
-	#  NOTE: Indexes should work as long as BVHType enums are positive
-	#%BVHType.selected = pt_window.renderer.default_bvh
-	#%BVHType.previous_value = pt_window.renderer.default_bvh
 
 	# Set default values for sample buttons
 	enable_multisampling.button_pressed = pt_window.enable_multisampling
@@ -151,8 +145,8 @@ func _on_create_bvh_button_pressed() -> void:
 	bvh_type.previous_value = bvh_type.selected
 	bvh_order.previous_value = bvh_order.value
 
-	PTRendererAuto.create_bvh(PTRendererAuto.scene, int(bvh_order.value),
-			bvh_function_names[bvh_type.selected])
+	PTRendererAuto.create_bvh(
+			PTRendererAuto.scene, int(bvh_order.value), bvh_type.selected)
 
 
 func _on_enable_multisample_button_toggled(toggled_on : bool) -> void:

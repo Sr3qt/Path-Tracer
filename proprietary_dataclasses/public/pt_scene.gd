@@ -649,13 +649,13 @@ func get_size() -> int:
 	return unpacked_objects.object_count
 
 
-func create_BVH(order : int, function_name : String) -> void:
+func create_BVH(order : int, type : PTBVHTree.BVHType) -> void:
 	# TODO add check to reuse BVH if it is in cached_bvhs
 
 	if bvh:
 		cached_bvhs.append(bvh)
 
-	bvh = PTBVHTree.create_bvh_with_function_name(scene_objects, order, function_name, self)
+	bvh = PTBVHTree.create_bvh(scene_objects, order, type, self)
 
 
 func create_random_scene(_seed : int) -> void:

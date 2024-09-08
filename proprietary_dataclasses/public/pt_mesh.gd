@@ -91,8 +91,7 @@ func _ready() -> void:
 			add_object(triangle)
 			add_child(triangle)
 
-	var function_name : String = PTBVHTree.enum_to_dict[bvh_type] # UNSTATIC
-	bvh = PTBVHTree.create_bvh_with_function_name(objects, bvh_order, function_name, self)
+	bvh = PTBVHTree.create_bvh(objects, bvh_order, bvh_type, self)
 
 	if scene:
 		if PTRendererAuto.is_debug:

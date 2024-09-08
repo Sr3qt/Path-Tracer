@@ -44,31 +44,22 @@ enum BVHType {
 	XYZ_SORTED,
 }
 
-const enum_to_dict := {
-	BVHType.EMPTY : "EMPTY",
-	BVHType.X_SORTED : "X-Axis Sorted",
-	BVHType.Y_SORTED : "Y-Axis Sorted",
-	BVHType.Z_SORTED : "Z-Axis Sorted",
-	BVHType.XYZ_SORTED : "XYZ-Axis Sorted",
+## Dictionary from BVHType to bvh creator functions
+static var bvh_functions := {
+	BVHType.EMPTY : PTBVHTree.empty,
+	BVHType.X_SORTED : PTBVHAxisSort.x_axis_sorted,
+	BVHType.Y_SORTED : PTBVHAxisSort.y_axis_sorted,
+	BVHType.Z_SORTED : PTBVHAxisSort.z_axis_sorted,
+	BVHType.XYZ_SORTED : PTBVHAxisSort.longest_axis_sort,
 }
+static var bvh_function_names := [
+	"EMPTY",
+	"X-Axis Sorted",
+	"Y-Axis Sorted",
+	"Z-Axis Sorted",
+	"XYZ-Axis Sorted",
+]
 
-static var built_in_bvh_functions := {
-	"EMPTY" : PTBVHTree.empty,
-	"X-Axis Sorted" : PTBVHAxisSort.x_axis_sorted,
-	"Y-Axis Sorted" : PTBVHAxisSort.y_axis_sorted,
-	"Z-Axis Sorted" : PTBVHAxisSort.z_axis_sorted,
-	"XYZ-Axis Sorted" : PTBVHAxisSort.longest_axis_sort,
-}
-
-# TODO Scrap the entire user created bvh algos, use only enum and enum to func
-# TODO Should add config file where the user can specify functions and names
-#  And they will be added to enum/dict either here or from a Autoload
-## The user can add their of own bvh functions to the bvh_functions dict. The only
-##  non-optional arguments needs to be a PTObjectContainer followed by a maximum child count.
-##  Of course it also needs to return a PTBVHTree or subtype.
-static var bvh_functions := built_in_bvh_functions
-
-# TODO add support for meshes
 const objects_to_exclude : Array[PTObject.ObjectType] = [
 	PTObject.ObjectType.NOT_OBJECT,
 	PTObject.ObjectType.PLANE,
@@ -168,29 +159,31 @@ static func empty(_objects : PTObjectContainer, p_order : int) -> PTBVHTree:
 	return PTBVHTree.new(p_order)
 
 
-static func create_bvh_with_function_name(
+## Create a bvh with a specified algorithm given in the form of an enum
+static func create_bvh(
 		objects : PTObjectContainer,
-		_order : int,
-		_name : String,
-		mesh_or_scene_owner : Variant,
+		f_order : int,
+		f_type : BVHType,
+		bvh_owner : Variant = null,
 	) -> PTBVHTree:
 
-	if _name not in bvh_functions.keys():
-		print("Name: %s, not in list of callable bvh functions" % _name)
+	if f_type not in bvh_functions.keys():
+		print("Name: %s, not in list of callable bvh functions" % f_type)
 		return
 
-	assert(_order > 1, "BVH order has to be >= 2")
+	assert(f_order > 1, "BVH order has to be >= 2")
 
-	assert(mesh_or_scene_owner is PTScene or mesh_or_scene_owner is PTMesh,
-			"mesh_or_scene_owner should be PTMesh or PTScene, but was %s" % [mesh_or_scene_owner])
+	assert(bvh_owner is PTScene or bvh_owner is PTMesh or bvh_owner == null,
+			"bvh_owner should be PTMesh, PTScene or null, but was %s" % [bvh_owner])
 
 	@warning_ignore("unsafe_cast")
-	var tempt := bvh_functions[_name] as Callable # UNSTATIC
+	var tempt := bvh_functions[f_type] as Callable # UNSTATIC
 	var start_time : int = Time.get_ticks_usec()
-	var bvh : PTBVHTree = tempt.call(objects, _order) # UNSTATIC
+	var bvh : PTBVHTree = tempt.call(objects, f_order) # UNSTATIC
 	bvh.creation_time = (Time.get_ticks_usec() - start_time)
 
-	bvh.set_bvh_owner(mesh_or_scene_owner)
+	if is_instance_valid(bvh_owner):
+		bvh.set_bvh_owner(bvh_owner)
 
 	return bvh
 
