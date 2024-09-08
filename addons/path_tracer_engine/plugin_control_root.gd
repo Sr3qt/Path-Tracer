@@ -24,7 +24,7 @@ func _ready():
 			better_window.get_node("SettingsManager") as _PTSettingsManager)
 
 		settings_manager._is_plugin_instance = true
-		settings_manager._plugin_panel_node = get_child(0)
+		settings_manager._plugin_panel_node = %VBoxContainer
 
 		better_window.work_group_width = x
 		better_window.work_group_height = y
@@ -45,4 +45,4 @@ func _on_resized():
 		# Fallback ratio if no camera exists
 		viewport.size.y = size.x / (16.0 / 9.0)
 
-	($VBoxContainer as VBoxContainer).size = size
+	(%VBoxContainer as VBoxContainer).size = size

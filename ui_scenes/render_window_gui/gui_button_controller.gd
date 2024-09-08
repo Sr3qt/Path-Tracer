@@ -107,9 +107,6 @@ func _ready() -> void:
 	#	-add button to make a new camera instance and a way top change between camera instances
 	#	-add ability to change camera variables, fov, gamma, focal
 
-	# TODO TURN labels to rich text labels with hints on hover'
-	#  Also fix those labels' background being wrong in the editor
-
 
 # Shouldnt work withouth no_signal, but it does, so no change needed
 func toggle_all_render_mode_buttons(toggle : bool) -> void:

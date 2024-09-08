@@ -111,6 +111,9 @@ columns = 2
 [node name="UseBVHLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
 layout_mode = 2
 size_flags_horizontal = 3
+tooltip_text = "Whether to use a BVH for rendering.
+Should only be disabled for debugging."
+mouse_filter = 1
 text = "    Use BVH tree"
 
 [node name="UseBVHButton" type="CheckBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
@@ -137,6 +140,8 @@ color = Color(160, 0, 0, 0.4)
 
 [node name="ShowBVHDepthLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
 layout_mode = 2
+tooltip_text = "Show a heat map of box/object intersection tests."
+mouse_filter = 1
 text = "    Show BVH depth map"
 
 [node name="ShowBVHDepthButton" type="CheckBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
@@ -162,6 +167,8 @@ color = Color(160, 0, 0, 0.4)
 [node name="ShowNodeLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
 unique_name_in_owner = true
 layout_mode = 2
+tooltip_text = "Whether to display box intersection tests or not."
+mouse_filter = 1
 text = "        Show node count"
 
 [node name="ShowNodeButton" type="CheckBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
@@ -172,6 +179,8 @@ script = ExtResource("3_g0amw")
 [node name="NodeCountLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
 unique_name_in_owner = true
 layout_mode = 2
+tooltip_text = "The number of box intersections required for pixels to turn white."
+mouse_filter = 1
 text = "        Node count threshold"
 
 [node name="NodeCountThreshold" type="SpinBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
@@ -184,6 +193,8 @@ script = ExtResource("5_v8pkx")
 [node name="ShowObjectLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
 unique_name_in_owner = true
 layout_mode = 2
+tooltip_text = "Whether to display object intersection tests or not."
+mouse_filter = 1
 text = "        Show object count"
 
 [node name="ShowObjectButton" type="CheckBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
@@ -194,6 +205,8 @@ script = ExtResource("3_g0amw")
 [node name="ObjectCountLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
 unique_name_in_owner = true
 layout_mode = 2
+tooltip_text = "The number of object intersections required for pixels to turn white."
+mouse_filter = 1
 text = "        Object count threshold"
 
 [node name="ObjectCountThreshold" type="SpinBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
@@ -205,6 +218,11 @@ script = ExtResource("5_v8pkx")
 
 [node name="BVHTypeLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
 layout_mode = 2
+tooltip_text = "Which BVH creation algorithm to use for the current scene.
+Does not apply to meshes in scene.
+
+\"Create BVH\" must be pressed for changes to take effect."
+mouse_filter = 1
 text = "    BVH algorithm"
 
 [node name="BVHType" type="OptionButton" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
@@ -237,6 +255,11 @@ color = Color(220, 165, 0, 0.6)
 
 [node name="BVHTreeOrderLabel" type="Label" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
 layout_mode = 2
+tooltip_text = "What BVH order to use for the current scene.
+Does not apply to meshes in scene.
+
+\"Create BVH\" must be pressed for changes to take effect."
+mouse_filter = 1
 text = "    BVH tree order"
 
 [node name="BVHTreeOrder" type="SpinBox" parent="MarginContainer/AllSettings/BVHContainer/BVHOptions"]
@@ -305,6 +328,9 @@ columns = 2
 [node name="EnableMultisampleLabel" type="Label" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions"]
 layout_mode = 2
 size_flags_horizontal = 3
+tooltip_text = "Whether to enable multisampling or not.
+When disabled it is equivalent to enable max sample pause and setting max samples to 1."
+mouse_filter = 1
 text = "    Enable multisampling"
 
 [node name="EnableMultisampleButton" type="CheckBox" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions"]
@@ -326,11 +352,11 @@ offset_bottom = 7.5
 mouse_filter = 2
 color = Color(160, 0, 0, 0.4)
 
-[node name="MaxSamplePauseLabel" type="RichTextLabel" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions"]
+[node name="MaxSamplePauseLabel" type="Label" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions"]
 layout_mode = 2
-text = "    Max sample pause "
-fit_content = true
-scroll_active = false
+tooltip_text = "If enabled, rendering will stop once the maximum samples has been rendered."
+mouse_filter = 1
+text = "    Max sample pause"
 
 [node name="MaxSamplePauseButton" type="CheckBox" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions"]
 unique_name_in_owner = true
@@ -352,6 +378,8 @@ color = Color(160, 0, 0, 0.4)
 
 [node name="MaxSamplesLabel" type="Label" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions"]
 layout_mode = 2
+tooltip_text = "The amount of samples rendered before clearing the screen or pausing rendering."
+mouse_filter = 1
 text = "    Max samples"
 
 [node name="MaxSamplesButton" type="SpinBox" parent="MarginContainer/AllSettings/SamplingContainer/SamplingOptions"]
@@ -419,7 +447,10 @@ columns = 2
 [node name="RayBouncesLabel" type="Label" parent="MarginContainer/AllSettings/Other/GridContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "    Ray bounces"
+tooltip_text = "The max depth of rays that will be called recursively.
+Ray max depth set to 1 will only send rays from camera, setting it to 2 will give it 1 bounce."
+mouse_filter = 1
+text = "    Ray max depth"
 
 [node name="RayBounces" type="SpinBox" parent="MarginContainer/AllSettings/Other/GridContainer"]
 unique_name_in_owner = true
@@ -432,6 +463,8 @@ script = ExtResource("5_v8pkx")
 
 [node name="NormalViewLabel" type="Label" parent="MarginContainer/AllSettings/Other/GridContainer"]
 layout_mode = 2
+tooltip_text = "Show the normals of rendered objects."
+mouse_filter = 1
 text = "Show Normal Vew"
 
 [node name="NormalViewButton" type="CheckBox" parent="MarginContainer/AllSettings/Other/GridContainer"]
