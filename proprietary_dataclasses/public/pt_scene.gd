@@ -7,14 +7,15 @@ extends Node
 ## It's responsibility is to keep track of objects and materials, as well as any
 ## changes to them or the BVH. The camera is self sufficient.
 ##
-## TODO Make option to only render an object/mesh and its reflections
+## TODO 3: Make option to only render an object/mesh and its reflections
 ##
-## TODO Make a mesh be able to only exist in one place in memory when multiple
+## TODO 2: Make a mesh be able to only exist in one place in memory when multiple
 ##  sub_scenes are using it.
-## TODO ALSO make bvh nodes only appear once
+## TODO 2: ALSO make bvh nodes only appear once
 ##
-## TODO Make scenes and meshes able to convert to static. Their objects will only
-##  exist as buffers and cannot be updated. For performance optimization
+## TODO 3: Make scenes and meshes able to convert to static. Their objects will only
+##  exist as buffers and cannot be updated. For performance optimization.
+## 	Also make them be able to convert back for editing i guess.
 ##
 ## WE ARE PIVOTING AWAY FROM SUB SCENES AND TO ACTUAL MESH OBJECTS
 ##
@@ -259,8 +260,8 @@ func add_mesh(mesh : PTMesh) -> void:
 			#add_object(object)
 
 	mesh.transform_changed.connect(_update_mesh)
-	# TODO Make meshes support queue deletion
-	# TODO Make material changed signal for meshes
+	# TODO 2: Make meshes support queue deletion
+	# TODO 2: Make material changed signal for meshes
 	# mesh.deleted.connect(remove_mesh)
 
 	scene_changed = true
@@ -270,9 +271,9 @@ func remove_mesh(mesh : PTMesh) -> void:
 	print("removing mesh ", mesh)
 	print(meshes_to_remove)
 	print(objects_to_remove)
-	# TODO Remove mesh and objects from scene and bvh, as well as buffers
+	# TODO 2: Remove mesh and objects from scene and bvh, as well as buffers
 	scene_objects.remove_mesh(mesh)
-	# TODO Rmove mesh objects from unpacked_objects
+	# TODO 2: Rmove mesh objects from unpacked_objects
 
 	for object : PTObject in objects_to_remove.duplicate():
 		if object._mesh == mesh:
@@ -384,7 +385,7 @@ func update_material(material : PTMaterial)  -> void:
 
 
 func make_mesh_arrays() -> Array:
-	#TODO Make method that only loads the same resource once
+	#TODO 2: Make method that only loads the same resource once
 	var unique_meshes : Array[Mesh] = []
 	for mesh in scene_objects.meshes:
 		if mesh.mesh:
@@ -437,7 +438,7 @@ func _add_texture(texture : PTTextureAbstract) -> int:
 		textures.append(texture)
 
 		_texture_to_texture_id[texture] = texture.get_texture_id(texture_index) # UNSTATIC
-		# TODO add texture updatiung buffer/ shader
+		# TODO 2: add texture updatiung buffer/ shader
 		#object.material.connect("material_changed", update_material)
 
 		if texture is PTProceduralTexture:
@@ -523,7 +524,7 @@ func add_object(object : PTObject) -> void:
 ## Internal function for removing objects in the re-indexing step and
 ## also part of the complete remove_object function
 func _remove_object(object : PTObject) -> void:
-	## TODO This is TEMP, REDESIGN
+	## TODO 3: This is TEMP, REDESIGN
 	unpacked_objects.remove_object(object)
 	if not object.is_meshlet:
 		scene_objects.remove_object(object)
@@ -536,7 +537,7 @@ func _remove_object(object : PTObject) -> void:
 
 	object._scene = null
 
-	# TODO Remove from texture list if object was their last user
+	# TODO 2: Remove from texture list if object was their last user
 
 	disconnect_object_signals(object)
 
@@ -557,7 +558,7 @@ func remove_object(object : PTObject) -> void:
 
 	object._scene = null
 
-	# TODO Remove from texture list if object was their last user
+	# TODO 2: Remove from texture list if object was their last user
 
 	disconnect_object_signals(object)
 
@@ -565,7 +566,6 @@ func remove_object(object : PTObject) -> void:
 		bvh.remove_object(object)
 
 	# Send request to update buffer
-	# TODO MOVE out of funciton, to PTRenderer maybe
 	PTRendererAuto.remove_object(self, object)
 
 	#if object.is_meshlet and not object._mesh in meshes_to_remove:
@@ -592,7 +592,7 @@ func queue_add_object(object : PTObject) -> void:
 
 
 func queue_remove_object(object : PTObject) -> void:
-	# TODO test if deleting mesh and object at the same time in editor causes bugs
+	# TODO 2: test if deleting mesh and object at the same time in editor causes bugs
 	if not _to_remove.has(object):
 		_to_remove.add_object(object)
 	if not object in objects_to_remove and not object._mesh in meshes_to_remove:
@@ -650,7 +650,7 @@ func get_size() -> int:
 
 
 func create_BVH(order : int, type : PTBVHTree.BVHType) -> void:
-	# TODO add check to reuse BVH if it is in cached_bvhs
+	# TODO 3: add check to reuse BVH if it is in cached_bvhs
 
 	if bvh:
 		cached_bvhs.append(bvh)

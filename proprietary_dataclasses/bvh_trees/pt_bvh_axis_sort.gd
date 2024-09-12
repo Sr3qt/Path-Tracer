@@ -9,14 +9,15 @@ var _axis : int = 0
 var _axis_sorts : Array[Callable] = []
 const MAX_DEPTH_LIMIT = 32
 
+# TODO 1: Decide on a single algorithm to use for axis sort.
 # Leave new method a little unfinished, work on SAH method next
 # New method is slightly faster on dragon test, slower on import_test and spheres
 const use_old_method = !true
 
-## TODO sort_custom does not keep order. Try using stable sorting algorithm.
+## TODO 1: sort_custom does not keep order. Try using stable sorting algorithm.
 
 
-## TODO FIX This should not be neccessary but godot thinks that for some reason
+## TODO 3: GODOT_BUG FIX This should not be neccessary but godot thinks that for some reason
 ## the inherited _init called on PTBVHAxisSort should need 2 arguments instead of one.
 func _init(_order : int = 2) -> void:
 	super._init(_order)
@@ -200,8 +201,8 @@ func create_bvh_node_list(objects : PTObjectContainer, f_type := BVHType.XYZ_SOR
 	# Creates tree recursively
 	root_node.add_children(_recursive_split_nodes(node_list, root_node), true)
 
-	## TODO index mesh_sockets
-	# TODO Merge object ids
+	## TODO 2: index mesh_sockets
+	# TODO 2: Merge object ids
 	for mesh in objects.meshes:
 		var index_offset := bvh_list.size()
 
@@ -264,11 +265,11 @@ func _recursive_split(object_list : Array[PTObject], parent : BVHNode) -> Array[
 
 	return new_children
 
-# TODO Make tree_pruner that finds and removes empty nodes and removes chains of one child (except mesh_socket ofc)
+# TODO 1: Make tree_pruner that finds and removes empty nodes and removes chains of one child (except mesh_socket ofc)
 
 func _recursive_split_nodes(node_list : Array[BVHNode], parent : BVHNode, depth : int = 0) -> Array[BVHNode]:
 	# SPlitting objects by the middle of the list is very bad i just forgot to improve it
-	# TODO Maybe make node container object similar to object_container
+	# TODO 3: Maybe make node container object similar to object_container
 
 	var new_nodes_children : Array[Array] = []
 	var new_nodes : Array[BVHNode] = []
@@ -287,12 +288,12 @@ func _recursive_split_nodes(node_list : Array[BVHNode], parent : BVHNode, depth 
 
 	if depth >= MAX_DEPTH_LIMIT:
 		if  mesh_count >= order:
-			# TODO Make sure this terminates
+			# TODO 3: Make sure this terminates
 			push_warning("PT: BVH node depth limit reached with %s unfitted meshes. \n" +
 				"Will extend limit to fit remaining meshes." % [mesh_count])
 
 		elif mesh_count > 0:
-			# TODO Make sure this terminates
+			# TODO 2: Make sure this terminates
 			segment_count = order - mesh_count
 
 	if depth >= MAX_DEPTH_LIMIT + 5:
@@ -379,7 +380,7 @@ func _recursive_split_nodes(node_list : Array[BVHNode], parent : BVHNode, depth 
 
 
 func _recursive_split2(object_list : Array[PTObject], parent : BVHNode, depth : int = 0) -> Array[BVHNode]:
-	# TODO Add support for all orders
+	# TODO 3: Add support for all orders
 
 	var left : Array[PTObject] = []
 	var right : Array[PTObject] = []

@@ -38,7 +38,12 @@ extends Resource
 		is_emissive = value
 		material_changed.emit(self)
 
-# TODO Calculate current IOR of camera and pass it to gpu
+# TODO 3: Calculate current IOR of camera and pass it to gpu
+# Would need to calculate the whole IOR stack and pass it to GPU
+# That might require double buffers.
+
+# TODO 2: Add Glossiness
+# TODO 3: read on the Pixar PBR model, video by Acerola
 
 signal material_changed(material_instance : PTMaterial)
 

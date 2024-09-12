@@ -37,7 +37,7 @@ func create_test_bvh_a1(test_index_node := false) -> PTBVHTree:
     bvh.root_node.add_children([node_l, node_r], true)
 
     if test_index_node:
-        # TODO Make test to verify that # Indices is equal to this
+        # TODO 1: Make test to verify that # Indices is equal to this
         var bvh_list : Array[PTBVHTree.BVHNode] = [
                 bvh.root_node, node_l, node_r, node_rl, node_rr]
         for node in bvh_list:

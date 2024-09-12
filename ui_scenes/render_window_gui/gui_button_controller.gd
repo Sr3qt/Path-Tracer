@@ -81,7 +81,7 @@ func _ready() -> void:
 	node_count_threshold.value = pt_window.node_display_threshold
 	node_count_threshold.previous_value = pt_window.node_display_threshold
 
-	# TODO use scene values
+	# TODO 3: use scene values
 	bvh_order.value = PTRendererAuto.bvh_order
 	bvh_order.previous_value = PTRendererAuto.bvh_order
 
@@ -103,7 +103,7 @@ func _ready() -> void:
 
 	ray_bounces.value = PTRendererAuto.max_default_depth
 
-	# TODO THINGS TO ADD:
+	# TODO 2: THINGS TO ADD:
 	#	-add button to make a new camera instance and a way top change between camera instances
 	#	-add ability to change camera variables, fov, gamma, focal
 

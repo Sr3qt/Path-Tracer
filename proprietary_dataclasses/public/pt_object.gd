@@ -4,11 +4,14 @@ extends MeshInstance3D
 
 ## Base class for all visual objects
 
-# TODO Optimize by making PTObject inherit Node3D and spawning meshinstance in editor
+# TODO 2: Optimize by making PTObject inherit Node3D and spawning meshinstance in editor
 
-# TODO Add support for lines and add abilitiy to visualize traced rays
-# TODO Add instancing only to meshes?
-# NOTE: Exporting can exclude meshes
+# TODO 3: Add support for lines and add abilitiy to visualize traced rays
+
+# TODO 1: Remove primitive nodes, make all PTObjects hold a PTPrimitive resource which is just data.
+# PTObjectContainers can hold PTObjects and PTPtimitives. The primitves are what is loaded into buffers.
+# This way you can programatically instantiate many primitives without node overhang as well as meshes are better.
+
 
 const EPSILON = 1e-6
 const AABB_PADDING := Vector3(EPSILON, EPSILON, EPSILON)
@@ -80,7 +83,7 @@ var is_meshlet : bool:
 
 var transform_before : Transform3D
 
-# TODO Make test to ensure an object has implemented all necessary functions
+# TODO 3: Make test to ensure an object has implemented all necessary functions
 
 func _enter_tree() -> void:
 	# Find scene when entering tree if scene is not set
@@ -102,7 +105,7 @@ func _enter_tree() -> void:
 				#print("Object adds itself to mesh. object: ", self, " ", _mesh)
 			_mesh.add_object(self)
 
-	# TODO Only objects withouth a mesh needs this
+	# TODO 3: Only objects withouth a mesh needs this
 	if not is_meshlet:
 		transform_before = Transform3D(global_transform)
 		set_notify_transform(true)

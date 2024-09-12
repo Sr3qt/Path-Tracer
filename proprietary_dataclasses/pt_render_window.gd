@@ -68,7 +68,7 @@ var _multisample := true:
 		_set_flag_bit(RenderFlagsBits.MULTISAMPLE, value)
 		_multisample = value
 
-# TODO FIX Flicker when enabled in editor
+# TODO 0: FIX Flicker when enabled in editor
 var show_normal_view := false
 
 var _current_render_mode : RenderMode

@@ -137,8 +137,11 @@ func remove_object(object : PTObject) -> void:
 	object_array.remove_at(index)
 	_object_to_object_index.erase(object)
 
-	# TODO Moving last object to removed index might be fine, in which case i also
+	# TODO 0: Removing object messes up indexing. Make function secure by updating relevant indices.
+	# Needs to send signal / have an array of objects that updated index for bvh and such.
+	# Moving last object to removed index might be fine, in which case i also
 	# need to update one bvhnode
+
 	# Re-index every object
 	for i in range(object_array.size()):
 		@warning_ignore("unsafe_cast")
@@ -211,7 +214,7 @@ func merge(other : PTObjectContainer) -> Array[bool]:
 	return added_types
 
 
-# TODO Move to test_helper_object_contianer
+# TODO 2: Move to test_helper_object_contianer
 ## Checks if any object is a part of any mesh.
 func check_no_object_is_meshlet() -> bool:
 	for type : ObjectType in ObjectType.values():

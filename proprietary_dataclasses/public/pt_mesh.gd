@@ -30,9 +30,12 @@ var mesh : Mesh
 
 var transform_before : Transform3D
 
-# TODO Be able to see and edit meshes while they are instatiated
+# TODO 3: Find a mesh with multiple surfaces and plan to implement support for it
 
-# TODO Actually just make more like objects. They talk only with their scene.
+# TODO 2: Be able to see and edit meshes while they are instatiated
+# add "preview_scene" property with different scenes as environments
+
+# TODO 3: Actually just make more like objects. They talk only with their scene.
 # They have no responsibility for nested meshes. Nested meshes in bvh is just a mesh.
 # mess*
 

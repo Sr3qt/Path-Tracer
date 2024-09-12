@@ -123,7 +123,7 @@ static func load_shader(ptscene : PTScene) -> RDShaderSource:
 	const DEFUALT_FUNCTION_NAME = "procedural_texture"
 	const BASE_FUNCTION_NAME = "_procedural_texture_function"
 
-	# TODO Add test to make sure the texture actually compiles
+	# TODO 3: Add test to make sure the texture actually compiles
 	var i : int = 1
 	var function_definitons := ""
 	var function_calls := ""

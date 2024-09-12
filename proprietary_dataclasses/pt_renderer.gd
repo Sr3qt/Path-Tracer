@@ -7,12 +7,21 @@ extends Node
 ## PTScenes will add themselves to this Singleton. The user can ask PTRenderer
 ## to swap scenes.
 
-# TODO WOuld be cool to have custom icons (@icons)
-# TODO Add setting to either load all scenes on start, just one or none. Also add button to load scene
-# TODO Add memory usage estimate?
+# TODO 3: WOuld be cool to have custom icons (@icons)
+# TODO 3: Add setting to either load all scenes on start, just one or none. Also add button to load scene
+# TODO 3: Add memory usage estimate?
 
-# Using a selction box in 3D editor crashes editor, FIX
-# NOTE: NOPE not my problem
+# TODO 1: add option to toggle between editor settings and scene run debug settings, for ray depth and such
+# TODO 3: Also make render settings node similar to WorldEnvironment that can be overriden by debug settings
+
+## TODO-SEVERITY SCALE (put somewhere appropriate):
+##	- Level 0: High Priority/, either breaks all functionality of the engine or is a small fix.
+##	- Level 1: Priority, Features and fixes that I really want.
+##	- Level 2: Low Priority, Feature requests that I want.
+## 	- Level 3: Suggestion, Features that may be wanted in the future.
+
+# Using a selction box in 3D editor crashes editor, FIX GODOT_BUG
+# NOTE: NOPE not my problem https://github.com/godotengine/godot/issues/95356
 
 const WindowGui := preload("res://ui_scenes/render_window_gui/render_window_gui.tscn")
 
@@ -24,7 +33,7 @@ const compute_invocation_depth : int = 1
 
 const _MAX_OWNER_SEARCH_DEPTH = 30
 
-# TODO Make toggle in editor. Maybe save value in config file
+# TODO 3: Make toggle in editor. Maybe save value in config file
 ## Whether the plugin should print internal debug messages
 var is_debug := true
 
@@ -66,7 +75,8 @@ var scenes_to_remove : Array[PTScene]
 # Two dicitionary that keeps track of multiple PTScenes within one Godot scene.
 # Only used by plugin, for runtime scene tracker see scene_to_scene_index
 var _root_node_to_scenes := {}
-var _root_node_to_last_index := {} # TODO add to main control
+ # TODO 2: Move editor scene control outside of PTRenderer. To pt_plugin maybe
+var _root_node_to_last_index := {}
 var _scene_to_root_node := {}
 
 # PTScene as key and scene_index pointing to the same scene in scenes
@@ -90,11 +100,10 @@ var is_camera_linked := true:
 			editor_camera.set_cull_mask_value(20, value)
 		is_camera_linked = value
 
-# TODO remove and replace with ptscene variable
+# TODO 3: remove and replace with ptscene variable
 # Controls the degree of the bvh tree passed to the gpu.
 var bvh_order : int = 8
 
-# TODO Make render settings node similar to WorldEnvironment
 var render_width := 1920
 var render_height := 1080
 
@@ -137,7 +146,7 @@ func _post_init() -> void:
 	print("Total Editor Startup Time: ", (Time.get_ticks_usec()) / 1000., " ms")
 	print()
 	print("reeeeeeee")
-	# TODO REport bug where bottom of output is not shown to exist. Only when show duplicate is toggled on specifically
+	# TODO 3: REport GODOT_BUG where bottom of output is not shown to exist. Only when show duplicate is toggled on specifically
 	#  Might be connected to the _set_window_layout not triggering correctly.
 	#  ACtually it can't be, because the time printed is correct.
 	PTRendererAuto._is_init = true
@@ -178,7 +187,7 @@ func _ready() -> void:
 		# Show canvas to editor camera if is_camera_linked
 		editor_camera.set_cull_mask_value(20, is_camera_linked)
 
-	# TODO Only trigger when PTScene is present and when debug is enabled
+	# TODO 3: Only trigger when PTScene is present and when debug is enabled
 	if not Engine.is_editor_hint():
 		var x := ceili(1920. / 8.)
 		var y := ceili(1080. / 8.)
@@ -222,7 +231,7 @@ func _process(_delta : float) -> void:
 	if (runtime or plugin) and common:
 		# Double check camera is there
 		if not is_instance_valid(scene.camera) and not Engine.is_editor_hint():
-			# TODO ADD Reporting node configuration warnings
+			# TODO 3: ADD Reporting node configuration warnings
 			# https://docs.godotengine.org/en/stable/tutorials/plugins/running_code_in_the_editor.html
 			push_error("No camera has been set in current scene.\n" +
 					"Rendering is therefore temporarily disabled.")
@@ -550,7 +559,7 @@ func change_scene(ptscene : PTScene) -> void:
 			has_active_camera = true
 			scene.camera.add_child(canvas)
 
-	# TODO Update GUI values
+	# TODO 3: Update GUI values
 
 
 func add_scene_to_remove_objects(ptscene : PTScene) -> void:
@@ -647,12 +656,13 @@ func _plugin_change_scene(scene_root : Node) -> void:
 
 
 func create_bvh(ptscene : PTScene, _order : int, type : PTBVHTree.BVHType) -> void:
-	# TODO Rework shader to work with different bvh orders without reloading
+	# TODO 3: Rework shader to work with different bvh orders without reloading
 	if not is_instance_valid(scene):
 		push_warning("PT: Cannot create bvh as there is no set scene.")
 		return
 
-	# TODO Add support so that all objects in scene can be rendered by bvh
+	# TODO 2: Check if this is still true.
+	# TODO 2: Add support so that all objects in scene can be rendered by bvh
 	#  THis is a bug because the shader has a fixed stack size and cannot always
 	#  accommodate for every object count and bvh order
 	var prev_max : int = bvh_order
@@ -709,7 +719,7 @@ func update_object(ptscene : PTScene, object : PTObject) -> void:
 	# return early if object cannot be in bvh
 	if object.get_type() in PTBVHTree.objects_to_exclude:
 		return
-	# TODO INvestigate if this function is complete
+	# TODO 3: INvestigate if this function is complete
 
 
 ## NOTE: Optimizations can probably be made, i just remake buffers for simplicity
@@ -717,7 +727,7 @@ func remove_object(ptscene : PTScene, object : PTObject) -> void:
 	# Find right wd based on ptscene
 	var scene_wd := get_scene_wd(ptscene)
 
-	# TODO just update object buffer nad no need to rebind uniform set
+	# TODO 3: just update object buffer nad no need to rebind uniform set
 	scene_wd.create_object_buffer(object.get_type())
 
 	scene_wd.bind_set(scene_wd.OBJECT_SET_INDEX)

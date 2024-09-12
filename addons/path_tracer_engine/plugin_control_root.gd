@@ -6,7 +6,7 @@ var viewport : SubViewport
 
 var _is_plugin_hint := false
 
-# TODO Add button to adjust render size and aspect ratio based on editor viewport
+# TODO 2: Add button to adjust render size and aspect ratio based on editor viewport
 func _ready():
 	if _is_plugin_hint:
 		viewport = %SubViewport as SubViewport

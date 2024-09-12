@@ -2,10 +2,10 @@
 class_name PTBVHTree
 extends RefCounted
 
-# TODO If i turn BVHNodes into actual nodes i can save and load BVHTrees
-# TODO Alternatively look at inst_to_dict for serialization, or var_to_bytes
+# TODO 3: If i turn BVHNodes into actual nodes i can save and load BVHTrees
+# TODO 3: Alternatively look at inst_to_dict for serialization, or var_to_bytes
 
-# TODO Make graph representation, maybe with graphEdit
+# TODO 3: Make graph representation, maybe with graphEdit
 
 ## Base class for BVH trees.
 ##
@@ -66,7 +66,7 @@ const objects_to_exclude : Array[PTObject.ObjectType] = [
 	PTObject.ObjectType.MAX,
 ]
 
-# TODO Fix support for multi order trees, now it crashes the whole program
+# TODO 1: Investigate Fix support for multi order trees, now it crashes the whole program
 var order : int
 
 # BVHTrees can merge, parent_tree is the BVH this tree was merged with
@@ -84,14 +84,14 @@ var object_ids : PackedInt32Array = []
 
 ## Takes in a node gives its index in bvh_list
 var _node_to_index := {}
-var _node_to_object_id_index := {} # TODO REMOVE equivelant from node
+var _node_to_object_id_index := {} # TODO 1: REMOVE equivelant from node
 
 var _mesh_to_mesh_socket := {}
 
-# TODO Add bvh constructor with bvh_list as argument
+# TODO 3: Add bvh constructor with bvh_list as argument
 var bvh_list : Array[BVHNode] = []
 
-# TODO Maybe inner_count should be bvh_list.size() - leaf_nodes.size()
+# TODO 1: Maybe inner_count should be bvh_list.size() - leaf_nodes.size()
 # and maybe object count should go up when add_object(s) is called
 ## Counts the number of nodes with no child nodes
 var leaf_count : int
@@ -107,13 +107,14 @@ var type : BVHType
 var creation_time : int # In usecs
 var sah_cost : float
 
-# TODO Currently functions do not clean up the tree to work with engine. They have to run a full re-index.
-# 	TODO Make all functions self contained.
+# Currently functions do not clean up the tree to work with engine. They have to run a full re-index.
+# TODO 2: Make all functions self contained, safe.
+
 var updated_indices : Array[int] = []
 
-# TODO MAke BVHBUffer abler to expand + have empty space
+# TODO 2: MAke BVHBUffer abler to expand + have empty space
 
-# TODO Make a check for loops existing
+# TODO 2: Make a check for loops existing
 
 ## TEMP Only valid for scene bvh. Whether the bvh buffer needs to be rebuilt.
 var tree_reindexing_needed := false
@@ -340,7 +341,8 @@ func _add_object_to_tree(object : PTObject) -> Array[BVHNode]:
 
 
 func add_object(object : PTObject) -> void:
-	# TODO Because of needing to update object_ids this function is out of date
+	# TODO 1: Because of needing to update object_ids this function is out of date
+	# TODO 2: remove object from this tree and to parent tree if relevant
 	if object.get_type() in objects_to_exclude:
 		push_warning("PT: Cannot add object to BVH as it is explicitly excluded.\n",
 				"object: ", object, "\ntype: ", object.get_type_name())
@@ -357,13 +359,12 @@ func add_object(object : PTObject) -> void:
 	for node in new_nodes:
 		index_node(node)
 
-	# TODO MAke BVHBUffer abler to expand + have empty space
 	# Would set flag for buffer expansion here
 
 
 func remove_object(object : PTObject) -> void:
-	# TODO FIX, currently messes up order of bvh
-	# TODO remove object from bvh_list and call back parent_tree
+	# TODO 1: FIX, currently messes up order of bvh
+	# TODO 2: remove object from this tree and to parent tree if relevant
 	if not has(object):
 		push_warning("Object: %s already removed from bvh tree" % object)
 		return
@@ -378,7 +379,7 @@ func remove_object(object : PTObject) -> void:
 	if index != -1:
 		leaf.object_list.remove_at(index)
 		if leaf.size() == 0:
-			# TODO Remove BVH node
+			# TODO 3: Remove BVH node
 			pass
 
 		leaf.update_aabb()
@@ -498,7 +499,7 @@ func find_inner_node(node : BVHNode) -> BVHNode:
 		for child in node.children:
 			var temp : BVHNode
 			if child.tree != self:
-				# TODO I don't think i should do this, just return
+				# TODO 3: I don't think i should do this, just return
 				temp = child.tree.find_inner_node(child)
 			else:
 				temp = find_inner_node(child)
@@ -525,7 +526,7 @@ func node_cleanup(node : BVHNode, cleaned_nodes : Array[BVHNode] = []) -> Array[
 ## If the given node is a leaf node so are the new nodes, else they are also inner nodes.
 ## Returns these new nodes.
 func _split_node(node : BVHNode) -> Array[BVHNode]:
-	# TODO Needs a lot of cleanup to work with new bvhnode continuity stuff
+	# TODO 2: Needs a lot of cleanup to work with new bvhnode continuity stuff
 	assert(node.tree == self, "The given node is not a part of this tree or is in" +
 			"a sub-tree. Please use the sub-tree's methods instead.")
 	var new_node_left := BVHNode.new(node, self)
@@ -610,6 +611,7 @@ func find_aabb_spot(aabb : AABB, node := root_node) -> BVHNode:
 ## Merge another BVHTree into this one.
 ## Return new nodes that need to be added to bvh_list.
 func _merge_with(other : PTBVHTree, root := root_node) -> Array[BVHNode]:
+	# TODO 1: Make only one function for merging
 	# Find inner node to place other
 	var fitting_node := find_aabb_spot(other.root_node.aabb, root)
 	var new_nodes : Array[BVHNode] = other.bvh_list.duplicate()
@@ -636,6 +638,8 @@ func _merge_with(other : PTBVHTree, root := root_node) -> Array[BVHNode]:
 	# TODO FIX NOTE THis gets reindexed correctly in the public function
 	_node_to_index.merge(other._node_to_index)
 
+	# TODO 2: add object id_merging too
+
 	object_count += other.object_count
 	leaf_count += other.leaf_count
 	inner_count += other.inner_count
@@ -643,7 +647,7 @@ func _merge_with(other : PTBVHTree, root := root_node) -> Array[BVHNode]:
 	other.parent_tree = self
 
 	return new_nodes
-	# TODO Add print/assert to verify succesfull merge
+	# TODO 1: Add print/assert to verify succesfull merge
 
 
 ## Inserts another tree at a node in the bvh.
@@ -659,7 +663,7 @@ func merge_with(other : PTBVHTree, root := root_node) -> void:
 		"allow for BVH order ", other.order, " of mesh.")
 		return
 	elif order > other.order:
-		# TODO Add editor warning for mismatched bvh orders
+		# TODO 2: Add editor warning for mismatched bvh orders
 		push_warning("PT: BVH order of mesh is ", other.order, ", ",
 		"while BVH order of scene is ", order, ".\n Mesh BVH order ",
 		"will be changed to ", order, ".")
@@ -678,7 +682,7 @@ func merge_with(other : PTBVHTree, root := root_node) -> void:
 func _remove_node(node : BVHNode) -> void:
 	#assert(node.tree == self, "The given node is not a part of this tree or is in" +
 			#"a sub-tree. Please use the sub-tree's methods instead.")
-	# TODO Remember to reindex / or fill hole with last node + fix indices
+	# TODO 1: Remember to reindex / or fill hole with last node + fix indices
 	bvh_list.remove_at(get_node_index(node))
 	_node_to_index.erase(node)
 	if node.is_inner:
@@ -695,8 +699,8 @@ func _remove_node(node : BVHNode) -> void:
 
 ## Remove all nodes that are descendants of a given node from the tree
 func remove_subtree(node : BVHNode) -> void:
-	# TODO Make recursive function to find any sub-trees that are removed in the process
-	# TODO Also this function almost certainly doesn't work properly
+	# TODO 2: This function almost certainly doesn't work properly anymore, make it work
+	# We need this to remove mesh sub-trees from scene trees. Also make remove_mesh func.
 	assert(node.tree == self or node == node.tree.root_node,
 			"The given node is not a part of this tree or is the root node of a " +
 			"sub-tree. Please use the sub-tree's methods instead.")
@@ -728,7 +732,7 @@ func get_depth() -> int:
 	return counter
 
 
-# TODO Implement sah_cost fucntion
+# TODO 2: Implement sah_cost fucntion
 func tree_sah_cost() -> void:
 	"Calculates the SAH cost for the whole tree"
 
@@ -736,7 +740,6 @@ func tree_sah_cost() -> void:
 func create_object_ids() -> void:
 	assert(is_scene_owned(), "Cannot create_object_ids without a valid set scene.")
 
-	# TODO Add object_id merging to new
 	var index := 0
 	object_ids.resize(object_count + mesh_object_count)
 
@@ -779,9 +782,9 @@ class BVHNode:
 	#  The object list is can be larger than tree.order
 	var object_list : Array[PTObject] = []
 
-	## NOTE TODO This information should not be stored on node. It should be gotten
+	## NOTE TODO 1: This information should not be stored on node. It should be gotten
 	## from tree / from parent tree. Or maybe it's fine. Just to remember to update.
-	## TODO DEPRECATED
+	## TODO 1: DEPRECATED
 	## Index to the leaf node's start position in the tree's object_ids
 	var object_id_index := 0
 
@@ -906,7 +909,7 @@ class BVHNode:
 			node_index = root_tree.get_node_index(children[0])
 			node_size  = children.size()
 
-		# TODO Object_ids can be packed tightly or with fixed size for potential perf gain, check
+		# TODO 3: Object_ids can be packed tightly or with fixed size for potential perf gain, check
 		if is_leaf:
 			# minus one to guarantee negative number because bit manip stuff
 			node_index = -object_id_index - 1

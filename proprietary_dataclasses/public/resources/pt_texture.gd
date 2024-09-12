@@ -13,7 +13,7 @@ enum TextureTypeFlagBits {IS_SAMPLE = 1, IS_SPATIAL = 2}
 ## Otherwise the objects uvs will be used
 @export var is_spatial := false
 
-# TODO ADD texture updated signal
+# TODO 2: ADD texture updated signal
 
 
 static func get_texture_type(texture : PTTextureAbstract) -> int:

@@ -54,9 +54,9 @@ var pipeline : RID
 
 var texture : Texture2DRD
 
-# TODO Maybe consider order of sets
+# TODO 3: Maybe consider order of sets
 #  https://stackoverflow.com/a/76655166
-# TODO Report umlaut bug to godot devs
+# TODO 3: Report umlaut GODOT_BUG to godot devs
 
 ## TO-DO List for creating buffer
 ##	- Make set bind index
@@ -163,7 +163,7 @@ func _init(renderer : PTRenderer, is_local := false) -> void:
 	else:
 		# Holy merge clutch https://github.com/godotengine/godot/pull/79288
 		# RenderingDevice for realtime rendering
-		# TODO Investigate if all wds have the same rd
+		# TODO 3: Investigate if all wds have the same rd
 		rd = RenderingServer.get_rendering_device()
 
 
@@ -187,7 +187,7 @@ func create_buffers() -> void:
 	# The image buffer used in compute and fragment shader
 	image_buffer = _create_image_buffer()
 
-	# TODO Add statistics buffer which the gpu can write to
+	# TODO 3: Add statistics buffer which the gpu can write to
 	create_lod_buffer()
 	create_material_buffer()
 	create_sphere_buffer()
@@ -278,7 +278,7 @@ func create_transform_buffer() -> void:
 	)
 
 
-# TODO Make checks for sub-arrays existing in, array creation, destruction and here
+# TODO 3: Make checks for sub-arrays existing in, array creation, destruction and here
 func create_triangle_buffers(surface : Array = [null]) -> void:
 
 	var vertex_bytes := PTUtils.empty_byte_array(12)
@@ -312,7 +312,7 @@ func create_triangle_buffers(surface : Array = [null]) -> void:
 	)
 
 func create_texture_buffers() -> void:
-	# # TODO REPORT GOOFY AH BUG
+	# # TODO 3: REPORT GOOFY AH GODOT_BUG
 	# # https://forum.godotengine.org/t/retrieving-image-data-from-noisetexture2d-returns-null/55303/4
 
 	var uniform := RDUniform.new()
@@ -330,7 +330,7 @@ func create_texture_buffers() -> void:
 	var sampler := rd.sampler_create(sample_state)
 	for pt_texture in _scene.sampled_textures:
 
-		# TODO Find a way to use the compressed textures
+		# TODO 2: Find a way to use the compressed textures
 		assert(pt_texture != null)
 
 		if pt_texture.texture == null:
@@ -365,7 +365,7 @@ func create_texture_buffers() -> void:
 
 
 func _create_fill_texture() -> RID:
-	# TODO Force texture to be pink and black grid filler texture / Override albedo
+	# TODO 3: Force texture to be pink and black grid filler texture / Override albedo
 	var usage_bits : int = (
 			RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT
 			+ RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT
@@ -401,7 +401,7 @@ func _create_image_buffer() -> RID:
 	#if is_local_renderer:
 		#usage_bits += RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
 
-	# TODO Explore multi-layered texture for multisampling/ ping-ponging
+	# TODO 3: Explore multi-layered texture for multisampling/ ping-ponging
 	var tf : RDTextureFormat = RDTextureFormat.new()
 	tf.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT
 	tf.texture_type = RenderingDevice.TEXTURE_TYPE_2D
@@ -535,9 +535,9 @@ func create_compute_list(window : PTRenderWindow = null) -> void:
 func set_scene(scene : PTScene) -> void:
 	_scene = scene
 
-# TODO Find a way for the cpu to wait for buffer access
+# TODO 2: Find a way for the cpu to wait for buffer access
 
-# TODO Make single expand buffer function which can expand any buffer
+# TODO 3: Make single expand buffer function which can expand any buffer
 ## Will expand a given object buffer by its respective step constant times given steps.
 ## Will return true if buffer was expanded.
 ## Setting create_set to false skips creating a set. By defualt will expand buffer to
@@ -661,7 +661,7 @@ func expand_material_buffer(steps : int = 0, create_set := true) -> bool:
 
 	return true
 
-# TODO Create function to expand texture buffer here
+# TODO 3: Create function to expand texture buffer here
 
 func expand_object_buffers(object_types : Array[PTObject.ObjectType]) -> void:
 	for object_type in object_types:
@@ -795,7 +795,7 @@ func _create_object_id_byte_array() -> PackedByteArray:
 
 	if _scene.bvh and _scene.bvh.is_scene_owned() and _scene.bvh.type != PTBVHTree.BVHType.EMPTY:
 		if _scene.bvh.object_ids.size() == 0:
-			# TODO Find a beter place to create object_ids, shouldn't be here atleast
+			# TODO 1: Find a beter place to create object_ids, shouldn't be here atleast
 			_scene.bvh.create_object_ids()
 		bytes = _scene.bvh.object_ids.to_byte_array()
 	else:
@@ -823,7 +823,8 @@ func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 		bytes += _scene.camera.to_byte_array()
 	# A higher divisor seems to give a more volatile local noise
 	#  If set to low, refractive materials might not multisample correctly
-	# TODO Make frame 1 always produce the same result, to eliminate pixelsd changing
+	# TODO 3: Make frame 1 always produce the same result, to eliminate pixelsd changing
+	# or at least make toggle for it?
 	var divisor := 100_000.0
 	var repeat := 10.0 # in seconds
 	var time : float = fmod(Time.get_ticks_msec() / divisor, (repeat * 1000) / divisor)

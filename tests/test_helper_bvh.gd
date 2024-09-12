@@ -81,7 +81,7 @@ func _is_leaf_node_contiguous(node : PTBVHTree.BVHNode) -> bool:
 
 
 func is_tree_valid() -> bool:
-	# TODO Make whole tree verification function and test
+	# TODO 1: Make whole tree verification function and test
 	return true
 
 
@@ -91,7 +91,7 @@ func is_tree_valid() -> bool:
 func is_same_as(other : PTBVHTree) -> bool:
 	is_same_diff.fill(true)
 
-	# TODO Finnish this function
+	# TODO 2: Finnish this function
 
 	var object_count := bvh.object_count == other.object_count
 	var mesh_object_count := bvh.mesh_object_count == other.mesh_object_count

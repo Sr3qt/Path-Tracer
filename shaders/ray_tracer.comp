@@ -13,7 +13,7 @@
 List of features:
     - Supported objects:
         3D simples:
-            - TODO Add rounding for 3d simples
+            - TODO 3: Add rounding for 3d simples
             - spheres
 
         2D simples:
@@ -116,7 +116,7 @@ Different methods to avoid self intersection
          -darker colors, although that might be more correct
     - method 1: Proposed in Ray tracing in a weekend.
         Simply sets range for valid t values a little above zero.
-        TODO Preferred method until I get method 0 to work properly
+        TODO 2: Preferred method until I get method 0 to work properly
 */
 #define self_intersect_method 1
 
@@ -142,6 +142,7 @@ Enabling refraction tracking has a small performance impact
 */
 #define use_refraction_tracking 1
 
+// TODO 0: Make ray paths that dont find emissive objects return black
 // Emissive materials
 #define USE_EMISSION 0
 
@@ -149,7 +150,7 @@ Enabling refraction tracking has a small performance impact
 #define use_early_t_break 0
 
 
-// TODO Add option to give max ray length for first rays and secondary rays for performance
+// TODO 3: Add option to give max ray length for first rays and secondary rays for performance
 
 // CONSTANTS
 // =========
@@ -222,7 +223,7 @@ InsideOf inside_of[max_refraction_depth] = InsideOf[](
     empty_inside(),
     empty_inside()
 );
-// TODO: Add support for cpu to send InsideOf buffer based on camera position
+// TODO 3: Add support for cpu to send InsideOf buffer based on camera position
 
 #if !USE_EMISSION
 const vec4 default_color = vec4(0.7, 0.7, 0.9, 1);
@@ -316,7 +317,7 @@ struct Material {
     int temp31;
 };
 
-// TODO Move properties to its own array and make global indices that point to object_ids
+// TODO 1: Move properties to its own array and make global indices that point to object_ids
 
 // The materials stored in objects are indices to a global material array
 struct Plane {
@@ -338,7 +339,7 @@ struct Sphere {
 };
 
 struct Triangle {
-    // TODO SO MUCH SPACE OPTIMIZATION
+    // TODO 3: SO MUCH SPACE OPTIMIZATION
     vec3 point1;
     float filler1;
     vec3 point2;
@@ -427,6 +428,8 @@ layout(set = 3, binding = 0, std430) restrict readonly buffer BVH_List {
 layout(set = 3, binding = 1, std430) restrict readonly buffer Object_ID {
     int list[];
 } object_ids;
+
+// TODO 2: Make material_index buffer similar to object id
 
 layout(set = 4, binding = 0, std430) restrict readonly buffer TriangleVertex {
     float data[];
@@ -532,7 +535,7 @@ void swap(inout float a, inout float b) {
 }
 
 bool is_close(float value1, float value2) {
-    // TODO COnsider implementing this algorithm:
+    // TODO 2: COnsider implementing this algorithm:
     // https://stackoverflow.com/questions/4915462/how-should-i-do-floating-point-comparison
     // Whether a value is within an epsilon of value2
     return (value2 + eps > value1 && value1 > value2 - eps);
@@ -666,7 +669,6 @@ vec4 get_texture(RayHit rayhit) {
     uint texture_index = get_texture_index(rayhit.texture_id);
     vec3 sampled_point = (texture_type & is_spatial) > 0 ? rayhit.point : vec3(rayhit.uv, 0);
 
-    // TODO Support for texture_index to work on objects properly
     if ((texture_type & is_sampled) > 0) {
         return texture(nonuniformEXT(Textures[texture_index]), rayhit.uv);
     }
@@ -679,7 +681,7 @@ vec4 get_texture(RayHit rayhit) {
 // =============
 
 vec4 hit_skybox(Ray ray, inout RayHit rayhit) {
-    // TODO: Implement skybox texture and hit detection
+    // TODO 2: Implement skybox texture and hit detection
     return default_color;
 }
 
@@ -786,7 +788,7 @@ RayHit hit_planes(inout Ray ray, inout RayHit rayhit) {
 // RAY-TRIANGLE INTERSECTION FUNCTIONS
 // ===================================
 
-// TODO Compare branched vs branchless when support for importing meshes
+// TODO 2: Compare branched vs branchless when support for importing meshes
 bool hit_triangle_MT_branchless(inout Ray ray, int object_id, inout RayHit rayhit) {
     // Implementation of the Moller-Trumbore algorithm made by BrunoLevy, fitted to project
     // https://stackoverflow.com/a/42752998
@@ -834,7 +836,7 @@ bool hit_triangle_MT(inout Ray ray, int object_id, inout RayHit rayhit) {
     vec3 E2 = C-A;
     vec3 N = cross(E1,E2);
     float det = -dot(ray.direction, N);
-    // TODO Add global backface cull flag and object flag
+    // TODO 3: Add global backface cull flag and object flag
 
     // If ray is parallel to triangle plane
     if (near_zero(det)) {
@@ -880,7 +882,7 @@ void hit_object(inout Ray ray, inout RayHit rayhit, int object_id) {
     if (object_type == is_sphere) {
         hit_sphere(ray, object_id, rayhit);
     } else if (object_type == is_triangle) {
-        // TODO compare with branchless
+        // TODO 2: compare with branchless
         hit_triangle_MT(ray, object_id, rayhit);
     }
 }
@@ -896,7 +898,7 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
     int object_type = get_object_type(rayhit.object_id);
     int object_index = get_object_index(rayhit.object_id);
 
-    // TODO texture_id should also be an index to data with the following:
+    // TODO 2: texture_id should also be an index to data with the following:
     //  vec3 offset
     //  vec3 scale
     //  bool ignore_albedo
@@ -991,7 +993,7 @@ void calculate_top_node(inout Ray ray, inout RayHit rayhit, vec3 inv_dir, bvec3 
         /* All nodes in to_visit should be in sorted order,
          we can break if the last node is out of range
         NOTE: This is slow for first rays, but seem comparable for secondary rays.
-        TODO Make toggle to use this for secondary rays
+        TODO 3: Make toggle to use this for secondary rays
         */
         #if use_early_t_break
         if (!in_range(to_visit_t[to_visit_i], ray)) {
@@ -1024,7 +1026,7 @@ void calculate_top_node(inout Ray ray, inout RayHit rayhit, vec3 inv_dir, bvec3 
             }
         }
 
-        // TODO COnsider min heap or insertion sort
+        // TODO 3: COnsider min heap or insertion sort
         // Add nodes to stack in a sorted order
         to_visit_i += added_children;
         for (int i = 0; i < added_children; i++) { // Looping over constant is not faster here
@@ -1074,7 +1076,7 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
     vec3 inv_direction = vec3(1) / ray.direction;
     bvec3 is_dir_negative = bvec3(inv_direction.x < 0., inv_direction.y < 0., inv_direction.z < 0.);
 
-    // TODO Another improvement might be to precompute all rays for every mesh per trace call
+    // TODO 3: Another improvement might be to precompute all rays for every mesh per trace call
 
     // Test if root node is hit by ray
     float root_hit = hit_AABB(ray, BVH.list[0].bbox, inv_direction, is_dir_negative);
@@ -1102,7 +1104,7 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
         /* All nodes in to_visit should be in sorted order,
          we can break if the last node is out of range
         NOTE: This is slow for first rays, but seem comparable for secondary rays.
-        TODO Make toggle to use this for secondary rays
+        TODO 3: Make toggle to use this for secondary rays
         */
         #if use_early_t_break
         if (!in_range(to_visit_t[to_visit_i], ray)) {
@@ -1166,7 +1168,7 @@ Ray reflect_ray(Ray ray_in, RayHit rayhit) {
     return Ray(new_origin, NEW_RAY_START, ray_dir, infinity);
 }
 
-// TODO Experiment with max heap instead of array
+// TODO 3: Experiment with max heap instead of array, or insert sorted list
 int get_material(int material_index, int lowest_depth, bool ignore_self) {
     // Loop over materials that we have entered and not left,
     //  pick the one with the lowest refraction_depth, ignore default values if specified
@@ -1202,10 +1204,10 @@ void remove_object_from_inside_of(int material_index) {
 
 Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     // Returns a refracted or reflected ray based on ray_in and rayhit
-    // TODO: Add support for cpu to send InsideOf buffer based on camera position
-    // TODO: Add tiny random direction change coupled with color shift, prism, diffraction
-    // TODO Add support for meshes to refract
-    // TODO: Implement Beer's law:
+    // TODO 3: Add support for cpu to send InsideOf buffer based on camera position
+    // TODO 3: Add tiny random direction change coupled with color shift, prism, diffraction
+    // TODO 2: Add support for meshes to refract
+    // TODO 2: Implement Beer's law:
     // https://www.flipcode.com/archives/Raytracing_Topics_Techniques-Part_3_Refractions_and_Beers_Law.shtml
 
     vec3 new_origin = rayhit.point;
@@ -1246,7 +1248,8 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
         new_origin = offset_ray(new_origin, -normal);
         #endif
 
-        // TODO Only invalidate color if this object has the same color as the previous object
+        // TODO 3: Only invalidate color if this object has the same color as the previous object
+        // Handle this in a more explicit way.
         rayhit.hit = false;
 
         // Add extra available bounces when ray refracts/goes through another object
@@ -1297,7 +1300,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
 }
 
 Ray scatter_ray(Ray ray_in, RayHit rayhit) {
-    // TODO Change the way rays are created based on roughness, less/ more scatter
+    // TODO 2: Change the way rays are created based on roughness, less/ more scatter
 
     #if self_intersect_method==0
     vec3 new_origin = offset_ray(rayhit.point, rayhit.normal);
@@ -1322,7 +1325,7 @@ Ray scatter_ray(Ray ray_in, RayHit rayhit) {
 Ray bounce_ray(Ray ray_in, inout RayHit rayhit) {
     // Creates a new ray based material properties from the previous rayhit
 
-    // TODO Make more sophisticated function choosing
+    // TODO 2: Make more sophisticated function choosing
     if (materials.data[rayhit.mtl_index].opacity < 1.) {
         return refract_ray(ray_in, rayhit);
     }
@@ -1339,7 +1342,8 @@ Ray bounce_ray(Ray ray_in, inout RayHit rayhit) {
 vec4 cast_ray(Ray ray) {
     // Casts a ray with bounces and returns the color of the ray
 
-    // Turns out computing colors in the same loop was faster, TODO maybe reconsider
+    // Turns out computing colors in the same loop was faster
+    // TODO 3: maybe reconsider
 
     // Calculate rayhits
     Ray new_ray = ray;
@@ -1365,7 +1369,7 @@ vec4 cast_ray(Ray ray) {
             rayhit = check_ray_hit(new_ray);
         }
 
-        // TODO Try using continues instead
+        // TODO 2: Try using continues instead
         // Early break if no hit
         if (!rayhit.hit) {
             // Adds sky color as the last rayhit when miss
@@ -1392,7 +1396,7 @@ vec4 cast_ray(Ray ray) {
 
         new_ray = bounce_ray(new_ray, rayhit);
 
-        // TODO: implement attenuation based on incident and exiting angles
+        // TODO 2: implement attenuation based on incident and exiting angles
 
         // Rayhit is invalidated if the ray goes through two transparent objects with the same material
         if (rayhit.hit) {
@@ -1451,7 +1455,7 @@ void main() {
     // Apply gamma correction
     new_color.rgb = pow(new_color.rgb, vec3(push.camera.gamma));
 
-    // TODO use max_samples to divide
+    // TODO 3: use max_samples to divide
     if (multisample) {
         vec4 prev_col = imageLoad(output_image, UVi.xy);
         new_color = mix(prev_col, new_color, 1.0 / max(1.0, push.frame));

@@ -9,7 +9,7 @@ var changed_mask : ColorRect
 
 var size_margin := Vector2(4, 5)
 
-# TODO Make previous value optional, make instant updates possible
+# TODO 3: Make previous value optional, make instant updates possible
 # The value selected might not be the same as the one in effect,
 #  which this value represents
 var previous_value := value:
