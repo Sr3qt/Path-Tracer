@@ -504,60 +504,12 @@ float rand2(vec2 co) {
   return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453);
 }
 
-float random_value(inout Random rand) {
-    float theta = pi_double * pcg(rand);
-    float rho = sqrt(-2 * log(pcg(rand)));
-    return rho * cos(theta);
-}
-
 vec3 random_point_on_sphere() {
-    // Different methods kept for archival purposes
-    // vec3 vector;
-    // do {
-    //     vector = vec3(noise(random) * 2 - 1, noise(random) * 2 - 1, noise(random) * 2 - 1);
-    // }
-    // while (dot(vector, vector) > 1);
-    // return normalize(vector);
-
-    // while (true) {
-    //     float x = noise(random) * 2 - 1;
-    //     float y = noise(random) * 2 - 1;
-    //     float z = noise(random) * 2 - 1;
-    //     vec3 point = vec3(x, y, z);
-    //     float dist = dot(point, point);
-    //     if (dist <= 1) {
-    //         return point / sqrt(dist);
-    //     }
-    // }
-
-    // float x = random_value(random);
-    // float y = random_value(random);
-    // float z = random_value(random);
-    // return normalize(vec3(x, y, z));
-
-    // float theta = noise(random) * pi_double;
-    // float theta2 = noise(random) * pi_double;
-    // vec3 n = vec3(
-    //     cos(theta),
-    //     sin(theta),
-    //     sin(theta2)
-    // );
-    // // Normalizing gives better performance?
-    // return normalize(n);
-    // // return n;
-
     // Consistently faster than other methods by a few dozen microseconds in testing:
     //  -35ms +-15ms / 300 frames
-    float theta1 = noise(random) * pi_double;
-    // float theta2 = noise(random) * pi;
-    // float theta2 = (noise(random) + noise(random)) * pi_half;
-    float theta2 = acos(2 * noise(random) - 1);
+    float theta1 = pcg(random) * pi_double;
+    float theta2 = acos(2 * pcg(random) - 1);
     vec3 point = vec3(cos(theta1) * sin(theta2), cos(theta2), sin(theta1) * sin(theta2));
-
-    // float theta1 = noise(random) * pi_double;
-    // float u = noise(random) * 2 -1;
-    // float u_inv = sqrt(1 - u * u);
-    // vec3 point = vec3(cos(theta1) * u_inv, sin(theta1) * u_inv, u);
 
     return point;
 
