@@ -1,7 +1,7 @@
 
 # Sources
 
-This is a list of resources I used to make this project. I thought it might be useful for anyone else wanting to learn more about raytracing, to have all the resources ready and available.
+This is a compendium of resources I used to make this project. I thought it might be useful for anyone else wanting to learn more about raytracing, to have all the resources ready and available.
 
 ## General reading resources
 
@@ -20,10 +20,24 @@ Cool test scenes https://benedikt-bitterli.me/resources/
 
 ## General CG Math
 
+### Transforming vectors
 When I looked at the way [_Ray Tracing The Next Week_](https://raytracing.github.io/books/RayTracingTheNextWeek.html#instances) implements Instancing, I realized I wanted in addition to have scaling as an option, specifically non-uniform scaling. I also wanted it to be in matrix form for its simplicity and speed, you can learn more [here](https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/matrices.html). As for the scaling problem, [this](https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/transforming-normals.html) Scratchapixel article explains why normals need special care when transformed using a matrix and how you can transform it correctly. And finally a wiki page on [how to apply matrix transformations](https://en.wikibooks.org/wiki/GLSL_Programming/Applying_Matrix_Transformations) in glsl.
 
+### Random point on a sphere
+When first faced with the problem of finding a random point *inside* a circle, the solution might seem obvious. However, finding a random distribution is not the same as finding an uniform random distribution. For more details see [this](https://www.youtube.com/watch?v=4y_nmpv-9lI&list=PL6C1-O-nCAAN3fc-7SoWnqdNaXvezvUBu&index=29) video by
+nubDotDev (The performance of each algorithm may not be accurate as it was tested in python on a CPU. Try testing it for yourself!). Computing random uniform points *on* a circle is trivial, simply choose an angle and calculate the cos and sin of said angle.
+
+Anyways, we are actually more interested in how to compute an uniform distribution of points on a sphere instead of points in a circle. For a quick [visual explanation](https://www.jasondavies.com/maps/random-points/) by Jason Davies. An overview of different methods with can be found [here](https://mathworld.wolfram.com/SpherePointPicking.html) on WolframAlpha. I tested rejection sampling, picking Gaussian random numbers (method was taken from Lauge's [video](https://youtu.be/Qz0KTGYJtUk?t=776)), and the two first methods in the WolframAlpha article. In my testing I found that the two WolframAlpha methods were consistently ever-so-slightly faster than the other two methods, and for simplicity I stuck with the random angle one. For converting the spherical coordinates to cartesian coordinates I used [this](https://raytracing.github.io/books/RayTracingTheNextWeek.html#texturemapping/texturecoordinatesforspheres) method found in Ray Tracing: The Next Week.
+
+
+Sidenote: I am confident, but without proof that (random + random) * pi / 2 <=> cos⁻¹(2 * random - 1)
 
 ## GPU limitations
+
+### General tip
+I will say that from experience, when i have implemented an algorithm and it performs much worse than expected, it is often caused by an out of bounds index or undefined number. GPUs don't fail as easily as CPUs, they will run the full program even with improper data. So make sure to test the performance of your program when you implement a new algorithm!
+
+### Texture storage
 For sampled textures I wanted to be able to add arbitrary textures to an array and simply index the array. This would be preferable over TextureArrays since they have to have tha same size and type, whereas this would not. However, for this I would require to use the Vulkan [descriptor index extension](https://docs.vulkan.org/samples/latest/samples/extensions/descriptor_indexing/README.html). Still I made it work, with the only caveat being that the maximum number of textures have to be set. It might be theoretically possible to have a variable size texture array, but godot throws an error thinking the array size is 1. DethRaid also seem to enconter this issue in their [Vulkan engine implementation](https://gist.github.com/DethRaid/0171f3cfcce51950ee4ef96c64f59617).
 
 Also, at the time of writing, it is not well documented how to give arrays of textures/buffers to the shaderpipeline in godot, even though it's very easy. Simply add more buffer ids to the RDShaderUniform.
@@ -36,7 +50,7 @@ Aurailus related to the same problem of needing to bind many textures, although 
 More about dynamic uniform indexing https://stackoverflow.com/questions/67056068/arrays-in-uniform-blocks-cannot-be-indexed-with-vertex-attributes-right
 
 
-## GPU precision considerations
+### GPU precision considerations
 
 Much smarter people than me, mention edge cases were simple functions are prone to errors due to floating point imprecision. Because of this some nice people on stack overflow have written those simple functions accounting for edge cases, so we can just copy-paste.
 
@@ -81,6 +95,13 @@ For complex scenes a fast ray-triangle intersection test is crucial for maintain
 The first model I used for testing was a GrimChild model by Andre Dudka, reposted by SuicideSquid on [TurboSquid](https://www.turbosquid.com/3d-models/3d-hollow-knight-grimmchild-animated-model-2074482). The original can be found [here](https://sketchfab.com/3d-models/hollow-knight-grimmchild-animation-a3c2474c002f4da78cf6e60288f59ab1)
 
 UV image was from [PostImage](https://postimg.cc/HrxvBss3), but I couldn't find any author.
+
+### Code Assets
+
+Random functions have been taken from:
+  - [Ray Tracer Demo](https://github.com/HK-SHAO/Godot-RayTracing-Demo) by HK-SHAO
+  - [Hash Functions for GPU Rendering](https://www.shadertoy.com/view/XlGcRh) by Mark Jarzynski and Marc Olano
+
 
 ## Further reading (for me)
 
