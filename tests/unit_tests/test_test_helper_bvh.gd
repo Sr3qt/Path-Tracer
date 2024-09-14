@@ -50,7 +50,6 @@ func create_test_bvh_a1(test_index_node := false) -> PTBVHTree:
         for node in bvh.bvh_list:
             bvh._node_to_index[node] = i
             if node.is_leaf:
-                node.object_id_index = bvh.object_ids.size() # DEPRECATED
                 bvh._node_to_object_id_index[node] = bvh.object_ids.size()
                 for object in node.object_list:
                     bvh.object_to_leaf[object] = node
@@ -90,7 +89,6 @@ func create_test_bvh_a2() -> PTBVHTree:
     for node in bvh.bvh_list:
         bvh._node_to_index[node] = i
         if node.is_leaf:
-            node.object_id_index = bvh.object_ids.size() # DEPRECATED
             bvh._node_to_object_id_index[node] = bvh.object_ids.size()
             for object in node.object_list:
                 bvh.object_to_leaf[object] = node

@@ -84,7 +84,7 @@ var object_ids : PackedInt32Array = []
 
 ## Takes in a node gives its index in bvh_list
 var _node_to_index := {}
-var _node_to_object_id_index := {} # TODO 1: REMOVE equivelant from node
+var _node_to_object_id_index := {}
 
 var _mesh_to_mesh_socket := {}
 
@@ -137,7 +137,6 @@ var needs_buffer_reset := false
 ##	- Add to leaf_nodes
 ##	- For each object, set object_to_leaf
 ##	- If is_scene_bvh: Add object's object_ids to object_ids
-##	- If is_scene_bvh: Set node's object_id_index  DEPRECATED
 ##	- If is_scene_bvh: Set _node_to_object_id_index
 ##
 ##	- Add to bvhlist next to sibling nodes
@@ -744,7 +743,7 @@ func create_object_ids() -> void:
 	object_ids.resize(object_count + mesh_object_count)
 
 	for leaf_node in leaf_nodes:
-		leaf_node.object_id_index = index
+		_node_to_object_id_index[leaf_node] = index
 		for object in leaf_node.object_list:
 			var id := PTObject.make_object_id(get_scene().get_object_index(object), object.get_type())
 			object_ids[index] = id
@@ -781,12 +780,6 @@ class BVHNode:
 	# Leaf nodes in the tree have no children and have a list pointing to objects
 	#  The object list is can be larger than tree.order
 	var object_list : Array[PTObject] = []
-
-	## NOTE TODO 1: This information should not be stored on node. It should be gotten
-	## from tree / from parent tree. Or maybe it's fine. Just to remember to update.
-	## TODO 1: DEPRECATED
-	## Index to the leaf node's start position in the tree's object_ids
-	var object_id_index := 0
 
 	var is_inner := true
 	var is_leaf : bool:
@@ -912,7 +905,7 @@ class BVHNode:
 		# TODO 3: Object_ids can be packed tightly or with fixed size for potential perf gain, check
 		if is_leaf:
 			# minus one to guarantee negative number because bit manip stuff
-			node_index = -object_id_index - 1
+			node_index = -tree._node_to_object_id_index[self] - 1
 			node_size = object_list.size() - 1
 
 		assert(node_size <= 128, "BVHNode cannot contain more than 128 nodes/objects.")
