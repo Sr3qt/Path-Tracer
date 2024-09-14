@@ -11,6 +11,12 @@ extends PTObject
 		if is_node_ready():
 			object_changed.emit(self)
 
+@export var center : Vector3:
+	set(value):
+		position = value
+	get:
+		return position
+
 
 func _init(
 			p_center := Vector3.ZERO,
@@ -31,6 +37,12 @@ func _init(
 
 	if p_material:
 		material = p_material
+
+func _validate_property(property: Dictionary) -> void:
+	super._validate_property(property)
+
+	if property.name == "center":
+		property.usage = PROPERTY_USAGE_EDITOR
 
 
 static func get_object_byte_size() -> int:
