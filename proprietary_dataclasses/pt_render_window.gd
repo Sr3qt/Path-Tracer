@@ -1,9 +1,17 @@
 @tool
 class_name PTRenderWindow
-extends Control
+extends Node
 
-"""Class for showing gui and passing render flags for a portion of
-the render window"""
+## Class for showing gui and passing render flags for a portion of the render window
+## TODO 3: Consider renaming to PTRenderSettings
+## TODO 3: Maybe they should have their own render texture each.
+## TODO 3: Make a PTRenderWindow selection system, look at WorldEnvironment for inspiration
+
+
+# How many pixels are in a work group dimension
+const INVOCATION_WIDTH := PTRenderer.compute_invocation_width
+const INVOCATION_HEIGHT := PTRenderer.compute_invocation_height
+const INVOCATION_DEPTH := PTRenderer.compute_invocation_depth
 
 enum RenderFlagsBits {
 	USE_BVH = 1,
@@ -20,47 +28,124 @@ enum RenderMode {
 	NORMAL_VIEW,
 }
 
-## GPU RENDER FLAGS
-## Flags that are sent to the gpu
+## 	NODE CONFIGURABLE SETTINGS
 
-# GPU render flags as an int
-var flags : int = 0
+## How many pixels to render horizontally
+@export var render_width := 1920:
+	set(value):
+		settings_was_changed = true
+		render_width = value
 
-# Whether a bvh tree should be used or
-#  if every object should be checked for ray hit
-var use_bvh := true:
+## How many pixels to render vertically
+@export var render_height := 1080:
+	set(value):
+		settings_was_changed = true
+		render_height = value
+
+## Whether multisampling is enabled or not.
+## Does not guarantee multisampling in all cases.
+@export var enable_multisampling := true:
+	set(value):
+		_multisample = not value and can_multisample()
+		settings_was_changed = true
+		enable_multisampling = value
+
+## If rendering should stop or reset when max_samples have been reached.
+@export var stop_rendering_on_max_samples := true:
+	set(value):
+		settings_was_changed = true
+		stop_rendering_on_max_samples = value
+
+## How many samples should be taken before stopping or restarting.
+@export var max_samples : int = 16:
+	set(value):
+		settings_was_changed = true
+		max_samples = value
+
+## The max numver of rays that will be called recursively.
+## Equal to number of ray bounces + 1
+@export_range(1, 128) var max_ray_depth : int = 1:
+	set(value):
+		settings_was_changed = true
+		max_ray_depth = value
+
+## The max number of extra rays that will be called when ray hits a transparent object.
+## Dielectric materials tend to need more ray bounces than other materials.
+## Use this for low ray depth scenes with dielectrics.
+@export_range(1, 128) var max_refraction_bounces : int = 2:
+	set(value):
+		settings_was_changed = true
+		max_refraction_bounces = value
+
+## DEBUG CONFIGURABLE SETTINGS
+
+## Whether a bvh tree should be used or if every object should be checked for ray hit
+@export_storage var use_bvh := true:
 	set(value):
 		_set_flag_bit(RenderFlagsBits.USE_BVH, value)
+		settings_was_changed = true
 		frame = frame if use_bvh == value else 0
 		use_bvh = value
 
+# TODO 0: FIX Flicker when enabled in editor
+@export_storage var show_normal_view := false
+
 # If a bvh heat map of of most expensive traversals are shown
 #  Also disables multisampling while on
-var show_bvh_depth := false
+@export_storage var show_bvh_depth := false
 
-var display_node_count := true:
+@export_storage var display_node_count := true:
 	set(value):
 		_set_flag_bit(RenderFlagsBits.SHOW_NODE_COUNT, value)
 		render_mode_changed = true
+		settings_was_changed = true
 		display_node_count = value
 
-var display_object_count := false:
+@export_storage var display_object_count := false:
 	set(value):
 		_set_flag_bit(RenderFlagsBits.SHOW_OBJECT_COUNT, value)
 		render_mode_changed = true
+		settings_was_changed = true
 		display_object_count = value
 
 ## How many object tests appear in show_bvh_depth before deufaulting color
-var object_display_threshold := 40:
+@export_storage var object_display_threshold := 40:
 	set(value):
 		render_mode_changed = true
+		settings_was_changed = true
 		object_display_threshold = value
 
 ## How many node tests appear in show_bvh_depth before deufaulting color
-var node_display_threshold := 50:
+@export_storage var node_display_threshold := 50:
 	set(value):
 		render_mode_changed = true
+		settings_was_changed = true
 		node_display_threshold = value
+
+# TODO 0: Turn off integer division warnings
+# work_group_height and width are used for size calculations.
+#  depth is passed to work dispatcher, but no support for depth != 1 exist yet
+@export_storage var work_group_width : int = render_width / INVOCATION_WIDTH:
+	set(value):
+		settings_was_changed = true
+		work_group_width = value
+@export_storage var work_group_height : int = render_height / INVOCATION_HEIGHT:
+	set(value):
+		settings_was_changed = true
+		work_group_height = value
+var work_group_depth := 1
+
+@export_storage var x_offset := 0:
+	set(value):
+		settings_was_changed = true
+		x_offset = value
+@export_storage var y_offset := 0:
+	set(value):
+		settings_was_changed = true
+		y_offset = value
+
+# GPU render flags as an int
+var flags : int = 0
 
 # Whether the shader will sample from previous draw call or not
 var _multisample := true:
@@ -68,19 +153,8 @@ var _multisample := true:
 		_set_flag_bit(RenderFlagsBits.MULTISAMPLE, value)
 		_multisample = value
 
-# TODO 0: FIX Flicker when enabled in editor
-var show_normal_view := false
-
-var _current_render_mode : RenderMode
-
-## OTHER RENDER FLAGS
-## Flags that dont go to the gpu
-
-# Whether multisampling is enabled by the user or not
-var enable_multisampling := true:
-	set(value):
-		_multisample = not value and can_multisample()
-		enable_multisampling = value
+# A disable override for render modes that cannot utilize multisampling
+var _disable_multisample := false
 
 # Updated whenever the camera or an object is moved
 var scene_changed := false:
@@ -88,24 +162,19 @@ var scene_changed := false:
 		_multisample = not value and can_multisample()
 		scene_changed = value
 
-# If rendering should stop when frame is larger than max_samples
-var stop_rendering_on_max_samples := true
+var _current_render_mode : RenderMode
 
 # Whether any flags that control *what* is rendered i.e. show_bvh_depth
 var render_mode_changed := false
 
-# A disable override for render modes that cannot utilize multisampling
-var _disable_multisample := false
-
 # Whether this window was rendered in the last renderer draw call
 var was_rendered := false
 
-## SAMPLE VALUES
-var max_samples : int = 16
+## Whether any settings that affect rendering changed this frame
+var settings_was_changed := false
 
-@onready var frame_counter : Label = %FrameCounter
-@onready var frame_time : Label = %FrameTimes
-
+var frame_counter : Label
+var frame_time : Label
 
 # The numbered sample that will be rendered this frame
 #  possible values: frame -> [0, max_samples)
@@ -126,43 +195,18 @@ var frame_times : float:
 
 var max_sample_start_time : float # Point in time when rendering started
 
-## OTHER STUFF
 
-var render_name := "unnamed_window"
-
-# How many pixels are in a work group dimension
-var work_group_width_pixels := PTRenderer.compute_invocation_width
-var work_group_height_pixels := PTRenderer.compute_invocation_height
-var work_group_depth_pixels := PTRenderer.compute_invocation_depth
-
-# work_group_height and width are used for size calculations.
-#  depth is passed to work dispatcher, but no support for depth > 1 exist yet
-var work_group_width : int
-var work_group_height : int
-var work_group_depth := 1
-
-var x_offset := 0
-var y_offset := 0
-
-
-
-func _init(group_x := 1, group_y := 1, group_z := 1, offset_x := 0, offset_y := 0) -> void:
+func _init(group_x := -1, group_y := -1, group_z := 1, offset_x := 0, offset_y := 0) -> void:
 	_set_flags()
 
-	custom_minimum_size = Vector2(work_group_width_pixels, work_group_height_pixels)
-
-	work_group_width = group_x
-	work_group_height = group_y
+	if group_x >= 1:
+		work_group_width = group_x
+	if group_y >= 1:
+		work_group_height = group_y
 	work_group_depth = group_z
-
-	var new_size := Vector2(group_x * work_group_width_pixels,
-						   group_y * work_group_height_pixels)
-	set_size(new_size)
 
 	x_offset = offset_x
 	y_offset = offset_y
-
-	set_position(Vector2(x_offset, y_offset))
 
 
 func can_multisample() -> bool:
@@ -201,6 +245,7 @@ func set_render_mode(render_mode : RenderMode, enable : bool) -> void:
 	_disable_multisample = true
 	_multisample = can_multisample()
 	render_mode_changed = true
+	settings_was_changed = true
 
 
 func get_render_mode() -> RenderMode:
@@ -231,6 +276,7 @@ func _disable_render_mode(render_mode : RenderMode) -> void:
 	_disable_multisample = false
 	_multisample = can_multisample()
 	render_mode_changed = true
+	settings_was_changed = true
 	frame = 0
 
 func flags_to_byte_array() -> PackedByteArray:

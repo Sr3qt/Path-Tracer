@@ -2,9 +2,14 @@
 class_name _PTPluginControlRoot
 extends Control
 
+const EditorRenderSettings := preload(PTRenderer.EDITOR_RENDER_SETTINGS_PATH)
+
 var viewport : SubViewport
+var editor_window : PTRenderWindow
+var runtime_window : PTRenderWindow
 
 var _is_plugin_hint := false
+
 
 # TODO 2: Add button to adjust render size and aspect ratio based on editor viewport
 func _ready():
@@ -15,24 +20,46 @@ func _ready():
 
 		PTRendererAuto._set_plugin_camera(camera)
 
-		var x := ceili(1920. / 8.)
-		var y := ceili(1080. / 8.)
+		# Editor panel
+		editor_window = EditorRenderSettings.instantiate()
+		var editor_settings := PTRenderer.WindowGui.instantiate() as _PTSettingsManager
+		editor_settings.set_pt_render_window(editor_window)
+		editor_settings.set_settings_manager(editor_window)
 
-		var better_window := PTRendererAuto.WindowGui.instantiate() as PTRenderWindow
+		editor_settings._is_plugin_instance = true
+		editor_settings._plugin_panel_node = %SettingsPanelTarget
+		editor_settings.settings_panel_name = "EditorSettings"
 
-		var settings_manager := (
-			better_window.get_node("SettingsManager") as _PTSettingsManager)
+		PTRendererAuto.add_window(editor_window)
+		viewport.get_parent().add_child(editor_settings)
 
-		settings_manager._is_plugin_instance = true
-		settings_manager._plugin_panel_node = %VBoxContainer
+		# Runtime panel
+		runtime_window = PTRenderer.RuntimeRenderSettings.instantiate()
+		var runtime_settings := PTRenderer.WindowGui.instantiate() as _PTSettingsManager
+		runtime_settings.set_pt_render_window(runtime_window)
 
-		better_window.work_group_width = x
-		better_window.work_group_height = y
+		runtime_settings._is_plugin_instance = true
+		runtime_settings._plugin_panel_node = %SettingsPanelTarget
+		runtime_settings.settings_panel_name = "RuntimeSettings"
 
-		PTRendererAuto.add_window(better_window)
-		viewport.get_parent().add_child(better_window)
+		viewport.get_parent().add_child(runtime_settings)
+		runtime_settings.visible = false
 
 	resized.connect(_on_resized)
+
+
+func _process(_delta):
+	if _is_plugin_hint:
+		if editor_window.settings_was_changed:
+			editor_window.settings_was_changed = false
+			var packed = PackedScene.new()
+			packed.pack(editor_window)
+			ResourceSaver.save(packed, PTRenderer.EDITOR_RENDER_SETTINGS_PATH)
+		if runtime_window.settings_was_changed:
+			runtime_window.settings_was_changed = false
+			var packed = PackedScene.new()
+			packed.pack(runtime_window)
+			ResourceSaver.save(packed, PTRenderer.RUNTIME_RENDER_SETTINGS_PATH)
 
 
 func _on_resized():

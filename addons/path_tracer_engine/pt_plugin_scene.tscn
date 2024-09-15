@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://addons/path_tracer_engine/plugin_control_root.gd" id="1_2v5h1"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_camera.gd" id="4_57u0y"]
 
-[node name="RootControl" type="Control"]
+[node name="PathTracer" type="Control"]
 clip_contents = true
 layout_mode = 3
 anchors_preset = 15
@@ -34,3 +34,8 @@ render_target_update_mode = 4
 transform = Transform3D(0.22486, -0.144453, 0.963624, 0, 0.98895, 0.14825, -0.974391, -0.0333354, 0.222375, 13, 2, 3)
 fov = 20.0
 script = ExtResource("4_57u0y")
+
+[node name="SettingsPanelTarget" type="TabContainer" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3

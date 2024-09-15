@@ -1,28 +1,19 @@
-[gd_scene load_steps=6 format=3 uid="uid://eoscno85ldok"]
+[gd_scene load_steps=5 format=3 uid="uid://eoscno85ldok"]
 
-[ext_resource type="Script" path="res://proprietary_dataclasses/pt_render_window.gd" id="1_7js1k"]
 [ext_resource type="Script" path="res://ui_scenes/render_window_gui/temp_button_focus.gd" id="2_pn3ng"]
 [ext_resource type="StyleBox" uid="uid://bq3nr6sqfrh8q" path="res://ui_scenes/render_window_gui/new_style_box_flat.tres" id="2_yf57u"]
 [ext_resource type="StyleBox" uid="uid://beqosf1vjneko" path="res://ui_scenes/render_window_gui/popup_button_background.tres" id="3_mwvv8"]
 [ext_resource type="Script" path="res://ui_scenes/render_window_gui/settings_manager.gd" id="7_wrn7u"]
 
-[node name="RenderWindowGui" type="Control"]
+[node name="SettingsManager" type="Control"]
 custom_minimum_size = Vector2(8, 8)
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_right = 8.0
-offset_bottom = 8.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-script = ExtResource("1_7js1k")
-
-[node name="SettingsManager" type="Control" parent="."]
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
 script = ExtResource("7_wrn7u")
 
 [node name="FocusLossButton" type="Button" parent="."]
@@ -64,7 +55,7 @@ unique_name_in_owner = true
 layout_mode = 0
 offset_left = 31.0
 offset_top = 55.0
-offset_right = 126.0
+offset_right = 136.0
 offset_bottom = 78.0
 theme_override_colors/font_color = Color(0.223529, 0.0980392, 0.027451, 1)
 text = "Time: 0.0000s"
@@ -86,9 +77,9 @@ layout_mode = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 33.0
-offset_top = -77.0
+offset_top = -69.0
 offset_right = 132.0
-offset_bottom = -34.0
+offset_bottom = -26.0
 theme_override_colors/font_focus_color = Color(0.223529, 0.0980392, 0.027451, 1)
 theme_override_colors/font_color = Color(0.223529, 0.0980392, 0.027451, 1)
 text = "Settings"
@@ -119,4 +110,4 @@ visible = false
 layout_mode = 2
 theme_override_styles/panel = ExtResource("2_yf57u")
 
-[connection signal="toggled" from="SettingsButton" to="SettingsManager" method="_on_settings_button_toggled"]
+[connection signal="toggled" from="SettingsButton" to="." method="_on_settings_button_toggled"]

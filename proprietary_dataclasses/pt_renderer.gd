@@ -23,7 +23,12 @@ extends Node
 # Using a selction box in 3D editor crashes editor, FIX GODOT_BUG
 # NOTE: NOPE not my problem https://github.com/godotengine/godot/issues/95356
 
+const RENDER_SETTINGS_PATH := "res://addons/path_tracer_engine/configs/"
+const EDITOR_RENDER_SETTINGS_PATH := RENDER_SETTINGS_PATH + "editor_render_settings.tscn"
+const RUNTIME_RENDER_SETTINGS_PATH := RENDER_SETTINGS_PATH + "runtime_render_settings.tscn"
+
 const WindowGui := preload("res://ui_scenes/render_window_gui/render_window_gui.tscn")
+const RuntimeRenderSettings := preload(RUNTIME_RENDER_SETTINGS_PATH)
 
 # NOTE: CPU control over gpu invocations has not been added.
 #	These are merely for reference
@@ -36,6 +41,11 @@ const _MAX_OWNER_SEARCH_DEPTH = 30
 # TODO 3: Make toggle in editor. Maybe save value in config file
 ## Whether the plugin should print internal debug messages
 var is_debug := true
+
+## When no render window is in scene use defualt runtime_render_settings.
+# TODO 2: Also make toggle in editor
+## Whether to use the render settings configurable in the editor, for runtime rendering as well
+var use_render_settings_override := true
 
 ## General override for stopping rendering. When enabled no work will be pushed to the
 ##  GPU and the screen will be white.
@@ -83,7 +93,8 @@ var _scene_to_root_node := {}
 var scene_to_scene_index := {}
 
 # Array of sub-windows
-var windows : Array[PTRenderWindow] = []
+var render_windows : Array[PTRenderWindow] = []
+var render_window : PTRenderWindow
 
 # The mesh to draw to
 var canvas : MeshInstance3D
@@ -104,20 +115,20 @@ var is_camera_linked := true:
 # Controls the degree of the bvh tree passed to the gpu.
 var bvh_order : int = 8
 
+# TODO 0: Deprecate all
 var render_width := 1920
 var render_height := 1080
-
 var samples_per_pixel : int = 1 # DEPRECATED REMOVE
 @export var max_default_depth : int = 1:
 	# NOTE: Temp implementation, move values to render settings. BRUH that is what render window is for.
 	set(value):
 		if wd:
 			max_default_depth = value
-			wd.create_lod_buffer()
-			wd.bind_set(wd.CAMERA_SET_INDEX)
+			# wd.create_lod_buffer()
+			# wd.bind_set(wd.CAMERA_SET_INDEX)
 @export var max_refraction_bounces : int = 8
 
-# Whether anything was rendered in the last render_window call. Only used by plugin
+# Whether anything was rendered in the last render_pt_window call. Only used by plugin
 var was_rendered := false
 
 # Whether a scene was changed in the editor dock. Only used by plugin
@@ -187,19 +198,21 @@ func _ready() -> void:
 		# Show canvas to editor camera if is_camera_linked
 		editor_camera.set_cull_mask_value(20, is_camera_linked)
 
-	# TODO 3: Only trigger when PTScene is present and when debug is enabled
 	if not Engine.is_editor_hint():
-		var x := ceili(1920. / 8.)
-		var y := ceili(1080. / 8.)
+		var pt_window : PTRenderWindow
 
-		var better_window := WindowGui.instantiate() as PTRenderWindow
-		better_window.max_samples = 300
-		better_window.stop_rendering_on_max_samples = false
+		if use_render_settings_override:
+			pt_window = RuntimeRenderSettings.instantiate()
+		else:
+			pt_window = PTRenderWindow.new()
 
-		better_window.work_group_width = x
-		better_window.work_group_height = y
+		add_window(pt_window)
 
-		add_window(better_window)
+		if is_debug:
+			var debug_menu := PTRendererAuto.WindowGui.instantiate() as _PTSettingsManager
+			debug_menu.set_pt_render_window(pt_window)
+			debug_menu.set_settings_manager(pt_window)
+			add_child(debug_menu)
 
 
 func _process(_delta : float) -> void:
@@ -239,8 +252,8 @@ func _process(_delta : float) -> void:
 
 		if has_active_camera:
 			# If no warnings are raised, this will render
-			for window in windows:
-				render_window(window)
+			for pt_window in render_windows:
+				render(pt_window)
 
 			# NOTE: For some reason this is neccessary for smooth performance in editor
 			if Engine.is_editor_hint() and was_rendered:
@@ -267,15 +280,12 @@ func _set_plugin_camera(cam : PTCamera) -> void:
 
 ## Although PTRenderer can store multiple PTRenderWindows, there is currently
 ##  no plan to support multiple windows simultaniously.
-func add_window(window : PTRenderWindow) -> void:
-	windows.append(window)
-
-	if not Engine.is_editor_hint():
-		add_child(window)
+func add_window(pt_window : PTRenderWindow) -> void:
+	render_windows.append(pt_window)
 
 
-func render_window(window : PTRenderWindow) -> void:
-	"""Might render window according to flags if flags allow it"""
+## Might render PTRenderWindow according to flags if flags allow it
+func render(pt_window : PTRenderWindow) -> void:
 
 	# If camera moved or scene changed
 	var camera_moved := ((scene and scene.camera and scene.camera.camera_changed) or
@@ -285,52 +295,52 @@ func render_window(window : PTRenderWindow) -> void:
 
 	# If rendering should stop when reached max samples
 	var stop_multisampling := (
-			window.stop_rendering_on_max_samples and
-			(window.frame >= window.max_samples)
+			pt_window.stop_rendering_on_max_samples and
+			(pt_window.frame >= pt_window.max_samples)
 	)
 
-	var multisample := (window.enable_multisampling and not stop_multisampling and
-			not window._disable_multisample)
+	var multisample := (pt_window.enable_multisampling and not stop_multisampling and
+			not pt_window._disable_multisample)
 
 	# Adds the time of the last frame rendered
-	if window.frame == window.max_samples and multisample and window.was_rendered:
-		window.frame_times += (
-				Time.get_ticks_usec() - window.max_sample_start_time
+	if pt_window.frame == pt_window.max_samples and multisample and pt_window.was_rendered:
+		pt_window.frame_times += (
+				Time.get_ticks_usec() - pt_window.max_sample_start_time
 		) / 1_000_000.0
 
 	# If window will not render return
-	if not (movement or multisample or window.render_mode_changed):
-		window.was_rendered = false
+	if not (movement or multisample or pt_window.render_mode_changed):
+		pt_window.was_rendered = false
 		return
 
 	# RENDER
-	window.scene_changed = movement
+	pt_window.scene_changed = movement
 
 	# Adds the time taken since last frame render started
-	if window.frame < window.max_samples and multisample and window.was_rendered:
-		window.frame_times += (
-				Time.get_ticks_usec() - window.max_sample_start_time
+	if pt_window.frame < pt_window.max_samples and multisample and pt_window.was_rendered:
+		pt_window.frame_times += (
+				Time.get_ticks_usec() - pt_window.max_sample_start_time
 		) / 1_000_000.0
 
 	# If frame is above limit or a scene/camera/flag change caused a reset
-	if window.frame > window.max_samples or movement or window.render_mode_changed:
-		window.frame = 0
+	if pt_window.frame > pt_window.max_samples or movement or pt_window.render_mode_changed:
+		pt_window.frame = 0
 
-	if window.frame == 0:
-		window.frame_times = 0
+	if pt_window.frame == 0:
+		pt_window.frame_times = 0
 
-	window.max_sample_start_time = Time.get_ticks_usec()
+	pt_window.max_sample_start_time = Time.get_ticks_usec()
 
 	# Create work for gpu
-	wd.create_compute_list(window)
+	wd.create_compute_list(pt_window)
 
-	window.frame += 1
+	pt_window.frame += 1
 
 	# Reset frame values
-	window.scene_changed = false
-	window.render_mode_changed = false
+	pt_window.scene_changed = false
+	pt_window.render_mode_changed = false
 
-	window.was_rendered = true
+	pt_window.was_rendered = true
 	was_rendered = true
 
 

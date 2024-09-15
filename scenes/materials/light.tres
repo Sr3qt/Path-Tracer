@@ -8,6 +8,7 @@ albedo = Color(15, 15, 15, 1)
 roughness = 0.0
 metallic = 0.0
 opacity = 1.0
+reflectivity = 1.0
 IOR = 1.0
 refraction_depth = 0
 is_emissive = true

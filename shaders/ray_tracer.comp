@@ -456,6 +456,10 @@ layout(push_constant, std430) restrict readonly uniform constants {
     int image_offset_y;
     int node_count_threshold;
     int object_count_threshold;
+    int width;
+    int height;
+    int max_default_depth;
+    int max_refraction_bounces;
     float time;
     float frame;
     float max_samples;
@@ -1253,7 +1257,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
         rayhit.hit = false;
 
         // Add extra available bounces when ray refracts/goes through another object
-        if (refraction_bounces < LOD.max_refraction_bounces - 1) {refraction_bounces++;}
+        if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
 
         return Ray(new_origin, NEW_RAY_START, ray_in.direction, infinity);
     }
@@ -1294,7 +1298,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     #endif
 
     // Add extra available bounces when ray refracts/goes through another object
-    if (refraction_bounces < LOD.max_refraction_bounces - 1) {refraction_bounces++;}
+    if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
 
     return Ray(new_origin, NEW_RAY_START, refract(normalized_direction, normal, eta), infinity);
 }
@@ -1353,7 +1357,7 @@ vec4 cast_ray(Ray ray) {
     vec4 tex_col = vec4(1);
 
     // MICRO-OPT Having the loop be static/const is slightly faster than with having it dynamic
-    for (int i = 0; i < LOD.max_default_depth + refraction_bounces; i++) {
+    for (int i = 0; i < push.max_default_depth + refraction_bounces; i++) {
         if (use_bvh) {
             rayhit = check_ray_hit_BVH(new_ray);
 
@@ -1419,8 +1423,8 @@ void main() {
     const vec3 viewport_v = -push.camera.up * push.camera.viewport_height;
 
     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
-    const vec3 pixel_delta_u = viewport_u / LOD.width;
-    const vec3 pixel_delta_v = viewport_v / LOD.height;
+    const vec3 pixel_delta_u = viewport_u / push.width;
+    const vec3 pixel_delta_v = viewport_v / push.height;
 
     // Calculate the location of the upper left pixel.
     const vec3 viewport_upper_left = push.camera.pos - push.camera.forward * push.camera.focal_length -

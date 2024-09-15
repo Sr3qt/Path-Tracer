@@ -37,7 +37,7 @@ var _is_plugin_instance := false
 
 
 func _ready() -> void:
-	if Engine.is_editor_hint() and not _is_plugin_instance:
+	if (Engine.is_editor_hint() and not _is_plugin_instance) or pt_window == null:
 		return
 
 	use_bvh = %UseBVHButton as PTCheckBox
@@ -101,7 +101,7 @@ func _ready() -> void:
 	# Set default for rendering disabled
 	disable_rendering.button_pressed = PTRendererAuto.is_rendering_disabled
 
-	ray_bounces.value = PTRendererAuto.max_default_depth
+	ray_bounces.value = pt_window.max_ray_depth
 
 	# TODO 2: THINGS TO ADD:
 	#	-add button to make a new camera instance and a way top change between camera instances
@@ -205,7 +205,7 @@ func _on_object_count_threshold_value_changed(value : float) -> void:
 
 
 func _on_ray_bounces_value_changed(value : int) -> void:
-	PTRendererAuto.max_default_depth = value
+	pt_window.max_ray_depth = value
 	ray_bounces.previous_value = value
 
 

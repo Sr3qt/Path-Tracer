@@ -123,6 +123,7 @@ var transform_set : RID
 var image_buffer : RID
 
 var camera_buffer : RID
+# TODO 0: FIX Formatting. ALSO DEPRECATED
 var LOD_buffer : RID
 
 var material_buffer : RID
@@ -145,6 +146,7 @@ var transform_buffer : RID
 var is_local_renderer := false
 
 # References to renderer and scene that will render
+# TODO 0: Reformat to remove _renderer
 var _renderer : PTRenderer
 var _scene : PTScene
 
@@ -493,6 +495,7 @@ func create_compute_list(window : PTRenderWindow = null) -> void:
 	if window == null:
 		window = PTRenderWindow.new()
 
+		# TODO 0: Refactor to require window
 		@warning_ignore("integer_division")
 		window.work_group_width = ceili(_renderer.render_width /
 										_renderer.compute_invocation_width)
@@ -520,7 +523,6 @@ func create_compute_list(window : PTRenderWindow = null) -> void:
 	rd.compute_list_bind_uniform_set(compute_list, transform_set, TRANSFORM_SET_INDEX)
 	rd.compute_list_set_push_constant(compute_list, push_bytes, push_bytes.size())
 
-	rd.capture_timestamp(window.render_name)
 	rd.compute_list_dispatch(compute_list, x, y, z)
 
 	rd.compute_list_end()
@@ -836,6 +838,10 @@ func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 		window.y_offset,
 		window.node_display_threshold,
 		window.object_display_threshold,
+		window.render_width,
+		window.render_height,
+		window.max_ray_depth,
+		window.max_refraction_bounces,
 	]).to_byte_array()
 	bytes += PackedFloat32Array([time]).to_byte_array()
 	bytes += PackedFloat32Array([
