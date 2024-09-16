@@ -122,7 +122,6 @@ enum RenderMode {
 		settings_was_changed = true
 		node_display_threshold = value
 
-# TODO 0: Turn off integer division warnings
 # work_group_height and width are used for size calculations.
 #  depth is passed to work dispatcher, but no support for depth != 1 exist yet
 @export_storage var work_group_width : int = render_width / INVOCATION_WIDTH:

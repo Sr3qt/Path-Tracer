@@ -238,7 +238,6 @@ func _recursive_split(object_list : Array[PTObject], parent : BVHNode) -> Array[
 		object_list.sort_custom(_axis_sorts[longest_axis])
 
 	# Will distriute objects evenly with first indices having slightly more
-	@warning_ignore("integer_division")
 	var even_division : int = object_list.size() / order
 	var leftover : int = object_list.size() % order
 
@@ -320,9 +319,7 @@ func _recursive_split_nodes(node_list : Array[BVHNode], parent : BVHNode, depth 
 		else:
 			first_non_empty = nodes
 	if empty_sections == segment_count - 1:
-		@warning_ignore("integer_division")
 		var left : Array = first_non_empty.slice(0, first_non_empty.size() / 2)
-		@warning_ignore("integer_division")
 		var right : Array = first_non_empty.slice(first_non_empty.size() / 2)
 
 		new_nodes_children = [left, right]
@@ -391,7 +388,6 @@ func _recursive_split2(object_list : Array[PTObject], parent : BVHNode, depth : 
 
 	if depth > MAX_DEPTH_LIMIT:
 		#Will distriute objects evenly with first indices having slightly more
-		@warning_ignore("integer_division")
 		var even_division : int = object_list.size() / order
 		var leftover : int = object_list.size() % order
 
@@ -449,7 +445,6 @@ func _recursive_split2(object_list : Array[PTObject], parent : BVHNode, depth : 
 	return [new_node_right, new_node_left]
 
 	# Will distriute objects evenly with first indices having slightly more
-	# @warning_ignore("integer_division")
 	# var even_division : int = object_list.size() / order
 	# var leftover : int = object_list.size() % order
 

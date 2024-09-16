@@ -12,7 +12,6 @@ static func vector3_to_array(vector : Vector3) -> Array[float]:
 ## Create empty byte array with given size in bytes, rounded down to 4 byte-intervals
 static func empty_byte_array(size : int) -> PackedByteArray:
 	var ints : Array[int] = []
-	@warning_ignore("integer_division")
 	ints.resize(size / 4)
 	ints.fill(0)
 

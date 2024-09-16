@@ -171,7 +171,6 @@ func _init(renderer : PTRenderer, is_local := false) -> void:
 
 ## Finds the smallest integer multiple of step that is strictly greater than x
 func ceil_snap(x : int, step : int) -> int:
-	@warning_ignore("integer_division")
 	return (x / step + 1) * step
 
 
@@ -496,10 +495,8 @@ func create_compute_list(window : PTRenderWindow = null) -> void:
 		window = PTRenderWindow.new()
 
 		# TODO 0: Refactor to require window
-		@warning_ignore("integer_division")
 		window.work_group_width = ceili(_renderer.render_width /
 										_renderer.compute_invocation_width)
-		@warning_ignore("integer_division")
 		window.work_group_height = ceili(_renderer.render_height /
 										_renderer.compute_invocation_height)
 		window.work_group_depth = 1
@@ -782,7 +779,6 @@ func _create_bvh_byte_array() -> PackedByteArray:
 	if bvh_buffer_size == 0:
 		bvh_buffer_size = ceil_snap(size, BVH_COUNT_STEP)
 
-	@warning_ignore("integer_division")
 	assert(bytes.size() / PTBVHTree.NODE_BYTE_SIZE <= bvh_buffer_size,
 			"Actual BVH buffer size should be smaller or equal to max buffer size")
 

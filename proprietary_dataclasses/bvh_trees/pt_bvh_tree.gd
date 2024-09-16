@@ -535,7 +535,6 @@ func _split_node(node : BVHNode) -> Array[BVHNode]:
 	new_node_right.is_inner = node.is_inner
 
 	if node.is_inner:
-		@warning_ignore("integer_division")
 		var halfway := node.children.size() / 2
 		new_node_left.add_children(node.children.slice(0, halfway), true)
 		new_node_right.add_children(node.children.slice(halfway), true)
@@ -544,7 +543,6 @@ func _split_node(node : BVHNode) -> Array[BVHNode]:
 
 		inner_count += 2
 	else:
-		@warning_ignore("integer_division")
 		var halfway := node.size() / 2
 		new_node_left.add_objects(node.object_list.slice(0, halfway), true)
 		new_node_left.add_objects(node.object_list.slice(halfway), true)
