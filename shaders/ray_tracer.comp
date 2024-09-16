@@ -395,13 +395,7 @@ struct BVHNode {
 // =======
 layout(rgba32f, set = 0, binding = 0) uniform restrict image2D output_image;
 
-layout(set = 1, binding = 0, std430) restrict readonly buffer LODBuffer {
-    int width;
-    int height;
-    int samples_per_pixel; // How many rays are sent per pixel, DEPRECATED
-    int max_default_depth; // How many bounces is sampled, for normal rays
-    int max_refraction_bounces; // How many total extra bounces can occur on refraction
-} LOD;
+// SET 1 was deprecated.
 
 // Materials
 layout(set = 2, binding = 0, std430) restrict readonly buffer MaterialBuffer {

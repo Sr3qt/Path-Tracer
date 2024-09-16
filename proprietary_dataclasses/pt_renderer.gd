@@ -115,19 +115,6 @@ var is_camera_linked := true:
 # Controls the degree of the bvh tree passed to the gpu.
 var bvh_order : int = 8
 
-# TODO 0: Deprecate all
-var render_width := 1920
-var render_height := 1080
-var samples_per_pixel : int = 1 # DEPRECATED REMOVE
-@export var max_default_depth : int = 1:
-	# NOTE: Temp implementation, move values to render settings. BRUH that is what render window is for.
-	set(value):
-		if wd:
-			max_default_depth = value
-			# wd.create_lod_buffer()
-			# wd.bind_set(wd.CAMERA_SET_INDEX)
-@export var max_refraction_bounces : int = 8
-
 # Whether anything was rendered in the last render_pt_window call. Only used by plugin
 var was_rendered := false
 
@@ -344,6 +331,17 @@ func render(pt_window : PTRenderWindow) -> void:
 	was_rendered = true
 
 
+## TODO 3: Make functions that account for multiple render_windows on the same texture,
+## and multiple textures with render windows. Select the relavent texture.
+## Make each texture an indexed render target.
+func get_render_width() -> int:
+	return render_windows[0].render_width
+
+
+func get_render_height() -> int:
+	return render_windows[0].render_height
+
+
 ## Saves the last rendered image as a png.
 ## The defualt directory is "res://renders/temps/[date_for_today]/".
 ## The directory can be changed with the property "screenshot_folder"
@@ -358,8 +356,8 @@ func take_screenshot() -> void:
 	# Changing the renderer render size should always create a new buffer, so
 	#  this code should always yield a correct result
 	var new_image := Image.create_from_data(
-		render_width,
-		render_height,
+		get_render_width(),
+		get_render_height(),
 		false,
 		Image.FORMAT_RGBAF,
 		image
@@ -464,7 +462,7 @@ func add_scene(new_ptscene : PTScene) -> void:
 		canvas = PTUtils.create_canvas()
 
 	# Create new WD
-	var new_wd := PTWorkDispatcher.new(self)
+	var new_wd := PTWorkDispatcher.new()
 	new_wd.set_scene(new_ptscene)
 	new_wd.load_shader(PTUtils.load_shader(new_ptscene))
 	new_wd.create_buffers()

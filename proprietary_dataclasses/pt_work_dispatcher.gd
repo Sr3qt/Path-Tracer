@@ -78,9 +78,7 @@ const IMAGE_SET_INDEX : int = 0
 const IMAGE_BUFFER_BIND : int = 0
 const IMAGE_SET_MAX : int = 1
 
-const CAMERA_SET_INDEX : int = 1
-const LOD_BIND : int = 0 # For sample per pixel, bounce depth etc.
-const CAMERA_SET_MAX : int = 1
+## SET 1 was deprecated
 
 const OBJECT_SET_INDEX : int = 2
 const MATERIALS_BIND : int = 0
@@ -122,10 +120,6 @@ var transform_set : RID
 # Buffer RIDS
 var image_buffer : RID
 
-var camera_buffer : RID
-# TODO 0: FIX Formatting. ALSO DEPRECATED
-var LOD_buffer : RID
-
 var material_buffer : RID
 var sphere_buffer : RID
 var plane_buffer : RID
@@ -145,18 +139,14 @@ var transform_buffer : RID
 # Whether this instance is using a local RenderDevice
 var is_local_renderer := false
 
-# References to renderer and scene that will render
-# TODO 0: Reformat to remove _renderer
-var _renderer : PTRenderer
+# References to scene that will rendered
 var _scene : PTScene
 
 
-func _init(renderer : PTRenderer, is_local := false) -> void:
+func _init(is_local := false) -> void:
 	uniforms = UniformStorage.new()
 	object_buffer_sizes.resize(PTObject.ObjectType.MAX)
 	object_buffer_sizes.fill(0)
-
-	_renderer = renderer
 
 	is_local_renderer = is_local
 
@@ -180,16 +170,13 @@ func create_buffers() -> void:
 	var prev_time := Time.get_ticks_usec()
 
 	# Trying to set up buffers without a scene makes no sense
-	if not _scene:
-		push_warning("PT: Set a scene for the WorkDispatcher before trying to",
-				" create gpu buffers.")
-		return
+	assert(is_instance_valid(_scene),
+			"PT: Set a scene for the WorkDispatcher before trying to create gpu buffers.")
 
 	# The image buffer used in compute and fragment shader
 	image_buffer = _create_image_buffer()
 
 	# TODO 3: Add statistics buffer which the gpu can write to
-	create_lod_buffer()
 	create_material_buffer()
 	create_sphere_buffer()
 	create_plane_buffer()
@@ -203,7 +190,7 @@ func create_buffers() -> void:
 	bind_sets()
 
 	# Get texture RID for Canvas
-	var material := _renderer.canvas.get_mesh().surface_get_material(0) as ShaderMaterial
+	var material := PTRendererAuto.canvas.get_mesh().surface_get_material(0) as ShaderMaterial
 	# NOTE: get_shader_parameter literally returns variant; get fgucked. UNSTATIC
 	@warning_ignore("unsafe_cast")
 	texture = material.get_shader_parameter("image_buffer") as Texture2DRD
@@ -236,11 +223,6 @@ func create_object_buffer(type : PTObject.ObjectType) -> void:
 		_:
 			assert(false, "PT: ObjectType %s does cannot create a buffer." % [type])
 
-
-func create_lod_buffer() -> void:
-	LOD_buffer = _create_uniform(
-			_create_lod_byte_array(), CAMERA_SET_INDEX, LOD_BIND
-	)
 
 func create_sphere_buffer() -> void:
 	sphere_buffer = _create_uniform(
@@ -406,8 +388,8 @@ func _create_image_buffer() -> RID:
 	var tf : RDTextureFormat = RDTextureFormat.new()
 	tf.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT
 	tf.texture_type = RenderingDevice.TEXTURE_TYPE_2D
-	tf.width = PTRendererAuto.render_width
-	tf.height = PTRendererAuto.render_height
+	tf.width = PTRendererAuto.get_render_width()
+	tf.height = PTRendererAuto.get_render_height()
 	tf.usage_bits = usage_bits
 
 	var new_image_buffer := rd.texture_create(tf, RDTextureView.new(), [])
@@ -429,8 +411,6 @@ func bind_set(index : int) -> void:
 	match index:
 		IMAGE_SET_INDEX:
 			image_set = new_set_rid
-		CAMERA_SET_INDEX:
-			camera_set = new_set_rid
 		OBJECT_SET_INDEX:
 			object_set = new_set_rid
 		BVH_SET_INDEX:
@@ -446,7 +426,6 @@ func bind_set(index : int) -> void:
 func bind_sets() -> void:
 	# Bind uniforms and sets
 	bind_set(IMAGE_SET_INDEX)
-	bind_set(CAMERA_SET_INDEX)
 	bind_set(OBJECT_SET_INDEX)
 	bind_set(BVH_SET_INDEX)
 	bind_set(TRIANGLE_SET_INDEX)
@@ -488,18 +467,7 @@ func free_rid(rid : RID) -> void:
 ## Creates the compute list required for every compute call
 ##
 ## Requires workgroup coordinates to be given in an array or vector
-func create_compute_list(window : PTRenderWindow = null) -> void:
-
-	# By default, will dispatch groups to fill whole render size
-	if window == null:
-		window = PTRenderWindow.new()
-
-		# TODO 0: Refactor to require window
-		window.work_group_width = ceili(_renderer.render_width /
-										_renderer.compute_invocation_width)
-		window.work_group_height = ceili(_renderer.render_height /
-										_renderer.compute_invocation_height)
-		window.work_group_depth = 1
+func create_compute_list(window : PTRenderWindow) -> void:
 
 	var x := window.work_group_width
 	var y := window.work_group_height
@@ -512,7 +480,6 @@ func create_compute_list(window : PTRenderWindow = null) -> void:
 
 	# Bind uniform sets
 	rd.compute_list_bind_uniform_set(compute_list, image_set, IMAGE_SET_INDEX)
-	rd.compute_list_bind_uniform_set(compute_list, camera_set, CAMERA_SET_INDEX)
 	rd.compute_list_bind_uniform_set(compute_list, object_set, OBJECT_SET_INDEX)
 	rd.compute_list_bind_uniform_set(compute_list, bvh_set, BVH_SET_INDEX)
 	rd.compute_list_bind_uniform_set(compute_list, triangle_set, TRIANGLE_SET_INDEX)
@@ -686,17 +653,6 @@ func _create_uniform(bytes : PackedByteArray, _set : int, binding : int) -> RID:
 	return buffer
 
 
-func _create_lod_byte_array() -> PackedByteArray:
-	var lod_array : Array[int] = [
-		_renderer.render_width,
-		_renderer.render_height,
-		_renderer.samples_per_pixel,
-		_renderer.max_default_depth,
-		_renderer.max_refraction_bounces
-	]
-	return PackedInt32Array(lod_array).to_byte_array()
-
-
 func _create_materials_byte_array() -> PackedByteArray:
 	var bytes := PackedByteArray()
 	var size : int = _scene.materials.size()
@@ -850,7 +806,6 @@ func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 
 class UniformStorage:
 	var image_set : Array[RDUniform]
-	var camera_set : Array[RDUniform]
 	var object_set : Array[RDUniform]
 	var bvh_set : Array[RDUniform]
 	var triangle_set : Array[RDUniform]
@@ -861,7 +816,6 @@ class UniformStorage:
 	func _init() -> void:
 		# Arrays need to be initialized with the same size as number of binds in a set
 		image_set.resize(IMAGE_SET_MAX)
-		camera_set.resize(CAMERA_SET_MAX)
 		object_set.resize(OBJECT_SET_MAX)
 		bvh_set.resize(BVH_SET_MAX)
 		triangle_set.resize(TRIANGLE_SET_MAX)
@@ -873,8 +827,6 @@ class UniformStorage:
 		match index:
 			IMAGE_SET_INDEX:
 				return image_set
-			CAMERA_SET_INDEX:
-				return camera_set
 			OBJECT_SET_INDEX:
 				return object_set
 			BVH_SET_INDEX:
