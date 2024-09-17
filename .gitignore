@@ -13,3 +13,4 @@ data_*/
 /temps
 shaders/comp - no ray reset.spv
 shaders/comp.spv
+/addons/path_tracer_engine/configs

@@ -533,7 +533,7 @@ void swap(inout float a, inout float b) {
 }
 
 bool is_close(float value1, float value2) {
-    // TODO 2: COnsider implementing this algorithm:
+    // TODO 1: COnsider implementing this algorithm:
     // https://stackoverflow.com/questions/4915462/how-should-i-do-floating-point-comparison
     // Whether a value is within an epsilon of value2
     return (value2 + eps > value1 && value1 > value2 - eps);
@@ -922,7 +922,7 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
             // Normal in world space
             rayhit.normal = normalize((vec4(rayhit.normal, 0) * inverse(matrix)).xyz);
         } else {
-            rayhit.normal = (rayhit.point - sphere.center) / sphere.radius;
+            rayhit.normal = normalize((rayhit.point - sphere.center));
             rayhit.uv = sphere_get_uv(rayhit.normal);
         }
 
@@ -1350,6 +1350,7 @@ vec4 cast_ray(Ray ray) {
     vec4 new_color = vec4(1);
     vec4 tex_col = vec4(1);
 
+    // TODO 0: Make render modes use overwrite color, remove from loop, set loop length to 1
     // MICRO-OPT Having the loop be static/const is slightly faster than with having it dynamic
     for (int i = 0; i < push.max_default_depth + refraction_bounces; i++) {
         if (use_bvh) {

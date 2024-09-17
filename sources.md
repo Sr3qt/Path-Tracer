@@ -57,7 +57,8 @@ Much smarter people than me, mention edge cases were simple functions are prone 
 - More robust atan by HuaTham [link](https://stackoverflow.com/questions/26070410/robust-atany-x-on-glsl-for-converting-xy-coordinate-to-angle)
 
 - How to do floating point comparison by P-Gn [link](https://stackoverflow.com/questions/4915462/how-should-i-do-floating-point-comparison)
--
+
+- CORRECTION: Despite being recommended by *Ray Tracing in One Weekend* ch. [6.1](https://raytracing.github.io/books/RayTracingInOneWeekend.html#surfacenormalsandmultipleobjects/shadingwithsurfacenormals), to calculate sphere normals using the formula $normal = (rayhit - center) / radius$, I would recommend against it. Actually doing so will result in a normal that is significantly different from a normalized one. This is because of the limited precision of floating point numbers when finding a ray-sphere intersection, and the bigger the distance between ray origin and the intersection point, the more impresise the calculated normal will be. Thats why I recommend instead to use $normal = normalize(rayhit - center)$.
 
 ## Camera / Color theory
 

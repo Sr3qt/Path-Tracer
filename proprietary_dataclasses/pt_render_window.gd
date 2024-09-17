@@ -87,7 +87,6 @@ enum RenderMode {
 		frame = frame if use_bvh == value else 0
 		use_bvh = value
 
-# TODO 0: FIX Flicker when enabled in editor
 @export_storage var show_normal_view := false
 
 # If a bvh heat map of of most expensive traversals are shown
