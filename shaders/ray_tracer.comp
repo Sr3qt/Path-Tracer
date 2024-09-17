@@ -142,7 +142,10 @@ Enabling refraction tracking has a small performance impact
 */
 #define use_refraction_tracking 1
 
-// TODO 0: Make ray paths that dont find emissive objects return black
+// IN sphere_scene_3 the ground is first way to bright then it darkens drastically
+// TODO 1: Make it so that the color and intensity doesn't change much.
+// Probably need to look at roughness new ray creation and attenuation. Need to attenuate based on roughness
+// TODO 2: Make toggle in editor for emmission rendering.
 // Emissive materials
 #define USE_EMISSION 0
 
@@ -257,7 +260,9 @@ bool show_normal_view;
 
 bool multisample;
 
-vec4 debug_color = vec4(0);
+vec4 debug_color = vec4(-1);
+vec4 render_mode_color = vec4(-1);
+bool use_render_mode_color = false;
 
 // Random
 // Code snippets taken from Ray tracer demo by HK-SHAO
@@ -603,6 +608,8 @@ void parse_flags() {
     show_node_count = flags[3];
     show_object_count = flags[4];
     show_normal_view = flags[5];
+    // Needs to be updated when new render modes appear
+    use_render_mode_color = show_bvh_depth || show_normal_view;
 }
 
 int get_object_type(int object_id) {
@@ -1350,25 +1357,20 @@ vec4 cast_ray(Ray ray) {
     vec4 new_color = vec4(1);
     vec4 tex_col = vec4(1);
 
-    // TODO 0: Make render modes use overwrite color, remove from loop, set loop length to 1
+    int i = 0;
+    if (use_render_mode_color) {
+        refraction_bounces = push.max_refraction_bounces;
+        i = push.max_default_depth + push.max_refraction_bounces - 1;
+    }
+
     // MICRO-OPT Having the loop be static/const is slightly faster than with having it dynamic
-    for (int i = 0; i < push.max_default_depth + refraction_bounces; i++) {
+    for (; i < push.max_default_depth + refraction_bounces; i++) {
         if (use_bvh) {
             rayhit = check_ray_hit_BVH(new_ray);
-
-            // Send one ray, skip bouncing
-            if (show_bvh_depth) {
-                float a = show_node_count ? float(node_hit_count) / float(push.node_count_threshold) : 0.0;
-                float b = show_object_count ? float(object_hit_count) / float(push.object_count_threshold) : 0.0;
-                rayhit.color = (max(a, b) > 1.0) ? vec4(1) : vec4(b, 0, a, 0);
-                new_color = rayhit.color;
-                break;
-            }
         } else {
             rayhit = check_ray_hit(new_ray);
         }
 
-        // TODO 2: Try using continues instead
         // Early break if no hit
         if (!rayhit.hit) {
             // Adds sky color as the last rayhit when miss
@@ -1378,10 +1380,6 @@ vec4 cast_ray(Ray ray) {
         }
 
         determine_rayhit(new_ray, rayhit);
-
-        if (show_normal_view) {
-            return vec4((rayhit.normal + vec3(1)) / 2.0, 1);
-        }
 
         #if USE_EMISSION
         if (is_emissive) {
@@ -1401,6 +1399,23 @@ vec4 cast_ray(Ray ray) {
         if (rayhit.hit) {
             new_color *= rayhit.color * tex_col;
         }
+    }
+
+    #if USE_EMISSION
+    if (!is_emissive) {
+        new_color = vec4(0);
+    }
+    #endif
+
+    // RENDER MODE COLOR OVERRIDES
+    if (show_bvh_depth) {
+        float a = show_node_count ? float(node_hit_count) / float(push.node_count_threshold) : 0.0;
+        float b = show_object_count ? float(object_hit_count) / float(push.object_count_threshold) : 0.0;
+        render_mode_color = (max(a, b) > 1.0) ? vec4(1) : vec4(b, 0, a, 0);
+    }
+
+    if (show_normal_view) {
+        render_mode_color = vec4((rayhit.normal + vec3(1)) / 2.0, 1);
     }
 
     return new_color;
@@ -1464,7 +1479,11 @@ void main() {
         // }
     }
 
-    if (debug_color != vec4(0)) {
+    if (render_mode_color != vec4(-1)) {
+        new_color = render_mode_color;
+    }
+
+    if (debug_color != vec4(-1)) {
         new_color = debug_color;
     }
 
