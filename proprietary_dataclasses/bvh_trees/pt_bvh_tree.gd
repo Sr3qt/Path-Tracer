@@ -384,6 +384,32 @@ func remove_object(object : PTObject) -> void:
 		leaf.update_aabb()
 
 
+## Returns the index to the first object in a leaf node in the object_ids array.
+## Will return an index as long as a this tree or an ancestor is_scene_owned.
+## Otherwise return -1.
+func get_object_id_index(node : BVHNode) -> int:
+	assert(node.is_leaf, "PT: Cannot get object_id index for non-leaf node.")
+
+	if is_scene_owned():
+		return _node_to_object_id_index[node]
+
+	if is_sub_tree():
+		return parent_tree.get_object_id_index(node)
+
+	return -1
+
+
+## Will set the object_id_index in the first tree/tree ancestor that is_scene_owned.
+func set_object_id_index(node : BVHNode, index : int) -> void:
+	assert(node.is_leaf, "PT: Cannot set object_id index for non-leaf node.")
+	if is_scene_owned():
+		_node_to_object_id_index[node] = index
+	elif is_sub_tree():
+		parent_tree.set_object_id_index(node, index)
+	else:
+		assert(false, "PT: Cannot give object_id index to non-scene bvh.")
+
+
 func get_node_index(node : BVHNode) -> int:
 	return _node_to_index[node] # UNSTATIC
 
@@ -423,17 +449,17 @@ func index_node(node : BVHNode, count := false) -> void:
 			object_count += node.size()
 
 		if is_scene_owned():
-			_node_to_object_id_index[node] = object_ids.size()
+			set_object_id_index(node, object_ids.size())
 
 		for object in node.object_list:
 			if is_scene_owned():
 				object_ids.append(object.get_object_id())
 			object_to_leaf[object] = node # UNSTATIC
 
-		assert(not node in leaf_nodes, "Node is already partially indexed: leaf_nodes")
+		assert(node not in leaf_nodes, "Node is already partially indexed: leaf_nodes")
 		leaf_nodes.append(node)
 
-	assert(not node in _node_to_index, "Node is already partially indexed: _node_to_index")
+	assert(node not in _node_to_index, "Node is already partially indexed: _node_to_index")
 	_node_to_index[node] = bvh_list.size() # UNSTATIC
 	bvh_list.append(node)
 
@@ -465,6 +491,7 @@ func index_tree() -> void:
 	print("Time taken: ", ((Time.get_ticks_usec() - start_time) / 1000.0), "ms")
 
 
+# TODO 1: Make test
 ## Recursively index whole tree/sub-tree under given node
 func _index_node(node : BVHNode) -> void:
 	for child in node.children:
@@ -741,7 +768,7 @@ func create_object_ids() -> void:
 	object_ids.resize(object_count + mesh_object_count)
 
 	for leaf_node in leaf_nodes:
-		_node_to_object_id_index[leaf_node] = index
+		set_object_id_index(leaf_node, index)
 		for object in leaf_node.object_list:
 			var id := PTObject.make_object_id(get_scene().get_object_index(object), object.get_type())
 			object_ids[index] = id
@@ -903,7 +930,7 @@ class BVHNode:
 		# TODO 3: Object_ids can be packed tightly or with fixed size for potential perf gain, check
 		if is_leaf:
 			# minus one to guarantee negative number because bit manip stuff
-			node_index = -tree._node_to_object_id_index[self] - 1
+			node_index = -tree.get_object_id_index(self) - 1
 			node_size = object_list.size() - 1
 
 		assert(node_size <= 128, "BVHNode cannot contain more than 128 nodes/objects.")
