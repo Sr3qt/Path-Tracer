@@ -365,13 +365,13 @@ func _recursive_split_nodes(node_list : Array[BVHNode], parent : BVHNode, depth 
 
 			# Children of new_node will be fully indexed
 			if new_leaf.size() > 0:
-				index_node(new_leaf, true)
+				index_node(new_leaf)
 				new_node.add_child(new_leaf)
 
 		new_nodes.append(new_node)
 
 	for node in new_nodes:
-		index_node(node, true)
+		index_node(node)
 
 	return new_nodes
 

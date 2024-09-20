@@ -279,7 +279,7 @@ func create_mesh_socket(parent : BVHNode, mesh_tree : PTBVHTree) -> BVHNode:
 	mesh_socket.is_inner = true
 	_mesh_to_mesh_socket[mesh_tree.get_mesh()] = mesh_socket
 	mesh_socket.add_children([mesh_tree.root_node])
-	index_node(mesh_socket, true)
+	index_node(mesh_socket)
 
 	parent.add_children([mesh_socket])
 	parent.update_aabb()
@@ -385,19 +385,6 @@ func remove_object(object : PTObject) -> void:
 		leaf.update_aabb()
 
 
-# TODO 0: MAke test
-## Erase all indices belonging to tree.
-func erase_indices() -> void:
-
-	bvh_list = []
-	leaf_nodes = []
-	object_to_leaf = {}
-	_node_to_index = {}
-	inner_count = 0
-	leaf_count = 0
-	object_count = 0
-
-
 ## Returns the index to the first object in a leaf node in the object_ids array.
 ## Will return an index as long as a this tree or an ancestor is_scene_owned.
 ## Otherwise return -1.
@@ -452,9 +439,22 @@ func get_subnodes(node : BVHNode, indices : Array[BVHNode] = []) -> Array[BVHNod
 	return indices
 
 
+# TODO 0: MAke test
+## Erase all indices belonging to tree.
+func erase_indices() -> void:
+
+	bvh_list = []
+	leaf_nodes = []
+	object_to_leaf = {}
+	_node_to_index = {}
+	inner_count = 0
+	leaf_count = 0
+	object_count = 0
+
+
 ## Sets tree indices of tree for newly created node
 ## Can give optional parameter to count node and node objects
-func index_node(node : BVHNode, count := false) -> void:
+func index_node(node : BVHNode, count := true) -> void:
 	if node.is_inner and count:
 		inner_count += 1
 	elif node.is_leaf:
@@ -478,7 +478,7 @@ func index_node(node : BVHNode, count := false) -> void:
 	bvh_list.append(node)
 
 	if is_sub_tree():
-		parent_tree.index_node(node)
+		parent_tree.index_node(node, count)
 	else:
 		# Will always be run by top level bvh tree
 		node.set_aabb()
@@ -489,13 +489,7 @@ func index_tree() -> void:
 	# NOTE: Should be used as little as possible for best performance
 	print("bvhtree re-indexed")
 	var start_time := Time.get_ticks_usec()
-	bvh_list = []
-	leaf_nodes = []
-	object_to_leaf = {}
-	_node_to_index = {}
-	inner_count = 0
-	leaf_count = 0
-	object_count = 0
+	erase_indices()
 
 	_node_to_index[root_node] = bvh_list.size() # UNSTATIC
 	bvh_list.append(root_node)
