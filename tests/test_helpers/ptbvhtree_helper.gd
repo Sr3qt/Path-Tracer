@@ -1,7 +1,7 @@
-class_name PTTestHelperBVH
+class_name PTBVHTreeHelper
 extends RefCounted
 
-## Helper functions to verify bvh integrity when testing bvh modification and creation
+## Helper functions to verify bvh integrity when testing bvh modification and creation.
 
 var bvh : PTBVHTree
 
@@ -13,6 +13,7 @@ var is_similar_diff : Array[bool]
 ## Check is_same_as for what the corresponding index in
 ## is_same_diff is checking for.
 var is_same_diff : Array[bool]
+
 
 func _init(p_bvh : PTBVHTree) -> void:
 	bvh = p_bvh
@@ -80,6 +81,7 @@ func _is_leaf_node_contiguous(node : PTBVHTree.BVHNode) -> bool:
 #endregion
 
 
+# TODO 1: NEEDS Testing in test_test_helper_bvh
 func is_tree_valid() -> bool:
 	# TODO 1: Make whole tree verification function and test
 	return true

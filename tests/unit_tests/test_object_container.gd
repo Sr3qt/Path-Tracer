@@ -35,6 +35,6 @@ func test_merge() -> void:
 	assert_true(res[PTObject.ObjectType.PLANE])
 	assert_false(res[PTObject.ObjectType.TRIANGLE])
 
-	assert_true(TestHelper.check_dictionary_index(container.spheres, container._object_to_object_index))
-	assert_true(TestHelper.check_dictionary_index(container.planes, container._object_to_object_index))
-	assert_true(TestHelper.check_dictionary_index(container.triangles, container._object_to_object_index))
+	assert_true(PTTestHelper.check_dictionary_index(container.spheres, container._object_to_object_index))
+	assert_true(PTTestHelper.check_dictionary_index(container.planes, container._object_to_object_index))
+	assert_true(PTTestHelper.check_dictionary_index(container.triangles, container._object_to_object_index))

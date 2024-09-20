@@ -1,4 +1,4 @@
-class_name TestHelper
+class_name PTTestHelper
 extends RefCounted
 
 ## Class with some functions to help assert conditions

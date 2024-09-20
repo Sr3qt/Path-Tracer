@@ -14,3 +14,4 @@ data_*/
 shaders/comp - no ray reset.spv
 shaders/comp.spv
 /addons/path_tracer_engine/configs
+.gutconfig.json

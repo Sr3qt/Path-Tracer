@@ -146,13 +146,14 @@ var needs_buffer_reset := false
 ##	- If not in creation: append to updated_indices
 ##
 
-func _init(_order := 2) -> void:
+# TODO 1: Determine if bvh should initialize indexed or not.
+func _init(_order := 2, index_root := true) -> void:
 	order = _order
 	root_node = BVHNode.new(null, self)
-	_node_to_index[root_node] = 0
-	inner_count += 1
-
-	bvh_list = [root_node]
+	if index_root:
+		_node_to_index[root_node] = 0
+		bvh_list = [root_node]
+		inner_count += 1
 
 
 static func empty(_objects : PTObjectContainer, p_order : int) -> PTBVHTree:
@@ -382,6 +383,19 @@ func remove_object(object : PTObject) -> void:
 			pass
 
 		leaf.update_aabb()
+
+
+# TODO 0: MAke test
+## Erase all indices belonging to tree.
+func erase_indices() -> void:
+
+	bvh_list = []
+	leaf_nodes = []
+	object_to_leaf = {}
+	_node_to_index = {}
+	inner_count = 0
+	leaf_count = 0
+	object_count = 0
 
 
 ## Returns the index to the first object in a leaf node in the object_ids array.
