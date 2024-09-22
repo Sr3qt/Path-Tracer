@@ -625,6 +625,9 @@ func split_node(node : BVHNode) -> Array[BVHNode]:
 ## NOTE: This is a greedy search algorithm and it will return the first spot
 ##  that is good enough
 func find_aabb_spot(aabb : AABB, node := root_node) -> BVHNode:
+	if not PTUtils.is_aabb_valid(aabb):
+		return null
+
 	if node.aabb.encloses(aabb):
 		if node.is_inner:
 			for child in node.children:
@@ -800,11 +803,12 @@ class BVHNode:
 	## other BVHNodes or is empty, or a leaf node, where its object_list property point to
 	## objects. Having a mixed node is no longer supported.
 	## Rather, wrap the objects in the mixed node into a new leaf node child.
+	## A BVHNode without children will have a zeroed aabb
 
 	var tree : PTBVHTree # Reference to the tree this node is a part of
 	var parent : BVHNode # Reference to parent BVHNode
 	var children : Array[BVHNode] # Reference to child BVHNodes
-	var aabb : AABB
+	var aabb := AABB()
 
 	# A mesh socket is a special node that only has a subtree as a child.
 	# It has special rules for its aabb
@@ -845,31 +849,20 @@ class BVHNode:
 
 
 	func set_aabb() -> void:
-		assert(size() > 0, "Cannot set aabb of node with no objects/child nodes.")
+		aabb = AABB()
 		if is_mesh_socket:
-			assert(children[0].aabb != null and children[0].aabb.size != Vector3.ZERO,
-					"PT: Mesh socket's child does not have an aabb.")
 			aabb = children[0].tree.get_mesh().transform * children[0].aabb
 			return
 
 		if not object_list.is_empty():
-			aabb = object_list[0].get_bvh_aabb()
 			for object in object_list:
-				aabb = aabb.merge(object.get_bvh_aabb())
-			assert(aabb != null and aabb.size != Vector3.ZERO,
-					"PT: Leaf node did not create aabb correctly")
+				aabb = PTUtils.merge_aabb(aabb, object.get_bvh_aabb())
 			return
 
 		if not children.is_empty():
-			aabb = children[0].aabb
 			for child in children:
-				assert(aabb != null and aabb.size != Vector3.ZERO,
-						"PT: Child node %s does not have aabb" % child)
-				aabb = aabb.merge(child.aabb)
+				aabb = PTUtils.merge_aabb(aabb, child.aabb)
 			return
-
-		# in theory should never trigger
-		assert(false, "PT: Node exited set_aabb with no aabb.")
 
 
 	func update_aabb() -> void:

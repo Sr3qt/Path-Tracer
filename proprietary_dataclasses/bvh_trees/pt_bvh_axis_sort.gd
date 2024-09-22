@@ -411,10 +411,10 @@ func _recursive_split2(object_list : Array[PTObject], parent : BVHNode, depth : 
 
 		return new_children
 
-	var temp := object_list[0].get_bvh_aabb()
+	var temp := AABB()
 
 	for object in object_list:
-		temp = temp.merge(object.get_bvh_aabb())
+		temp = PTUtils.merge_aabb(temp, object.get_bvh_aabb())
 		# temp = temp.expand(object.get_bvh_aabb().get_center())
 
 	if type == BVHType.XYZ_SORTED:
@@ -496,26 +496,22 @@ func _index_node2(parent : BVHNode) -> void:
 
 
 func find_longest_axis(object_list : Array[PTObject]) -> int:
-	var temp := object_list[0].get_bvh_aabb()
-
+	var temp := AABB()
 	for object in object_list:
-		temp = temp.merge(object.get_bvh_aabb())
-
+		temp = PTUtils.merge_aabb(temp, object.get_bvh_aabb())
 	return temp.get_longest_axis_index()
 
 
 func create_array_aabb(object_list : Array[PTObject]) -> AABB:
-	var temp := object_list[0].get_bvh_aabb()
-
+	var temp := AABB()
 	for object in object_list:
-		temp = temp.merge(object.get_bvh_aabb())
-
+		temp = PTUtils.merge_aabb(temp, object.get_bvh_aabb())
 	return temp
 
 
 func get_array_aabb(nodes : Array[BVHNode]) -> AABB:
-	var aabb := nodes[0].aabb
+	var aabb := AABB()
 	for node in nodes:
-		aabb = aabb.merge(node.aabb)
+		aabb = PTUtils.merge_aabb(aabb, node.aabb)
 	return aabb
 

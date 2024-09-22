@@ -9,6 +9,10 @@ static func vector3_to_array(vector : Vector3) -> Array[float]:
 	return [vector.x, vector.y, vector.z]
 
 
+static func vector3_to_bytes(vector : Vector3) -> PackedByteArray:
+	return PackedFloat32Array([vector.x, vector.y, vector.z]).to_byte_array()
+
+
 ## Create empty byte array with given size in bytes, rounded down to 4 byte-intervals
 static func empty_byte_array(size : int) -> PackedByteArray:
 	var ints : Array[int] = []
@@ -41,23 +45,23 @@ static func merge_aabb(bbox1 : AABB, bbox2 : AABB) -> AABB:
 
 static func transform3d_to_byte_array(transform : Transform3D) -> PackedByteArray:
 	var bytes : PackedByteArray = (
-			PackedFloat32Array(PTUtils.vector3_to_array(transform.basis.x)).to_byte_array() +
-			PackedFloat32Array(PTUtils.vector3_to_array(transform.basis.y)).to_byte_array() +
-			PackedFloat32Array(PTUtils.vector3_to_array(transform.basis.z)).to_byte_array() +
-			PackedFloat32Array(PTUtils.vector3_to_array(transform.origin)).to_byte_array()
+			PTUtils.vector3_to_bytes(transform.basis.x) +
+			PTUtils.vector3_to_bytes(transform.basis.y) +
+			PTUtils.vector3_to_bytes(transform.basis.z) +
+			PTUtils.vector3_to_bytes(transform.origin)
 	)
 	return bytes
 
 
 static func transform3d_smuggle_to_byte_array(transform : Transform3D, last_row := Vector4.ZERO) -> PackedByteArray:
 	var bytes : PackedByteArray = (
-			PackedFloat32Array(PTUtils.vector3_to_array(transform.basis.x)).to_byte_array() +
+			PTUtils.vector3_to_bytes(transform.basis.x) +
 			PackedFloat32Array([last_row.x]).to_byte_array() +
-			PackedFloat32Array(PTUtils.vector3_to_array(transform.basis.y)).to_byte_array() +
+			PTUtils.vector3_to_bytes(transform.basis.y) +
 			PackedFloat32Array([last_row.y]).to_byte_array() +
-			PackedFloat32Array(PTUtils.vector3_to_array(transform.basis.z)).to_byte_array() +
+			PTUtils.vector3_to_bytes(transform.basis.z) +
 			PackedFloat32Array([last_row.z]).to_byte_array() +
-			PackedFloat32Array(PTUtils.vector3_to_array(transform.origin)).to_byte_array() +
+			PTUtils.vector3_to_bytes(transform.origin) +
 			PackedFloat32Array([last_row.w]).to_byte_array()
 	)
 	return bytes
@@ -65,10 +69,14 @@ static func transform3d_smuggle_to_byte_array(transform : Transform3D, last_row 
 
 ## Turns AABB into bytes, with optional smuggling
 static func aabb_to_byte_array(aabb : AABB, smuggle1 : Variant = 0.0, smuggle2 : Variant = 0.0) -> PackedByteArray:
+	if aabb != aabb.abs():
+		push_warning("PT: AABB in aabb_to_byte_array is invalid: ", aabb)
+
 	var new_aabb := aabb.abs()
+	var padding := Vector3.ZERO if aabb.size == Vector3.ZERO else AABB_PADDING
 	var bytes : PackedByteArray = []
 
-	bytes += PackedFloat32Array(PTUtils.vector3_to_array(new_aabb.position - AABB_PADDING)).to_byte_array()
+	bytes += PTUtils.vector3_to_bytes(new_aabb.position - padding)
 
 	if smuggle1 is float:
 		bytes += PackedFloat32Array([smuggle1]).to_byte_array()
@@ -77,7 +85,7 @@ static func aabb_to_byte_array(aabb : AABB, smuggle1 : Variant = 0.0, smuggle2 :
 	else:
 		assert(false, "PT: smuggle1 has to be int or float, but was " + str(type_string(typeof(smuggle1))))
 
-	bytes += PackedFloat32Array(PTUtils.vector3_to_array(new_aabb.end + AABB_PADDING)).to_byte_array()
+	bytes += PTUtils.vector3_to_bytes(new_aabb.end + padding)
 
 	if smuggle2 is float:
 		bytes += PackedFloat32Array([smuggle2]).to_byte_array()
