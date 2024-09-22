@@ -27,6 +27,7 @@ const RENDER_SETTINGS_PATH := "res://addons/path_tracer_engine/configs/"
 const EDITOR_RENDER_SETTINGS_PATH := RENDER_SETTINGS_PATH + "editor_render_settings.tscn"
 const RUNTIME_RENDER_SETTINGS_PATH := RENDER_SETTINGS_PATH + "runtime_render_settings.tscn"
 
+# TODO 0: Make into load and create scenes on first editor load. Maybe should move also
 const WindowGui := preload("res://ui_scenes/render_window_gui/render_window_gui.tscn")
 const RuntimeRenderSettings := preload(RUNTIME_RENDER_SETTINGS_PATH)
 

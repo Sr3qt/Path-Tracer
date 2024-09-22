@@ -18,6 +18,27 @@ static func empty_byte_array(size : int) -> PackedByteArray:
 	return PackedInt32Array(ints).to_byte_array()
 
 
+## For an AABB to be valid it needs to have at least on positive size axis,
+## no negative size axees and be finite
+static func is_aabb_valid(bbox : AABB) -> bool:
+	return bbox.size != Vector3.ZERO and bbox.abs() == bbox and bbox.is_finite()
+
+
+## Merge two valid aabbs
+## Will not merge if one of the bounding boxes are invalid, see is_aabb_valid()
+## If both bounding boxes are invalid, return a zeroed AABB.
+static func merge_aabb(bbox1 : AABB, bbox2 : AABB) -> AABB:
+	# Zeroed AABB is returned, to give consistent output independant of order of parameters
+	if (not (is_aabb_valid(bbox1) or is_aabb_valid(bbox2))):
+		return AABB()
+	if not is_aabb_valid(bbox1):
+		return bbox2
+	if not is_aabb_valid(bbox2):
+		return bbox1
+
+	return bbox1.merge(bbox2)
+
+
 static func transform3d_to_byte_array(transform : Transform3D) -> PackedByteArray:
 	var bytes : PackedByteArray = (
 			PackedFloat32Array(PTUtils.vector3_to_array(transform.basis.x)).to_byte_array() +
