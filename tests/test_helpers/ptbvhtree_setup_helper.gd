@@ -22,7 +22,7 @@ func after_all() -> void:
 
 
 ## Create a valid small tree
-func create_test_bvh_a1(test_index_node := false) -> PTBVHTree:
+func create_test_bvh_a1() -> PTBVHTree:
 	if not scene_a:
 		scene_a = SceneA.instantiate()
 		add_child(scene_a)
@@ -49,33 +49,27 @@ func create_test_bvh_a1(test_index_node := false) -> PTBVHTree:
 	node_r.add_children([node_rl, node_rr], true)
 	bvh.root_node.add_children([node_l, node_r], true)
 
-	if test_index_node:
-		# TODO 1: Make test to verify that # Indices is equal to this
-		var bvh_list : Array[PTBVHTree.BVHNode] = [
-				node_l, node_r, node_rl, node_rr]
-		for node in bvh_list:
-			bvh.index_node(node)
-	else:
-		# Indices
-		bvh.leaf_nodes = [node_l, node_rl, node_rr]
-		bvh.bvh_list = [bvh.root_node, node_l, node_r, node_rl, node_rr]
-		var i := 0
-		for node in bvh.bvh_list:
-			bvh._node_to_index[node] = i
-			if node.is_leaf:
-				bvh._node_to_object_id_index[node] = bvh.object_ids.size()
-				for object in node.object_list:
-					bvh.object_to_leaf[object] = node
-					bvh.object_ids.append(object.get_object_id())
+	# Indices
+	bvh.leaf_nodes = [node_l, node_rl, node_rr]
+	bvh.bvh_list = [bvh.root_node, node_l, node_r, node_rl, node_rr]
+	var i := 0
+	for node in bvh.bvh_list:
+		bvh._node_to_index[node] = i
+		if node.is_leaf:
+			bvh._node_to_object_id_index[node] = bvh.object_ids.size()
+			for object in node.object_list:
+				bvh.object_to_leaf[object] = node
+				bvh.object_ids.append(object.get_object_id())
 
-			i += 1
+		i += 1
 
-		bvh.inner_count = 2
-		bvh.leaf_count = 3
-		bvh.object_count = 6
-		bvh.mesh_object_count = 0
+	bvh.inner_count = 2
+	bvh.leaf_count = 3
+	bvh.object_count = 6
+	bvh.mesh_object_count = 0
 
 	return bvh
+
 
 ## Create a sligthly smaller valid tree
 func create_test_bvh_a2() -> PTBVHTree:
@@ -121,6 +115,7 @@ func create_test_bvh_a2() -> PTBVHTree:
 	return bvh
 
 
+# TODO 2: Create two more scenes and manually index them
 func create_test_bvh_b() -> PTBVHTree:
 	pass
 	return

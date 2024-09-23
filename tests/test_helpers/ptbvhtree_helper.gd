@@ -20,7 +20,7 @@ func _init(p_bvh : PTBVHTree) -> void:
 
 	is_similar_diff.resize(7)
 	is_similar_diff.fill(false)
-	is_same_diff.resize(100)
+	is_same_diff.resize(11)
 	is_same_diff.fill(false)
 
 

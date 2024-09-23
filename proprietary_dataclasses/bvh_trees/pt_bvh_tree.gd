@@ -442,14 +442,15 @@ func get_subnodes(node : BVHNode, indices : Array[BVHNode] = []) -> Array[BVHNod
 # TODO 0: MAke test
 ## Erase all indices belonging to tree.
 func erase_indices() -> void:
-
 	bvh_list = []
 	leaf_nodes = []
 	object_to_leaf = {}
 	_node_to_index = {}
+	_mesh_to_mesh_socket = {}
 	inner_count = 0
 	leaf_count = 0
 	object_count = 0
+	mesh_object_count = 0
 
 
 ## Sets tree indices of tree for newly created node
@@ -486,22 +487,23 @@ func index_node(node : BVHNode, count := true) -> void:
 
 ## Sets the required indexes for the BVHTree to work with the engine
 func index_tree() -> void:
+	# NTR - No Test Required
 	# NOTE: Should be used as little as possible for best performance
-	print("bvhtree re-indexed")
+	print("BVHTree re-indexed, ")
 	var start_time := Time.get_ticks_usec()
+
 	erase_indices()
 
-	_node_to_index[root_node] = bvh_list.size() # UNSTATIC
-	bvh_list.append(root_node)
-	inner_count += 1
+	index_node(root_node)
+	index_subnodes(root_node)
 
-	_index_node(root_node)
-	print("Time taken: ", ((Time.get_ticks_usec() - start_time) / 1000.0), "ms")
+	printraw("Time taken: ", ((Time.get_ticks_usec() - start_time) / 1000.0), "ms")
 
 
 # TODO 1: Make test
-## Recursively index whole tree/sub-tree under given node
-func _index_node(node : BVHNode) -> void:
+## Recursively index all nodes under given node
+## Does not index node
+func index_subnodes(node : BVHNode) -> void:
 	for child in node.children:
 		_node_to_index[child] = bvh_list.size() # UNSTATIC
 		bvh_list.append(child)
@@ -514,10 +516,13 @@ func _index_node(node : BVHNode) -> void:
 				object_to_leaf[object] = child # UNSTATIC
 		else:
 			inner_count += 1
+		# index_node(child)
 
 	for child in node.children:
+		# if child.tree != self:
+		# 	child.tree.index_subnodes(child)
 		if child.is_inner:
-			_index_node(child)
+			index_subnodes(child)
 
 
 ## Finds a non-full inner node recursively
