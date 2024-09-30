@@ -14,6 +14,11 @@ extends Node
 # TODO 1: add option to toggle between editor settings and scene run debug settings, for ray depth and such
 # TODO 3: Also make render settings node similar to WorldEnvironment that can be overriden by debug settings
 
+# TODO 3: Ideas for showcase scene:
+#	- Crystal Ball on table in the dark, with wirly things inisde
+#	- Zeppelin in lighning and rain.
+#	- Regular outdoors forest environment.
+
 ## TODO-SEVERITY SCALE (put somewhere appropriate):
 ##	- Level 0: High Priority/, either breaks all functionality of the engine or is a small fix.
 ##	- Level 1: Priority, Features and fixes that I really want.

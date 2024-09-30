@@ -3,6 +3,7 @@ extends _PTBVHTreeSetupHelper
 ## Test script to test methods in PTBVHTreeHelper
 
 
+# TODO 1: All tests needs to test on scene_bvh_b as well
 func test_is_contigous_memory() -> void:
 	assert_true(tester_a.is_memory_contiguous(), "Normal bvh")
 

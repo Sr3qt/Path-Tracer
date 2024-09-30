@@ -92,7 +92,7 @@ var _mesh_to_mesh_socket := {}
 # TODO 3: Add bvh constructor with bvh_list as argument
 var bvh_list : Array[BVHNode] = []
 
-# TODO 1: Maybe inner_count should be bvh_list.size() - leaf_nodes.size()
+# TODO 0: Maybe inner_count should be bvh_list.size() - leaf_nodes.size()
 # and maybe object count should go up when add_object(s) is called
 ## Counts the number of nodes with no child nodes
 var leaf_count : int
@@ -439,7 +439,6 @@ func get_subnodes(node : BVHNode, indices : Array[BVHNode] = []) -> Array[BVHNod
 	return indices
 
 
-# TODO 0: MAke test
 ## Erase all indices belonging to tree.
 func erase_indices() -> void:
 	bvh_list = []

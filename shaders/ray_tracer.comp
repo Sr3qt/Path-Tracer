@@ -515,6 +515,8 @@ vec3 random_point_on_sphere() {
     //  -35ms +-15ms / 300 frames
     float theta1 = pcg(random) * pi_double;
     float theta2 = acos(2 * pcg(random) - 1);
+    // TODO 2: try other ways to calculate point
+    // float cos_theta2 = 2 * pcg(random) - 1;
     vec3 point = vec3(cos(theta1) * sin(theta2), cos(theta2), sin(theta1) * sin(theta2));
 
     return point;
@@ -988,71 +990,71 @@ float to_visit_t[max_depth];
 #endif
 
 void calculate_top_node(inout Ray ray, inout RayHit rayhit, vec3 inv_dir, bvec3 is_neg) {
-        int current_index = to_visit[--to_visit_i];
+    int current_index = to_visit[--to_visit_i];
 
-        BVHNode node = BVH.list[current_index];
-        int node_id = NODE_node_id;
-        int node_index = get_node_index(node_id);
-        int node_size = get_node_size(node_id);
+    BVHNode node = BVH.list[current_index];
+    int node_id = NODE_node_id;
+    int node_index = get_node_index(node_id);
+    int node_size = get_node_size(node_id);
 
-        /* All nodes in to_visit should be in sorted order,
-         we can break if the last node is out of range
-        NOTE: This is slow for first rays, but seem comparable for secondary rays.
-        TODO 3: Make toggle to use this for secondary rays
-        */
-        #if use_early_t_break
-        if (!in_range(to_visit_t[to_visit_i], ray)) {
-            break;
+    /* All nodes in to_visit should be in sorted order,
+        we can break if the last node is out of range
+    NOTE: This is slow for first rays, but seem comparable for secondary rays.
+    TODO 3: Make toggle to use this for secondary rays
+    */
+    #if use_early_t_break
+    if (!in_range(to_visit_t[to_visit_i], ray)) {
+        break;
+    }
+    #endif
+
+    // If node is leaf node, hit all children
+    // node_index pointing to nodes should never be zero (root_node)
+    // node_index should always be negative for bit manip consistency
+    if (node_index <= 0) {
+        for (int k = 0; k < node_size; k++) {
+            hit_object(ray, rayhit, object_ids.list[abs(node_index) + k - 1]);
         }
-        #endif
+        return;
+    }
 
-        // If node is leaf node, hit all children
-        // node_index pointing to nodes should never be zero (root_node)
-        // node_index should always be negative for bit manip consistency
-        if (node_index <= 0) {
-            for (int k = 0; k < node_size; k++) {
-                hit_object(ray, rayhit, object_ids.list[abs(node_index) + k - 1]);
-            }
-            return;
-        }
+    int added_children = 0;
+    // Do hit check on child inner nodes and add them to temp array
+    for (int l = 0; l < node_size; l++) {
+        BVHNode child = BVH.list[node_index + l];
 
-        int added_children = 0;
-        // Do hit check on child inner nodes and add them to temp array
-        for (int l = 0; l < node_size; l++) {
-            BVHNode child = BVH.list[node_index + l];
+        float aabb_t = hit_AABB(ray, child.bbox, inv_dir, is_neg);
 
-            float aabb_t = hit_AABB(ray, child.bbox, inv_dir, is_neg);
-
-            // xin_range much faster, but has an artifact
-            if (in_range(aabb_t, ray)) {
-                added_children++;
-                temp_ts[l] = aabb_t;
-                temp_children[l] = node_index + l;
-            }
-        }
-
-        // TODO 3: COnsider min heap or insertion sort
-        // Add nodes to stack in a sorted order
-        to_visit_i += added_children;
-        for (int i = 0; i < added_children; i++) { // Looping over constant is not faster here
-            // Finds smallest t, closest box
-            float smallest_t = infinity;
-            int smallest_index = order;
-            for (int j = 0; j < order; j++) { // Looping over constant is faster here
-                if (temp_ts[j] < smallest_t ) {
-                    smallest_t = temp_ts[j];
-                    smallest_index = j;
-                }
-            }
-
-            // Zero out the smallest
-            temp_ts[smallest_index] = infinity;
-            to_visit[to_visit_i - i - 1] = temp_children[smallest_index];
-            #if use_early_t_break
-            to_visit_t[to_visit_i - i - 1] = smallest_t;
-            #endif
+        // xin_range much faster, but has an artifact
+        if (in_range(aabb_t, ray)) {
+            added_children++;
+            temp_ts[l] = aabb_t;
+            temp_children[l] = node_index + l;
         }
     }
+
+    // TODO 3: COnsider min heap or insertion sort
+    // Add nodes to stack in a sorted order
+    to_visit_i += added_children;
+    for (int i = 0; i < added_children; i++) { // Looping over constant is not faster here
+        // Finds smallest t, closest box
+        float smallest_t = infinity;
+        int smallest_index = order;
+        for (int j = 0; j < order; j++) { // Looping over constant is faster here
+            if (temp_ts[j] < smallest_t ) {
+                smallest_t = temp_ts[j];
+                smallest_index = j;
+            }
+        }
+
+        // Zero out the smallest
+        temp_ts[smallest_index] = infinity;
+        to_visit[to_visit_i - i - 1] = temp_children[smallest_index];
+        #if use_early_t_break
+        to_visit_t[to_visit_i - i - 1] = smallest_t;
+        #endif
+    }
+}
 
 float check_ray_hit_BVH_mesh(Ray ray, inout RayHit rayhit) {
 

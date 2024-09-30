@@ -137,7 +137,7 @@ func remove_object(object : PTObject) -> void:
 	object_array.remove_at(index)
 	_object_to_object_index.erase(object)
 
-	# TODO 0: Removing object messes up indexing. Make function secure by updating relevant indices.
+	# TODO 2: Removing object messes up indexing. Make function secure by updating relevant indices.
 	# Needs to send signal / have an array of objects that updated index for bvh and such.
 	# Moving last object to removed index might be fine, in which case i also
 	# need to update one bvhnode

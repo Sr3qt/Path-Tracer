@@ -96,7 +96,7 @@ func _is_leaf_node_contiguous(node : PTBVHTree.BVHNode) -> bool:
 #endregion
 
 
-# TODO 1: NEEDS Testing in test_test_helper_bvh
+# TODO 1: NEEDS Testing in test_ptbvhtree_helper
 func is_tree_valid() -> bool:
 	assert(bvh != null, "PTBVHTreeHelper requires a set bvh in its 'bvh' property.")
 	# TODO 1: Make whole tree verification function and test

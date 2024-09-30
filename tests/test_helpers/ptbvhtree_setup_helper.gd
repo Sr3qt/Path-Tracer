@@ -126,8 +126,6 @@ func create_test_bvh_a2() -> PTBVHTree:
 	return bvh
 
 
-# TODO 2: Create two more scenes and manually index them
-# TODO Need to create bvhs for pt_meshes
 func create_test_bvh_b() -> PTBVHTree:
 	if not scene_b:
 		scene_b = SceneB.instantiate()
@@ -270,6 +268,7 @@ func create_test_bvh_b() -> PTBVHTree:
 	return scene_bvh
 
 
+# TODO 2: Create one more scene that has an instanced ptmeshinstance
 func create_test_bvh_c() -> PTBVHTree:
 	pass
 	return

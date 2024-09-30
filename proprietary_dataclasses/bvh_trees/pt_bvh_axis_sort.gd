@@ -9,7 +9,7 @@ var _axis : int = 0
 var _axis_sorts : Array[Callable] = []
 const MAX_DEPTH_LIMIT = 32
 
-# TODO 1: Decide on a single algorithm to use for axis sort.
+# TODO 2: Decide on a single algorithm to use for axis sort.
 # Leave new method a little unfinished, work on SAH method next
 # New method is slightly faster on dragon test, slower on import_test and spheres
 const use_old_method = !true
