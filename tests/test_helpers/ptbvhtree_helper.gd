@@ -3,6 +3,18 @@ extends RefCounted
 
 ## Helper functions to verify bvh integrity when testing bvh modification and creation.
 
+enum Similar {
+	OBJECT_COUNT,
+	ACTUAL_OBJECT_COUNT,
+	LEAF_TO_OBJECT_SIZE,
+	LEAF_TO_OBJECT_KEYS,
+	MESH_OBJECT_COUNT,
+	MESH_INDEX_SIZE,
+	MESH_INDEX_KEYS,
+	ROOT_AABB,
+	MAX
+}
+
 var bvh : PTBVHTree
 
 ## Array of if checks between bvh and another bvh.
@@ -16,9 +28,10 @@ var is_same_diff : Array[bool]
 
 
 func _init(p_bvh : PTBVHTree) -> void:
+	assert(p_bvh != null, "PTBVHTreeHelper requires a set bvh in its 'bvh' property.")
 	bvh = p_bvh
 
-	is_similar_diff.resize(7)
+	is_similar_diff.resize(Similar.MAX)
 	is_similar_diff.fill(false)
 	is_same_diff.resize(11)
 	is_same_diff.fill(false)
@@ -28,6 +41,7 @@ func _init(p_bvh : PTBVHTree) -> void:
 
 ## Verifies that all nodes in a tree adhere to the memory layout requirements.
 func is_memory_contiguous() -> bool:
+	assert(bvh != null, "PTBVHTreeHelper requires a set bvh in its 'bvh' property.")
 	if not is_node_contiguous(bvh.root_node):
 		return false
 	return _recursive_is_contiguous(bvh.root_node)
@@ -45,6 +59,7 @@ func _recursive_is_contiguous(node : PTBVHTree.BVHNode) -> bool:
 
 ## Verifys that the children/objects of a node adheres to the memory layout requirements.
 func is_node_contiguous(node : PTBVHTree.BVHNode) -> bool:
+	assert(bvh != null, "PTBVHTreeHelper requires a set bvh in its 'bvh' property.")
 	if node.is_leaf:
 		return _is_leaf_node_contiguous(node)
 
@@ -83,7 +98,18 @@ func _is_leaf_node_contiguous(node : PTBVHTree.BVHNode) -> bool:
 
 # TODO 1: NEEDS Testing in test_test_helper_bvh
 func is_tree_valid() -> bool:
+	assert(bvh != null, "PTBVHTreeHelper requires a set bvh in its 'bvh' property.")
 	# TODO 1: Make whole tree verification function and test
+	## Tests needed for verify tree:
+	##	- Is all nodes in tree present in bvh_list
+	##	- No infinite loops
+	##	- All leaf nodes in tree are indexed
+	##	- All objects to leaf nodes are indexed
+	##	- All mesh sockets adhere to the rules
+	##	- All nodes have set correct is_inner, is_leaf, and is_mesh_socket
+	## 	- All nodes' aabb fit inside their parents
+	##	- Node_to_index points to correct node and index
+
 	return true
 
 
@@ -91,6 +117,7 @@ func is_tree_valid() -> bool:
 ## Objects have to be the same instance, but nodes can be different instances.
 ## Does not compare bvh owners or owner specific values, like object_ids.
 func is_same_as(other : PTBVHTree) -> bool:
+	assert(bvh != null, "PTBVHTreeHelper requires a set bvh in its 'bvh' property.")
 	is_same_diff.fill(true)
 
 	# TODO 2: Finnish this function
@@ -128,14 +155,12 @@ func is_same_as(other : PTBVHTree) -> bool:
 ## However it does not check for the same tree structure.
 ## Basically it will check if two bvhs were created from the same PTObjectContainer.
 func is_similar_to(other : PTBVHTree) -> bool:
+	assert(bvh != null, "PTBVHTreeHelper requires a set bvh in its 'bvh' property.")
 	is_similar_diff.fill(true)
 
 	var object_count := bvh.object_count == other.object_count
+	var actual_object_count := _count_objects() == _count_objects(other)
 	var mesh_object_count := bvh.mesh_object_count == other.mesh_object_count
-	# SHOuld this be included?
-	# var object_id_index_size := (
-	# 		bvh._node_to_object_id_index.size() ==
-	# 		other._node_to_object_id_index.size())
 	var mesh_index_size := (
 			bvh._mesh_to_mesh_socket.size() == other._mesh_to_mesh_socket.size())
 	var mesh_index_keys := (
@@ -144,14 +169,23 @@ func is_similar_to(other : PTBVHTree) -> bool:
 	var object_leaf_keys := other.object_to_leaf.has_all(bvh.object_to_leaf.keys())
 	var root_node_aabb := bvh.root_node.aabb.is_equal_approx(other.root_node.aabb)
 
-	is_similar_diff[0] = object_count
-	is_similar_diff[1] = mesh_object_count
-	is_similar_diff[2] = root_node_aabb
-	is_similar_diff[3] = mesh_index_size
-	is_similar_diff[4] = mesh_index_keys
-	is_similar_diff[5] = object_leaf_size
-	is_similar_diff[6] = object_leaf_keys
-	# is_similar_diff[7] = object_id_index_size
+	is_similar_diff[Similar.OBJECT_COUNT] = object_count
+	is_similar_diff[Similar.ACTUAL_OBJECT_COUNT] = actual_object_count
+	# Will be DEPRECATED when object_count chagnges to object_to_leaf.size
+	is_similar_diff[Similar.LEAF_TO_OBJECT_SIZE] = object_leaf_size
+	is_similar_diff[Similar.LEAF_TO_OBJECT_KEYS] = object_leaf_keys
+	is_similar_diff[Similar.MESH_OBJECT_COUNT] = mesh_object_count
+	is_similar_diff[Similar.MESH_INDEX_SIZE] = mesh_index_size
+	is_similar_diff[Similar.MESH_INDEX_KEYS] = mesh_index_keys
+	is_similar_diff[Similar.ROOT_AABB] = root_node_aabb
 
 	return is_similar_diff.all(func(a : bool) -> bool: return a)
 
+
+func _count_objects(other : PTBVHTree = null) -> int:
+	var temp_bvh := bvh if other == null else other
+	var count := 0
+	for node in temp_bvh.leaf_nodes:
+		count += node.object_list.size()
+
+	return count

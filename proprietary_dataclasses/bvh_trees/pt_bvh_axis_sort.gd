@@ -69,7 +69,7 @@ func create_disconnected_node_list(objects : PTObjectContainer) -> Array[BVHNode
 		for object : PTObject in objects.get_object_array(object_type):
 			var new_node := BVHNode.new(null, self)
 			new_node.is_leaf = true
-			new_node.add_object(object, true)
+			new_node.add_object(object)
 			flat_node_list.append(new_node)
 
 	for mesh in objects.meshes:
@@ -78,7 +78,7 @@ func create_disconnected_node_list(objects : PTObjectContainer) -> Array[BVHNode
 		new_node.is_inner = true
 		_mesh_to_mesh_socket[mesh] = new_node
 		mesh.bvh.root_node.parent = new_node
-		new_node.add_child(mesh.bvh.root_node, true)
+		new_node.add_child(mesh.bvh.root_node)
 		flat_node_list.append(new_node)
 
 	return flat_node_list
@@ -128,7 +128,7 @@ func create_bvh_tree(objects : PTObjectContainer, f_type := BVHType.XYZ_SORTED) 
 			flat_object_list.sort_custom(_axis_sorts[_axis])
 
 		# Creates tree recursively
-		root_node.add_children(_recursive_split(flat_object_list, root_node), true)
+		root_node.add_children(_recursive_split(flat_object_list, root_node))
 
 		# Indexes tree recursively
 		bvh_list.resize(size())
@@ -199,7 +199,7 @@ func create_bvh_node_list(objects : PTObjectContainer, f_type := BVHType.XYZ_SOR
 	inner_count = 1
 
 	# Creates tree recursively
-	root_node.add_children(_recursive_split_nodes(node_list, root_node), true)
+	root_node.add_children(_recursive_split_nodes(node_list, root_node))
 
 	## TODO 2: index mesh_sockets
 	# TODO 2: Merge object ids
@@ -258,7 +258,7 @@ func _recursive_split(object_list : Array[PTObject], parent : BVHNode) -> Array[
 			new_children.append(_set_leaf(new_node, split_objects))
 			continue
 
-		new_node.add_children(_recursive_split(split_objects, new_node), true)
+		new_node.add_children(_recursive_split(split_objects, new_node))
 		inner_count += 1
 		new_children.append(new_node)
 
@@ -334,7 +334,7 @@ func _recursive_split_nodes(node_list : Array[BVHNode], parent : BVHNode, depth 
 		new_node.is_inner = true
 		# Remaining nodes are still to many, split them into new nodes.
 		if nodes.size() > order and depth < MAX_DEPTH_LIMIT:
-			new_node.add_children(_recursive_split_nodes(nodes, new_node, depth + 1), true)
+			new_node.add_children(_recursive_split_nodes(nodes, new_node, depth + 1))
 			new_nodes.append(new_node)
 			continue
 
@@ -432,14 +432,14 @@ func _recursive_split2(object_list : Array[PTObject], parent : BVHNode, depth : 
 	if right.size() <= order:
 		new_children.append(_set_leaf(new_node_right, right))
 	else:
-		new_node_right.add_children(_recursive_split2(right, new_node_right, depth + 1), true)
+		new_node_right.add_children(_recursive_split2(right, new_node_right, depth + 1))
 		inner_count += 1
 
 
 	if left.size() <= order:
 		new_children.append(_set_leaf(new_node_left, left))
 	else:
-		new_node_left.add_children(_recursive_split2(left, new_node_left, depth + 1), true)
+		new_node_left.add_children(_recursive_split2(left, new_node_left, depth + 1))
 		inner_count += 1
 
 	return [new_node_right, new_node_left]

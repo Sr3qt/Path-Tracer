@@ -35,21 +35,33 @@ func test_is_similar_to() -> void:
 	assert_true(tester_a.is_similar_to(bvh_a2), "Empty node ignored")
 
 	bvh_a2.object_count += 1
-	assert_false(
-			tester_a.is_similar_to(bvh_a2) or
-			tester_a.is_similar_diff[0] or
-			tester_a.is_similar_diff.count(true) != 6,
-			"Differing object count"
+	assert_false(tester_a.is_similar_to(bvh_a2),
+			"Is dissimilar: differing object count")
+	assert_false(tester_a.is_similar_diff[tester_a.Similar.OBJECT_COUNT],
+			"Is NOT Similar.OBJECT_COUNT")
+	assert_eq(
+			tester_a.is_similar_diff.count(true), 7,
+			"Exact differing similarity count"
 	)
 	bvh_a2.object_count -= 1
 
 	var poor_orphan := PTSphere.new(Vector3(10, 10, 10), 2)
-	bvh_a2.bvh_list[1].add_object(poor_orphan)
+	bvh_a2.bvh_list[1].add_object(poor_orphan, false)
 	bvh_a2.bvh_list[1].update_aabb()
-	assert_false(
-			tester_a.is_similar_to(bvh_a2) or
-			tester_a.is_similar_diff[2] or
-			tester_a.is_similar_diff.count(true) != 6,
+	assert_false(tester_a.is_similar_to(bvh_a2),
+			"Is dissimilar: aabb and index")
+
+	assert_true(tester_a.is_similar_diff[tester_a.Similar.OBJECT_COUNT],
+			"Is Similar.OBJECT_COUNT")
+	assert_false(tester_a.is_similar_diff[tester_a.Similar.ACTUAL_OBJECT_COUNT],
+			"Is NOT Similar.ACTUAL_OBJECT_COUNT")
+	assert_true(tester_a.is_similar_diff[tester_a.Similar.LEAF_TO_OBJECT_SIZE],
+			"Is Similar.LEAF_TO_OBJECT_SIZE")
+	assert_false(tester_a.is_similar_diff[tester_a.Similar.ROOT_AABB],
+			"Is NOT Similar.ROOT_AABB")
+
+	assert_eq(
+			tester_a.is_similar_diff.count(true), 6,
 			"Differing aabb + unindexed object"
 	)
 

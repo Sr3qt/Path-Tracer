@@ -16,6 +16,7 @@ extends RefCounted
 ## Also really good overview
 ## https://meistdan.github.io/publications/bvh_star/paper.pdf
 ##
+## ALL INFORMATION IS OUTDATED
 ## The user can add their own algorithmic implementation of the creation code.
 ## After all BVHNodes point to their respective child nodes and objects, index_tree
 ## should be called to assure it will work properly with the rest of the Engine.
@@ -144,9 +145,8 @@ var needs_buffer_reset := false
 ##	- Set node's parent
 ##	- Update nodes aabb and ancestors'
 ##	- If not in creation: append to updated_indices
-##
 
-# TODO 1: Determine if bvh should initialize indexed or not.
+
 func _init(_order := 2, index_root := true) -> void:
 	order = _order
 	root_node = BVHNode.new(null, self)
@@ -281,7 +281,7 @@ func create_mesh_socket(parent : BVHNode, mesh_tree : PTBVHTree) -> BVHNode:
 	mesh_socket.add_children([mesh_tree.root_node])
 	index_node(mesh_socket)
 
-	parent.add_children([mesh_socket])
+	parent.add_children([mesh_socket], false)
 	parent.update_aabb()
 
 	# Redundant bc of update_aabb?
@@ -326,11 +326,11 @@ func _add_object_to_tree(object : PTObject) -> Array[BVHNode]:
 	if fitting_node.is_inner:
 		var new_node := BVHNode.new(fitting_node, self)
 		new_node.is_leaf = true
-		new_node.add_object(object, true)
+		new_node.add_object(object)
 		fitting_node.add_child(new_node)
 		new_nodes.append(new_node)
 	else:
-		fitting_node.add_object(object)
+		fitting_node.add_object(object, false)
 		object_to_leaf[object] = fitting_node # UNSTATIC
 		if is_sub_tree():
 			parent_tree.object_to_leaf[object] = fitting_node # UNSTATIC
@@ -525,6 +525,7 @@ func index_subnodes(node : BVHNode) -> void:
 			index_subnodes(child)
 
 
+# TODO 2: alos make find_leaf_node
 ## Finds a non-full inner node recursively
 func find_inner_node(node : BVHNode) -> BVHNode:
 	assert(node.tree == self, "The given node is not a part of this tree or is in" +
@@ -576,16 +577,16 @@ func _split_node(node : BVHNode) -> Array[BVHNode]:
 
 	if node.is_inner:
 		var halfway := node.children.size() / 2
-		new_node_left.add_children(node.children.slice(0, halfway), true)
-		new_node_right.add_children(node.children.slice(halfway), true)
+		new_node_left.add_children(node.children.slice(0, halfway))
+		new_node_right.add_children(node.children.slice(halfway))
 
 		node.children.clear()
 
 		inner_count += 2
 	else:
 		var halfway := node.size() / 2
-		new_node_left.add_objects(node.object_list.slice(0, halfway), true)
-		new_node_left.add_objects(node.object_list.slice(halfway), true)
+		new_node_left.add_objects(node.object_list.slice(0, halfway))
+		new_node_left.add_objects(node.object_list.slice(halfway))
 
 		# Remove leaf node references in node
 		node.object_list.clear()
@@ -597,7 +598,7 @@ func _split_node(node : BVHNode) -> Array[BVHNode]:
 		inner_count += 1
 		leaf_count += 1
 
-	node.add_children([new_node_left, new_node_right], true)
+	node.add_children([new_node_left, new_node_right])
 	append_updated_node_index(get_node_index(node))
 
 	return [new_node_left, new_node_right]
@@ -882,7 +883,7 @@ class BVHNode:
 				parent.update_aabb()
 
 
-	func add_children(new_children : Array[BVHNode], f_set_aabb := false) -> void:
+	func add_children(new_children : Array[BVHNode], f_set_aabb := true) -> void:
 		assert(is_inner, "Cannot give child node(s) to leaf node.")
 		assert(size() + new_children.size() <= tree.order,
 				"PT: Cannot fit child BVHNode(s) to node: " + str(self))
@@ -891,18 +892,19 @@ class BVHNode:
 			set_aabb()
 
 
-	func add_child(new_child : BVHNode, f_set_aabb := false) -> void:
+	func add_child(new_child : BVHNode, f_set_aabb := true) -> void:
 		add_children([new_child], f_set_aabb)
 
 
-	func add_objects(new_objects : Array[PTObject], f_set_aabb := false) -> void:
+	# TODO 1: Index objects with ids when added
+	func add_objects(new_objects : Array[PTObject], f_set_aabb := true) -> void:
 		assert(is_leaf, "Cannot give objects to inner node.")
 		object_list.append_array(new_objects)
 		if f_set_aabb:
 			set_aabb()
 
 
-	func add_object(new_object : PTObject, f_set_aabb := false) -> void:
+	func add_object(new_object : PTObject, f_set_aabb := true) -> void:
 		add_objects([new_object], f_set_aabb)
 
 
