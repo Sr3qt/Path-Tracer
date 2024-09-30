@@ -2,8 +2,6 @@
 class_name _PTPluginControlRoot
 extends Control
 
-const EditorRenderSettings := preload(PTRenderer.EDITOR_RENDER_SETTINGS_PATH)
-
 var viewport : SubViewport
 var editor_window : PTRenderWindow
 var runtime_window : PTRenderWindow
@@ -16,12 +14,15 @@ func _ready():
 	if _is_plugin_hint:
 		viewport = %SubViewport as SubViewport
 
+		var EditorRenderConfig : PackedScene = load(PTConfig.EDITOR_RENDER_CONFIG)
+		var RuntimeRenderConfig : PackedScene = load(PTConfig.RUNTIME_RENDER_CONFIG)
+
 		var camera := viewport.get_child(0) as PTCamera
 
 		PTRendererAuto._set_plugin_camera(camera)
 
 		# Editor panel
-		editor_window = EditorRenderSettings.instantiate()
+		editor_window = EditorRenderConfig.instantiate()
 		var editor_settings := PTRenderer.WindowGui.instantiate() as _PTSettingsManager
 		editor_settings.set_pt_render_window(editor_window)
 		editor_settings.set_settings_manager(editor_window)
@@ -34,7 +35,7 @@ func _ready():
 		viewport.get_parent().add_child(editor_settings)
 
 		# Runtime panel
-		runtime_window = PTRenderer.RuntimeRenderSettings.instantiate()
+		runtime_window = RuntimeRenderConfig.instantiate()
 		var runtime_settings := PTRenderer.WindowGui.instantiate() as _PTSettingsManager
 		runtime_settings.set_pt_render_window(runtime_window)
 
@@ -52,14 +53,10 @@ func _process(_delta):
 	if _is_plugin_hint:
 		if editor_window.settings_was_changed:
 			editor_window.settings_was_changed = false
-			var packed = PackedScene.new()
-			packed.pack(editor_window)
-			ResourceSaver.save(packed, PTRenderer.EDITOR_RENDER_SETTINGS_PATH)
+			PTConfig.save_editor_render_config(editor_window)
 		if runtime_window.settings_was_changed:
 			runtime_window.settings_was_changed = false
-			var packed = PackedScene.new()
-			packed.pack(runtime_window)
-			ResourceSaver.save(packed, PTRenderer.RUNTIME_RENDER_SETTINGS_PATH)
+			PTConfig.save_runtime_render_config(runtime_window)
 
 
 func _on_resized():

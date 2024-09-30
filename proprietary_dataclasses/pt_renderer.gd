@@ -28,13 +28,7 @@ extends Node
 # Using a selction box in 3D editor crashes editor, FIX GODOT_BUG
 # NOTE: NOPE not my problem https://github.com/godotengine/godot/issues/95356
 
-const RENDER_SETTINGS_PATH := "res://addons/path_tracer_engine/configs/"
-const EDITOR_RENDER_SETTINGS_PATH := RENDER_SETTINGS_PATH + "editor_render_settings.tscn"
-const RUNTIME_RENDER_SETTINGS_PATH := RENDER_SETTINGS_PATH + "runtime_render_settings.tscn"
-
-# TODO 0: Make into load and create scenes on first editor load. Maybe should move also
 const WindowGui := preload("res://ui_scenes/render_window_gui/render_window_gui.tscn")
-const RuntimeRenderSettings := preload(RUNTIME_RENDER_SETTINGS_PATH)
 
 # NOTE: CPU control over gpu invocations has not been added.
 #	These are merely for reference
@@ -165,7 +159,7 @@ func _ready() -> void:
 	print("PTRenderer ready time: ", (Time.get_ticks_usec()) / 1000., "ms ")
 	_startup_time = Time.get_ticks_usec()
 
-	# REMOVE in final
+	# TODO 3: REMOVE in final
 	if not Engine.is_editor_hint():
 		# Apparently very import check for get_window (Otherwise the editor bugs out)
 		get_window().position -= Vector2i(450, 100)
@@ -195,7 +189,8 @@ func _ready() -> void:
 		var pt_window : PTRenderWindow
 
 		if use_render_settings_override:
-			pt_window = RuntimeRenderSettings.instantiate()
+			var WINDOW : PackedScene = load(PTConfig.RUNTIME_RENDER_CONFIG)
+			pt_window = WINDOW.instantiate()
 		else:
 			pt_window = PTRenderWindow.new()
 

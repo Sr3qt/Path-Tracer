@@ -15,3 +15,5 @@ shaders/comp - no ray reset.spv
 shaders/comp.spv
 /addons/path_tracer_engine/configs
 .gutconfig.json
+addons/path_tracer_engine/configs/editor_render_settings.tscn
+addons/path_tracer_engine/configs/runtime_render_settings.tscn
