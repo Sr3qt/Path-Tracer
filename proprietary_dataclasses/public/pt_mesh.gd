@@ -24,6 +24,9 @@ var bvh : PTBVHTree
 
 # The scene this object is part of. This object might also be a part of a mesh.
 var scene : PTScene
+## Whenever an object is added to mesh and the mesh doesn't have a valid scene,
+## those objects must be added to the scene when mesh gets a valid scene.
+var objects_not_in_scene : PTObjectContainer
 
 #var surface_mesh : ArrayMesh
 var mesh : Mesh
@@ -42,6 +45,7 @@ var transform_before : Transform3D
 
 func _init() -> void:
 	objects = PTObjectContainer.new()
+	objects_not_in_scene = PTObjectContainer.new()
 
 
 func _enter_tree() -> void:
@@ -121,6 +125,8 @@ func add_object(object : PTObject) -> void:
 
 	if is_instance_valid(scene):
 		scene.add_object(object)
+	else:
+		objects_not_in_scene.add_object(object)
 
 	if bvh:
 		bvh.add_object(object)

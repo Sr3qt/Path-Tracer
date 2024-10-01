@@ -26,6 +26,7 @@ var spheres : Array[PTSphere]
 var planes : Array[PTPlane]
 var triangles : Array[PTTriangle]
 
+# TODO 2: Remove count and object_count, replace with get_object_count
 var object_count : int = 0
 
 # Simple dict to help choose the right list
@@ -52,7 +53,7 @@ func get_object_array(type : ObjectType) -> Array:
 		ObjectType.TRIANGLE:
 			return triangles
 
-	push_error("PT: PTMesh.get_object_array with argument: ", type, ", is not supported.")
+	assert(false, "PT: PTMesh.get_object_array with argument: " + str(type) + ", is not supported.")
 	return []
 
 
@@ -120,6 +121,7 @@ func get_mesh_index(mesh : PTMesh) -> int:
 
 
 func add_object(object : PTObject) -> void:
+	assert(not has(object))
 	var type := object.get_type()
 	var object_array : Array = get_object_array(type)
 	_set_object_index(object, object_array.size())
@@ -187,6 +189,7 @@ func mesh_to_pttriangles(f_mesh : Mesh) -> Array[PTTriangle]:
 ## Add another PTObjectContainer's objects to this object
 ## Returns a bool array, indexed by ObjectType, of which objects were added.
 func merge(other : PTObjectContainer) -> Array[bool]:
+	assert(check_no_object_shared_with_container(other))
 	meshes.append_array(other.meshes)
 	var added_types : Array[bool] = []
 	added_types.resize(ObjectType.MAX)
