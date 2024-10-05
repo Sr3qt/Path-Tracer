@@ -95,6 +95,10 @@ For complex scenes a fast ray-triangle intersection test is crucial for maintain
 ## Asset Sources
 The first model I used for testing was a GrimChild model by Andre Dudka, reposted by SuicideSquid on [TurboSquid](https://www.turbosquid.com/3d-models/3d-hollow-knight-grimmchild-animated-model-2074482). The original can be found [here](https://sketchfab.com/3d-models/hollow-knight-grimmchild-animation-a3c2474c002f4da78cf6e60288f59ab1)
 
+The Crytek Sponza model I got from Morgan McGuire's [Computer Graphics Archive](https://casual-effects.com/data).
+
+The Chinese dragon model I got from Morgan McGuire's [Computer Graphics Archive](https://casual-effects.com/data) (1% Downscaled in blender).
+
 UV image was from [PostImage](https://postimg.cc/HrxvBss3), but I couldn't find any author.
 
 ### Code Assets

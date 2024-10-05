@@ -17,3 +17,6 @@ shaders/comp.spv
 .gutconfig.json
 addons/path_tracer_engine/configs/editor_render_settings.tscn
 addons/path_tracer_engine/configs/runtime_render_settings.tscn
+/test_models/sponza/textures
+/test_models/sponza/original
+/test_models/dragon low poly/original

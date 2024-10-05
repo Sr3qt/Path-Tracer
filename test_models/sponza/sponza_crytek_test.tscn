@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3 uid="uid://dmwa4w7ns2qg"]
+
+[ext_resource type="PackedScene" uid="uid://c3564xwpe245i" path="res://test_models/sponza/sponza-crytek.blend" id="1_gdvga"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_mesh.gd" id="2_wfhch"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="3_km4eg"]
+
+[node name="sponza-crytek" instance=ExtResource("1_gdvga")]
+script = ExtResource("2_wfhch")
+bvh_type = 0
+
+[node name="Light" parent="." index="0"]
+transform = Transform3D(-0.290865, -0.771101, 0.566393, -0.055189, 0.604525, 0.794672, -0.955171, 0.199883, -0.218391, 4.07625, 560.304, -1.00545)
+omni_range = 597.036
+omni_attenuation = 1.197
+
+[node name="PTCameraFPS" type="Camera3D" parent="." index="2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 135.136, 0)
+script = ExtResource("3_km4eg")

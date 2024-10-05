@@ -1,0 +1,29 @@
+[gd_scene load_steps=6 format=3 uid="uid://dps6ckgdqw24i"]
+
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_hjw4n"]
+[ext_resource type="PackedScene" uid="uid://dmwa4w7ns2qg" path="res://test_models/sponza/sponza_crytek_test.tscn" id="2_ogube"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="3_ih8qe"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_material.gd" id="3_vxgct"]
+
+[sub_resource type="Resource" id="Resource_rpb77"]
+script = ExtResource("3_vxgct")
+albedo = Color(0.901961, 0.454902, 0.588235, 1)
+roughness = 0.0
+metallic = 0.0
+opacity = 1.0
+reflectivity = 1.0
+IOR = 1.0
+refraction_depth = 0
+is_emissive = false
+
+[node name="Node3D" type="Node"]
+script = ExtResource("1_hjw4n")
+default_bvh = 4
+
+[node name="sponza-crytek" parent="." instance=ExtResource("2_ogube")]
+bvh_type = 4
+default_material = SubResource("Resource_rpb77")
+
+[node name="PTCameraFPS" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 98.79, 0)
+script = ExtResource("3_ih8qe")
