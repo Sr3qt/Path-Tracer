@@ -28,7 +28,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+refraction_depth = -2
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_wc8i6"]

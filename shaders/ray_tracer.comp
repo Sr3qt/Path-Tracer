@@ -205,7 +205,7 @@ float current_IOR = IOR_air;
 
 // The program will keep track of which objects a ray has passed through to do correct calculations
 //  i.e. refraction tracking
-// This is the maximum amount of overlapping geomtry that will be considered
+// This is the maximum amount of overlapping geometry that will be considered
 const int max_refraction_depth = 8;
 
 // Keeps track of first vacant index in stack
@@ -215,7 +215,7 @@ InsideOf empty_inside() {
     return InsideOf(0, int_limit - 1);
 }
 
-// Holds the object_id, obejct_type and refraction_depth of and object
+// Holds the array of material index and refraction depth
 InsideOf inside_of[max_refraction_depth] = InsideOf[](
     empty_inside(),
     empty_inside(),
@@ -246,6 +246,7 @@ int object_hit_count = 0;
 const int order = 2; // Replaced by script preprocessor, do NOT touch this line
 
 int current_transform_index = -1;
+bool ignore_attenuation = false;
 
 // Flags
 const int flag_size = 31;
@@ -1176,6 +1177,7 @@ Ray reflect_ray(Ray ray_in, RayHit rayhit) {
 }
 
 // TODO 3: Experiment with max heap instead of array, or insert sorted list
+// TODO 2: Try storing last two InsideOfs, then return based on if the last one was material_index
 int get_material(int material_index, int lowest_depth, bool ignore_self) {
     // Loop over materials that we have entered and not left,
     //  pick the one with the lowest refraction_depth, ignore default values if specified
@@ -1196,16 +1198,61 @@ int get_material(int material_index, int lowest_depth, bool ignore_self) {
     return current_index;
 }
 
-void remove_object_from_inside_of(int material_index) {
-    int shift = 0;
-    // NOTE: inside_of_count tested to be faster than looping over entire array
-    for (int i = 0; i < inside_of_count; i++) {
+ivec2 get_material2(int material_index, int lowest_depth) {
+    // Loop over materials that we have entered and not left,
+    //  pick the one with the lowest refraction_depth, ignore default values if specified
+    int second_lowest = int_limit;
+    ivec2 current_indices = ivec2(material_index, 0);
+    for (int i = 0; i < max_refraction_depth; i++) {
         InsideOf index = inside_of[i];
-        if (material_index == index.material_index) {
+        if (index.refraction_depth < lowest_depth) {
+            second_lowest = lowest_depth;
+            lowest_depth = index.refraction_depth;
+            current_indices.y = index.material_index;
+            current_indices = current_indices.yx;
+        } else if  (index.refraction_depth < second_lowest) {
+            second_lowest = index.refraction_depth;
+            current_indices.y = index.material_index;
+        }
+    }
+
+    return current_indices;
+}
+
+ivec2 get_material3() {
+    return ivec2(inside_of[0].material_index, inside_of[1].material_index);
+}
+
+// Adds new material to be ior tracked in sorted array inside_of
+void add_material_to_inside_of(int material_index, int depth) {
+    int shift = 0;
+    int insert_index = 0;
+    for (int i = 0; i < max_refraction_depth; i++) {
+        InsideOf index = inside_of[i];
+        inside_of[i] = inside_of[i - shift];
+        if (depth < index.refraction_depth && shift == 0) {
+            insert_index = i;
+            shift = 1;
+        }
+    }
+    inside_of[insert_index] = InsideOf(material_index, depth);
+    inside_of_count++;
+}
+
+
+void remove_material_from_inside_of(int material_index) {
+    int shift = 0;
+    // TODO 1: Previous testing was probably flawed bc of out of bounds indexing. Re-test
+    // NOTE: inside_of_count tested to be faster than looping over entire array
+    // NOTE: Newer testing show that looping over entire array is faster
+    for (int i = 0; i < max_refraction_depth - 1; i++) {
+        InsideOf index = inside_of[i];
+        if (shift == 0 && material_index == index.material_index) {
             shift = 1;
         }
         inside_of[i] = inside_of[i + shift];
     }
+    inside_of[max_refraction_depth - 1] = empty_inside();
     inside_of_count--;
 }
 
@@ -1213,11 +1260,16 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     // Returns a refracted or reflected ray based on ray_in and rayhit
     // TODO 3: Add support for cpu to send InsideOf buffer based on camera position
     // TODO 3: Add tiny random direction change coupled with color shift, prism, diffraction
-    // TODO 2: Add support for meshes to refract
+    // TODO 2: add refraction depth checks to diffuse and metallic
+    // TODO 2: Add support for meshes to refract DONE!
     // TODO 2: Implement Beer's law:
     // https://www.flipcode.com/archives/Raytracing_Topics_Techniques-Part_3_Refractions_and_Beers_Law.shtml
 
     vec3 new_origin = rayhit.point;
+
+    // #if self_intersect_method==0
+    // new_origin = offset_ray(new_origin, -normal);
+    // #endif
 
     // Whether object is inside the current object
     bool is_inside = bool(dot(rayhit.normal, ray_in.direction) > 0.);
@@ -1236,19 +1288,141 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     // If ray is inside object ignore rayhti.mtl_index as having a possible eta_out, else
     //  rayhit.mtl_index is default material if no other materials are in inside_of.
     int depth = is_inside ? int_limit : material.refraction_depth;
+
+    float eta_out;
+
+    #define USE_NEW_REFRACTION_TRACKING 1
+
+    #if USE_NEW_REFRACTION_TRACKING
+    int object_material = rayhit.mtl_index;
+    // ivec2 material_indices = get_material2(object_material, int_limit);
+    ivec2 material_indices = get_material3();
+    // TODO 1: Move Refraction depth check to before choosing ray creation method.
+    // TODO 2: make warning in godot for whenever manx refraction depth has been reached.
+    if (is_inside) {
+        if (inside_of_count == 1) {
+            // Material outside is air.
+            eta_out = IOR_air;
+            ignore_attenuation = true;
+        } else {
+            if (material_indices.x == object_material) {
+                if (material_indices.y == object_material) {
+                    // Material on both sides of object are the same and are the same as object's material.
+                    remove_material_from_inside_of(object_material);
+                    ignore_attenuation = true;
+
+                    #if self_intersect_method==0
+                    new_origin = offset_ray(new_origin, -normal);
+                    #endif
+
+                    if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
+
+                    return Ray(new_origin, NEW_RAY_START, ray_in.direction, infinity);
+                }
+                // material on inside is material's, material on outside is different.
+                ignore_attenuation = true;
+                eta_out = materials.data[material_indices.y].IOR;
+
+            } else {
+                // Material on both sides of object are the same, but not the same as object's material.
+                remove_material_from_inside_of(object_material);
+                ignore_attenuation = true;
+
+                #if self_intersect_method==0
+                new_origin = offset_ray(new_origin, -normal);
+                #endif
+
+                if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
+
+                return Ray(new_origin, NEW_RAY_START, ray_in.direction, infinity);
+            }
+        }
+    } else {
+        Material mtl = materials.data[object_material]; // replace with material
+        if (inside_of_count == 0) {
+            // Ray is entering from air into object
+            eta_out = mtl.IOR;
+        } else {
+            if (material_indices.x == object_material) {
+                // Material on both sides of object are the same and are the same as object's material.
+                add_material_to_inside_of(object_material, mtl.refraction_depth);
+                ignore_attenuation = true;
+
+                #if self_intersect_method==0
+                new_origin = offset_ray(new_origin, -normal);
+                #endif
+
+                if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
+
+                return Ray(new_origin, NEW_RAY_START, ray_in.direction, infinity);
+
+            } else {
+                if (inside_of[0].refraction_depth < mtl.refraction_depth) {
+                    // Ray comes from material with lower refraction depth.
+                    add_material_to_inside_of(object_material, mtl.refraction_depth);
+                    ignore_attenuation = true;
+
+                    #if self_intersect_method==0
+                    new_origin = offset_ray(new_origin, -normal);
+                    #endif
+
+                    if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
+
+                    return Ray(new_origin, NEW_RAY_START, ray_in.direction, infinity);
+
+                } else {
+                    eta_out = mtl.IOR;
+                }
+            }
+        }
+    }
+    #elif 0
+
+    ivec2 two_materials = get_material(rayhit.mtl_index, int_limit, false);
+    // ivec2 two_materials = get_material3();
+    // If is_inside and materials match, go to second material
+    int current_material = (two_materials.x == 0) ? rayhit.mtl_index : two_materials.x;
+    // int current_material = inside_of_count > 0 && is_inside && two_materials.x == rayhit.mtl_index ? two_materials.y : two_materials.x;
+    // int current_material = is_inside && two_materials.x == rayhit.mtl_index ? two_materials.y : two_materials.x;
+    // int current_material = two_materials.x;
+    eta_out = materials.data[current_material].IOR;
+    #elif !USE_NEW_REFRACTION_TRACKING
     int current_material = get_material(rayhit.mtl_index, depth, is_inside);
 
-    float eta_out = materials.data[current_material].IOR;
+    eta_out = materials.data[current_material].IOR;
+    if (is_inside) {
+        ignore_attenuation = true;
+    }
+    #endif
+
+    // TODO 0: needs to fix scenario where ray enters object, then enters another part of the object.
+    /*
+        ray hits outside of object:
+            - ray is in air. New material added to stack, apply attenuation, bend ray.
+            - ray comes from shallower material. New material added to stack, apply attenuation, bend ray.
+            - ray comes from deeper material. New material added to stack, ignore attenuation, straigth ray.
+            - ray comes from same material. New material added to stack, ignore attenuation, straight ray.
+        ray hits from inside object:
+            if  inside_of_count == 1:
+                - use the material of object, out IOR is IOR_air. Remove material, ignore attenuation, bend ray.
+            else inside_of_count > 1: Ignore object material to find outside material
+                if current_material == object.material.
+                    - ray enters same material. remove material, ignore attenuation, straight ray.
+                    - ray enters different material. Remove old material, apply attenuation, bend ray.
+                else current_matrial.depth < object.material.depth
+                    - ray enters same material. remove object material, ignore attenuation, straight ray.
+    */
+
     float eta = eta_in / eta_out;
 
     // If ratio is one the ray will travel in a straight line
     if (is_close(eta, 1.0)) {
         // If ray was inside and went out, remove from inside_of list
         if (is_inside) {
-            remove_object_from_inside_of(rayhit.mtl_index);
+            remove_material_from_inside_of(rayhit.mtl_index);
         } else {
             // If ray was outside and refracted, add to inside_of list
-            inside_of[inside_of_count++] = InsideOf(rayhit.mtl_index, material.refraction_depth);
+            add_material_to_inside_of(rayhit.mtl_index, material.refraction_depth);
         }
 
         #if self_intersect_method==0
@@ -1257,7 +1431,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
 
         // TODO 3: Only invalidate color if this object has the same color as the previous object
         // Handle this in a more explicit way.
-        rayhit.hit = false;
+        ignore_attenuation = true;
 
         // Add extra available bounces when ray refracts/goes through another object
         if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
@@ -1289,10 +1463,10 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     #if use_refraction_tracking==1
     // If ray was inside and went out, remove from inside_of list
     if (is_inside) {
-        remove_object_from_inside_of(rayhit.mtl_index);
+        remove_material_from_inside_of(rayhit.mtl_index);
     } else {
         // If ray was outside and refracted, add to inside_of list
-        inside_of[inside_of_count++] = InsideOf(rayhit.mtl_index, material.refraction_depth);
+        add_material_to_inside_of(rayhit.mtl_index, material.refraction_depth);
     }
     #endif
 
@@ -1398,8 +1572,10 @@ vec4 cast_ray(Ray ray) {
         // TODO 2: implement attenuation based on incident and exiting angles
 
         // Rayhit is invalidated if the ray goes through two transparent objects with the same material
-        if (rayhit.hit) {
+        if (!ignore_attenuation) {
             new_color *= rayhit.color * tex_col;
+        } else {
+            ignore_attenuation = false;
         }
     }
 

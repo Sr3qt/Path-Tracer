@@ -10,5 +10,5 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+refraction_depth = 1
 is_emissive = false
