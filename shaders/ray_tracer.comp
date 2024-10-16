@@ -942,8 +942,9 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         if (rayhit.transform_index >= 0) {
             mat4 matrix = inverse(transforms.data[rayhit.transform_index].matrix);
 
+            // TODO 1: Try also storing transformed rays
             Ray transformed_ray = ray_in;
-            transformed_ray.direction = (vec4(ray_in.direction, 0) * matrix).xyz;
+            transformed_ray.direction = normalize((vec4(ray_in.direction, 0) * matrix).xyz);
             transformed_ray.origin = (vec4(ray_in.origin, 1) * matrix).xyz;
 
             // Normal in object space
@@ -1148,7 +1149,7 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
             mat4 matrix = transforms.data[transform_index].matrix;
 
             Ray new_ray = ray;
-            new_ray.direction = (matrix * vec4(ray.direction, 0)).xyz;
+            new_ray.direction = normalize((matrix * vec4(ray.direction, 0)).xyz);
             new_ray.origin = (matrix * vec4(ray.origin, 1)).xyz;
 
             #if use_early_t_break
@@ -1560,6 +1561,8 @@ vec4 cast_ray(Ray ray) {
         tex_col = get_texture(rayhit);
 
         new_ray = bounce_ray(new_ray, rayhit);
+        // TODO 1: move to ray generation methods
+        new_ray.direction = normalize(new_ray.direction);
 
         // TODO 2: implement attenuation based on incident and exiting angles
 
@@ -1630,7 +1633,7 @@ void main() {
     // Create ray with offset
     vec3 offset = (pixel_delta_u / 2) * (rand(float(push.time)) - 1.) +
                   (pixel_delta_v / 2) * (rand(float(push.time)) - 1.);
-    vec3 ray_direction = pixel_center - push.camera.pos + offset;
+    vec3 ray_direction = normalize(pixel_center - push.camera.pos + offset);
     Ray ray = Ray(push.camera.pos, NEW_RAY_START, ray_direction, infinity);
 
     // Cast ray
