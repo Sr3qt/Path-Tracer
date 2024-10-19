@@ -17,11 +17,15 @@ IDK this dude built smthjn cool https://github.com/TomClabault/HIPRT-Path-Tracer
 
 Cool test scenes https://benedikt-bitterli.me/resources/
 
+Inigo Quilez's [website](https://iquilezles.org):
+  - Ray-Primitive intersection [algorithms](https://iquilezles.org/articles/intersectors/).
 
 ## General CG Math
 
 ### Transforming vectors
 When I looked at the way [_Ray Tracing The Next Week_](https://raytracing.github.io/books/RayTracingTheNextWeek.html#instances) implements Instancing, I realized I wanted in addition to have scaling as an option, specifically non-uniform scaling. I also wanted it to be in matrix form for its simplicity and speed, you can learn more [here](https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/matrices.html). As for the scaling problem, [this](https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/transforming-normals.html) Scratchapixel article explains why normals need special care when transformed using a matrix and how you can transform it correctly. And finally a wiki page on [how to apply matrix transformations](https://en.wikibooks.org/wiki/GLSL_Programming/Applying_Matrix_Transformations) in glsl.
+
+This doesn't change the fact that finding the normal of a non-uniformilly scaled sphere is rather challenging. A unit sphere has the useful property of points on the sphere also being normals. However, a spheroid does not keep this property. I have yet to find out how to get the normal, but I will come back when I do.
 
 ### Random point on a sphere
 When first faced with the problem of finding a random point *inside* a circle, the solution might seem obvious. However, finding a random distribution is not the same as finding an uniform random distribution. For more details see [this](https://www.youtube.com/watch?v=4y_nmpv-9lI&list=PL6C1-O-nCAAN3fc-7SoWnqdNaXvezvUBu&index=29) video by
@@ -59,6 +63,13 @@ Much smarter people than me, mention edge cases were simple functions are prone 
 - How to do floating point comparison by P-Gn [link](https://stackoverflow.com/questions/4915462/how-should-i-do-floating-point-comparison)
 
 - CORRECTION: Despite being recommended by *Ray Tracing in One Weekend* ch. [6.1](https://raytracing.github.io/books/RayTracingInOneWeekend.html#surfacenormalsandmultipleobjects/shadingwithsurfacenormals), to calculate sphere normals using the formula $normal = (rayhit - center) / radius$, I would recommend against it. Actually doing so will result in a normal that is significantly different from a normalized one. This is because of the limited precision of floating point numbers when finding a ray-sphere intersection, and the bigger the distance between ray origin and the intersection point, the more impresise the calculated normal will be. Thats why I recommend instead to use $normal = normalize(rayhit - center)$.
+
+- How to do precise ray-sphere intersections, [Raytracing gems 7.2](https://link.springer.com/content/pdf/10.1007/978-1-4842-4427-2_7.pdf). Iñigo Quilez proposes two different algorithms on his [website](https://iquilezles.org/articles/intersectors/), and I would recommend the more precise one. However I found that my implementation is a bit faster (on my machine).
+
+- How to do avoid self intersection independant of scale, [Ray Tracing Gems 6.2.2.4](https://link.springer.com/content/pdf/10.1007/978-1-4842-4427-2_6.pdf).
+
+- How to calculate a hit point as close to the surface of the primitive as possible, [Ray Tracing Gems 6.2.2](https://link.springer.com/content/pdf/10.1007/978-1-4842-4427-2_6.pdf). Lessons learned can also be aplied to sphere intersection. point = center + normal * radius.
+
 
 ## Camera / Color theory
 

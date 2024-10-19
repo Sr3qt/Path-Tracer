@@ -1,5 +1,7 @@
 Performance on random_scene with book_ex camera settings
 
+Improved precision for hit tests, 52 fps for spheres new x-sort, 144 fps grimchild
+
 Improved node appending syntax/AABB bug fix,
 	135 fps with grimchild, 70 fps spheres old x-sort, 103 with old xyz-sort
 	54 fps with new x-sort, 100 with new xyz-sort. 525 fps with dragon 1 bounce

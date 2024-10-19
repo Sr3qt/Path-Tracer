@@ -49,6 +49,7 @@ RayHit structs don't determine normals and intersection points on-hit. They
 have to have determine_rayhit called on them afterwards to have valid values.
 
 Normals always point outwards from surfaces and are always normalized on creation.
+Ray direction is also normalized on creation.
 
 Ray depth starts at 0 and goes up as depth increases.
 
@@ -105,28 +106,6 @@ LONG TERM GOALS
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 // PRE PROCESSOR STUFF
-
-/*
-Different methods to avoid self intersection
-    - method 0: Proposed in Ray Tracing Gems.
-        Use a custom function to offset intersection point when creating a new ray.
-        My implementation doesn't seem to work correctly as it produces some nasty artifacts.
-        Some of them are:
-         -visible lines in noise when multisampling is disabled
-         -weird lines on a center circle in the random scene
-         -being a little more expensive to run
-         -darker colors, although that might be more correct
-    - method 1: Proposed in Ray tracing in a weekend.
-        Simply sets range for valid t values a little above zero.
-        TODO 2: Preferred method until I get method 0 to work properly
-*/
-#define self_intersect_method 1
-
-#if self_intersect_method == 1
-#define NEW_RAY_START 0.0001
-#elif self_intersect_method == 0
-#define NEW_RAY_START 0.0
-#endif
 
 /*
 // Fun fact, I happened to implement Nested Dielectrics not knowing what it was.
@@ -283,7 +262,10 @@ int node_hit_count = 0;
 int object_hit_count = 0;
 
 #define debug_black debug_color = vec4(0)
+#define debug_red debug_color = vec4(1, 0, 0, 1)
 // #endif
+
+int previous_object = -1;
 
 // Random
 // Code snippets taken from Ray tracer demo by HK-SHAO
@@ -394,6 +376,7 @@ struct RayHit {
     vec3 normal;
     uint texture_id;
     vec4 color;
+    vec2 bary_coords;
 };
 
 struct AABB {
@@ -489,7 +472,12 @@ layout(push_constant, std430) restrict readonly uniform constants {
 // =================
 
 RayHit empty_rayhit() {
-    return RayHit(false, 0, -1, vec2(0), vec3(0), 0, vec3(0), 0, vec4(0));
+    return RayHit(false, 0, -1, vec2(0), vec3(0), 0, vec3(0), 0, vec4(0), vec2(0));
+}
+
+// Creates a new ray based on given origin and direction. Normalizes direction.
+Ray new_ray(vec3 origin, vec3 direction) {
+    return Ray(origin, 0.0, normalize(direction), infinity);
 }
 
 float atan2(float y, float x) {
@@ -581,9 +569,9 @@ vec3 offset_ray(const vec3 point, const vec3 normal) {
     // Implementation of algorithm in Ray Tracing Gems chapter 6.2.2.4
     ivec3 offset = ivec3(normal * int_scale);
     vec3 point_offset = vec3(
-        intBitsToFloat(floatBitsToInt(point.x) + ((point.x < 0.) ? -offset.x : offset.x)),
-        intBitsToFloat(floatBitsToInt(point.y) + ((point.y < 0.) ? -offset.y : offset.y)),
-        intBitsToFloat(floatBitsToInt(point.z) + ((point.z < 0.) ? -offset.z : offset.z))
+        intBitsToFloat(floatBitsToInt(point.x) + ((point.x < 0) ? -offset.x : offset.x)),
+        intBitsToFloat(floatBitsToInt(point.y) + ((point.y < 0) ? -offset.y : offset.y)),
+        intBitsToFloat(floatBitsToInt(point.z) + ((point.z < 0) ? -offset.z : offset.z))
     );
     return vec3(
         abs(point.x) < origin ? point.x + float_scale * normal.x : point_offset.x,
@@ -750,12 +738,128 @@ RayHit hit_sphere(inout Ray ray, int object_id, inout RayHit rayhit) {
         return rayhit;
     }
 
+    // OPTIMIZATION ?
+    // float sqrtd = (near_zero(discriminant)) ? 0 : sqrt(discriminant);
     float sqrtd = sqrt(discriminant);
     float root = (-half_b - sqrtd) / a;
 
     // If root is within a valid t range and less than previous rayhit
     if (!in_range(root, ray)) {
         root = (-half_b + sqrtd) / a;
+        if (!in_range(root, ray)) {
+            return rayhit;
+        }
+    }
+
+    // Set rayhit variables
+    rayhit.hit = true;
+    rayhit.object_id = object_id;
+    rayhit.transform_index = current_transform_index;
+    ray.end = root;
+
+    return rayhit;
+}
+
+vec2 sphIntersect( in vec3 ro, in vec3 rd, in vec3 ce, float ra )
+{
+    vec3 oc = ro - ce;
+    float b = dot( oc, rd );
+    float c = dot( oc, oc ) - ra*ra;
+    float h = b*b - c;
+    if( h<0.0 ) return vec2(-1.0); // no intersection
+    h = sqrt( h );
+    return vec2( -b-h, -b+h );
+}
+
+// sphere of size ra centered at point ce
+vec2 sphIntersectPrec( in vec3 ro, in vec3 rd, in vec3 ce, float ra )
+{
+    vec3 oc = ro - ce;
+    float b = dot( oc, rd );
+    vec3 qc = oc - b*rd;
+    float h = ra*ra - dot( qc, qc );
+    if( h<0.0 ) return vec2(-1.0); // no intersection
+    h = sqrt( h );
+    return vec2( -b-h, -b+h );
+}
+
+RayHit hit_sphere_iquilez(inout Ray ray, int object_id, inout RayHit rayhit) {
+
+    Sphere sphere = spheres.data[get_object_index(object_id)];
+
+    float root;
+    vec2 t = sphIntersectPrec(ray.origin,(ray.direction), sphere.center, sphere.radius);
+    // if (!in_range(t.y, ray)) {return rayhit;} // ray does NOT intersect the sphere
+    // else if (!in_range(t.x, ray)) {root = t.y;} // ro  inside the sphere, t.y is intersection distance
+    // else               {root = t.x;} // ro outside the sphere, t.x is intersection distance
+
+    if (in_range(t.x, ray)) {
+        root = t.x;
+    } else if (in_range(t.y, ray)) {
+        root = t.y;
+    } else {
+        return rayhit;
+    }
+
+    // // Calculate the determinant of quadratic formula
+    // vec3 oc = ray.origin - sphere.center;
+    // float a = dot(ray.direction, ray.direction);
+    // float half_b = dot(oc, ray.direction);
+    // float c = dot(oc, oc) - (sphere.radius * sphere.radius);
+
+    // float discriminant = half_b * half_b - a*c;
+
+    // // Early return if ray does not hit
+    // if (discriminant < 0.0) {
+    //     return rayhit;
+    // }
+
+    // float sqrtd = sqrt(discriminant);
+    // float root = (-half_b - sqrtd);
+
+    // // If root is within a valid t range and less than previous rayhit
+    // if (!in_range(root, ray)) {
+    //     root = (-half_b + sqrtd);
+    //     if (!in_range(root, ray)) {
+    //         return rayhit;
+    //     }
+    // }
+
+    // Set rayhit variables
+    rayhit.hit = true;
+    rayhit.object_id = object_id;
+    rayhit.transform_index = current_transform_index;
+    ray.end = root;
+
+    return rayhit;
+}
+
+RayHit hit_sphere_gems(inout Ray ray, int object_id, inout RayHit rayhit) {
+
+    Sphere sphere = spheres.data[get_object_index(object_id)];
+
+    // Calculate the determinant of quadratic formula
+    vec3 oc = ray.origin - sphere.center;
+    float a = dot(ray.direction, ray.direction);
+    float half_b = dot(-oc, ray.direction);
+    float r_sqrd = (sphere.radius * sphere.radius);
+
+    vec3 temp = oc + half_b * ray.direction;
+    float discriminant = r_sqrd - dot(temp, temp);
+
+    // Early return if ray does not hit
+    if (discriminant < 0.0) {
+        return rayhit;
+    }
+
+    float c = dot(oc, oc) - r_sqrd;
+    float sqrtd = sqrt(discriminant);
+    float q = half_b + sign(half_b) * sqrtd;
+    float root = c / q;
+
+    // If root is within a valid t range and less than previous rayhit
+    if (!in_range(root, ray)) {
+        root = q;
         if (!in_range(root, ray)) {
             return rayhit;
         }
@@ -845,6 +949,7 @@ bool hit_triangle_MT_branchless(inout Ray ray, int object_id, inout RayHit rayhi
         rayhit.hit = true;
         rayhit.object_id = object_id;
         rayhit.transform_index = current_transform_index;
+        rayhit.bary_coords = vec2(u, v);
         ray.end = t;
         return true;
     }
@@ -889,6 +994,7 @@ bool hit_triangle_MT(inout Ray ray, int object_id, inout RayHit rayhit) {
         rayhit.hit = true;
         rayhit.object_id = object_id;
         rayhit.transform_index = current_transform_index;
+        rayhit.bary_coords = vec2(u, v);
         ray.end = t;
         return true;
     }
@@ -910,10 +1016,16 @@ void hit_object(inout Ray ray, inout RayHit rayhit, int object_id) {
     object_hit_count++;
 
     if (object_type == is_sphere) {
-        hit_sphere(ray, object_id, rayhit);
+        // Iquilez method, more precise, slower
+        // TODO 3: Try to optimize i. quilez method
+        // TODO 3: Try to optimize Ray tracing gems method
+        // hit_sphere(ray, object_id, rayhit);
+        // hit_sphere_iquilez(ray, object_id, rayhit);
+        hit_sphere_gems(ray, object_id, rayhit);
     } else if (object_type == is_triangle) {
         // TODO 2: compare with branchless
         hit_triangle_MT(ray, object_id, rayhit);
+        // hit_triangle_MT_branchless(ray, object_id, rayhit);
     }
 }
 
@@ -921,10 +1033,8 @@ void hit_object(inout Ray ray, inout RayHit rayhit, int object_id) {
 // OTHER RAY FUNCTIONS
 // ===================
 
+// Resolves intersextion point, normal and other information from rayhit
 RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
-    // Resolves intersextion point, normal and other information from rayhit
-    rayhit.point = ray_at(ray_in);
-
     int object_type = get_object_type(rayhit.object_id);
     int object_index = get_object_index(rayhit.object_id);
 
@@ -940,7 +1050,14 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         rayhit.texture_id = sphere.texture_id;
 
         if (rayhit.transform_index >= 0) {
-            mat4 matrix = inverse(transforms.data[rayhit.transform_index].matrix);
+            mat4 m = transforms.data[rayhit.transform_index].matrix;
+            mat4 matrix = inverse(m);
+
+            vec3 center = ((vec4(sphere.center, 1) * m).xyz);
+            // vec3 scale = vec3(m[0][0], m[1][1], m[2][2]);
+            float scalex = length(m[0].xyz);
+            float scaley = length(m[1].xyz);
+            float scalez = length(m[2].xyz);
 
             // TODO 1: Try also storing transformed rays
             Ray transformed_ray = ray_in;
@@ -948,20 +1065,31 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
             transformed_ray.origin = (vec4(ray_in.origin, 1) * matrix).xyz;
 
             // Normal in object space
-            rayhit.normal = (ray_at(transformed_ray) - sphere.center) / sphere.radius;
+            rayhit.normal = normalize((ray_at(transformed_ray) - sphere.center) / sphere.radius);
             // Setting uvs early gives them the rotation of the sphere.
+            // TODO 2: Fix UVs are incorrect with uniform and non-uniform scaling.
             rayhit.uv = sphere_get_uv(rayhit.normal);
 
-            // Normal in world space
-            rayhit.normal = normalize((vec4(rayhit.normal, 0) * inverse(matrix)).xyz);
+            // If scaling is uniform
+            if (is_close(scalex, scaley) && is_close(scalex, scaley)) {
+                rayhit.normal = normalize((vec4(rayhit.normal, 0) * m).xyz);
+                rayhit.point = center + rayhit.normal * scalex * sphere.radius;
+            } else {
+                // TODO 2: Find a way to find the normal of a anistropically scaled sphere
+            }
+            // rayhit.normal = normalize(rayhit.normal / vec3(scalex * scalex, scaley * scaley, scalez * scalez));
+            // rayhit.point = center + rayhit.normal * scale;
         } else {
+            rayhit.point = ray_at(ray_in);
             rayhit.normal = normalize((rayhit.point - sphere.center));
             rayhit.uv = sphere_get_uv(rayhit.normal);
+            rayhit.point = sphere.center + rayhit.normal * sphere.radius;
         }
 
     // Procedure for hitting plane
     } else if (object_type == is_plane) {
         Plane plane = planes.data[object_index];
+        rayhit.point = ray_at(ray_in);
         rayhit.mtl_index = plane.mtl_index;
         rayhit.texture_id = plane.texture_id;
         rayhit.normal = plane.normal;
@@ -972,12 +1100,20 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         rayhit.mtl_index = triangle.mtl_index;
         rayhit.texture_id = triangle.texture_id;
 
-        rayhit.normal = triangle.normal;
+        // rayhit.normal = triangle.normal;
+        rayhit.normal = normalize(cross(triangle.point1 - triangle.point3, triangle.point1 - triangle.point2));
         if (rayhit.transform_index >= 0) {
             mat4 matrix = inverse(transforms.data[rayhit.transform_index].matrix);
 
             rayhit.normal = normalize((matrix * vec4(rayhit.normal, 0)).xyz);
         }
+
+        rayhit.point = (
+            rayhit.bary_coords.x * triangle.point2 +
+            rayhit.bary_coords.y * triangle.point3 +
+            (1 - rayhit.bary_coords.x - rayhit.bary_coords.y) * triangle.point1
+        );
+
         if (dot(rayhit.normal, ray_in.direction) > 0) {
             rayhit.normal *= -1;
         }
@@ -1028,7 +1164,7 @@ void calculate_top_node(inout Ray ray, inout RayHit rayhit, vec3 inv_dir, bvec3 
     */
     #if use_early_t_break
     if (!in_range(to_visit_t[to_visit_i], ray)) {
-        break;
+        return;
     }
     #endif
 
@@ -1057,7 +1193,7 @@ void calculate_top_node(inout Ray ray, inout RayHit rayhit, vec3 inv_dir, bvec3 
         }
     }
 
-    // TODO 3: COnsider min heap or insertion sort
+    // TODO 1: COnsider min heap or insertion sort
     // Add nodes to stack in a sorted order
     to_visit_i += added_children;
     for (int i = 0; i < added_children; i++) { // Looping over constant is not faster here
@@ -1124,6 +1260,15 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
         temp_ts[h] = infinity;
     }
 
+    //         // hit_object(ray, rayhit, object_ids.list[0]);
+    //         // hit_object(ray, rayhit, object_ids.list[1]);
+
+
+    //     // calculate_top_node(ray, rayhit, inv_direction, is_dir_negative);
+    // }
+    // return rayhit;
+
+
     while (to_visit_i > 0 && to_visit_i <= max_depth) {
         int current_index = to_visit[--to_visit_i];
 
@@ -1178,11 +1323,7 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
 Ray reflect_ray(Ray ray_in, RayHit rayhit) {
     // Returns a new reflected ray based on ray_in and rayhit
 
-    vec3 new_origin = rayhit.point;
-
-    #if self_intersect_method==0
-    new_origin = offset_ray(rayhit.point, rayhit.normal);
-    #endif
+    vec3 new_origin = offset_ray(rayhit.point, rayhit.normal);
 
     float metallic = materials.data[rayhit.mtl_index].metallic;
 
@@ -1196,11 +1337,9 @@ Ray reflect_ray(Ray ray_in, RayHit rayhit) {
         ray_dir = reflect(ray_dir, rayhit.normal);
     }
 
-    return Ray(new_origin, NEW_RAY_START, ray_dir, infinity);
+    return new_ray(new_origin, ray_dir);
 }
 
-// TODO 3: Experiment with max heap instead of array, or insert sorted list
-// TODO 2: Try storing last two InsideOfs, then return based on if the last one was material_index
 int get_material(int material_index, int lowest_depth, bool ignore_self) {
     // Loop over materials that we have entered and not left,
     //  pick the one with the lowest refraction_depth, ignore default values if specified
@@ -1227,7 +1366,6 @@ ivec2 get_material3() {
 
 // TODO 3: Add render_mode to see if more objects than allowed are overlapping
 // TODO 1: Refactor render modes to be an enum instead of bools.
-// TODO 1: fix edges of empty sphere being added multiple times
 // Adds new material to be ior tracked in sorted array inside_of
 void add_material_to_inside_of(int material_index, int depth) {
     int shift = 1;
@@ -1242,10 +1380,7 @@ void add_material_to_inside_of(int material_index, int depth) {
     }
     inside_of[insert_index] = InsideOf(material_index, depth);
     inside_of_count++;
-                // if (material_index == 4) {debug_black;}
-                // if (inside_of[3].material_index != 0) {debug_black;}
 }
-
 
 void remove_material_from_inside_of(int material_index) {
     int shift = 0;
@@ -1261,7 +1396,6 @@ void remove_material_from_inside_of(int material_index) {
     }
     inside_of[max_refraction_depth - 1] = empty_inside();
     inside_of_count--;
-                // if (inside_of[inside_of_count].material_index != 0 && shift == 1) {debug_black;}
 }
 
 Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
@@ -1269,15 +1403,12 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     // TODO 3: Add support for cpu to send InsideOf buffer based on camera position
     // TODO 3: Add tiny random direction change coupled with color shift, prism, diffraction
     // TODO 2: add refraction depth checks to diffuse and metallic
-    // TODO 2: Add support for meshes to refract DONE!
     // TODO 2: Implement Beer's law:
     // https://www.flipcode.com/archives/Raytracing_Topics_Techniques-Part_3_Refractions_and_Beers_Law.shtml
 
-    vec3 new_origin = rayhit.point;
-
     // Whether object is inside the current object
     // Due to floating point error, the boundaries of spheres can incorrectly be considered 'is_inside'
-    // TODO 1: See if there is a way where these hits get ignored.
+    // TODO 1: See if extra inside_of_Count check can be reverted
     #if use_refraction_tracking==2 || use_refraction_tracking==3
     // Double check with inside_of array.
     bool is_inside = bool(dot(rayhit.normal, ray_in.direction) > 0. && inside_of_count > 0);
@@ -1286,9 +1417,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     #endif
     vec3 normal = (is_inside) ? -rayhit.normal : rayhit.normal;
 
-    #if self_intersect_method==0
-    new_origin = offset_ray(rayhit.point, -normal);
-    #endif
+    vec3 new_origin = offset_ray(rayhit.point, -normal);
 
     Material material = materials.data[rayhit.mtl_index];
 
@@ -1308,8 +1437,8 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
 
     float eta_in = current_IOR;
     #if USE_NEW_REFRACTION_TRACKING
+    float eta_out;
     int object_material = rayhit.mtl_index;
-    // ivec2 material_indices = get_material2(object_material, int_limit);
     ivec2 material_indices = get_material3();
     // TODO 1: Move Refraction depth check to before choosing ray creation method.
     // TODO 2: make warning in godot for whenever manx refraction depth has been reached.
@@ -1328,7 +1457,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
 
                     if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
 
-                    return Ray(new_origin, NEW_RAY_START, ray_in.direction, infinity);
+                    return new_ray(new_origin, ray_in.direction);
                 }
                 // material on inside is material's, material on outside is different.
                 // TODO 0: Should do make new ray based on outside's material
@@ -1337,15 +1466,12 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
 
             } else {
                 // Material on both sides of object are the same, but not the same as object's material.
-                // if (material_indices.y != 3) {debug_black;}
-                // debug_black;
                 remove_material_from_inside_of(object_material);
                 ignore_attenuation = true;
 
                 if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
 
-
-                return Ray(new_origin, NEW_RAY_START, ray_in.direction, infinity);
+                return new_ray(new_origin, ray_in.direction);
             }
         }
     } else {
@@ -1367,7 +1493,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
 
                 if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
 
-                return Ray(new_origin, NEW_RAY_START, ray_in.direction, infinity);
+                return new_ray(new_origin, ray_in.direction);
 
             } else {
                 if (new_depth_is_lower) {
@@ -1377,7 +1503,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
 
                     if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
 
-                    return Ray(new_origin, NEW_RAY_START, ray_in.direction, infinity);
+                    return new_ray(new_origin, ray_in.direction);
 
                 } else {
                     eta_out = material.IOR;
@@ -1432,25 +1558,18 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
         // Add extra available bounces when ray refracts/goes through another object
         if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
 
-        return Ray(new_origin, NEW_RAY_START, ray_in.direction, infinity);
+        return new_ray(new_origin, ray_in.direction);
     }
     #endif
 
-    // TODO 1: Raydir should already be normalized, remove normalize and assert it still works
-    vec3 normalized_direction = normalize(ray_in.direction);
-
     // Calculate whether angle is shallow enough to disallow refraction
-    float cos_theta = min(dot(-normalized_direction, normal), 1.);
+    float cos_theta = min(dot(-ray_in.direction, normal), 1.);
     float sin_theta = sqrt(1. - cos_theta * cos_theta);
     bool cannot_refract = eta * sin_theta > 1.;
 
     // Check for internal reflection
     if ((reflectance(eta, cos_theta) * (material.reflectivity) > noise(random)) || cannot_refract) {
-        #if self_intersect_method==0
-        new_origin = offset_ray(rayhit.point, normal);
-        #endif
-
-        return Ray(new_origin, NEW_RAY_START, reflect(normalized_direction, normal), infinity);
+        return new_ray(offset_ray(rayhit.point, normal), reflect(ray_in.direction, normal));
     }
 
     #if use_refraction_tracking
@@ -1470,19 +1589,13 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     // Add extra available bounces when ray refracts/goes through another object
     if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
 
-    return Ray(new_origin, NEW_RAY_START, refract(normalized_direction, normal, eta), infinity);
+    return new_ray(new_origin, refract(ray_in.direction, normal, eta));
 }
 
 Ray scatter_ray(Ray ray_in, RayHit rayhit) {
     // TODO 2: Change the way rays are created based on roughness, less/ more scatter
 
-    #if self_intersect_method==0
     vec3 new_origin = offset_ray(rayhit.point, rayhit.normal);
-    #endif
-
-    #if self_intersect_method==1
-    vec3 new_origin = rayhit.point;
-    #endif
 
     // Returns a scattered ray based on ray_in and rayhit
     vec3 ray_dir = random_point_on_sphere() + rayhit.normal;
@@ -1493,13 +1606,13 @@ Ray scatter_ray(Ray ray_in, RayHit rayhit) {
     // Make sure reflected ray points in the same way as normal
     ray_dir = dot(ray_dir, rayhit.normal) < 0. ? ray_dir * -1.0 : ray_dir;
 
-    return Ray(new_origin, NEW_RAY_START, ray_dir, infinity);
+    return new_ray(new_origin, ray_dir);
 }
 
 Ray bounce_ray(Ray ray_in, inout RayHit rayhit) {
     // Creates a new ray based material properties from the previous rayhit
 
-    // TODO 2: Make more sophisticated function choosing
+    // TODO 1: Make more sophisticated function choosing
     if (materials.data[rayhit.mtl_index].opacity < 1.) {
         return refract_ray(ray_in, rayhit);
     }
@@ -1540,6 +1653,11 @@ vec4 cast_ray(Ray ray) {
             rayhit = check_ray_hit(new_ray);
         }
 
+        // if (rayhit.object_id == previous_object) {
+        //     // debug_red;
+        // }
+        // previous_object = rayhit.object_id;
+
         // Early break if no hit
         if (!rayhit.hit) {
             // Adds sky color as the last rayhit when miss
@@ -1561,8 +1679,6 @@ vec4 cast_ray(Ray ray) {
         tex_col = get_texture(rayhit);
 
         new_ray = bounce_ray(new_ray, rayhit);
-        // TODO 1: move to ray generation methods
-        new_ray.direction = normalize(new_ray.direction);
 
         // TODO 2: implement attenuation based on incident and exiting angles
 
@@ -1634,7 +1750,7 @@ void main() {
     vec3 offset = (pixel_delta_u / 2) * (rand(float(push.time)) - 1.) +
                   (pixel_delta_v / 2) * (rand(float(push.time)) - 1.);
     vec3 ray_direction = normalize(pixel_center - push.camera.pos + offset);
-    Ray ray = Ray(push.camera.pos, NEW_RAY_START, ray_direction, infinity);
+    Ray ray = new_ray(push.camera.pos, ray_direction);
 
     // Cast ray
     vec4 new_color = cast_ray(ray);

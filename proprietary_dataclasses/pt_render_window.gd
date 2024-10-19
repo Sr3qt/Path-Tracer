@@ -72,7 +72,7 @@ enum RenderMode {
 ## The max number of extra rays that will be called when ray hits a transparent object.
 ## Dielectric materials tend to need more ray bounces than other materials.
 ## Use this for low ray depth scenes with dielectrics.
-@export_range(1, 128) var max_refraction_bounces : int = 2:
+@export_range(1, 128) var max_refraction_bounces : int = 4:
 	set(value):
 		settings_was_changed = true
 		max_refraction_bounces = value
@@ -87,6 +87,7 @@ enum RenderMode {
 		frame = frame if use_bvh == value else 0
 		use_bvh = value
 
+## TODO 0: Value is not applied in RuntimeSettings
 @export_storage var show_normal_view := false
 
 # If a bvh heat map of of most expensive traversals are shown
