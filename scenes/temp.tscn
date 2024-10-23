@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://c8qptlvl2wmde"]
+[gd_scene load_steps=20 format=3 uid="uid://c8qptlvl2wmde"]
 
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_4n3re"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_1oi20"]
@@ -15,7 +15,7 @@
 script = ExtResource("6_677ub")
 albedo = Color(0.129412, 1, 1, 1)
 roughness = 0.0
-metallic = 0.0
+metallic = 1.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
@@ -32,6 +32,11 @@ reflectivity = 1.0
 IOR = 1.0
 refraction_depth = 0
 is_emissive = false
+
+[sub_resource type="Resource" id="Resource_j74fo"]
+script = ExtResource("8_omjtt")
+texture = ExtResource("10_1312y")
+is_spatial = false
 
 [sub_resource type="Resource" id="Resource_31vpg"]
 script = ExtResource("6_677ub")
@@ -76,33 +81,47 @@ script = ExtResource("8_omjtt")
 texture = ExtResource("10_1312y")
 is_spatial = false
 
+[sub_resource type="Resource" id="Resource_v63kt"]
+script = ExtResource("6_677ub")
+albedo = Color(1, 0.443137, 1, 1)
+roughness = 0.0
+metallic = 1.0
+opacity = 1.0
+reflectivity = 1.0
+IOR = 1.0
+refraction_depth = 0
+is_emissive = false
+
 [node name="PTScene2" type="Node"]
 script = ExtResource("1_4n3re")
 
 [node name="PTCameraFPS" type="Camera3D" parent="."]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 3, 0, 0)
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -5, 0, 0)
 script = ExtResource("2_1oi20")
+focal_length = 500.0
 
 [node name="PTSphere" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.109318, -0.994007, 0, 0.994007, 0.109318, -3.96523, 1.76679, 5.58572)
+transform = Transform3D(1, 0, 0, 0, 0.109318, -0.994007, 0, 0.994007, 0.109318, 203.965, 1.767, 5.586)
 script = ExtResource("3_8wdme")
 radius = 1.395
 material = ExtResource("4_5ktls")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.9, -1.1)
 script = ExtResource("7_qmtfy")
-vertex1 = Vector3(-1, -1, 0)
-vertex3 = Vector3(1, 1, 0)
+vertex1 = Vector3(-0.98, -0.995, 0)
+vertex2 = Vector3(0, 0, -0.975)
+vertex3 = Vector3(1.03, 1.03, 0)
 material = SubResource("Resource_r8b3q")
 
 [node name="PTTriangle" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.855537, 1.70591, 0.508483, -0.819451, -0.123398, 1.79274, 1.58025, -0.987558, 0.654348, 0.901246, 1.6992, 2.28665)
+transform = Transform3D(0.855537, 1.70591, 0.508483, -0.819451, -0.123398, 1.79274, 1.58025, -0.987558, 0.654348, -1.72929, 0.511565, 3.61232)
 script = ExtResource("7_qmtfy")
 vertex1 = Vector3(0, 1, -0.742)
 vertex2 = Vector3(2.0827, 0, 0.813851)
 vertex3 = Vector3(1.34062, 0, 1.48416)
 material = SubResource("Resource_3e08u")
+texture = SubResource("Resource_j74fo")
 
 [node name="PTSphere2" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, -2.5551, 0, 2)
@@ -114,18 +133,19 @@ script = ExtResource("3_8wdme")
 material = SubResource("Resource_bvoeq")
 
 [node name="PTTriangle2" type="MeshInstance3D" parent="."]
-transform = Transform3D(-0.999998, 0.00179768, 0, -0.00179768, -0.999998, 0, 0, 0, 1, 0, 2.7543, -0.284441)
+transform = Transform3D(-0.999998, 0.00179768, 0, -0.00179768, -0.999998, 0, 0, 0, 1, 1.01662, 4, -2.44016)
 script = ExtResource("7_qmtfy")
 material = SubResource("Resource_j8qno")
 
 [node name="PTMesh" type="Node3D" parent="."]
-transform = Transform3D(1.91069e-15, 4.37114e-08, 1, 1, -4.37114e-08, -3.59989e-21, 4.37114e-08, 1, -4.37114e-08, 0, 0, 0)
+transform = Transform3D(2.71512e-08, 3.42563e-08, 1, 0.783694, -0.621148, 0, 0.621148, 0.783694, -4.37114e-08, 0, 0, 0)
 script = ExtResource("7_60idy")
 
 [node name="PTSphere4" type="MeshInstance3D" parent="PTMesh"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.815518, 1.905)
 skeleton = NodePath("../..")
 script = ExtResource("3_8wdme")
+radius = 1.2
 material = SubResource("Resource_bvoeq")
 texture = SubResource("Resource_pf614")
 
@@ -133,3 +153,12 @@ texture = SubResource("Resource_pf614")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.59247e-08, 2.1945, -9.59247e-08)
 script = ExtResource("3_8wdme")
 texture = SubResource("Resource_3mkey")
+
+[node name="PTMesh2" type="Node3D" parent="."]
+transform = Transform3D(-4.11772e-09, 7.7118e-08, 2, 0.176425, 0.942024, 0, -0.0942024, 1.76425, -8.74228e-08, 0, 0, 0)
+script = ExtResource("7_60idy")
+
+[node name="PTSphere" type="MeshInstance3D" parent="PTMesh2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 0, 0)
+script = ExtResource("3_8wdme")
+material = SubResource("Resource_v63kt")

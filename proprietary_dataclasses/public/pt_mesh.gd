@@ -157,7 +157,7 @@ func remove_object(object : PTObject) -> void:
 		bvh.remove_object(object)
 
 
-## Returns the mesh's global transform in a byte array
+## Returns the global to mesh transform in a byte array
 func to_byte_array() -> PackedByteArray:
 	return PTUtils.transform3d_smuggle_to_byte_array(
 		global_transform.affine_inverse(), Vector4(0, 0, 0, 1))

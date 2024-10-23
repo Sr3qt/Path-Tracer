@@ -11,7 +11,6 @@ extends Node
 # TODO 3: Add setting to either load all scenes on start, just one or none. Also add button to load scene
 # TODO 3: Add memory usage estimate?
 
-# TODO 1: add option to toggle between editor settings and scene run debug settings, for ray depth and such
 # TODO 3: Also make render settings node similar to WorldEnvironment that can be overriden by debug settings
 
 # TODO 3: Ideas for showcase scene:
