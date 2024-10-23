@@ -187,7 +187,10 @@ func _ready() -> void:
 	if not Engine.is_editor_hint():
 		var pt_window : PTRenderWindow
 
-		if use_render_settings_override:
+		if (
+				use_render_settings_override and
+				FileAccess.file_exists(PTConfig.RUNTIME_RENDER_CONFIG)
+		):
 			var WINDOW : PackedScene = load(PTConfig.RUNTIME_RENDER_CONFIG)
 			pt_window = WINDOW.instantiate()
 		else:
@@ -220,11 +223,12 @@ func _process(_delta : float) -> void:
 				editor_camera.transform == _pt_editor_camera.transform)):
 			_pt_editor_camera.copy_camera(editor_camera)
 
+	time_render_windows()
+
 	## Decides if any rendering will be done at all
 	# Runtime and plugin requires different checks for window focus
 	var runtime := (get_window().has_focus() and not Engine.is_editor_hint())
 	var plugin := (Engine.is_editor_hint())
-
 	var common := (not is_rendering_disabled and has_active_scene and
 			has_active_camera)
 
@@ -270,64 +274,35 @@ func _set_plugin_camera(cam : PTCamera) -> void:
 func add_window(pt_window : PTRenderWindow) -> void:
 	render_windows.append(pt_window)
 
+## Takes the time of last frame rendered for each render window
+func time_render_windows() -> void:
+	for window in render_windows:
+		# Adds the time of the last frame rendered
+		if window.was_rendered:
+			window.frame_times += (Time.get_ticks_usec() - window.sample_start_time) / 1_000_000.0
+		window.was_rendered = false
+
 
 ## Might render PTRenderWindow according to flags if flags allow it
 func render(pt_window : PTRenderWindow) -> void:
-
 	# If camera moved or scene changed
 	var camera_moved := ((scene and scene.camera and scene.camera.camera_changed) or
 			(Engine.is_editor_hint() and _pt_editor_camera.camera_changed))
-
 	var movement := camera_moved or scene.scene_changed
 
-	# If rendering should stop when reached max samples
-	var stop_multisampling := (
-			pt_window.stop_rendering_on_max_samples and
-			(pt_window.frame >= pt_window.max_samples)
-	)
-
-	var multisample := (pt_window.enable_multisampling and not stop_multisampling and
-			not pt_window._disable_multisample)
-
-	# Adds the time of the last frame rendered
-	if pt_window.frame == pt_window.max_samples and multisample and pt_window.was_rendered:
-		pt_window.frame_times += (
-				Time.get_ticks_usec() - pt_window.max_sample_start_time
-		) / 1_000_000.0
-
 	# If window will not render return
-	if not (movement or multisample or pt_window.render_mode_changed):
-		pt_window.was_rendered = false
+	if not (movement or pt_window.can_multisample() or pt_window.render_mode_changed or pt_window.frame_reset):
 		return
 
-	# RENDER
-	pt_window.scene_changed = movement
-
-	# Adds the time taken since last frame render started
-	if pt_window.frame < pt_window.max_samples and multisample and pt_window.was_rendered:
-		pt_window.frame_times += (
-				Time.get_ticks_usec() - pt_window.max_sample_start_time
-		) / 1_000_000.0
-
-	# If frame is above limit or a scene/camera/flag change caused a reset
-	if pt_window.frame > pt_window.max_samples or movement or pt_window.render_mode_changed:
-		pt_window.frame = 0
-
-	if pt_window.frame == 0:
-		pt_window.frame_times = 0
-
-	pt_window.max_sample_start_time = Time.get_ticks_usec()
+	pt_window._frame_reset_check(movement)
+	pt_window.sample_start_time = Time.get_ticks_usec()
 
 	# Create work for gpu
 	wd.create_compute_list(pt_window)
 
+	# Cleanup frame dependant values
 	pt_window.frame += 1
-
-	# Reset frame values
-	pt_window.scene_changed = false
-	pt_window.render_mode_changed = false
-
-	pt_window.was_rendered = true
+	pt_window._frame_cleanup()
 	was_rendered = true
 
 

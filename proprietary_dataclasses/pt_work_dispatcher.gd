@@ -784,8 +784,12 @@ func _push_constant_byte_array(window : PTRenderWindow) -> PackedByteArray:
 	var time : float = fmod(Time.get_ticks_msec() / divisor, (repeat * 1000) / divisor)
 
 	# NOTE: Must be 16-byte aligned
-	bytes += window.flags_to_byte_array()
 	bytes += PackedInt32Array([
+		window.flags,
+		window.get_render_mode(),
+		0,
+		0,
+		0,
 		window.x_offset,
 		window.y_offset,
 		window.node_display_threshold,

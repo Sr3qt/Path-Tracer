@@ -15,11 +15,9 @@ const INVOCATION_DEPTH := PTRenderer.compute_invocation_depth
 
 enum RenderFlagsBits {
 	USE_BVH = 1,
-	SHOW_BVH_DEPTH = 2,
-	MULTISAMPLE = 4,
-	SHOW_NODE_COUNT = 8,
-	SHOW_OBJECT_COUNT = 16,
-	SHOW_NORMAL_VIEW = 32
+	MULTISAMPLE = 2,
+	SHOW_NODE_COUNT = 4,
+	SHOW_OBJECT_COUNT = 8,
 }
 
 enum RenderMode {
@@ -46,7 +44,7 @@ enum RenderMode {
 ## Does not guarantee multisampling in all cases.
 @export var enable_multisampling := true:
 	set(value):
-		_multisample = not value and can_multisample()
+		_set_flag_bit(RenderFlagsBits.MULTISAMPLE, value)
 		settings_was_changed = true
 		enable_multisampling = value
 
@@ -69,6 +67,8 @@ enum RenderMode {
 		settings_was_changed = true
 		max_ray_depth = value
 
+# TODO 3: Do like other pathtracer and let the user precisely define the types of
+# allowed bounces on different kinds of surfaces
 ## The max number of extra rays that will be called when ray hits a transparent object.
 ## Dielectric materials tend to need more ray bounces than other materials.
 ## Use this for low ray depth scenes with dielectrics.
@@ -79,6 +79,8 @@ enum RenderMode {
 
 ## DEBUG CONFIGURABLE SETTINGS
 
+@export_storage var _current_render_mode : RenderMode
+
 ## Whether a bvh tree should be used or if every object should be checked for ray hit
 @export_storage var use_bvh := true:
 	set(value):
@@ -86,13 +88,6 @@ enum RenderMode {
 		settings_was_changed = true
 		frame = frame if use_bvh == value else 0
 		use_bvh = value
-
-## TODO 0: Value is not applied in RuntimeSettings
-@export_storage var show_normal_view := false
-
-# If a bvh heat map of of most expensive traversals are shown
-#  Also disables multisampling while on
-@export_storage var show_bvh_depth := false
 
 @export_storage var display_node_count := true:
 	set(value):
@@ -108,14 +103,14 @@ enum RenderMode {
 		settings_was_changed = true
 		display_object_count = value
 
-## How many object tests appear in show_bvh_depth before deufaulting color
+## How many object tests appear in bvh view before defaulting color
 @export_storage var object_display_threshold := 40:
 	set(value):
 		render_mode_changed = true
 		settings_was_changed = true
 		object_display_threshold = value
 
-## How many node tests appear in show_bvh_depth before deufaulting color
+## How many node tests appear in bvh view before deufaulting color
 @export_storage var node_display_threshold := 50:
 	set(value):
 		render_mode_changed = true
@@ -143,30 +138,13 @@ var work_group_depth := 1
 		settings_was_changed = true
 		y_offset = value
 
-# GPU render flags as an int
+## GPU render flags as an int
 var flags : int = 0
 
-# Whether the shader will sample from previous draw call or not
-var _multisample := true:
-	set(value):
-		_set_flag_bit(RenderFlagsBits.MULTISAMPLE, value)
-		_multisample = value
-
-# A disable override for render modes that cannot utilize multisampling
-var _disable_multisample := false
-
-# Updated whenever the camera or an object is moved
-var scene_changed := false:
-	set(value):
-		_multisample = not value and can_multisample()
-		scene_changed = value
-
-var _current_render_mode : RenderMode
-
-# Whether any flags that control *what* is rendered i.e. show_bvh_depth
+## Whether _current_render_mode changed this frame
 var render_mode_changed := false
 
-# Whether this window was rendered in the last renderer draw call
+## Whether this window was rendered in the last renderer draw call
 var was_rendered := false
 
 ## Whether any settings that affect rendering changed this frame
@@ -175,15 +153,14 @@ var settings_was_changed := false
 var frame_counter : Label
 var frame_time : Label
 
-# The numbered sample that will be rendered this frame
-#  possible values: frame -> [0, max_samples)
+## The number of samples that have been rendered
 var frame : int = 0:
 	set(value):
 		if frame_counter:
 			frame_counter.text = "Frame: " + str(value)
 		frame = value
 
-# The seconds passed since frame 0 was rendered,
+# The seconds passed since frame 1 was rendered,
 #  stopping when frame max_samples have been rendered
 #  Updated by PTRenderer
 var frame_times : float:
@@ -192,7 +169,11 @@ var frame_times : float:
 			frame_time.text = "Time: %.2fs" % value
 		frame_times = value
 
-var max_sample_start_time : float # Point in time when rendering started
+## Point in time when last sample started rendering
+var sample_start_time : float
+
+## Whether all samples will be cleared this frame
+var frame_reset := false
 
 
 func _init(group_x := -1, group_y := -1, group_z := 1, offset_x := 0, offset_y := 0) -> void:
@@ -208,41 +189,49 @@ func _init(group_x := -1, group_y := -1, group_z := 1, offset_x := 0, offset_y :
 	y_offset = offset_y
 
 
+func is_defualt_view() -> bool:
+	return _current_render_mode == RenderMode.DEFAULT
+
+
+func is_bvh_view() -> bool:
+	return _current_render_mode == RenderMode.BVH_DEPTH
+
+
+func is_normal_view() -> bool:
+	return _current_render_mode == RenderMode.NORMAL_VIEW
+
+
+## Whether the given render mode can multisample or not.
+func render_mode_can_multisample(render_mode : RenderMode) -> bool:
+	return true if render_mode == RenderMode.DEFAULT else false
+
+
+## Whether the render window is allowed to multisample this frame.
 func can_multisample() -> bool:
-	return enable_multisampling and not _disable_multisample
+	return (
+		enable_multisampling and
+		not render_mode_changed and
+		render_mode_can_multisample(_current_render_mode) and
+		(not stop_rendering_on_max_samples or frame < max_samples)
+)
 
-
-## Sets the given render mode to true or false.
-## Only one render mode can be true at the same time.
+## Sets the given render mode to true by defualt.
 ## Disabling a render mode will change the render mode to DEFUALT.
-func set_render_mode(render_mode : RenderMode, enable : bool) -> void:
+func set_render_mode(render_mode : RenderMode, enable := true) -> void:
 	if not enable:
-		_disable_render_mode(render_mode)
+		assert(render_mode != RenderMode.DEFAULT,
+				"Cannot disable the defualt render mode.")
+		assert(render_mode == _current_render_mode,
+				"Cannot disable a render_mode that is already disabled.")
+
+		_current_render_mode = RenderMode.DEFAULT
+
+	elif _current_render_mode != render_mode:
+		_current_render_mode = render_mode
+	else:
+		# Trying to enable the current active render mode should do nothing
 		return
 
-	# Trying to enable the current active render mode
-	if _current_render_mode == render_mode:
-		return
-
-	if _current_render_mode != RenderMode.DEFAULT:
-		_disable_render_mode(_current_render_mode)
-
-	_current_render_mode = render_mode
-
-	match render_mode:
-		RenderMode.DEFAULT:
-			return
-
-		RenderMode.BVH_DEPTH:
-			_set_flag_bit(RenderFlagsBits.SHOW_BVH_DEPTH, true)
-			show_bvh_depth = true
-
-		RenderMode.NORMAL_VIEW:
-			_set_flag_bit(RenderFlagsBits.SHOW_NORMAL_VIEW, true)
-			show_normal_view = false
-
-	_disable_multisample = true
-	_multisample = can_multisample()
 	render_mode_changed = true
 	settings_was_changed = true
 
@@ -251,50 +240,40 @@ func get_render_mode() -> RenderMode:
 	return _current_render_mode
 
 
-func _disable_render_mode(render_mode : RenderMode) -> void:
-	assert(render_mode != RenderMode.DEFAULT,
-		"Cannot disable the defualt render mode.")
-
-	if _current_render_mode != render_mode:
-		return
-
-	_current_render_mode = RenderMode.DEFAULT
-
-	match render_mode:
-		RenderMode.DEFAULT:
-			return
-
-		RenderMode.BVH_DEPTH:
-			_set_flag_bit(RenderFlagsBits.SHOW_BVH_DEPTH, false)
-			show_bvh_depth = false
-
-		RenderMode.NORMAL_VIEW:
-			_set_flag_bit(RenderFlagsBits.SHOW_NORMAL_VIEW, false)
-			show_normal_view = false
-
-	_disable_multisample = false
-	_multisample = can_multisample()
-	render_mode_changed = true
-	settings_was_changed = true
-	frame = 0
-
-func flags_to_byte_array() -> PackedByteArray:
-	return PackedInt32Array([flags]).to_byte_array()
+## Requests the renderer to reset frame counter next render call.
+func clear_frames() -> void:
+	frame_reset = true
 
 
+## Checks if frame counter should reset and resets it if it does.
+func _frame_reset_check(movement : bool) -> void:
+	if (
+			movement
+			or frame_reset
+			or render_mode_changed
+			or (frame >= max_samples and not stop_rendering_on_max_samples)
+	):
+		frame = 0
+		frame_times = 0
+		frame_reset = false
+
+
+## Used once for _init()
 func _set_flags() -> void:
-	"""Used once for init"""
 	flags = (
 		RenderFlagsBits.USE_BVH * int(use_bvh) +
-		RenderFlagsBits.SHOW_BVH_DEPTH * int(show_bvh_depth) +
-		RenderFlagsBits.MULTISAMPLE * int(_multisample) +
+		RenderFlagsBits.MULTISAMPLE * int(enable_multisampling) +
 		RenderFlagsBits.SHOW_NODE_COUNT * int(display_node_count) +
-		RenderFlagsBits.SHOW_OBJECT_COUNT * int(display_object_count) +
-		RenderFlagsBits.SHOW_NORMAL_VIEW * int(show_normal_view)
+		RenderFlagsBits.SHOW_OBJECT_COUNT * int(display_object_count)
 	)
 
 func _set_flag_bit(bit : int, boolean : bool) -> void:
 	# Shamlessly stolen from:
-	# https://stackoverflow.com/questions/47981/how-to-set-clear-and-toggle-a-single-bit
+	# https://stackoverflow.com/a/47990
 	flags = (flags & ~bit) | (bit * int(boolean))
 
+
+## Resets frame dependant values
+func _frame_cleanup() -> void:
+	render_mode_changed = false
+	was_rendered = true

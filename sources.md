@@ -117,6 +117,7 @@ UV image was from [PostImage](https://postimg.cc/HrxvBss3), but I couldn't find 
 Random functions have been taken from:
   - [Ray Tracer Demo](https://github.com/HK-SHAO/Godot-RayTracing-Demo) by HK-SHAO
   - [Hash Functions for GPU Rendering](https://www.shadertoy.com/view/XlGcRh) by Mark Jarzynski and Marc Olano
+  - [Single bit set](https://stackoverflow.com/a/47990)
 
 
 ## Further reading (for me)

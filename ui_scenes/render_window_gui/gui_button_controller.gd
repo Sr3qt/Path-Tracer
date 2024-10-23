@@ -68,16 +68,15 @@ func _ready() -> void:
 
 	# Set default value for bvh buttons
 	use_bvh.button_pressed = pt_window.use_bvh
-	show_bvh_depth.button_pressed = pt_window.show_bvh_depth
+	_on_show_bvh_depth_button_toggled(pt_window.is_bvh_view())
+
 	show_node_count.button_pressed = pt_window.display_node_count
 	show_object_count.button_pressed = pt_window.display_object_count
-	_on_show_bvh_depth_button_toggled(pt_window.show_bvh_depth)
 	_on_show_node_button_toggled(pt_window.display_node_count)
 	_on_show_object_button_toggled(pt_window.display_object_count)
 
 	object_count_threshold.value = pt_window.object_display_threshold
 	object_count_threshold.previous_value = pt_window.object_display_threshold
-
 	node_count_threshold.value = pt_window.node_display_threshold
 	node_count_threshold.previous_value = pt_window.node_display_threshold
 
@@ -103,12 +102,14 @@ func _ready() -> void:
 
 	ray_bounces.value = pt_window.max_ray_depth
 
+	_on_normal_view_button_toggled(pt_window.is_normal_view())
+
 	# TODO 2: THINGS TO ADD:
 	#	-add button to make a new camera instance and a way top change between camera instances
 	#	-add ability to change camera variables, fov, gamma, focal
 
 
-# Shouldnt work withouth no_signal, but it does, so no change needed
+# Buttons need to be toggled with event so the ui updates apropiatly
 func toggle_all_render_mode_buttons(toggle : bool) -> void:
 	show_bvh_depth.button_pressed = toggle
 	normal_view.button_pressed = toggle
@@ -124,9 +125,11 @@ func _on_use_bvh_button_toggled(toggled_on : bool) -> void:
 
 
 func _on_show_bvh_depth_button_toggled(toggled_on : bool) -> void:
-	toggle_all_render_mode_buttons(false)
-	show_bvh_depth.set_pressed_no_signal(toggled_on)
-	pt_window.set_render_mode(pt_window.RenderMode.BVH_DEPTH, toggled_on)
+	if toggled_on:
+		toggle_all_render_mode_buttons(false)
+		show_bvh_depth.set_pressed_no_signal(toggled_on)
+	if (pt_window.is_bvh_view() or toggled_on):
+		pt_window.set_render_mode(pt_window.RenderMode.BVH_DEPTH, toggled_on)
 
 	node_count_threshold.visible = toggled_on
 	object_count_threshold.visible = toggled_on
@@ -165,7 +168,7 @@ func _on_max_samples_button_focus_exited() -> void:
 
 
 func _on_clear_samples_pressed() -> void:
-	pt_window.frame = 0
+	pt_window.clear_frames()
 
 
 func _on_disable_render_button_toggled(toggled_on : bool) -> void:
@@ -210,6 +213,8 @@ func _on_ray_bounces_value_changed(value : int) -> void:
 
 
 func _on_normal_view_button_toggled(toggled_on : bool) -> void:
-	toggle_all_render_mode_buttons(false)
-	normal_view.set_pressed_no_signal(toggled_on)
-	pt_window.set_render_mode(pt_window.RenderMode.NORMAL_VIEW, toggled_on)
+	if toggled_on:
+		toggle_all_render_mode_buttons(false)
+		normal_view.set_pressed_no_signal(toggled_on)
+	if pt_window.is_normal_view() != toggled_on:
+		pt_window.set_render_mode(pt_window.RenderMode.NORMAL_VIEW, toggled_on)

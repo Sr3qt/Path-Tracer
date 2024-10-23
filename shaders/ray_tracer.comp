@@ -246,17 +246,23 @@ const int starting_bit = int(pow(2, flag_size - 1));
 bool flags[flag_size];
 
 bool use_bvh;
-bool show_bvh_depth;
 bool show_node_count;
 bool show_object_count;
-bool show_normal_view;
 
 bool multisample;
 
 // #if IS_DEBUG
+
+// Render flags
+const int RENDER_MODE_DEFAULT = 0;
+const int RENDER_MODE_BVH_DEPTH = 1;
+const int RENDER_MODE_NORMAL_VIEW = 2;
+bool show_bvh_depth;
+bool show_normal_view;
+
 vec4 debug_color = vec4(-1);
 vec4 render_mode_color = vec4(-1);
-bool use_render_mode_color = false;
+bool render_mode_is_single_sample = false;
 
 int node_hit_count = 0;
 int object_hit_count = 0;
@@ -456,6 +462,10 @@ layout(set = 6, binding = 0, std430) restrict readonly buffer Transforms {
 layout(push_constant, std430) restrict readonly uniform constants {
     Camera camera;
     int flags;
+    int render_mode;
+    int filler1;
+    int filler2;
+    int filler3;
     int image_offset_x; // How many pixels offset should the viewport origin be
     int image_offset_y;
     int node_count_threshold;
@@ -615,13 +625,14 @@ void parse_flags() {
     }
 
     use_bvh = flags[0];
-    show_bvh_depth = flags[1];
-    multisample = flags[2];
-    show_node_count = flags[3];
-    show_object_count = flags[4];
-    show_normal_view = flags[5];
+    multisample = flags[1];
+    show_node_count = flags[2];
+    show_object_count = flags[3];
+
+    show_bvh_depth = push.render_mode == RENDER_MODE_BVH_DEPTH;
+    show_normal_view = push.render_mode == RENDER_MODE_NORMAL_VIEW;
     // Needs to be updated when new render modes appear
-    use_render_mode_color = show_bvh_depth || show_normal_view;
+    render_mode_is_single_sample = show_bvh_depth || show_normal_view;
 }
 
 int get_object_type(int object_id) {
@@ -1367,7 +1378,6 @@ ivec2 get_material3() {
 }
 
 // TODO 3: Add render_mode to see if more objects than allowed are overlapping
-// TODO 0: Refactor render modes to be an enum instead of bools.
 // Adds new material to be ior tracked in sorted array inside_of
 void add_material_to_inside_of(int material_index, int depth) {
     int shift = 1;
@@ -1642,7 +1652,7 @@ vec4 cast_ray(Ray ray) {
     vec4 tex_col = vec4(1);
 
     int i = 0;
-    if (use_render_mode_color) {
+    if (render_mode_is_single_sample) {
         refraction_bounces = push.max_refraction_bounces;
         i = push.max_default_depth + push.max_refraction_bounces - 1;
     }
