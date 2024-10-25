@@ -1339,21 +1339,38 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
 
 // RAY-BOUNCE FUNCTIONS
 // ====================
-Ray reflect_ray(Ray ray_in, RayHit rayhit) {
-    // Returns a new reflected ray based on ray_in and rayhit
+Ray scatter_ray(Ray ray_in, vec3 point, vec3 normal, int material) {
+    // TODO 2: Change the way rays are created based on roughness, less/ more scatter
+    vec3 new_origin = offset_ray(point, normal);
 
-    vec3 new_origin = offset_ray(rayhit.point, rayhit.normal);
+    // Returns a scattered ray based on ray_in and hit information
+    vec3 ray_dir = random_point_on_sphere() + normal;
 
-    float metallic = materials.data[rayhit.mtl_index].metallic;
+    // If created ray pointed in opposite direction of normal
+    ray_dir = near_zero(ray_dir) ? normal : ray_dir;
 
-    vec3 reflected_dir = reflect(ray_in.direction, rayhit.normal) * metallic;
+    // Make sure reflected ray points in the same way as normal
+    ray_dir = dot(ray_dir, normal) < 0. ? ray_dir * -1.0 : ray_dir;
+
+    return new_ray(new_origin, ray_dir);
+}
+
+Ray reflect_ray(Ray ray_in, vec3 point, vec3 normal, int material) {
+    // Returns a new reflected ray based on ray_in and hit information
+    vec3 new_origin = offset_ray(point, normal);
+
+    float metallic = materials.data[material].metallic;
+
+    // Metallic vlaues 0.5 look all the same
+    // TODO 2: Redo how metallic works
+    vec3 reflected_dir = reflect(ray_in.direction, normal) * metallic;
     vec3 dir_offset = random_point_on_sphere() * (1. - metallic);
 
     vec3 ray_dir = reflected_dir + dir_offset;
 
     // Reflects ray if it points into the object
-    if (dot(ray_dir, rayhit.normal) < 0.) {
-        ray_dir = reflect(ray_dir, rayhit.normal);
+    if (dot(ray_dir, normal) < 0.) {
+        ray_dir = reflect(ray_dir, normal);
     }
 
     return new_ray(new_origin, ray_dir);
@@ -1398,6 +1415,9 @@ void add_material_to_inside_of(int material_index, int priority) {
     }
     inside_of[insert_index] = InsideOf(material_index, priority);
     inside_of_count++;
+    // if (inside_of_count == 2 && 2 == inside_of[1].material_index) {
+    //     debug_black;
+    // }
 }
 
 void remove_material_from_inside_of(int material_index) {
@@ -1416,80 +1436,61 @@ void remove_material_from_inside_of(int material_index) {
     inside_of_count--;
 }
 
-Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
-    // Returns a refracted or reflected ray based on ray_in and rayhit
-    // TODO 3: Add support for cpu to send InsideOf buffer based on camera position
-    // TODO 3: Add tiny random direction change coupled with color shift, prism, diffraction
-    // TODO! 2: add refraction depth checks to diffuse and metallic
-    // TODO 2: Implement Beer's law:
-    // https://www.flipcode.com/archives/Raytracing_Topics_Techniques-Part_3_Refractions_and_Beers_Law.shtml
 
-    // Whether object is inside the current object
-    // Due to floating point error, the boundaries of spheres can incorrectly be considered 'is_inside'
-    // TODO! 1: See if extra inside_of_count check can be reverted
-    #if use_refraction_tracking==2 || use_refraction_tracking==3
-    // Double check with inside_of array.
-    bool is_inside = bool(dot(rayhit.normal, ray_in.direction) > 0. && inside_of_count > 0);
-    #else
-    bool is_inside = bool(dot(rayhit.normal, ray_in.direction) > 0.);
-    #endif
-    vec3 normal = (is_inside) ? -rayhit.normal : rayhit.normal;
-
-    vec3 new_origin = offset_ray(rayhit.point, -normal);
-
+void material_chooser(
+        RayHit rayhit,
+        bool is_inside,
+        inout vec3 out_normal,
+        inout int out_material,
+        out float out_ior
+) {
+    // We can assume that the out_normal we get is rayhit.normal
+    // and out_material is rayhit.mtl_index
+    // is_inside = bool(dot(rayhit.normal, ray_in.direction) > 0.);
+    // out_normal = (is_inside) ? -rayhit.normal : rayhit.normal;
     Material material = materials.data[rayhit.mtl_index];
 
-    #if use_refraction_tracking==0
-    float eta = (is_inside) ? material.IOR / IOR_air : IOR_air / material.IOR ;
-    if (is_inside) {
-        ignore_attenuation = true;
-    }
-
-    #elif use_refraction_tracking==1
-    float eta_in = current_IOR;
-    float eta_out = (is_inside) ? IOR_air : material.IOR;
-    float eta = eta_in / eta_out;
-
-    #elif use_refraction_tracking==2 || use_refraction_tracking==3
-
-    float eta_in = current_IOR;
-    #if USE_NEW_REFRACTION_TRACKING
-    float eta_out;
     int object_material = rayhit.mtl_index;
     ivec2 material_indices = get_highest_priority_materials();
-    // TODO! 1: Move Refraction depth check to before choosing ray creation method.
     // TODO 2: make warning in godot for whenever manx refraction depth has been reached.
     if (is_inside) {
         if (inside_of_count == 1) {
             // Material outside is air.
-            eta_out = IOR_air;
+            out_ior = IOR_air;
+            out_material = -1;
                 // if (material_indices.y == 3) {debug_black;}
-            ignore_attenuation = true;
+            // ignore_attenuation = true;
         } else {
-            if (material_indices.x == object_material) {
-                if (material_indices.y == object_material) {
+            if (material_indices.x != object_material || material_indices.y == object_material) {
+                // if (material_indices.y == object_material) {
                     // Material on both sides of object are the same and are the same as object's material.
-                    remove_material_from_inside_of(object_material);
-                    ignore_attenuation = true;
+                    // remove_material_from_inside_of(object_material);
+                    // ignore_attenuation = true;
 
-                    if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
+                    // if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
 
-                    return new_ray(new_origin, ray_in.direction);
-                }
-                // material on inside is material's, material on outside is different.
-                // TODO! 0: Should do make new ray based on outside's material
-                ignore_attenuation = true;
-                eta_out = materials.data[material_indices.y].IOR;
+                    out_material = current_material;
 
+                    // return new_ray(new_origin, ray_in.direction);
+                // }
             } else {
-                // Material on both sides of object are the same, but not the same as object's material.
-                remove_material_from_inside_of(object_material);
-                ignore_attenuation = true;
+                // material on inside is material's, material on outside is different.
+                // TODO 0: Should do make new ray based on outside's material!
+                // ignore_attenuation = true;
+                out_ior = materials.data[material_indices.y].IOR;
+                out_material = material_indices.y;
+                out_normal *= -1;
 
-                if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
-
-                return new_ray(new_origin, ray_in.direction);
             }
+            // else {
+            //     // Material on both sides of object are the same, but not the same as object's material.
+            //     remove_material_from_inside_of(object_material);
+            //     ignore_attenuation = true;
+
+            //     if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
+
+            //     return new_ray(new_origin, ray_in.direction);
+            // }
         }
     } else {
         #define is_same_material material_indices.x == object_material
@@ -1500,42 +1501,133 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
         #elif use_refraction_tracking==3
         #define ior_priority material.dielectric_priority
         #endif
-        if (inside_of_count == 0) {
-            // Ray is entering from air into object
-            eta_out = material.IOR;
+
+        if (is_same_material || old_priority_is_higher) {
+            // Material on both sides of object are the same and are the same as object's material.
+            // Or
+            // The previous material we were inside of has a higher priority than the new material.
+            // add_material_to_inside_of(object_material, ior_priority);
+            // Moved outside later
+            // ignore_attenuation = true;
+
+            // if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
+
+            out_material = current_material;
         } else {
-            if (is_same_material) {
-                // Material on both sides of object are the same and are the same as object's material.
-                add_material_to_inside_of(object_material, ior_priority);
-                ignore_attenuation = true;
+            out_ior = material.IOR;
+            out_material = object_material;
+            // debug_black;
+        }
+    }
+    // current_material = material_indices.x;
+}
 
-                if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
 
-                return new_ray(new_origin, ray_in.direction);
+Ray refract_ray(
+        Ray ray_in,
+        inout RayHit rayhit,
+        // int in_material_index,
+        int material_index,
+        float out_ior
+) {
+    // Returns a refracted or reflected ray based on ray_in and rayhit
+    // TODO 3: Add support for cpu to send InsideOf buffer based on camera position
+    // TODO 3: Add tiny random direction change coupled with color shift, prism, diffraction
+    // TODO 2: Implement Beer's law:
+    // https://www.flipcode.com/archives/Raytracing_Topics_Techniques-Part_3_Refractions_and_Beers_Law.shtml
 
-            } else {
-                if (old_priority_is_higher) {
-                    // Ray comes from material with lower refraction depth.
-                    add_material_to_inside_of(object_material, ior_priority);
+    // Whether object is inside the current object
+    bool is_inside = bool(dot(rayhit.normal, ray_in.direction) > 0.);
+    vec3 normal = (is_inside) ? -rayhit.normal : rayhit.normal;
+
+    vec3 new_origin = offset_ray(rayhit.point, -normal);
+
+    // Material material = materials.data[material_index];
+    Material object_material = materials.data[rayhit.mtl_index];
+
+    #if use_refraction_tracking==0
+    float eta = (is_inside) ? object_material.IOR / IOR_air : IOR_air / object_material.IOR ;
+    if (is_inside) {
+        ignore_attenuation = true;
+    }
+
+    #elif use_refraction_tracking==1
+    float eta_in = current_IOR;
+    float eta_out = (is_inside) ? IOR_air : object_material.IOR;
+    float eta = eta_in / eta_out;
+
+    #elif use_refraction_tracking==2 || use_refraction_tracking==3
+
+    float eta_in = current_IOR;
+    #if USE_NEW_REFRACTION_TRACKING
+    float eta_out;
+    int object_material_index = rayhit.mtl_index;
+    ivec2 material_indices = get_highest_priority_materials();
+    // TODO 2: make warning in godot for whenever manx refraction depth has been reached.
+    if (is_inside) {
+        if (inside_of_count == 1) {
+            // Material outside is air.
+            eta_out = IOR_air;
+                // if (material_indices.y == 3) {debug_black;}
+            ignore_attenuation = true;
+        } else {
+            if (material_indices.x == object_material_index) {
+                if (material_indices.y == object_material_index) {
+                    // Material on both sides of object are the same and are the same as object's material.
+                    remove_material_from_inside_of(object_material_index);
                     ignore_attenuation = true;
 
                     if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
 
                     return new_ray(new_origin, ray_in.direction);
-
-                } else {
-                    eta_out = material.IOR;
                 }
+            // } else {
+                // material on inside is material's, material on outside is different.
+                ignore_attenuation = true;
+                eta_out = materials.data[material_indices.y].IOR;
+
+            } else {
+                // Material on both sides of object are the same, but not the same as object's material.
+                remove_material_from_inside_of(object_material_index);
+                ignore_attenuation = true;
+
+                if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
+
+                return new_ray(new_origin, ray_in.direction);
             }
+        }
+    } else {
+        #define is_same_material_ material_indices.x == object_material_index
+        #define old_priority_is_higher_ object_material.dielectric_priority < inside_of[0].dielectric_priority
+
+        #if use_refraction_tracking==2
+        #define ior_priority_ inside_of_count
+        #elif use_refraction_tracking==3
+        #define ior_priority_ object_material.dielectric_priority
+        #endif
+
+        if (is_same_material_ || old_priority_is_higher_) {
+            // Material on both sides of object are the same and are the same as object's material.
+            // Or
+            // The previous material we were inside of has a higher priority than the new material.
+            add_material_to_inside_of(object_material_index, ior_priority_);
+            ignore_attenuation = true;
+
+            if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
+
+            return new_ray(new_origin, ray_in.direction);
+
+        } else {
+            eta_out = object_material.IOR;
         }
     }
     #elif !USE_NEW_REFRACTION_TRACKING
     // If ray is inside object ignore rayhti.mtl_index as having a possible eta_out, else
     //  rayhit.mtl_index is default material if no other materials are in inside_of.
-    int dielectric_priority = is_inside ? neg_int_limit : material.dielectric_priority;
-    current_material = get_material(rayhit.mtl_index, dielectric_priority, is_inside);
+    int dielectric_priority = is_inside ? neg_int_limit : object_material.dielectric_priority;
+    int temp_material = get_material(rayhit.mtl_index, dielectric_priority, is_inside);
 
-    float eta_out = materials.data[current_material].IOR;
+    float eta_out = materials.data[temp_material].IOR;
     if (is_inside) {
         ignore_attenuation = true;
     }
@@ -1557,6 +1649,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
                     - ray enters same material. remove object material, ignore attenuation, straight ray.
     */
 
+    // float eta_out = out_ior;
     float eta = eta_in / eta_out;
 
     // If ratio is one the ray will travel in a straight line
@@ -1566,7 +1659,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
             remove_material_from_inside_of(rayhit.mtl_index);
         } else {
             // If ray was outside and refracted, add to inside_of list
-            add_material_to_inside_of(rayhit.mtl_index, material.dielectric_priority);
+            add_material_to_inside_of(rayhit.mtl_index, object_material.dielectric_priority);
         }
 
         // TODO! 3: Only invalidate color if this object has the same color as the previous object
@@ -1585,14 +1678,16 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     float cos_theta = min(dot(-ray_in.direction, normal), 1.);
     float sin_theta = sqrt(1. - cos_theta * cos_theta);
     bool cannot_refract = eta * sin_theta > 1.;
+    // if (cannot_refract) {debug_black;}
 
     // Check for internal reflection
-    if ((reflectance(eta, cos_theta) * (material.reflectivity) > noise(random)) || cannot_refract) {
+    if ((reflectance(eta, cos_theta) * (object_material.reflectivity) > noise(random)) || cannot_refract) {
         return new_ray(offset_ray(rayhit.point, normal), reflect(ray_in.direction, normal));
     }
 
     #if use_refraction_tracking
     current_IOR = eta_out;
+    current_material = material_index;
     #endif
 
     #if use_refraction_tracking==2 || use_refraction_tracking==3
@@ -1601,8 +1696,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
         remove_material_from_inside_of(rayhit.mtl_index);
     } else {
         // If ray was outside and refracted, add to inside_of list
-        // TODO 0: remember to swap material with object_material
-        add_material_to_inside_of(rayhit.mtl_index, material.dielectric_priority);
+        add_material_to_inside_of(rayhit.mtl_index, object_material.dielectric_priority);
     }
     #endif
 
@@ -1612,36 +1706,64 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     return new_ray(new_origin, refract(ray_in.direction, normal, eta));
 }
 
-Ray scatter_ray(Ray ray_in, RayHit rayhit) {
-    // TODO 2: Change the way rays are created based on roughness, less/ more scatter
-
-    vec3 new_origin = offset_ray(rayhit.point, rayhit.normal);
-
-    // Returns a scattered ray based on ray_in and rayhit
-    vec3 ray_dir = random_point_on_sphere() + rayhit.normal;
-
-    // If created ray pointed in opposite direction of normal
-    ray_dir = near_zero(ray_dir) ? rayhit.normal : ray_dir;
-
-    // Make sure reflected ray points in the same way as normal
-    ray_dir = dot(ray_dir, rayhit.normal) < 0. ? ray_dir * -1.0 : ray_dir;
-
-    return new_ray(new_origin, ray_dir);
-}
-
 Ray bounce_ray(Ray ray_in, inout RayHit rayhit) {
     // Creates a new ray based material properties from the previous rayhit
 
-    // TODO 1: Make more sophisticated function choosing
-    if (materials.data[rayhit.mtl_index].opacity < 1.) {
-        return refract_ray(ray_in, rayhit);
+    // TODO 0: Optimize to only require one refraction depth test.
+    bool is_inside = bool(dot(rayhit.normal, ray_in.direction) > 0.);
+    vec3 normal = rayhit.normal;
+    int material = rayhit.mtl_index;
+    float eta_out = IOR_air;
+
+    #define GO_AWAY 1
+    #if GO_AWAY
+    material_chooser(rayhit, is_inside, normal, material, eta_out);
+
+    // If we are inside an object, calculate beer's law here
+
+    if (material == -1) {
+        // outside material is air
+        // Perform this materials refraction
+        return refract_ray(ray_in, rayhit, -1, eta_out);
+    } else
+    if (material == current_material) {
+        // Same material do nothjing
+        // Same ray, new offset origin
+        ignore_attenuation = true;
+        if (refraction_bounces < push.max_refraction_bounces - 1) {refraction_bounces++;}
+        // debug_black;
+
+        if (is_inside) {
+            remove_material_from_inside_of(rayhit.mtl_index);
+        } else {
+            // If ray was outside and refracted, add to inside_of list
+            add_material_to_inside_of(rayhit.mtl_index, materials.data[rayhit.mtl_index].dielectric_priority);
+        }
+
+        normal = is_inside ? normal : -normal;
+        return new_ray(offset_ray(rayhit.point, normal), ray_in.direction);
+    }
+    // material = rayhit.mtl_index;
+    // eta_out = IOR_air;
+    // normal = rayhit.normal;
+
+    rayhit.color = vec4(materials.data[material].albedo, 1);
+    #endif
+
+    // Material of a new object.
+    // If the object we are in follows Beer's law, finish it.
+    // Then perform the ray bounce apropriate for the new material.
+
+    if (materials.data[material].opacity < 1.) {
+        return refract_ray(ray_in, rayhit, material, eta_out);
     }
 
-    if (materials.data[rayhit.mtl_index].metallic > 0.) {
-        return reflect_ray(ray_in, rayhit);
+    if (materials.data[material].metallic > 0.) {
+        return reflect_ray(ray_in, rayhit.point, normal, material);
     }
 
-    return scatter_ray(ray_in, rayhit);
+    return scatter_ray(ray_in, rayhit.point, normal, material);
+
 }
 
 // MAIN FUNCTIONS
