@@ -29,9 +29,11 @@ extends Resource
 		material_changed.emit(self)
 # NOTE: Because of how the shader is written, int_limit and int_limit -1 are not
 #  available
-@export_range(-2147483646, 2147483645) var refraction_depth : int = 0:
+## During an intersection between at least one dielectric object and another object,
+## the object with the highest dielectric_priority will "exist" in the overlap between objects.
+@export_range(-2147483646, 2147483645) var dielectric_priority : int = 0:
 	set(value):
-		refraction_depth = value
+		dielectric_priority = value
 		material_changed.emit(self)
 @export var is_emissive := false:
 	set(value):
@@ -71,7 +73,7 @@ func is_equal(other : PTMaterial) -> bool:
 			other.metallic == metallic and
 			other.opacity == opacity and
 			other.IOR == IOR and
-			other.refraction_depth == refraction_depth
+			other.dielectric_priority == dielectric_priority
 	)
 
 
@@ -88,7 +90,7 @@ func to_byte_array() -> PackedByteArray:
 	]
 
 	var ints_array : Array[int] = [
-		refraction_depth,
+		dielectric_priority,
 		is_emissive,
 		0,
 		0,

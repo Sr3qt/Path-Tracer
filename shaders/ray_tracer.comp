@@ -51,10 +51,9 @@ have to have determine_rayhit called on them afterwards to have valid values.
 Normals always point outwards from surfaces and are always normalized on creation.
 Ray direction is also normalized on creation.
 
-Ray depth starts at 0 and goes up as depth increases.
+Ray depth is the number of bounces it has done. It starts at 0 and goes up as the ray bounces.
 
-TODO 0: refactor phrasing of refraction depth to "dielectric_priority" make it less ambivilous
-Materials have something called refraction_depth. A lower number takes priority.
+Materials have something called dielectric_priority. A higher number takes priority.
 See Refraction Tracking in PRE PROCESSOR STUFF
 
 mtl_index and object_index refer to a material and an object in the global material list and
@@ -109,21 +108,22 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 /*
 // Fun fact, I happened to implement Nested Dielectrics not knowing what it was.
+// However, I still prefer to call it refraction tracking.
 Refraction tracking is the practice of answering the question,
-if I enter 3 transparant objects, when I leave only one, what material am I in.
-Refraction tracking solves this by assigning a refraction depth value to all materials,
-and choosing the material with the lowest depth when leaving an object inside of another/others.
+"What is the material in the intersection between two objects?".
+Refraction tracking solves this by assigning a dielectric priority to all materials,
+and choosing the material with the highest priority when leaving an object inside of another.
 
 This should, in theory, come with the abiltiy to cut objects with another object that has
 air as its material. It also allows for composite glass objects; Rays will travel through multiple
 transparent objects with the same material as if it was one homogenous mass,
 although at a higher ray depth cost (It might not get out if max_default_depth is low).
 
-Enabling refraction tracking has a small performance impact
+Enabling any of the options below might have a small performance impact
 Diferent modes:
-    - 0 Disabled nested dielectrics and disabled refraction tracking,
+    - 0 Disabled nested dielectrics and disabled IoR tracking,
         dielectric refractions will assume IOR_air for ior_out
-    - 1 Disabled nested dielectrics and enabled refraction tracking,
+    - 1 Disabled nested dielectrics and enabled IoR tracking,
         dielectric refractions will assume previous entered material for ior_in
     - 2 Enable nested dielectrics, priority will be assumed to be first entered having lowest priority.
     - 3 Enable nested dielectrics and dielectric priority, will use dielectric priority of material.
@@ -188,29 +188,36 @@ const int MAX_TEXTURE_COUNT = 512;
 // Keeps values of inside_of neatly organized
 struct InsideOf {
     int material_index;
-    int refraction_depth;
+    int dielectric_priority;
 };
 
 // IORs
 const float IOR_air = 1.0;
 #if use_refraction_tracking
 float current_IOR = IOR_air;
+int current_material = -1;
 #endif
 
-// The program will keep track of which objects a ray has passed through to do correct calculations
-//  i.e. refraction tracking
 // This is the maximum amount of overlapping geometry that will be considered
-const int max_refraction_depth = 8;
+// for nested dielectrics.
+const int max_overlapping_objects = 8;
 
 // Keeps track of first vacant index in stack
 int inside_of_count = 0;
 
+#define USE_NEW_REFRACTION_TRACKING 1
+#if USE_NEW_REFRACTION_TRACKING
 InsideOf empty_inside() {
-    return InsideOf(0, int_limit - 1);
+    return InsideOf(-1, neg_int_limit);
 }
+#else
+InsideOf empty_inside() {
+    return InsideOf(0, neg_int_limit);
+}
+#endif
 
-// Holds the array of material index and refraction depth
-InsideOf inside_of[max_refraction_depth] = InsideOf[](
+// Holds an array of material_index and dielectric_priority
+InsideOf inside_of[max_overlapping_objects] = InsideOf[](
     empty_inside(),
     empty_inside(),
     empty_inside(),
@@ -231,7 +238,7 @@ const vec4 default_color = vec4(0);
 bool is_emissive = false;
 #endif
 
-const int max_depth = 64 * 16; // Length of rayhits to visit stack in BVH
+const int max_bvh_depth = 64 * 16; // Length of rayhits to visit stack in BVH
 int refraction_bounces = 0; // Counts the number of times a ray has refracted
 
 // Maximum number of inner nodes a BVHNode can have
@@ -255,9 +262,9 @@ bool multisample;
 
 // Render flags
 const int RENDER_MODE_DEFAULT = 0;
-const int RENDER_MODE_BVH_DEPTH = 1;
+const int RENDER_MODE_BVH_VIEW = 1;
 const int RENDER_MODE_NORMAL_VIEW = 2;
-bool show_bvh_depth;
+bool show_bvh_view;
 bool show_normal_view;
 
 vec4 debug_color = vec4(-1);
@@ -316,12 +323,11 @@ struct Material {
     // Non-opaque materials can refract.
     float opacity;
     float reflectivity;
-    // Index of refraction
     float IOR;
     // In cases where a translusent object intersects other objects or contains other translusent
-    //  objects, the refraction_depth will determine which object's material will take precedence
+    //  objects, the dielectric_priority will determine which object's material will take precedence
     //  in the intersection
-    int refraction_depth;
+    int dielectric_priority;
     bool is_emissive;
     int temp2;
     int temp3;
@@ -629,10 +635,10 @@ void parse_flags() {
     show_node_count = flags[2];
     show_object_count = flags[3];
 
-    show_bvh_depth = push.render_mode == RENDER_MODE_BVH_DEPTH;
+    show_bvh_view = push.render_mode == RENDER_MODE_BVH_VIEW;
     show_normal_view = push.render_mode == RENDER_MODE_NORMAL_VIEW;
     // Needs to be updated when new render modes appear
-    render_mode_is_single_sample = show_bvh_depth || show_normal_view;
+    render_mode_is_single_sample = show_bvh_view || show_normal_view;
 }
 
 int get_object_type(int object_id) {
@@ -1146,14 +1152,14 @@ RayHit check_ray_hit(inout Ray ray) {
 
 // Stack of indices of nodes yet to traverse
 // NOTE: might need to be bigger for larger scenes and/or with higher order trees
-int to_visit[max_depth];
+int to_visit[max_bvh_depth];
 int to_visit_i;
 
 int temp_children[order];
 float temp_ts[order];
 
 #if use_early_t_break
-float to_visit_t[max_depth];
+float to_visit_t[max_bvh_depth];
 #endif
 
 void calculate_top_node(inout Ray ray, inout RayHit rayhit, vec3 inv_dir, bvec3 is_neg) {
@@ -1233,7 +1239,7 @@ float check_ray_hit_BVH_mesh(Ray ray, inout RayHit rayhit) {
     int current_index;
     int start_index = to_visit_i;
 
-    while (to_visit_i >= start_index && to_visit_i <= max_depth) {
+    while (to_visit_i >= start_index && to_visit_i <= max_bvh_depth) {
         calculate_top_node(ray, rayhit, inv_direction, is_dir_negative);
     }
 
@@ -1276,7 +1282,7 @@ RayHit check_ray_hit_BVH(inout Ray ray) {
     // return rayhit;
 
 
-    while (to_visit_i > 0 && to_visit_i <= max_depth) {
+    while (to_visit_i > 0 && to_visit_i <= max_bvh_depth) {
         int current_index = to_visit[--to_visit_i];
 
         BVHNode node = BVH.list[current_index];
@@ -1353,15 +1359,15 @@ Ray reflect_ray(Ray ray_in, RayHit rayhit) {
     return new_ray(new_origin, ray_dir);
 }
 
-int get_material(int material_index, int lowest_depth, bool ignore_self) {
+int get_material(int material_index, int highest_priority, bool ignore_self) {
     // Loop over materials that we have entered and not left,
-    //  pick the one with the lowest refraction_depth, ignore default values if specified
+    //  pick the one with the highest dielectric_priority, ignore default values if specified
     int current_index = material_index;
-    for (int i = 0; i < max_refraction_depth; i++) {
+    for (int i = 0; i < max_overlapping_objects; i++) {
         InsideOf index = inside_of[i];
-        if (index.refraction_depth < lowest_depth) {
+        if (index.dielectric_priority > highest_priority) {
             if (!(material_index == index.material_index) || !ignore_self) {
-                lowest_depth = index.refraction_depth;
+                highest_priority = index.dielectric_priority;
                 current_index = index.material_index;
             } else {
                 // same material is true, we ignore the same material one time
@@ -1373,24 +1379,24 @@ int get_material(int material_index, int lowest_depth, bool ignore_self) {
     return current_index;
 }
 
-ivec2 get_material3() {
+ivec2 get_highest_priority_materials() {
     return ivec2(inside_of[0].material_index, inside_of[1].material_index);
 }
 
 // TODO 3: Add render_mode to see if more objects than allowed are overlapping
 // Adds new material to be ior tracked in sorted array inside_of
-void add_material_to_inside_of(int material_index, int depth) {
+void add_material_to_inside_of(int material_index, int priority) {
     int shift = 1;
     int insert_index = 0;
-    for (int i = max_refraction_depth - 1; i >= 0; i--) {
+    for (int i = max_overlapping_objects - 1; i >= 0; i--) {
         InsideOf index = inside_of[i];
-        if (depth > index.refraction_depth && shift == 1) {
+        if (priority < index.dielectric_priority && shift == 1) {
             insert_index = i + 1;
             shift = 0;
         }
         inside_of[i] = inside_of[i - shift];
     }
-    inside_of[insert_index] = InsideOf(material_index, depth);
+    inside_of[insert_index] = InsideOf(material_index, priority);
     inside_of_count++;
 }
 
@@ -1399,14 +1405,14 @@ void remove_material_from_inside_of(int material_index) {
     // TODO 1: Previous testing was probably flawed bc of out of bounds indexing. Re-test
     // NOTE: inside_of_count tested to be faster than looping over entire array
     // NOTE: Newer testing show that looping over entire array is faster
-    for (int i = 0; i < max_refraction_depth - 1; i++) {
+    for (int i = 0; i < max_overlapping_objects - 1; i++) {
         InsideOf index = inside_of[i];
         if (shift == 0 && material_index == index.material_index) {
             shift = 1;
         }
         inside_of[i] = inside_of[i + shift];
     }
-    inside_of[max_refraction_depth - 1] = empty_inside();
+    inside_of[max_overlapping_objects - 1] = empty_inside();
     inside_of_count--;
 }
 
@@ -1414,13 +1420,13 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     // Returns a refracted or reflected ray based on ray_in and rayhit
     // TODO 3: Add support for cpu to send InsideOf buffer based on camera position
     // TODO 3: Add tiny random direction change coupled with color shift, prism, diffraction
-    // TODO 2: add refraction depth checks to diffuse and metallic
+    // TODO! 2: add refraction depth checks to diffuse and metallic
     // TODO 2: Implement Beer's law:
     // https://www.flipcode.com/archives/Raytracing_Topics_Techniques-Part_3_Refractions_and_Beers_Law.shtml
 
     // Whether object is inside the current object
     // Due to floating point error, the boundaries of spheres can incorrectly be considered 'is_inside'
-    // TODO 1: See if extra inside_of_Count check can be reverted
+    // TODO! 1: See if extra inside_of_count check can be reverted
     #if use_refraction_tracking==2 || use_refraction_tracking==3
     // Double check with inside_of array.
     bool is_inside = bool(dot(rayhit.normal, ray_in.direction) > 0. && inside_of_count > 0);
@@ -1445,14 +1451,13 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     float eta = eta_in / eta_out;
 
     #elif use_refraction_tracking==2 || use_refraction_tracking==3
-    #define USE_NEW_REFRACTION_TRACKING 0
 
     float eta_in = current_IOR;
     #if USE_NEW_REFRACTION_TRACKING
     float eta_out;
     int object_material = rayhit.mtl_index;
-    ivec2 material_indices = get_material3();
-    // TODO 1: Move Refraction depth check to before choosing ray creation method.
+    ivec2 material_indices = get_highest_priority_materials();
+    // TODO! 1: Move Refraction depth check to before choosing ray creation method.
     // TODO 2: make warning in godot for whenever manx refraction depth has been reached.
     if (is_inside) {
         if (inside_of_count == 1) {
@@ -1472,7 +1477,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
                     return new_ray(new_origin, ray_in.direction);
                 }
                 // material on inside is material's, material on outside is different.
-                // TODO 0: Should do make new ray based on outside's material
+                // TODO! 0: Should do make new ray based on outside's material
                 ignore_attenuation = true;
                 eta_out = materials.data[material_indices.y].IOR;
 
@@ -1488,11 +1493,12 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
         }
     } else {
         #define is_same_material material_indices.x == object_material
-        #define new_depth_is_lower inside_of[0].refraction_depth < material.refraction_depth
+        #define old_priority_is_higher material.dielectric_priority < inside_of[0].dielectric_priority
+
         #if use_refraction_tracking==2
         #define ior_priority inside_of_count
         #elif use_refraction_tracking==3
-        #define ior_priority material.refraction_depth
+        #define ior_priority material.dielectric_priority
         #endif
         if (inside_of_count == 0) {
             // Ray is entering from air into object
@@ -1508,7 +1514,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
                 return new_ray(new_origin, ray_in.direction);
 
             } else {
-                if (new_depth_is_lower) {
+                if (old_priority_is_higher) {
                     // Ray comes from material with lower refraction depth.
                     add_material_to_inside_of(object_material, ior_priority);
                     ignore_attenuation = true;
@@ -1526,8 +1532,8 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     #elif !USE_NEW_REFRACTION_TRACKING
     // If ray is inside object ignore rayhti.mtl_index as having a possible eta_out, else
     //  rayhit.mtl_index is default material if no other materials are in inside_of.
-    int depth = is_inside ? int_limit : material.refraction_depth;
-    int current_material = get_material(rayhit.mtl_index, depth, is_inside);
+    int dielectric_priority = is_inside ? neg_int_limit : material.dielectric_priority;
+    current_material = get_material(rayhit.mtl_index, dielectric_priority, is_inside);
 
     float eta_out = materials.data[current_material].IOR;
     if (is_inside) {
@@ -1560,10 +1566,10 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
             remove_material_from_inside_of(rayhit.mtl_index);
         } else {
             // If ray was outside and refracted, add to inside_of list
-            add_material_to_inside_of(rayhit.mtl_index, material.refraction_depth);
+            add_material_to_inside_of(rayhit.mtl_index, material.dielectric_priority);
         }
 
-        // TODO 3: Only invalidate color if this object has the same color as the previous object
+        // TODO! 3: Only invalidate color if this object has the same color as the previous object
         // Handle this in a more explicit way.
         ignore_attenuation = true;
 
@@ -1575,6 +1581,7 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
     #endif
 
     // Calculate whether angle is shallow enough to disallow refraction
+    // TODO 0: Convert to macros
     float cos_theta = min(dot(-ray_in.direction, normal), 1.);
     float sin_theta = sqrt(1. - cos_theta * cos_theta);
     bool cannot_refract = eta * sin_theta > 1.;
@@ -1594,7 +1601,8 @@ Ray refract_ray(Ray ray_in, inout RayHit rayhit) {
         remove_material_from_inside_of(rayhit.mtl_index);
     } else {
         // If ray was outside and refracted, add to inside_of list
-        add_material_to_inside_of(rayhit.mtl_index, material.refraction_depth);
+        // TODO 0: remember to swap material with object_material
+        add_material_to_inside_of(rayhit.mtl_index, material.dielectric_priority);
     }
     #endif
 
@@ -1709,7 +1717,7 @@ vec4 cast_ray(Ray ray) {
     #endif
 
     // RENDER MODE COLOR OVERRIDES
-    if (show_bvh_depth) {
+    if (show_bvh_view) {
         float a = show_node_count ? float(node_hit_count) / float(push.node_count_threshold) : 0.0;
         float b = show_object_count ? float(object_hit_count) / float(push.object_count_threshold) : 0.0;
         render_mode_color = (max(a, b) > 1.0) ? vec4(1) : vec4(b, 0, a, 0);

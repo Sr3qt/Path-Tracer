@@ -1,0 +1,50 @@
+[gd_scene load_steps=8 format=3 uid="uid://bk2cgbehknu60"]
+
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_scene.gd" id="1_bsbh0"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="2_qbqao"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_plane.gd" id="3_t043i"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/primitives/pt_sphere.gd" id="4_4d1qk"]
+[ext_resource type="Script" path="res://proprietary_dataclasses/public/resources/pt_material.gd" id="5_oxdpx"]
+
+[sub_resource type="Resource" id="Resource_81n8q"]
+script = ExtResource("5_oxdpx")
+albedo = Color(0.223103, 0.223103, 0.223103, 1)
+roughness = 0.0
+metallic = 0.0
+opacity = 1.0
+reflectivity = 1.0
+IOR = 1.0
+refraction_depth = 0
+is_emissive = false
+
+[sub_resource type="Resource" id="Resource_hucri"]
+script = ExtResource("5_oxdpx")
+albedo = Color(1, 0.533333, 0.27451, 1)
+roughness = 0.0
+metallic = 0.0
+opacity = 1.0
+reflectivity = 1.0
+IOR = 1.0
+refraction_depth = 0
+is_emissive = false
+
+[node name="PTScene" type="Node"]
+script = ExtResource("1_bsbh0")
+
+[node name="PTCameraFPS" type="Camera3D" parent="."]
+script = ExtResource("2_qbqao")
+
+[node name="PTPlane" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.67, 0)
+script = ExtResource("3_t043i")
+distance = -0.67
+material = SubResource("Resource_81n8q")
+
+[node name="PTSphere" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.746493, -5.03176)
+script = ExtResource("4_4d1qk")
+material = SubResource("Resource_hucri")
+
+[node name="PTSphere2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.72375, 0, -3.70955)
+script = ExtResource("4_4d1qk")

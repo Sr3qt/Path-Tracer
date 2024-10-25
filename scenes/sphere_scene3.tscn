@@ -11,13 +11,13 @@
 
 [sub_resource type="Resource" id="Resource_jw4pa"]
 script = ExtResource("4_w7rf0")
-albedo = Color(0.1, 0.2, 0.5, 1)
+albedo = Color(0.224478, 0.380152, 0.817569, 1)
 roughness = 0.0
-metallic = 0.0
+metallic = 1.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_4ll4u"]
@@ -26,9 +26,9 @@ albedo = Color(1, 1, 1, 1)
 roughness = 0.0
 metallic = 0.0
 opacity = 0.0
-reflectivity = 1.0
+reflectivity = 0.0
 IOR = 1.0
-refraction_depth = -2
+dielectric_priority = 2
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_wc8i6"]
@@ -39,7 +39,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 4
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_p8ma1"]
@@ -50,7 +50,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = true
 
 [node name="PTScene" type="Node"]
@@ -115,7 +115,7 @@ radius = 0.5
 material = ExtResource("6_l00f7")
 
 [node name="Empty2" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, -0.5)
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, -0.400262)
 script = ExtResource("3_khgji")
 radius = 0.5
 material = SubResource("Resource_4ll4u")

@@ -16,7 +16,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_1oojt"]
@@ -27,7 +27,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.5
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_gu1fu"]
@@ -38,7 +38,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ilwqr"]
@@ -49,7 +49,7 @@ metallic = 1.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_h4n1g"]
@@ -65,7 +65,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_kjc1c"]
@@ -76,7 +76,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_582ct"]
@@ -87,7 +87,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_k0x0a"]
@@ -98,7 +98,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_oohye"]
@@ -109,7 +109,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_v0fcs"]
@@ -120,7 +120,7 @@ metallic = 0.965075
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_qrtpb"]
@@ -131,7 +131,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_hr3ql"]
@@ -142,7 +142,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_7x0q5"]
@@ -153,7 +153,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_uvdq0"]
@@ -164,7 +164,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_1prm3"]
@@ -175,7 +175,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_blag0"]
@@ -186,7 +186,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_0hpjd"]
@@ -197,7 +197,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_q8v3o"]
@@ -208,7 +208,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_xwg1b"]
@@ -219,7 +219,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_jn20a"]
@@ -230,7 +230,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_5lfom"]
@@ -241,7 +241,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_bi0j8"]
@@ -252,7 +252,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_sjsak"]
@@ -263,7 +263,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_wrr4h"]
@@ -274,7 +274,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_45e5f"]
@@ -285,7 +285,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_tsold"]
@@ -296,7 +296,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_8pwhi"]
@@ -307,7 +307,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ep6ok"]
@@ -318,7 +318,7 @@ metallic = 0.93021
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_7bkir"]
@@ -329,7 +329,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_amhjj"]
@@ -340,7 +340,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_2wxt4"]
@@ -351,7 +351,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_vr1k2"]
@@ -362,7 +362,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_5a6wy"]
@@ -373,7 +373,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_0yn3i"]
@@ -384,7 +384,7 @@ metallic = 0.917132
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_4608t"]
@@ -395,7 +395,7 @@ metallic = 0.938863
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_et6hm"]
@@ -406,7 +406,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_l7awj"]
@@ -417,7 +417,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_4vmre"]
@@ -428,7 +428,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_jbcsc"]
@@ -439,7 +439,7 @@ metallic = 0.951885
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_rbd7t"]
@@ -450,7 +450,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_1t6sx"]
@@ -461,7 +461,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_oc24c"]
@@ -472,7 +472,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_puml7"]
@@ -483,7 +483,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_eheoj"]
@@ -494,7 +494,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_cgkwb"]
@@ -505,7 +505,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_7p5oc"]
@@ -516,7 +516,7 @@ metallic = 0.941922
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_oxx7b"]
@@ -527,7 +527,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_einqf"]
@@ -538,7 +538,7 @@ metallic = 0.943303
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_c51nu"]
@@ -549,7 +549,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ufaky"]
@@ -560,7 +560,7 @@ metallic = 0.921665
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_srn2d"]
@@ -571,7 +571,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_txwu5"]
@@ -582,7 +582,7 @@ metallic = 0.925933
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_uu27m"]
@@ -593,7 +593,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_mum6r"]
@@ -604,7 +604,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_mq3ga"]
@@ -615,7 +615,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ma5ay"]
@@ -626,7 +626,7 @@ metallic = 0.965342
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_2nio5"]
@@ -637,7 +637,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_c4or0"]
@@ -648,7 +648,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_pf3im"]
@@ -659,7 +659,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_rmmw4"]
@@ -670,7 +670,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_pxotp"]
@@ -681,7 +681,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_800lo"]
@@ -692,7 +692,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_hulor"]
@@ -703,7 +703,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_fdp85"]
@@ -714,7 +714,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_6c4ba"]
@@ -725,7 +725,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ho3fy"]
@@ -736,7 +736,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_to4ol"]
@@ -747,7 +747,7 @@ metallic = 0.894947
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_j417p"]
@@ -758,7 +758,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_jcy3t"]
@@ -769,7 +769,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_x5rfb"]
@@ -780,7 +780,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_n7brj"]
@@ -791,7 +791,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_sr0fl"]
@@ -802,7 +802,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_gj17t"]
@@ -813,7 +813,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_p5jrl"]
@@ -824,7 +824,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_m7j6b"]
@@ -835,7 +835,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_tkc8r"]
@@ -846,7 +846,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_kqfx0"]
@@ -857,7 +857,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_3p33k"]
@@ -868,7 +868,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_oo5iw"]
@@ -879,7 +879,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_owt2y"]
@@ -890,7 +890,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_yxtlr"]
@@ -901,7 +901,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_aq808"]
@@ -912,7 +912,7 @@ metallic = 0.904625
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_dvtq7"]
@@ -923,7 +923,7 @@ metallic = 0.881091
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_u8ll8"]
@@ -934,7 +934,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_vu6fx"]
@@ -945,7 +945,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_4tu7h"]
@@ -956,7 +956,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_gut55"]
@@ -967,7 +967,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_7tjsj"]
@@ -978,7 +978,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_rai5h"]
@@ -989,7 +989,7 @@ metallic = 0.900621
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ntkt6"]
@@ -1000,7 +1000,7 @@ metallic = 0.967975
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_3srki"]
@@ -1011,7 +1011,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ftqby"]
@@ -1022,7 +1022,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_v2een"]
@@ -1033,7 +1033,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_d6bex"]
@@ -1044,7 +1044,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_emn5h"]
@@ -1055,7 +1055,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_rcrfu"]
@@ -1066,7 +1066,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_poeal"]
@@ -1077,7 +1077,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_4yjer"]
@@ -1088,7 +1088,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_02aj5"]
@@ -1099,7 +1099,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_jiega"]
@@ -1110,7 +1110,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_q3syw"]
@@ -1121,7 +1121,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_7f4hu"]
@@ -1132,7 +1132,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_yfm3x"]
@@ -1143,7 +1143,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ukdkm"]
@@ -1154,7 +1154,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_smk1b"]
@@ -1165,7 +1165,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_6n8cp"]
@@ -1176,7 +1176,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_5s0hc"]
@@ -1187,7 +1187,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ik4rj"]
@@ -1198,7 +1198,7 @@ metallic = 0.929624
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_t0htg"]
@@ -1209,7 +1209,7 @@ metallic = 0.96781
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_rcupk"]
@@ -1220,7 +1220,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_wsr8e"]
@@ -1231,7 +1231,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_macgg"]
@@ -1242,7 +1242,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_yys2h"]
@@ -1253,7 +1253,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_p2mm3"]
@@ -1264,7 +1264,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_e7jjr"]
@@ -1275,7 +1275,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_unjlc"]
@@ -1286,7 +1286,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_123g0"]
@@ -1297,7 +1297,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_2hiph"]
@@ -1308,7 +1308,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_swtm5"]
@@ -1319,7 +1319,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_m245a"]
@@ -1330,7 +1330,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_5rscb"]
@@ -1341,7 +1341,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_wu3tx"]
@@ -1352,7 +1352,7 @@ metallic = 0.881472
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_bxoq4"]
@@ -1363,7 +1363,7 @@ metallic = 0.853003
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_f02dy"]
@@ -1374,7 +1374,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_m4rvs"]
@@ -1385,7 +1385,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_kwk2k"]
@@ -1396,7 +1396,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_oalrh"]
@@ -1407,7 +1407,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_fip5v"]
@@ -1418,7 +1418,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_uw1xj"]
@@ -1429,7 +1429,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_jcs3l"]
@@ -1440,7 +1440,7 @@ metallic = 0.91034
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_lr1xm"]
@@ -1451,7 +1451,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_0ru0i"]
@@ -1462,7 +1462,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_2k0u2"]
@@ -1473,7 +1473,7 @@ metallic = 0.973597
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_jtq1c"]
@@ -1484,7 +1484,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_h7qe0"]
@@ -1495,7 +1495,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_xvoms"]
@@ -1506,7 +1506,7 @@ metallic = 0.927951
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_884fg"]
@@ -1517,7 +1517,7 @@ metallic = 0.918512
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_udfym"]
@@ -1528,7 +1528,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_i8yl4"]
@@ -1539,7 +1539,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_rid1k"]
@@ -1550,7 +1550,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_takr7"]
@@ -1561,7 +1561,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_me36f"]
@@ -1572,7 +1572,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_k7r6m"]
@@ -1583,7 +1583,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_k3yvr"]
@@ -1594,7 +1594,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_wvaem"]
@@ -1605,7 +1605,7 @@ metallic = 0.870332
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_70lgp"]
@@ -1616,7 +1616,7 @@ metallic = 0.94082
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_1hepx"]
@@ -1627,7 +1627,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_i863s"]
@@ -1638,7 +1638,7 @@ metallic = 0.989026
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_6ympu"]
@@ -1649,7 +1649,7 @@ metallic = 0.897213
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_gt33c"]
@@ -1660,7 +1660,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_2nbeb"]
@@ -1671,7 +1671,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ki3q8"]
@@ -1682,7 +1682,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_gbm2y"]
@@ -1693,7 +1693,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_gu2s0"]
@@ -1704,7 +1704,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_4iva3"]
@@ -1715,7 +1715,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_2noa2"]
@@ -1726,7 +1726,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_n38fb"]
@@ -1737,7 +1737,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_2cxaw"]
@@ -1748,7 +1748,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_0vliy"]
@@ -1759,7 +1759,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_gayum"]
@@ -1770,7 +1770,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ne2j0"]
@@ -1781,7 +1781,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_abyl0"]
@@ -1792,7 +1792,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_vwa0q"]
@@ -1803,7 +1803,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_38n48"]
@@ -1814,7 +1814,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_k3u5g"]
@@ -1825,7 +1825,7 @@ metallic = 0.862339
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_u4r73"]
@@ -1836,7 +1836,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_vwkxa"]
@@ -1847,7 +1847,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_eucuw"]
@@ -1858,7 +1858,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_prwx6"]
@@ -1869,7 +1869,7 @@ metallic = 0.857049
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_pfl43"]
@@ -1880,7 +1880,7 @@ metallic = 0.992284
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_d7mda"]
@@ -1891,7 +1891,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_rxfjs"]
@@ -1902,7 +1902,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_njred"]
@@ -1913,7 +1913,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_34iqs"]
@@ -1924,7 +1924,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_3ef4k"]
@@ -1935,7 +1935,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_e37ru"]
@@ -1946,7 +1946,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_gahqb"]
@@ -1957,7 +1957,7 @@ metallic = 0.858325
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_56xt6"]
@@ -1968,7 +1968,7 @@ metallic = 0.98488
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_o67fr"]
@@ -1979,7 +1979,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_8vyif"]
@@ -1990,7 +1990,7 @@ metallic = 0.896635
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_nsgyi"]
@@ -2001,7 +2001,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_oiqqh"]
@@ -2012,7 +2012,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_4jurm"]
@@ -2023,7 +2023,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_0fvyx"]
@@ -2034,7 +2034,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_aqbw3"]
@@ -2045,7 +2045,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_5fajr"]
@@ -2056,7 +2056,7 @@ metallic = 0.903006
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_2q1ol"]
@@ -2067,7 +2067,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_hfl7b"]
@@ -2078,7 +2078,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_s32g2"]
@@ -2089,7 +2089,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_jlbxe"]
@@ -2100,7 +2100,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_8g5h4"]
@@ -2111,7 +2111,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_d08vp"]
@@ -2122,7 +2122,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_se8j2"]
@@ -2133,7 +2133,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_i7a7c"]
@@ -2144,7 +2144,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_vs4g2"]
@@ -2155,7 +2155,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_spvlh"]
@@ -2166,7 +2166,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_o3f2s"]
@@ -2177,7 +2177,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_kau2x"]
@@ -2188,7 +2188,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_0ocux"]
@@ -2199,7 +2199,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_q1wir"]
@@ -2210,7 +2210,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_mhyee"]
@@ -2221,7 +2221,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_htayg"]
@@ -2232,7 +2232,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_auar0"]
@@ -2243,7 +2243,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_664d2"]
@@ -2254,7 +2254,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_0prfi"]
@@ -2265,7 +2265,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ortv4"]
@@ -2276,7 +2276,7 @@ metallic = 0.961678
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_mxtfb"]
@@ -2287,7 +2287,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_vt665"]
@@ -2298,7 +2298,7 @@ metallic = 0.873299
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_8em8v"]
@@ -2309,7 +2309,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ym545"]
@@ -2320,7 +2320,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_15sge"]
@@ -2331,7 +2331,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_0g4x8"]
@@ -2342,7 +2342,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_m106h"]
@@ -2353,7 +2353,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_dkw8x"]
@@ -2364,7 +2364,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_8yvth"]
@@ -2375,7 +2375,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_di1y2"]
@@ -2386,7 +2386,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_rcj2q"]
@@ -2397,7 +2397,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_p8v23"]
@@ -2408,7 +2408,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_kr75t"]
@@ -2419,7 +2419,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_s3e22"]
@@ -2430,7 +2430,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_y26y0"]
@@ -2441,7 +2441,7 @@ metallic = 0.934669
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_kswg0"]
@@ -2452,7 +2452,7 @@ metallic = 0.999658
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_rf18s"]
@@ -2463,7 +2463,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_6n12u"]
@@ -2474,7 +2474,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_fyst0"]
@@ -2485,7 +2485,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_4tgk3"]
@@ -2496,7 +2496,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_6iy0t"]
@@ -2507,7 +2507,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_2ayv7"]
@@ -2518,7 +2518,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_pas3t"]
@@ -2529,7 +2529,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_rum7y"]
@@ -2540,7 +2540,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_na6wk"]
@@ -2551,7 +2551,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_bdul1"]
@@ -2562,7 +2562,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_nvnp8"]
@@ -2573,7 +2573,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_aali8"]
@@ -2584,7 +2584,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_7ve4f"]
@@ -2595,7 +2595,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ja1qw"]
@@ -2606,7 +2606,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_q8cnb"]
@@ -2617,7 +2617,7 @@ metallic = 0.915367
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_36xuw"]
@@ -2628,7 +2628,7 @@ metallic = 0.9674
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_tgrjt"]
@@ -2639,7 +2639,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_a4a61"]
@@ -2650,7 +2650,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_gr0d4"]
@@ -2661,7 +2661,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_8ebxm"]
@@ -2672,7 +2672,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_3qoe5"]
@@ -2683,7 +2683,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_jjrr5"]
@@ -2694,7 +2694,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_awb00"]
@@ -2705,7 +2705,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_e8hy3"]
@@ -2716,7 +2716,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_iw56o"]
@@ -2727,7 +2727,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_qnycs"]
@@ -2738,7 +2738,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_pp0te"]
@@ -2749,7 +2749,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_x0too"]
@@ -2760,7 +2760,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ixr8f"]
@@ -2771,7 +2771,7 @@ metallic = 0.923758
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_mgy7p"]
@@ -2782,7 +2782,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_cw24u"]
@@ -2793,7 +2793,7 @@ metallic = 0.925442
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_bog0h"]
@@ -2804,7 +2804,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_266fk"]
@@ -2815,7 +2815,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_84p5p"]
@@ -2826,7 +2826,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_trenk"]
@@ -2837,7 +2837,7 @@ metallic = 0.999093
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_vebkn"]
@@ -2848,7 +2848,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_necby"]
@@ -2859,7 +2859,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_sthek"]
@@ -2870,7 +2870,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_15rqr"]
@@ -2881,7 +2881,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_faku0"]
@@ -2892,7 +2892,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_p0hbt"]
@@ -2903,7 +2903,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_l1ff3"]
@@ -2914,7 +2914,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_tps10"]
@@ -2925,7 +2925,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_pu583"]
@@ -2936,7 +2936,7 @@ metallic = 0.856066
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_b22y0"]
@@ -2947,7 +2947,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_s6jm7"]
@@ -2958,7 +2958,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_0227a"]
@@ -2969,7 +2969,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_qvc7s"]
@@ -2980,7 +2980,7 @@ metallic = 0.867547
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_t7gxl"]
@@ -2991,7 +2991,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_4jl48"]
@@ -3002,7 +3002,7 @@ metallic = 0.984203
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_hahy2"]
@@ -3013,7 +3013,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_waqfq"]
@@ -3024,7 +3024,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_3fvww"]
@@ -3035,7 +3035,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_86ysc"]
@@ -3046,7 +3046,7 @@ metallic = 0.948552
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_dw673"]
@@ -3057,7 +3057,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_camf0"]
@@ -3068,7 +3068,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_avjvo"]
@@ -3079,7 +3079,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_xf07g"]
@@ -3090,7 +3090,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_th0wx"]
@@ -3101,7 +3101,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_6wtk3"]
@@ -3112,7 +3112,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_hyoji"]
@@ -3123,7 +3123,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_lp81s"]
@@ -3134,7 +3134,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_jw7lu"]
@@ -3145,7 +3145,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_xg374"]
@@ -3156,7 +3156,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_tx1t6"]
@@ -3167,7 +3167,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_55o48"]
@@ -3178,7 +3178,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_buj3g"]
@@ -3189,7 +3189,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_b8x72"]
@@ -3200,7 +3200,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_d3ih8"]
@@ -3211,7 +3211,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_shsn8"]
@@ -3222,7 +3222,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_xq8ot"]
@@ -3233,7 +3233,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_0rk2l"]
@@ -3244,7 +3244,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_qeiph"]
@@ -3255,7 +3255,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_jqh21"]
@@ -3266,7 +3266,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_f5qcr"]
@@ -3277,7 +3277,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ly7f5"]
@@ -3288,7 +3288,7 @@ metallic = 0.941293
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_khpjb"]
@@ -3299,7 +3299,7 @@ metallic = 0.931769
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_sr2hu"]
@@ -3310,7 +3310,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_v6v6w"]
@@ -3321,7 +3321,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_3g2jg"]
@@ -3332,7 +3332,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_2xufd"]
@@ -3343,7 +3343,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_rq2ej"]
@@ -3354,7 +3354,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_7b364"]
@@ -3365,7 +3365,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_lycb1"]
@@ -3376,7 +3376,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_v887d"]
@@ -3387,7 +3387,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_j2er5"]
@@ -3398,7 +3398,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_mkenu"]
@@ -3409,7 +3409,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_tqxbh"]
@@ -3420,7 +3420,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_iifs4"]
@@ -3431,7 +3431,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_1u7te"]
@@ -3442,7 +3442,7 @@ metallic = 0.949189
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_kwkqh"]
@@ -3453,7 +3453,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_tx15d"]
@@ -3464,7 +3464,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_xkb2y"]
@@ -3475,7 +3475,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_gof8g"]
@@ -3486,7 +3486,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_oujfj"]
@@ -3497,7 +3497,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_fkhaq"]
@@ -3508,7 +3508,7 @@ metallic = 0.987821
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_tmqqo"]
@@ -3519,7 +3519,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_wbsmx"]
@@ -3530,7 +3530,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_htwe4"]
@@ -3541,7 +3541,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_jt6pk"]
@@ -3552,7 +3552,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_wrpq4"]
@@ -3563,7 +3563,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_tb7dj"]
@@ -3574,7 +3574,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_0ipnq"]
@@ -3585,7 +3585,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_7cbhp"]
@@ -3596,7 +3596,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_vdjcq"]
@@ -3607,7 +3607,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_i0cmi"]
@@ -3618,7 +3618,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_pu0bf"]
@@ -3629,7 +3629,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_qudm6"]
@@ -3640,7 +3640,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_u31v0"]
@@ -3651,7 +3651,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_skucq"]
@@ -3662,7 +3662,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_lfoud"]
@@ -3673,7 +3673,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_njp1s"]
@@ -3684,7 +3684,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_l53r3"]
@@ -3695,7 +3695,7 @@ metallic = 0.894317
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_lwvuc"]
@@ -3706,7 +3706,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_3w4wt"]
@@ -3717,7 +3717,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_xfqtc"]
@@ -3728,7 +3728,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_0qvsm"]
@@ -3739,7 +3739,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_8s3qt"]
@@ -3750,7 +3750,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_8o4yt"]
@@ -3761,7 +3761,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_i2ccy"]
@@ -3772,7 +3772,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_2eniy"]
@@ -3783,7 +3783,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_pqppo"]
@@ -3794,7 +3794,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_wityp"]
@@ -3805,7 +3805,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ovfe2"]
@@ -3816,7 +3816,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_6g23x"]
@@ -3827,7 +3827,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_2qt4w"]
@@ -3838,7 +3838,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_lyyew"]
@@ -3849,7 +3849,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_homhq"]
@@ -3860,7 +3860,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_med2j"]
@@ -3871,7 +3871,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_h5ali"]
@@ -3882,7 +3882,7 @@ metallic = 0.941468
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_pc3oo"]
@@ -3893,7 +3893,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_s8j1h"]
@@ -3904,7 +3904,7 @@ metallic = 0.885047
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_o17m3"]
@@ -3915,7 +3915,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_xlxq1"]
@@ -3926,7 +3926,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_tidtp"]
@@ -3937,7 +3937,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_fbrsi"]
@@ -3948,7 +3948,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_mdc1u"]
@@ -3959,7 +3959,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_erba2"]
@@ -3970,7 +3970,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_fb3un"]
@@ -3981,7 +3981,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_t2fyl"]
@@ -3992,7 +3992,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_vyif3"]
@@ -4003,7 +4003,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_easbt"]
@@ -4014,7 +4014,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_us5r2"]
@@ -4025,7 +4025,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_h0lfs"]
@@ -4036,7 +4036,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_7cgyo"]
@@ -4047,7 +4047,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_xje74"]
@@ -4058,7 +4058,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_d4asf"]
@@ -4069,7 +4069,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_pqd36"]
@@ -4080,7 +4080,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ghdu1"]
@@ -4091,7 +4091,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_4iho5"]
@@ -4102,7 +4102,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_xlv08"]
@@ -4113,7 +4113,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_5yqb2"]
@@ -4124,7 +4124,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_sctkp"]
@@ -4135,7 +4135,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_b1o10"]
@@ -4146,7 +4146,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_chthd"]
@@ -4157,7 +4157,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_yjcfc"]
@@ -4168,7 +4168,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_j2xms"]
@@ -4179,7 +4179,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_7hq6w"]
@@ -4190,7 +4190,7 @@ metallic = 0.952143
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_71okk"]
@@ -4201,7 +4201,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_feni8"]
@@ -4212,7 +4212,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ru7lo"]
@@ -4223,7 +4223,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_pstp5"]
@@ -4234,7 +4234,7 @@ metallic = 0.98082
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_66aoe"]
@@ -4245,7 +4245,7 @@ metallic = 0.926234
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_lyoad"]
@@ -4256,7 +4256,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_4hqs5"]
@@ -4267,7 +4267,7 @@ metallic = 0.895042
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_6btxb"]
@@ -4278,7 +4278,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_cnhii"]
@@ -4289,7 +4289,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_qby6x"]
@@ -4300,7 +4300,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_s2jwe"]
@@ -4311,7 +4311,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_dc1rb"]
@@ -4322,7 +4322,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_hlmay"]
@@ -4333,7 +4333,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_tv055"]
@@ -4344,7 +4344,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ie1li"]
@@ -4355,7 +4355,7 @@ metallic = 0.859792
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_4a33h"]
@@ -4366,7 +4366,7 @@ metallic = 0.949784
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ax7w7"]
@@ -4377,7 +4377,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_x18l5"]
@@ -4388,7 +4388,7 @@ metallic = 0.904173
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ct05x"]
@@ -4399,7 +4399,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_8rkvm"]
@@ -4410,7 +4410,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_1o4ry"]
@@ -4421,7 +4421,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_gpjlp"]
@@ -4432,7 +4432,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_qe615"]
@@ -4443,7 +4443,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_frmo2"]
@@ -4454,7 +4454,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_s6ix7"]
@@ -4465,7 +4465,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_h6s4i"]
@@ -4476,7 +4476,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_3ra6b"]
@@ -4487,7 +4487,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_oc0qb"]
@@ -4498,7 +4498,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_sgsan"]
@@ -4509,7 +4509,7 @@ metallic = 0.979495
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_wnt6h"]
@@ -4520,7 +4520,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_jed5q"]
@@ -4531,7 +4531,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_bvjcg"]
@@ -4542,7 +4542,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_tc074"]
@@ -4553,7 +4553,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_kb8if"]
@@ -4564,7 +4564,7 @@ metallic = 0.990518
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_03axb"]
@@ -4575,7 +4575,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_kffpc"]
@@ -4586,7 +4586,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ticxk"]
@@ -4597,7 +4597,7 @@ metallic = 0.948256
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_04ixc"]
@@ -4608,7 +4608,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_cl88y"]
@@ -4619,7 +4619,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_cp5rs"]
@@ -4630,7 +4630,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_3q52h"]
@@ -4641,7 +4641,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ddd5f"]
@@ -4652,7 +4652,7 @@ metallic = 0.873125
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_nowof"]
@@ -4663,7 +4663,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_tuki6"]
@@ -4674,7 +4674,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_sc7h5"]
@@ -4685,7 +4685,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_25qh0"]
@@ -4696,7 +4696,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_vxffm"]
@@ -4707,7 +4707,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_5ivqd"]
@@ -4718,7 +4718,7 @@ metallic = 0.939242
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_a676g"]
@@ -4729,7 +4729,7 @@ metallic = 0.979132
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_u430f"]
@@ -4740,7 +4740,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_o320f"]
@@ -4751,7 +4751,7 @@ metallic = 0.946405
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_nycq4"]
@@ -4762,7 +4762,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_mw8vv"]
@@ -4773,7 +4773,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_3bja0"]
@@ -4784,7 +4784,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ulu8j"]
@@ -4795,7 +4795,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_yxu4i"]
@@ -4806,7 +4806,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_1ag8y"]
@@ -4817,7 +4817,7 @@ metallic = 0.871412
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_s5n8i"]
@@ -4828,7 +4828,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_tddm1"]
@@ -4839,7 +4839,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_xwm0u"]
@@ -4850,7 +4850,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_5f2ub"]
@@ -4861,7 +4861,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_t83ay"]
@@ -4872,7 +4872,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_tpkul"]
@@ -4883,7 +4883,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_7yfvd"]
@@ -4894,7 +4894,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_vkfxl"]
@@ -4905,7 +4905,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_m46wf"]
@@ -4916,7 +4916,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_kb2fm"]
@@ -4927,7 +4927,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_1xt7h"]
@@ -4938,7 +4938,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_jsc64"]
@@ -4949,7 +4949,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_f5rri"]
@@ -4960,7 +4960,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_lm6lq"]
@@ -4971,7 +4971,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_kq6tx"]
@@ -4982,7 +4982,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_fgpsx"]
@@ -4993,7 +4993,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_p01dh"]
@@ -5004,7 +5004,7 @@ metallic = 0.915837
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_1if1q"]
@@ -5015,7 +5015,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_yduh3"]
@@ -5026,7 +5026,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_s2hbp"]
@@ -5037,7 +5037,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_njogt"]
@@ -5048,7 +5048,7 @@ metallic = 0.869105
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_a1glo"]
@@ -5059,7 +5059,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_bk6qi"]
@@ -5070,7 +5070,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_xgpeo"]
@@ -5081,7 +5081,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_4svuk"]
@@ -5092,7 +5092,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_fnalf"]
@@ -5103,7 +5103,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_h3qca"]
@@ -5114,7 +5114,7 @@ metallic = 0.923936
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_q5jf7"]
@@ -5125,7 +5125,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_57pm7"]
@@ -5136,7 +5136,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_iylq5"]
@@ -5147,7 +5147,7 @@ metallic = 0.885844
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_jdxe0"]
@@ -5158,7 +5158,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_r7ukt"]
@@ -5169,7 +5169,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_ju61a"]
@@ -5180,7 +5180,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_fyekj"]
@@ -5191,7 +5191,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_rwyyp"]
@@ -5202,7 +5202,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_dlx6q"]
@@ -5213,7 +5213,7 @@ metallic = 0.961737
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_5k735"]
@@ -5224,7 +5224,7 @@ metallic = 0.0
 opacity = 0.0
 reflectivity = 1.0
 IOR = 1.6
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_3uws0"]
@@ -5235,7 +5235,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_kd06n"]
@@ -5246,7 +5246,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_psfo8"]
@@ -5257,7 +5257,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_2eihh"]
@@ -5268,7 +5268,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_fsppu"]
@@ -5279,7 +5279,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_lljcw"]
@@ -5290,7 +5290,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_7mmri"]
@@ -5301,7 +5301,7 @@ metallic = 0.97336
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_kbyfa"]
@@ -5312,7 +5312,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_wvyng"]
@@ -5323,7 +5323,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_x4aws"]
@@ -5334,7 +5334,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_qefqa"]
@@ -5345,7 +5345,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_f536w"]
@@ -5356,7 +5356,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_qfrcf"]
@@ -5367,7 +5367,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_2vdtb"]
@@ -5378,7 +5378,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [node name="PTScene" type="Node"]

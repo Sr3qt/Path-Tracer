@@ -19,7 +19,7 @@ metallic = 1.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_3e08u"]
@@ -30,7 +30,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_j74fo"]
@@ -46,7 +46,7 @@ metallic = 1.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_bvoeq"]
@@ -57,7 +57,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_j8qno"]
@@ -68,7 +68,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_pf614"]
@@ -89,7 +89,7 @@ metallic = 1.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [node name="PTScene2" type="Node"]
