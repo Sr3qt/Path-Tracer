@@ -16,7 +16,7 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
 [sub_resource type="Resource" id="Resource_506e8"]
@@ -27,10 +27,10 @@ metallic = 0.0
 opacity = 1.0
 reflectivity = 1.0
 IOR = 1.0
-refraction_depth = 0
+dielectric_priority = 0
 is_emissive = false
 
-[node name="PTScene" type="Node"]
+[node name="PTScene2" type="Node"]
 script = ExtResource("1_31vot")
 
 [node name="PTMesh" type="Node3D" parent="."]

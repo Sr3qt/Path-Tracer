@@ -1,5 +1,10 @@
 Performance on random_scene with book_ex camera settings
 
+Optimized refraction tracking:
+	52 fps for spheres with full tracking, 54 without, 54 with partial tracking.
+	192 fps spheres3 with tracking, 125 without, 118 with partial tracking.
+	146 fps grimchild with tracking, 115 without, 115 with partial tracking.
+
 Improved precision for hit tests, 52 fps for spheres new x-sort, 144 fps grimchild
 
 Improved node appending syntax/AABB bug fix,

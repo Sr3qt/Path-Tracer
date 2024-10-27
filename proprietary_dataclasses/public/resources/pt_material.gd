@@ -27,11 +27,10 @@ extends Resource
 	set(value):
 		IOR = value
 		material_changed.emit(self)
-# NOTE: Because of how the shader is written, int_limit and int_limit -1 are not
-#  available
+# NOTE: Because of how the shader is written, negint_limit is not available
 ## During an intersection between at least one dielectric object and another object,
 ## the object with the highest dielectric_priority will "exist" in the overlap between objects.
-@export_range(-2147483646, 2147483645) var dielectric_priority : int = 0:
+@export_range(-2147483645, 2147483647) var dielectric_priority : int = 0:
 	set(value):
 		dielectric_priority = value
 		material_changed.emit(self)

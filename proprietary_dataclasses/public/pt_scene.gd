@@ -51,11 +51,11 @@ var scene_objects : PTObjectContainer
 ## All PTScene objects and objects in PTScene's meshes
 var unpacked_objects : PTObjectContainer
 
-## NOTE: Because of refraction tracking in the shader, a material index is reserved
-## for the IOR of air. Currently index 0 is reserved.
+## NOTE: Because of refraction tracking in the shader, two material indices are reserved
+## for an air material and default material. Currently index 0 and 1 are reserved.
 var materials : Array[PTMaterial] = [null]
 # Inverse of materials
-var _material_to_index := {null : 0}
+var _material_to_index := {null : 1}
 var material_ref_count := {null : 0}
 
 ## Whenever a material is removed, to not require massive buffer updates, a hole
@@ -128,6 +128,13 @@ func _init() -> void:
 	unpacked_objects = PTObjectContainer.new()
 	_to_add = PTObjectContainer.new()
 	_to_remove = PTObjectContainer.new()
+
+	# TODO 2: when adding ability to change air ior, change this and const in shader
+	# TODO 2: Allow user to give their objects air material
+	var air_material := PTMaterial.new()
+	materials = [air_material, null]
+	air_material.opacity = 0.0
+	air_material.reflectivity = 0.0
 
 
 func _enter_tree() -> void:
