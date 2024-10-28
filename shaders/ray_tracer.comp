@@ -203,7 +203,9 @@ const float IOR_air = 1.0;
 
 // This is the maximum amount of overlapping geometry that will be considered
 // for nested dielectrics.
-const int max_overlapping_objects = 8;
+// NOTE: Through testing on a few scenes I found there are major performance drops when
+// this value is 4 or less. Highest performance was at 5.
+const int max_overlapping_objects = 5;
 
 #if use_refraction_tracking
 float current_IOR = IOR_air;
@@ -218,9 +220,6 @@ InsideOf empty_inside() {
 // TODO 3: Add support for cpu to send InsideOf buffer based on camera position
 // Holds an array of material_index and dielectric_priority
 InsideOf inside_of[max_overlapping_objects] = InsideOf[](
-    empty_inside(),
-    empty_inside(),
-    empty_inside(),
     empty_inside(),
     empty_inside(),
     empty_inside(),
@@ -388,6 +387,7 @@ struct RayHit {
     vec3 normal;
     uint texture_id;
     vec4 color;
+    int dielectric_priority;
 };
 
 struct AABB {
@@ -489,7 +489,7 @@ layout(push_constant, std430) restrict readonly uniform constants {
 // =================
 
 RayHit empty_rayhit() {
-    return RayHit(false, 0, -1, vec2(0), vec3(0), 0, vec3(0), 0, vec4(0));
+    return RayHit(false, 0, -1, vec2(0), vec3(0), 0, vec3(0), 0, vec4(0), 0);
 }
 
 // Creates a new ray based on given origin and direction. Normalizes direction.
@@ -1133,7 +1133,9 @@ RayHit determine_rayhit(Ray ray_in, inout RayHit rayhit) {
         }
     }
 
-    rayhit.color = vec4(materials.data[rayhit.mtl_index].albedo, 1);
+    Material material = materials.data[rayhit.mtl_index];
+    rayhit.color = vec4(material.albedo, 1);
+    rayhit.dielectric_priority = material.dielectric_priority;
     #if USE_EMISSION
     is_emissive = materials.data[rayhit.mtl_index].is_emissive;
     #endif
@@ -1448,36 +1450,22 @@ void remove_material_from_inside_of(int material_index) {
 
 void material_chooser(
         bool is_inside,
-        inout int out_material,
-        out float out_ior
+        float dielectric_priority,
+        inout int object_material
 ) {
     // We can assume that the out_normal we get is rayhit.normal
     // and out_material is rayhit.mtl_index
-    Material material = materials.data[out_material];
-
-    int object_material = out_material;
     ivec2 material_indices = get_highest_priority_materials();
-    if (is_inside) {
-        if (material_indices.x != object_material || material_indices.y == object_material) {
-            // Material on both sides of object are the same, ray creation will be skipped
-            out_material = material_indices.x;
-        } else {
-            // material on inside is material's, material on outside is different.
-            out_ior = materials.data[material_indices.y].IOR;
-            out_material = material_indices.y;
-        }
-    } else {
-        #define is_same_material material_indices.x == object_material
-        #define old_priority_is_higher material.dielectric_priority < inside_of[0].dielectric_priority
-        if (is_same_material || old_priority_is_higher) {
-            // Material on both sides of object are the same and are the same as object's material.
-            // Or
-            // The previous material we were inside of has a higher priority than the new material.
-             out_material = material_indices.x;
-        } else {
-            out_ior = material.IOR;
-            // out_material = object_material; should be set but we know this is th defualt value
-        }
+    #define is_same_first_material material_indices.x == object_material
+    #define is_same_second_material material_indices.y == object_material
+
+    #define old_priority_is_higher dielectric_priority < inside_of[0].dielectric_priority
+
+    if (is_inside && is_same_first_material && !(is_same_second_material)) {
+        // material on inside is material's, material on outside is different.
+        object_material = material_indices.y;
+    } else if (is_inside || is_same_first_material || old_priority_is_higher) {
+        object_material = material_indices.x;
     }
 }
 #endif
@@ -1551,26 +1539,27 @@ Ray bounce_ray(Ray ray_in, inout RayHit rayhit) {
     vec3 normal = is_inside ? -rayhit.normal : rayhit.normal;
 
     int material = rayhit.mtl_index;
-    Material object_material = materials.data[rayhit.mtl_index];
 
     // Zero tracking
     #if use_refraction_tracking==0
+    Material object_material = materials.data[rayhit.mtl_index];
     float material_ior = object_material.IOR;
     float eta_in = is_inside ? material_ior : IOR_air;
     float eta_out = is_inside ? IOR_air : material_ior;
 
     // Track previous material ior
     #elif use_refraction_tracking==1
+    Material object_material = materials.data[rayhit.mtl_index];
     float eta_in = current_IOR;
     float eta_out = (is_inside) ? IOR_air : object_material.IOR;
 
     // Full refraction tracking
     #elif use_refraction_tracking==2
     float eta_in = current_IOR;
-    float eta_out = object_material.IOR;
+    float eta_out;
 
     if (inside_of_count > 0) {
-        material_chooser(is_inside, material, eta_out);
+        material_chooser(is_inside, rayhit.dielectric_priority, material);
     }
 
     // If we are inside an object, calculate beer's law HERE
@@ -1583,7 +1572,7 @@ Ray bounce_ray(Ray ray_in, inout RayHit rayhit) {
         if (is_inside) {
             remove_material_from_inside_of(rayhit.mtl_index);
         } else {
-            add_material_to_inside_of(rayhit.mtl_index, object_material.dielectric_priority);
+            add_material_to_inside_of(rayhit.mtl_index, rayhit.dielectric_priority);
         }
 
         return new_ray(offset_ray(rayhit.point, -normal), ray_in.direction);
@@ -1593,6 +1582,7 @@ Ray bounce_ray(Ray ray_in, inout RayHit rayhit) {
     // the exit refraction of a dielectric material. This can easily be remedied by making a
     // simple check.
     Material new_material = materials.data[material];
+    eta_out = new_material.IOR;
     rayhit.color = vec4(new_material.albedo, 1);
 
     #define object_material new_material
