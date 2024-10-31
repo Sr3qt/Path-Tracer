@@ -1202,13 +1202,14 @@ void calculate_top_node(inout Ray ray, inout RayHit rayhit, vec3 inv_dir, bvec3 
 
         // xin_range much faster, but has an artifact
         if (in_range(aabb_t, ray)) {
-            added_children++;
+            // Indexing by l is faster than indexing by added_children.
             temp_ts[l] = aabb_t;
             temp_children[l] = node_index + l;
+            added_children++;
         }
     }
 
-    // TODO 1: COnsider min heap or insertion sort
+    // This is faster than direct insertion sort.
     // Add nodes to stack in a sorted order
     to_visit_i += added_children;
     for (int i = 0; i < added_children; i++) { // Looping over constant is not faster here
@@ -1420,10 +1421,10 @@ ivec2 get_highest_priority_materials() {
 void add_material_to_inside_of(int material_index, int priority) {
     int shift = 1;
     int insert_index = 0;
-    for (int i = max_overlapping_objects - 1; i >= 0; i--) {
-        InsideOf index = inside_of[i];
+    for (int i = max_overlapping_objects - 1; i > 0; i--) {
+        InsideOf index = inside_of[i - 1];
         if (priority < index.dielectric_priority && shift == 1) {
-            insert_index = i + 1;
+            insert_index = i;
             shift = 0;
         }
         inside_of[i] = inside_of[i - shift];
