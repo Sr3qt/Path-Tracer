@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://br5dpvqqsnr7o"
-path="res://.godot/imported/hollow glass sphere replica.png-9c8c84062fc420a2f0d11059f8584404.ctex"
+uid="uid://nm1pqp0fidsu"
+path="res://.godot/imported/2025-04-11T16-11-12.png-492e2ab2a435eafe0ae7948a1ab0bbeb.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://renders/hollow glass sphere replica.png"
-dest_files=["res://.godot/imported/hollow glass sphere replica.png-9c8c84062fc420a2f0d11059f8584404.ctex"]
+source_file="res://renders/temps/2025-04-11/2025-04-11T16-11-12.png"
+dest_files=["res://.godot/imported/2025-04-11T16-11-12.png-492e2ab2a435eafe0ae7948a1ab0bbeb.ctex"]
 
 [params]
 
@@ -31,4 +31,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=0
+detect_3d/compress_to=1

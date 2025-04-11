@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://dmwa4w7ns2qg"]
 
-[ext_resource type="PackedScene" uid="uid://c3564xwpe245i" path="res://test_models/sponza/sponza-crytek.blend" id="1_gdvga"]
+[ext_resource type="PackedScene" uid="uid://1g1ca6k1u737" path="res://test_models/sponza/sponza-crytek.blend" id="1_gdvga"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/public/pt_mesh.gd" id="2_wfhch"]
 [ext_resource type="Script" path="res://proprietary_dataclasses/pt_camera_fps.gd" id="3_km4eg"]
 

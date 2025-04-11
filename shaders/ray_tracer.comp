@@ -9,37 +9,6 @@
 // https://godotengine.org/asset-library/asset/1550
 
 /*
-
-List of features:
-    - Supported objects:
-        3D simples:
-            - TODO 3: Add rounding for 3d simples
-            - spheres
-
-        2D simples:
-            - triangles
-
-        - planes
-        - meshes (Collection of primitives)
-
-    - instancing of meshes (not memory conservative yet)
-
-    - Material types:
-        -diffuse
-        -metallic
-        -transparent/glass
-
-    - Multisampling
-
-    - Procedural and sampled textures
-
-    - Nested Dielectrics
-
-    - Set operations with dielectric objects:
-        - Union
-        - Difference
-
-
 POLICIES
 ========
 
@@ -79,29 +48,6 @@ Meshes that are instantiated will have a "mesh-socket" BVHNode as its parent in 
 This node is identifiable by having only one child node and having its transform index be positive.
 The transform index should apply to all nodes and objects under the mesh-socket.
 
-
-LONG TERM GOALS
-===============
-
-    - Add detail when standing still -- DONE --
-
-    - Add skybox
-
-    - Add surface textures -- ALMOST --
-
-    - Make set theory functions possible with objects like add and subtract
-        (can see insides of objects) -- DONE --
-
-    - Subfurface scattering
-
-    - Add lighting -- BASIC --
-
-    - Make a real time ray tracer with triangle geometry (will be scuffed) -- ALMOST --
-
-    - Implement meshlets for more dynamic materials and better culling (for traingles)
-
-    - Simulate glass of beer
-
 */
 
 
@@ -111,8 +57,9 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 // PRE PROCESSOR STUFF
 
 /*
-// Fun fact, I happened to implement Nested Dielectrics not knowing what it was.
-// However, I still prefer to call it refraction tracking.
+// Fun fact, I happened to implement Nested Dielectrics before knowing what it was.
+// That is why it's called refraction tracking in the code.
+
 Refraction tracking is the practice of answering the question,
 "What is the material in the intersection between two objects?".
 Refraction tracking solves this by assigning a dielectric priority to all materials,
@@ -141,9 +88,10 @@ Diferent modes:
 // Probably need to look at roughness new ray creation and attenuation.
 // Need to attenuate based on roughness.
 // TODO 2: Make toggle in editor for emmission rendering.
-// Emissive materials
+// If enabled rays will trace unitl they encounter an emissive material or max bounces has been reached.
 #define USE_EMISSION 0
 
+// Allows rays to terminate their search early if current_t > min_t
 // Slower on primary rays but faster on secondary
 #define use_early_t_break 0
 

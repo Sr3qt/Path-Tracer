@@ -79,8 +79,6 @@ Unironically one of the deepest fields out of everything required to build a ray
 - Common color conversion forumlas, used by OpenCV - [Color conversions](https://docs.opencv.org/3.1.0/de/d25/imgproc_color_conversions.html)
 
 
-[Back to the top](#sources)😭
-
 ## Bounding Volume Hierarchy (BVH)
 
 There are many considerations for choosing specific BVH algorithms over another.
@@ -117,7 +115,6 @@ UV image was from [PostImage](https://postimg.cc/HrxvBss3), but I couldn't find 
 Random functions have been taken from:
   - [Ray Tracer Demo](https://github.com/HK-SHAO/Godot-RayTracing-Demo) by HK-SHAO
   - [Hash Functions for GPU Rendering](https://www.shadertoy.com/view/XlGcRh) by Mark Jarzynski and Marc Olano
-  - [Single bit set](https://stackoverflow.com/a/47990)
 
 
 ## Further reading (for me)

@@ -268,8 +268,6 @@ func _set_flags() -> void:
 	)
 
 func _set_flag_bit(bit : int, boolean : bool) -> void:
-	# Shamlessly stolen from:
-	# https://stackoverflow.com/a/47990
 	flags = (flags & ~bit) | (bit * int(boolean))
 
 

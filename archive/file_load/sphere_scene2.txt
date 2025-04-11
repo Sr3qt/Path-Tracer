@@ -1,5 +1,0 @@
-mtl empty 1 1 1 0. 0. 0. 1. 0
-mtl white 1 1 1 0. 0. 1. 1. 0
-
-sphere 0 -10 0 10 white
-sphere 0 10 0 10 white

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://behfggum1edqw"
-path="res://.godot/imported/first_triangles.png-987fc42fcb1f76bb1c48832162b142b6.ctex"
+uid="uid://d2o0my58i5gpf"
+path="res://.godot/imported/2025-04-11T16-11-31.png-4032f760aef3e0e0996d9645ec305155.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://renders/first_triangles.png"
-dest_files=["res://.godot/imported/first_triangles.png-987fc42fcb1f76bb1c48832162b142b6.ctex"]
+source_file="res://renders/temps/2025-04-11/2025-04-11T16-11-31.png"
+dest_files=["res://.godot/imported/2025-04-11T16-11-31.png-4032f760aef3e0e0996d9645ec305155.ctex"]
 
 [params]
 

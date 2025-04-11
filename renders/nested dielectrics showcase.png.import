@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://belvpp0qsouqi"
-path="res://.godot/imported/weekend_result.png-27dffee758dd886a5b3d5bacf0d4d184.ctex"
+uid="uid://48fby30jarn4"
+path="res://.godot/imported/nested dielectrics showcase.png-040acf049a702a66c00439d904b72a2b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://archive/weekend_result.png"
-dest_files=["res://.godot/imported/weekend_result.png-27dffee758dd886a5b3d5bacf0d4d184.ctex"]
+source_file="res://renders/nested dielectrics showcase.png"
+dest_files=["res://.godot/imported/nested dielectrics showcase.png-040acf049a702a66c00439d904b72a2b.ctex"]
 
 [params]
 
@@ -31,4 +31,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=0
+detect_3d/compress_to=1

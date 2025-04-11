@@ -27,7 +27,7 @@ extends Node
 # Using a selction box in 3D editor crashes editor, FIX GODOT_BUG
 # NOTE: NOPE not my problem https://github.com/godotengine/godot/issues/95356
 
-const WindowGui := preload("res://ui_scenes/render_window_gui/render_window_gui.tscn")
+const WindowGui := preload("res://ui_scenes/render_window_gui.tscn")
 
 # NOTE: CPU control over gpu invocations has not been added.
 #	These are merely for reference
@@ -139,10 +139,7 @@ func _init() -> void:
 ## Called by plugin.gd after PTRenderer has setup everything
 func _post_init() -> void:
 	print()
-	print("Loading PT plugin config (lie)")
-	print("Total Editor Startup Time: ", (Time.get_ticks_usec()) / 1000., " ms")
-	print()
-	print("reeeeeeee")
+	print("Total Editor Startup Time: ", (Time.get_ticks_usec()) / 1000., " ms\n")
 	# TODO 3: REport GODOT_BUG where bottom of output is not shown to exist. Only when show duplicate is toggled on specifically
 	#  Might be connected to the _set_window_layout not triggering correctly.
 	#  ACtually it can't be, because the time printed is correct.

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://7yy7731e3ihn"
-path="res://.godot/imported/fuzzed metal replica.png-dd6982a778acad54d75af2014c1f5e1b.ctex"
+uid="uid://drmmvs7qhbpyp"
+path="res://.godot/imported/2025-04-11T16-11-22.png-50826655563549faa3bfde656d530e85.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://renders/fuzzed metal replica.png"
-dest_files=["res://.godot/imported/fuzzed metal replica.png-dd6982a778acad54d75af2014c1f5e1b.ctex"]
+source_file="res://renders/temps/2025-04-11/2025-04-11T16-11-22.png"
+dest_files=["res://.godot/imported/2025-04-11T16-11-22.png-50826655563549faa3bfde656d530e85.ctex"]
 
 [params]
 
@@ -31,4 +31,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=0
+detect_3d/compress_to=1

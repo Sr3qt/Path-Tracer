@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bt8pld3q335nw"
-path.s3tc="res://.godot/imported/earthmap.jpg-b61b0ca2116ef6b2ca95d1d996d2856c.s3tc.ctex"
+uid="uid://his15bceolpe"
+path.s3tc="res://.godot/imported/C4-D-UV-Grid-1024x1024.jpg-e3497d9efea47a444f82eab73882ab27.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/earthmap.jpg"
-dest_files=["res://.godot/imported/earthmap.jpg-b61b0ca2116ef6b2ca95d1d996d2856c.s3tc.ctex"]
+source_file="res://scenes/textures/C4-D-UV-Grid-1024x1024.jpg"
+dest_files=["res://.godot/imported/C4-D-UV-Grid-1024x1024.jpg-e3497d9efea47a444f82eab73882ab27.s3tc.ctex"]
 
 [params]
 
