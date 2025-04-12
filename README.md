@@ -49,12 +49,22 @@ Currently the project is updated to Godot 4.3.
 
 
 ## Usage guide
+
+![Editor](renders/editor%20showcase.png)
+
+Godot 4.3 had some on-first-import bugs, so the editor will have to be restarted before using it.
+Rendering settings can be accessed through the PathTracer tab which by default is found in the right dock.
+Some rendering parameters have not been implented in the editor interface but can be found in shaders/ray_tracer.comp, most notably the option to toggle emissive rendering. You might need to restart the editor those changes to take effect.
+
+The most useful rendering settings are "Max Samples", which dictate the number of samples per pixel, and "Ray max depth", which dictates how many bounces are allowed per pixel. The last one needs to be >1 for the engine to path trace.
+
 To start rendering you need to create a PTScene Node. Then you can add any subtype of PTObject, PTObject itself will not work, as a descendant of that scene node. You can also add an PTMesh node. Any PTObject under a PTMesh will be a part of that mesh. The PTMesh allows for more efficient transformations of objects within it.
+
+Additionally, for runtime rendering a PTCamera has to be present in the scene. There is a sub type of PTCamera called PTFPSCamera. It uses "WASD" for movement and click+drag for camera rotation.
 
 In the PathTracer tab there are two sub-tabs that control editor and runtime settings separetaly.
 
-Some rendering parameters have not been implented in the editor interface but can be found in shaders/ray_tracer.comp, most notably the option to toggle emissive rendering. You might need to restart the editor.
-
+-------------------
 
 ### Long term goals
 
