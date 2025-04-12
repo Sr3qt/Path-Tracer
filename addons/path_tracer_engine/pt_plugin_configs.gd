@@ -7,6 +7,8 @@ const RENDER_CONFIG_PATH := "res://addons/path_tracer_engine/configs/"
 const EDITOR_RENDER_CONFIG := RENDER_CONFIG_PATH + "editor_render_settings.tscn"
 const RUNTIME_RENDER_CONFIG := RENDER_CONFIG_PATH + "runtime_render_settings.tscn"
 
+# var CONFIG_DIR := DirAccess.new()
+
 
 static func editor_render_config_exist() -> bool:
 	return FileAccess.file_exists(EDITOR_RENDER_CONFIG)
@@ -17,6 +19,9 @@ static func runtime_render_config_exist() -> bool:
 
 
 static func save_editor_render_config(window : PTRenderWindow) -> void:
+	if !DirAccess.dir_exists_absolute(RENDER_CONFIG_PATH):
+		DirAccess.make_dir_absolute(RENDER_CONFIG_PATH)
+
 	if window.name.is_empty():
 		window.name = "EditorSettings"
 	var editor_scene := PackedScene.new()
@@ -25,6 +30,9 @@ static func save_editor_render_config(window : PTRenderWindow) -> void:
 
 
 static func save_runtime_render_config(window : PTRenderWindow) -> void:
+	if !DirAccess.dir_exists_absolute(RENDER_CONFIG_PATH):
+		DirAccess.make_dir_absolute(RENDER_CONFIG_PATH)
+
 	if window.name.is_empty():
 		window.name = "RuntimeSettings"
 	var runtime_scene := PackedScene.new()
